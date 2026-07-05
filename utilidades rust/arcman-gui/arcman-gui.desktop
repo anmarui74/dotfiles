@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=arcman
+Comment=Gestor de paquetes para Arch Linux
+Exec=/home/antonio/.local/bin/arcman-gui
+Icon=arcman-gui
+Terminal=false
+Categories=System;PackageManager;Utility;
+StartupNotify=true
