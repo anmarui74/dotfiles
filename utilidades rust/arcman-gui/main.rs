@@ -53,61 +53,52 @@ fn generate_icon() -> Vec<u8> {
 
 fn strip_ansi(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
-    let mut i = 0;
-    let bytes = s.as_bytes();
-    while i < bytes.len() {
-        let b = bytes[i];
-        if b == 0x1b {
-            i += 1;
-            if i < bytes.len() {
-                match bytes[i] {
-                    0x5b => {
-                        // CSI: ESC [ params... letter
-                        i += 1;
-                        while i < bytes.len() {
-                            let c = bytes[i];
-                            if c.is_ascii_alphabetic() || c == 0x7e {
-                                i += 1;
-                                break;
-                            }
-                            i += 1;
+    let mut chars = s.chars().peekable();
+
+    while let Some(c) = chars.next() {
+        if c == '\u{1b}' {
+            // ESC sequence
+            match chars.next() {
+                Some('[') => {
+                    // CSI: ESC [ params... letter
+                    while let Some(&c) = chars.peek() {
+                        if c.is_ascii_alphabetic() || c == '~' {
+                            chars.next();
+                            break;
                         }
-                    }
-                    0x5d => {
-                        // OSC: ESC ] ... (terminated by BEL or ST)
-                        i += 1;
-                        while i < bytes.len() {
-                            if bytes[i] == 0x07 {
-                                i += 1;
-                                break;
-                            }
-                            if bytes[i] == 0x1b && i + 1 < bytes.len() && bytes[i + 1] == 0x5c {
-                                i += 2;
-                                break;
-                            }
-                            i += 1;
-                        }
-                    }
-                    _ => {
-                        // Otros ESC (una sola letra)
-                        i += 1;
+                        chars.next();
                     }
                 }
+                Some(']') => {
+                    // OSC: ESC ] ... (terminated by BEL or ST)
+                    while let Some(&c) = chars.peek() {
+                        if c == '\u{07}' {
+                            chars.next();
+                            break;
+                        }
+                        if c == '\u{1b}' {
+                            chars.next();
+                            if chars.peek() == Some(&'\\') {
+                                chars.next();
+                            }
+                            break;
+                        }
+                        chars.next();
+                    }
+                }
+                _ => {}
             }
-        } else if b == 0x9b {
+        } else if c == '\u{9b}' {
             // CSI 8-bit
-            i += 1;
-            while i < bytes.len() {
-                let c = bytes[i];
-                if c.is_ascii_alphabetic() || c == 0x7e {
-                    i += 1;
+            while let Some(&c) = chars.peek() {
+                if c.is_ascii_alphabetic() || c == '~' {
+                    chars.next();
                     break;
                 }
-                i += 1;
+                chars.next();
             }
         } else {
-            out.push(b as char);
-            i += 1;
+            out.push(c);
         }
     }
     out
@@ -303,15 +294,15 @@ impl Application for App {
                             format!("Gestor de paquetes: {pm}\n");
                         out.push_str(&format!(
                             "yay:        {}\n",
-                            if which("yay") { "✓" } else { "✗" }
+                            if which("yay") { "\u{F00C}" } else { "\u{F00D}" }
                         ));
                         out.push_str(&format!(
                             "paru:       {}\n",
-                            if which("paru") { "✓" } else { "✗" }
+                            if which("paru") { "\u{F00C}" } else { "\u{F00D}" }
                         ));
                         out.push_str(&format!(
                             "paccache:   {}\n\n",
-                            if which("paccache") { "✓" } else { "✗" }
+                            if which("paccache") { "\u{F00C}" } else { "\u{F00D}" }
                         ));
                         out.push_str("Comprobando actualizaciones...\n");
                         let result = tokio::task::spawn_blocking(|| {
@@ -545,9 +536,11 @@ impl App {
             horizontal_rule(1),
             Space::with_height(6.0),
         ]
-        .spacing(2)
+        .spacing(6)
         .padding(15)
         .width(180);
+
+        col = col.push(vertical_space());
 
         for (screen, label) in &nav_items {
             let is_active = self.screen == *screen;
@@ -639,7 +632,7 @@ impl App {
 
         container(
             scrollable(
-                container(text(content).size(13))
+                container(text(content).size(13).font(Font::with_name("DroidSansMono Nerd Font")))
                     .padding(15)
                     .width(Length::Fill),
             )
@@ -1080,6 +1073,7 @@ impl App {
 // ─── Main ──────────────────────────────────────────────────────────
 
 pub fn main() -> iced::Result {
+    std::env::set_var("WGPU_BACKEND", "gl");
     let icon = iced::window::icon::from_rgba(generate_icon(), 32, 32).ok();
     let font_data: &'static [u8] = include_bytes!("../arcman-font.otf");
     App::run(Settings {
@@ -1088,9 +1082,9 @@ pub fn main() -> iced::Result {
         window: iced::window::Settings {
             icon,
             platform_specific: iced::window::settings::PlatformSpecific {
-                application_id: String::from("arcman-gui"),
+                application_id: String::from("arcman"),
             },
-            size: [900u16, 720].into(),
+            size: [1000u16, 725].into(),
             min_size: Some([720u16, 480].into()),
             ..Default::default()
         },
