@@ -1,0 +1,19 @@
+{
+  // Añadir ollama como servidor local
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama local",
+      "options": {
+        "baseURL": "http://localhost:11434/v1",
+        "apiKey": "Ollama"
+      },
+      "models": {
+        "modelo-zipe:latest": {
+          "name": "modelo-zipe:latest"
+        }
+      }
+    }
+  },
+}

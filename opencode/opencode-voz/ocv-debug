@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+"""Debug: graba 3 segundos y muestra el nivel de audio."""
+
+import subprocess
+import struct
+import math
+import time
+
+MIC = "alsa_input.usb-Sonix_Technology_Co.__Ltd._UGREEN_Camera_2K_SN0001-02.analog-stereo"
+
+print("🎤 Grabando 3 segundos... HABLA AHORA.")
+proc = subprocess.Popen(
+    ["parec", "--device=" + MIC, "--rate=16000",
+     "--format=s16le", "--channels=1", "--raw"],
+    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+)
+
+time.sleep(0.5)
+data = bytearray()
+for _ in range(50):  # 50 chunks de ~100ms
+    chunk = proc.stdout.read(3200)
+    if not chunk:
+        break
+    data.extend(chunk)
+    if len(data) >= 48000:  # ~3 segundos
+        break
+
+proc.terminate()
+proc.wait()
+
+samples = struct.unpack(f"<{len(data)//2}h", data[:len(data)-len(data)%2])
+if not samples:
+    print("No se grabó nada.")
+    exit(1)
+
+rms = math.sqrt(sum(s*s for s in samples)/len(samples))
+mx = max(max(samples), -min(samples))
+frames = [samples[i:i+1600] for i in range(0, len(samples), 1600)]
+activos = sum(1 for f in frames if math.sqrt(sum(s*s for s in f)/len(f)) > 500)
+
+print(f"Duración: {len(samples)/16000:.1f}s")
+print(f"RMS total: {rms:.0f}")
+print(f"Pico máximo: {mx}")
+print(f"Frames activos (>500): {activos}/{len(frames)}")
+print(f"\nSi el RMS es < 500 y frames activos < 1: no se detecta voz.")
+print(f"Si RMS > 2000: hay voz clara y debería transcribir.")

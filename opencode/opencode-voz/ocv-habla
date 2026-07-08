@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+"""OpenCode por voz: Enter para grabar, Enter para parar."""
+
+import subprocess
+import sys
+import os
+import tempfile
+import signal
+import time
+import json
+import threading
+
+SPEAK_CMD = os.path.expanduser("~/.local/bin/speak")
+MODEL_PATH = os.path.expanduser("~/Config/opencode/opencode-voz/models/vosk-model-small-es-0.42")
+MIC_SOURCE = "alsa_input.usb-Sonix_Technology_Co.__Ltd._UGREEN_Camera_2K_SN0001-02.analog-stereo"
+
+recording = False
+audio_data = bytearray()
+rec_proc = None
+rec_thread = None
+
+def recorder_thread():
+    global recording, audio_data, rec_proc
+    rec_proc = subprocess.Popen(
+        ["parec", "--device=" + MIC_SOURCE,
+         "--rate=16000", "--format=s16le", "--channels=1",
+         "--raw"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+    )
+    while recording:
+        chunk = rec_proc.stdout.read(4096)
+        if not chunk:
+            break
+        audio_data.extend(chunk)
+    rec_proc.terminate()
+    try: rec_proc.wait(timeout=2)
+    except: rec_proc.kill()
+
+def empezar_grabacion():
+    global recording, audio_data, rec_thread
+    audio_data = bytearray()
+    recording = True
+    rec_thread = threading.Thread(target=recorder_thread, daemon=True)
+    rec_thread.start()
+
+def parar_grabacion():
+    global recording, rec_proc, rec_thread
+    recording = False
+    if rec_proc:
+        rec_proc.terminate()
+        try: rec_proc.wait(timeout=2)
+        except: rec_proc.kill()
+        rec_proc = None
+    if rec_thread:
+        rec_thread.join(timeout=3)
+        rec_thread = None
+
+def transcribir(data):
+    if not data:
+        return ""
+    tmp = tempfile.NamedTemporaryFile(suffix=".raw", delete=False)
+    tmp.write(data)
+    tmpn = tmp.name
+    tmp.close()
+    wav = tmpn + ".wav"
+    try:
+        subprocess.run(["ffmpeg", "-y", "-f", "s16le", "-ar", "16000",
+                       "-ac", "1", "-i", tmpn, wav],
+                       capture_output=True, timeout=10)
+        r = subprocess.run(
+            ["vosk-transcriber", "-m", MODEL_PATH,
+             "--input", wav, "--output-type", "json"],
+            capture_output=True, text=True, timeout=60
+        )
+        d = json.loads(r.stdout)
+        return d.get("text", "").strip()
+    except:
+        return ""
+    finally:
+        try: os.unlink(tmpn)
+        except: pass
+        try: os.unlink(wav)
+        except: pass
+
+def responder(texto):
+    cmd = ["opencode", "run", texto]
+    try:
+        r = subprocess.run(cmd, capture_output=True, timeout=120, text=True)
+        return r.stdout.strip()
+    except:
+        return ""
+
+signal.signal(signal.SIGINT, lambda s,f: sys.exit(0))
+
+print("🎤 OpenCode por voz")
+print("  Enter -> graba | Enter -> para | Ctrl+C -> salir")
+print()
+
+first = True
+
+while True:
+    try:
+        input("  Presiona Enter para hablar...")
+    except (EOFError, KeyboardInterrupt):
+        print("\nBye!")
+        break
+
+    if not first:
+        time.sleep(0.3)
+    first = False
+
+    print("  🎤 Grabando... presiona Enter para parar.")
+    empezar_grabacion()
+
+    try:
+        input()
+    except (EOFError, KeyboardInterrupt):
+        parar_grabacion()
+        print("\nBye!")
+        break
+
+    parar_grabacion()
+    print("  ⏳ Transcribiendo...")
+
+    texto = transcribir(bytes(audio_data))
+
+    if not texto:
+        print("  (no se detectó voz)\n")
+        continue
+
+    print(f"  Tú: {texto}")
+
+    resp = responder(texto)
+
+    if resp:
+        print(f"\n{resp}\n")
+        subprocess.Popen([SPEAK_CMD], stdin=subprocess.PIPE,
+                         text=True).communicate(resp)
+    else:
+        print("  (sin respuesta)\n")
