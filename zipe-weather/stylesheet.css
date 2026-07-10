@@ -1,0 +1,44 @@
+.zipe-panel-box {
+    spacing: 4px;
+}
+
+.zipe-panel-icon {
+    margin-right: 2px;
+}
+
+.zipe-panel-label {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.zipe-menu-content {
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 14px;
+    padding: 6px 12px;
+}
+
+.zipe-item-box {
+    spacing: 10px;
+}
+
+.zipe-col-fecha {
+    min-width: 65px;
+}
+
+.zipe-col-temp {
+    min-width: 60px;
+}
+
+.zipe-col-precip {
+    min-width: 55px;
+}
+
+.zipe-col-wind {
+    min-width: 80px;
+}
+
+.zipe-weather-source {
+    font-size: 0.85em;
+    color: #aaa;
+    padding: 2px 12px;
+}
