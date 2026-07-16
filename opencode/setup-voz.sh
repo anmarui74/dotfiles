@@ -254,11 +254,17 @@ function startRecording(kv, toast, logger) {
   forceKillSox(logger);
   try {
     fs.unlinkSync(WAV_FILE);
-  } catch {}
+    logger?.log("STT", "Deleted old WAV file", "debug");
+  } catch (e) {
+    logger?.log("STT", `Could not delete old WAV: ${e.message}`, "warn");
+  }
 
   soxStderr = "";
   const mic = kv.get("stt.mic", "") || null;
-  const inputArgs = mic ? ["-t", "coreaudio", mic] : ["-d"];
+  const isLinux = process.platform === "linux";
+  const inputArgs = mic
+    ? ["-t", isLinux ? "pulseaudio" : "coreaudio", mic]
+    : ["-d"];
   logger?.log("STT", `Starting recording mic=${mic || "system default"}`, "debug");
 
   soxProc = spawn(
@@ -323,6 +329,20 @@ function getModelName(kv) {
 
 function getModelPath(kv) {
   return path.join(getModelsDir(), MODELS[getModelName(kv)].file);
+}
+
+function checkAudioSilence(wavPath) {
+  try {
+    const buf = fs.readFileSync(wavPath);
+    const headerSize = 44;
+    const samples = new Int16Array(buf.buffer, headerSize);
+    let sumSq = 0;
+    for (let i = 0; i < samples.length; i++) sumSq += samples[i] * samples[i];
+    const rms = Math.sqrt(sumSq / samples.length);
+    return rms < 10;
+  } catch {
+    return true;
+  }
 }
 
 function transcribe(kv, logger) {
@@ -548,6 +568,19 @@ async function doTranscribePipeline(
     logger?.log("STT", `Pipeline started submit=${submit}`, "debug");
     stopRecording(logger);
     await waitForSoxExit(logger);
+
+    if (!fs.existsSync(WAV_FILE) || fs.statSync(WAV_FILE).size <= 44) {
+      logger?.log("STT", "No valid WAV file after recording", "error");
+      toast("No audio captured — ¿micrófono conectado?", "warning");
+      return;
+    }
+
+    const isSilent = checkAudioSilence(WAV_FILE);
+    if (isSilent) {
+      logger?.log("STT", "Recording is silent, skipping", "warn");
+      toast("No se detectó voz — ¿micrófono silenciado?", "warning");
+      return;
+    }
 
     toast("Transcribing...");
     const result = await transcribe(kv, logger);
