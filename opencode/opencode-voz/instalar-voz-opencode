@@ -14,74 +14,17 @@ else
     echo "edge-tts ya instalado"
 fi
 
-# 2. Script speak
-echo "Creando speak..."
-cat > "$BIN/speak" << 'SPEAKEOF'
-#!/usr/bin/env python3
-import sys
-import subprocess
-import tempfile
-import os
-import time
-import re
-
-ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x1b]*\x1b\\|\x1b[PX^_]|[^\x1b]*\x1b\\|\x1b][0-9;]*[\x07\x1b]|\x1b[=<>FGH]|\x1b[NOPQ\\]')
-BOX_RE = re.compile(r'[\u2500-\u257f\u2500-\u257f\u2580-\u259f\u25a0-\u25ff]')
-
-VOICE = os.environ.get("SPEAK_VOICE", "es-ES-AlvaroNeural")
-RATE = os.environ.get("SPEAK_RATE", "+5%")
-PITCH = os.environ.get("SPEAK_PITCH", "+0Hz")
-
-def speak(text):
-    text = text.strip()
-    if not text or len(text) < 3:
-        return
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-        fname = f.name
-    try:
-        cmd = ["edge-tts", "--voice", VOICE, "--rate", RATE, "--pitch", PITCH,
-               "--text", text, "--write-media", fname]
-        subprocess.run(cmd, capture_output=True, timeout=30)
-        subprocess.run(["paplay", fname], capture_output=True)
-    except Exception:
-        pass
-    finally:
-        try:
-            os.unlink(fname)
-        except OSError:
-            pass
-
-def clean_line(text):
-    text = ANSI_RE.sub("", text)
-    text = BOX_RE.sub("", text)
-    text = re.sub(r'[⬝■▣●▸▀▄╹┃╻━┏┓┗┛┣┫┳┻╋┠┨┷┯┥┝┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋]+', '', text)
-    text = re.sub(r'[▰▱▔▏▎▍▌▋▊▉]+', '', text)
-    text = ' '.join(text.split())
-    return text.strip()
-
-def main():
-    buffer = ""
-    for line in sys.stdin:
-        line = line.rstrip("\n")
-        print(line, flush=True)
-        clean = clean_line(line)
-        if not clean or len(clean) < 4:
-            continue
-        if clean.lower() in ('build', 'opencode zen', 'max', 'tab', 'agents', 'ctrl+p', 'commands', 'tip'):
-            continue
-        buffer += clean + " "
-        if clean.endswith(("." , "?" , "!" , ":" , "...")):
-            speak(buffer)
-            time.sleep(0.2)
-            buffer = ""
-    if buffer.strip():
-        speak(buffer)
-
-if __name__ == "__main__":
-    main()
-SPEAKEOF
-chmod +x "$BIN/speak"
-echo "  → $BIN/speak"
+# 2. Script speak (copiar desde la carpeta del proyecto)
+SCRIPT_DIR="${0:A:h}"
+SPEAK_SRC="$SCRIPT_DIR/speak"
+echo "Instalando speak..."
+if [ -f "$SPEAK_SRC" ]; then
+    cp "$SPEAK_SRC" "$BIN/speak"
+    chmod +x "$BIN/speak"
+    echo "  → $BIN/speak (copiado desde $SPEAK_SRC)"
+else
+    echo "  ⚠ No se encontró $SPEAK_SRC, saltando"
+fi
 
 # 3. Añadir función ocv a .zshrc si no existe ya
 ZSHRC="$HOME/.zshrc"

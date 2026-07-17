@@ -12,26 +12,33 @@ import threading
 
 SPEAK_CMD = os.path.expanduser("~/.local/bin/speak")
 MODEL_PATH = os.path.expanduser("~/Config/opencode/opencode-voz/models/vosk-model-small-es-0.42")
-MIC_SOURCE = "alsa_input.usb-Sonix_Technology_Co.__Ltd._UGREEN_Camera_2K_SN0001-02.analog-stereo"
+MIC_SOURCE = os.environ.get("OCV_MIC", "alsa_input.usb-TONOR_TONOR_TD510_Air_Mic_AP5980_20241018-00.mono-fallback")
+MAX_RECORD_SECONDS = int(os.environ.get("OCV_MAX_SECS", "30"))
 
 recording = False
 audio_data = bytearray()
 rec_proc = None
 rec_thread = None
+timeout_triggered = False
 
 def recorder_thread():
-    global recording, audio_data, rec_proc
+    global recording, audio_data, rec_proc, timeout_triggered
     rec_proc = subprocess.Popen(
         ["parec", "--device=" + MIC_SOURCE,
          "--rate=16000", "--format=s16le", "--channels=1",
          "--raw"],
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
     )
+    start = time.time()
+    timeout_triggered = False
     while recording:
         chunk = rec_proc.stdout.read(4096)
         if not chunk:
             break
         audio_data.extend(chunk)
+        if time.time() - start >= MAX_RECORD_SECONDS:
+            timeout_triggered = True
+            break
     rec_proc.terminate()
     try: rec_proc.wait(timeout=2)
     except: rec_proc.kill()
@@ -86,9 +93,15 @@ def responder(texto):
     cmd = ["opencode", "run", texto]
     try:
         r = subprocess.run(cmd, capture_output=True, timeout=120, text=True)
+        if r.returncode != 0 and r.stderr:
+            return f"[Error de OpenCode: {r.stderr.strip()[:200]}]"
         return r.stdout.strip()
-    except:
-        return ""
+    except FileNotFoundError:
+        return "[Error: 'opencode' no encontrado en PATH]"
+    except subprocess.TimeoutExpired:
+        return "[Error: OpenCode tardó más de 120 segundos]"
+    except Exception as e:
+        return f"[Error inesperado: {e}]"
 
 signal.signal(signal.SIGINT, lambda s,f: sys.exit(0))
 
@@ -120,6 +133,8 @@ while True:
         break
 
     parar_grabacion()
+    if timeout_triggered:
+        print(f"  (auto-parado tras {MAX_RECORD_SECONDS}s)")
     print("  ⏳ Transcribiendo...")
 
     texto = transcribir(bytes(audio_data))

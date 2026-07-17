@@ -53,8 +53,8 @@ import sys
 import subprocess
 import tempfile
 import os
-import time
 import re
+import signal
 
 ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x1b]*\x1b\\|\x1b[PX^_]|[^\x1b]*\x1b\\|\x1b][0-9;]*[\x07\x1b]|\x1b[=<>FGH]|\x1b[NOPQ\\]')
 BOX_RE = re.compile(r'[\u2500-\u257f\u2500-\u257f\u2580-\u259f\u25a0-\u25ff]')
@@ -63,24 +63,15 @@ VOICE = os.environ.get("SPEAK_VOICE", "es-ES-AlvaroNeural")
 RATE = os.environ.get("SPEAK_RATE", "+5%")
 PITCH = os.environ.get("SPEAK_PITCH", "+0Hz")
 
-def speak(text):
-    text = text.strip()
-    if not text or len(text) < 3:
-        return
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-        fname = f.name
-    try:
-        cmd = ["edge-tts", "--voice", VOICE, "--rate", RATE, "--pitch", PITCH,
-               "--text", text, "--write-media", fname]
-        subprocess.run(cmd, capture_output=True, timeout=30)
-        subprocess.run(["paplay", fname], capture_output=True)
-    except Exception:
-        pass
-    finally:
-        try:
-            os.unlink(fname)
-        except OSError:
-            pass
+_current_paplay = None
+
+def _sigterm_handler(signum, frame):
+    global _current_paplay
+    if _current_paplay and _current_paplay.poll() is None:
+        _current_paplay.kill()
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, _sigterm_handler)
 
 def clean_line(text):
     text = ANSI_RE.sub("", text)
@@ -90,23 +81,49 @@ def clean_line(text):
     text = ' '.join(text.split())
     return text.strip()
 
+def ensure_ending_punctuation(text):
+    if not text:
+        return text
+    if text[-1] in '.!?':
+        return text
+    if text.endswith('...'):
+        return text
+    return text + '.'
+
+def speak(text):
+    global _current_paplay
+    if not text:
+        return
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        fname = f.name
+    try:
+        cmd = ["edge-tts", "--voice", VOICE, "--rate", RATE, "--pitch", PITCH,
+               "--text", text, "--write-media", fname]
+        subprocess.run(cmd, capture_output=True, timeout=60)
+        _current_paplay = subprocess.Popen(["paplay", fname], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _current_paplay.wait()
+        _current_paplay = None
+    except Exception:
+        pass
+    finally:
+        try:
+            os.unlink(fname)
+        except OSError:
+            pass
+
 def main():
-    buffer = ""
+    lines = []
     for line in sys.stdin:
         line = line.rstrip("\n")
-        print(line, flush=True)
         clean = clean_line(line)
         if not clean or len(clean) < 4:
             continue
         if clean.lower() in ('build', 'opencode zen', 'max', 'tab', 'agents', 'ctrl+p', 'commands', 'tip'):
             continue
-        buffer += clean + " "
-        if clean.endswith(("." , "?" , "!" , ":" , "...")):
-            speak(buffer)
-            time.sleep(0.2)
-            buffer = ""
-    if buffer.strip():
-        speak(buffer)
+        lines.append(clean)
+    if lines:
+        text = '. '.join(ensure_ending_punctuation(l) for l in lines)
+        speak(text)
 
 if __name__ == "__main__":
     main()
@@ -880,14 +897,14 @@ export function registerTTS(api, kv, logger) {
   function killProcs() {
     if (speakProc) {
       try {
-        speakProc.kill("SIGKILL");
+        speakProc.kill("SIGTERM");
       } catch {}
       speakProc = null;
     }
   }
 
-  function cleanMarkdown(text) {
-    return text
+  function cleanLine(line) {
+    return line
       .replace(/```[\s\S]*?```/g, 'código')
       .replace(/`([^`]+)`/g, '$1')
       .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -903,13 +920,47 @@ export function registerTTS(api, kv, logger) {
       .replace(/^[\s]*[-*+]\s+/gm, '')
       .replace(/^[\s]*\d+\.\s+/gm, '')
       .replace(/\s+/g, ' ')
+      .replace(/\.([a-zA-Z])/g, ' punto $1')
+      .replace(/\s+/g, ' ')
+      .replace(/[*_`~]/g, '')
       .trim();
+  }
+
+  function cleanTableRow(line) {
+    let cleaned = line.replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '');
+    cleaned = cleaned.replace(/\s*\|\s*/g, ': ');
+    return cleanLine(cleaned);
+  }
+
+  function cleanMarkdown(text) {
+    return text
+      .split(/\n\n+/)
+      .flatMap(p => {
+        const rawLines = p.split('\n').filter(l => l.trim().length > 0);
+        const isList = rawLines.some(l => /^\s*[-*+]\s/.test(l) || /^\s*\d+\.\s/.test(l));
+        const isTable = rawLines.some(l => /^\s*\|/.test(l));
+
+        if (isList) {
+          return rawLines
+            .map(l => cleanLine(l))
+            .filter(l => l.length >= 4);
+        } else if (isTable) {
+          return rawLines
+            .filter(l => !/^\s*\|?[\s:-]+\|[\s:-]+\|?\s*$/.test(l))
+            .map(l => cleanTableRow(l))
+            .filter(l => l.length >= 4);
+        } else {
+          const cleaned = cleanLine(p);
+          return cleaned.length >= 4 ? [cleaned] : [];
+        }
+      })
+      .join('\n');
   }
 
   function speak(text) {
     if (!text) return Promise.resolve();
-    const line = cleanMarkdown(text);
-    if (!line) return Promise.resolve();
+    const cleaned = cleanMarkdown(text);
+    if (!cleaned) return Promise.resolve();
 
     killProcs();
 
@@ -920,25 +971,31 @@ export function registerTTS(api, kv, logger) {
       return Promise.resolve();
     }
 
-    logger?.log?.("TTS", `Speak requested chars=${line.length}`, "debug");
+    logger?.log?.("TTS", `Speak requested chars=${cleaned.length}`, "debug");
 
     return new Promise((resolve) => {
-      speakProc = spawn(speakScript, [], { stdio: ["pipe", "ignore", "ignore"] });
+      const proc = spawn(speakScript, [], { stdio: ["pipe", "ignore", "ignore"] });
+      speakProc = proc;
 
-      speakProc.on("close", () => {
-        speakProc = null;
+      proc.on("close", () => {
+        if (speakProc === proc) {
+          speakProc = null;
+        }
         resolve();
       });
 
-      speakProc.on("error", (err) => {
+      proc.on("error", (err) => {
         logger?.log?.("TTS", `speak error: ${err.message}`, "error");
-        speakProc = null;
+        if (speakProc === proc) {
+          speakProc = null;
+        }
         resolve();
       });
 
-      if (speakProc?.stdin && !speakProc.stdin.destroyed) {
-        speakProc.stdin.write(line + "\n");
-        speakProc.stdin.end();
+      if (proc?.stdin && !proc.stdin.destroyed) {
+        // Enviar todos los parrafos separados por saltos de linea
+        proc.stdin.write(cleaned);
+        proc.stdin.end();
       }
     });
   }

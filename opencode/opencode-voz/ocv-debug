@@ -5,8 +5,9 @@ import subprocess
 import struct
 import math
 import time
+import os
 
-MIC = "alsa_input.usb-Sonix_Technology_Co.__Ltd._UGREEN_Camera_2K_SN0001-02.analog-stereo"
+MIC = os.environ.get("OCV_MIC", "alsa_input.usb-TONOR_TONOR_TD510_Air_Mic_AP5980_20241018-00.mono-fallback")
 
 print("🎤 Grabando 3 segundos... HABLA AHORA.")
 proc = subprocess.Popen(
