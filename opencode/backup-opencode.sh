@@ -50,6 +50,60 @@ cp "$HOME_DIR/.config/opencode/tui.json" "$TMPDIR/tui.json"
 cp "$HOME_DIR/.config/opencode/AGENTS.md" "$TMPDIR/AGENTS.md"
 cp "$HOME_DIR/.config/opencode/ollama-proxy.py" "$TMPDIR/ollama-proxy.py" 2>/dev/null || true
 cp "$HOME_DIR/.config/opencode/litellm-config.yaml" "$TMPDIR/litellm-config.yaml" 2>/dev/null || true
+cp "$HOME_DIR/.config/opencode/web-search.sh" "$TMPDIR/web-search.sh" 2>/dev/null || true
+
+# Copiar system-info.sh (informe del sistema)
+if [ -f "$HOME_DIR/system-info.sh" ]; then
+    echo ">>> Copiando system-info.sh..."
+    cp "$HOME_DIR/system-info.sh" "$TMPDIR/system-info.sh"
+fi
+
+# Copiar backup-opencode.sh (el propio script de backup)
+if [ -f "$CONFIG_DIR/backup-opencode.sh" ]; then
+    echo ">>> Copiando backup-opencode.sh..."
+    cp "$CONFIG_DIR/backup-opencode.sh" "$TMPDIR/backup-opencode.sh"
+fi
+
+# Copiar scripts auxiliares de Config/opencode
+for _script in setup-voz.sh web-search.sh bootstrap-ocv.sh; do
+    if [ -f "$CONFIG_DIR/$_script" ]; then
+        echo ">>> Copiando $_script..."
+        cp "$CONFIG_DIR/$_script" "$TMPDIR/$_script"
+    fi
+done
+
+# Copiar directorio sesion-opencode/ (setup completo)
+if [ -d "$CONFIG_DIR/sesion-opencode" ]; then
+    echo ">>> Copiando sesion-opencode/..."
+    mkdir -p "$TMPDIR/sesion-opencode"
+    cp -r "$CONFIG_DIR/sesion-opencode/"* "$TMPDIR/sesion-opencode/" 2>/dev/null || true
+fi
+
+# Copiar .env (variables de entorno seguras)
+if [ -f "$HOME_DIR/.config/opencode/.env" ]; then
+    echo ">>> Copiando .env (variables de entorno)..."
+    cp "$HOME_DIR/.config/opencode/.env" "$TMPDIR/.env"
+fi
+
+# Copiar init-opencode.sh (script de inicialización)
+if [ -f "$HOME_DIR/.config/opencode/init-opencode.sh" ]; then
+    echo ">>> Copiando init-opencode.sh..."
+    cp "$HOME_DIR/.config/opencode/init-opencode.sh" "$TMPDIR/init-opencode.sh"
+fi
+
+# Copiar servicio systemd user (init service)
+if [ -f "$HOME_DIR/.config/systemd/user/init-opencode.service" ]; then
+    echo ">>> Copiando servicio systemd..."
+    mkdir -p "$TMPDIR/systemd/user"
+    cp "$HOME_DIR/.config/systemd/user/init-opencode.service" "$TMPDIR/systemd/user/init-opencode.service"
+fi
+
+# Copiar directorio data/ (persistencia, logs, estado)
+if [ -d "$HOME_DIR/.config/opencode/data" ]; then
+    echo ">>> Copiando data/ (persistencia)..."
+    mkdir -p "$TMPDIR/data"
+    cp -r "$HOME_DIR/.config/opencode/data/"* "$TMPDIR/data/" 2>/dev/null || true
+fi
 
 # Copiar prompts personalizados (importante para que el agente lea AGENTS.md)
 if [ -d "$HOME_DIR/.config/opencode/prompts" ]; then
@@ -63,6 +117,13 @@ if [ -d "$HOME_DIR/.config/opencode/commands" ]; then
     echo ">>> Copiando commands personalizados..."
     mkdir -p "$TMPDIR/commands"
     cp -r "$HOME_DIR/.config/opencode/commands/"* "$TMPDIR/commands/" 2>/dev/null || true
+fi
+
+# Copiar skills personalizados
+if [ -d "$HOME_DIR/.config/opencode/skills" ]; then
+    echo ">>> Copiando skills personalizados..."
+    mkdir -p "$TMPDIR/skills"
+    cp -r "$HOME_DIR/.config/opencode/skills/"* "$TMPDIR/skills/" 2>/dev/null || true
 fi
 
 # Copiar state/kv.json para mantener estado TTS y otros
@@ -102,7 +163,7 @@ echo "=============================================="
 echo ""
 
 # ---- 1. Dependencias del sistema ----
-echo "--- 1/13: Dependencias del sistema ---"
+echo "--- 1/18: Dependencias del sistema ---"
 sudo apt-get update -qq
 sudo apt-get install -y -qq \
   sox pulseaudio-utils whisper-cpp pipx nodejs npm 2>/dev/null || {
@@ -112,7 +173,7 @@ sudo apt-get install -y -qq \
 info "Dependencias del sistema instaladas"
 
 # ---- 2. whisper-cli wrapper ----
-echo "--- 2/13: whisper-cli wrapper ---"
+echo "--- 2/18: whisper-cli wrapper ---"
 mkdir -p "$LOCAL_BIN"
 if [ ! -f "$LOCAL_BIN/whisper-cli" ]; then
   if [ -f "$BACKUP_DIR/whisper-cli" ]; then
@@ -131,7 +192,7 @@ else
 fi
 
 # ---- 3. edge-tts via pipx ----
-echo "--- 3/13: edge-tts ---"
+echo "--- 3/18: edge-tts ---"
 if pipx list 2>/dev/null | grep -q edge-tts; then
   info "edge-tts ya instalado via pipx"
 else
@@ -140,7 +201,7 @@ else
 fi
 
 # ---- 4. Modelos whisper ----
-echo "--- 4/13: Modelos whisper ---"
+echo "--- 4/18: Modelos whisper ---"
 mkdir -p "$WHISPER_DIR"
 download_model() {
   local name="$1"
@@ -157,7 +218,7 @@ download_model "small" "ggml-small.bin"
 download_model "base" "ggml-base.bin"
 
 # ---- 5. Configuración principal ----
-echo "--- 5/13: Configuración principal ---"
+echo "--- 5/18: Configuración principal ---"
 mkdir -p "$OC_CONFIG"
 cp "$BACKUP_DIR/opencode.json" "$OC_CONFIG/"
 [ -f "$BACKUP_DIR/opencode.jsonc" ] && cp "$BACKUP_DIR/opencode.jsonc" "$OC_CONFIG/"
@@ -165,8 +226,31 @@ cp "$BACKUP_DIR/tui.json" "$OC_CONFIG/"
 cp "$BACKUP_DIR/AGENTS.md" "$OC_CONFIG/"
 info "Archivos de configuración copiados"
 
+# ---- 5b. system-info.sh ----
+if [ -f "$BACKUP_DIR/system-info.sh" ]; then
+  cp "$BACKUP_DIR/system-info.sh" "$HOME_DIR/system-info.sh"
+  chmod +x "$HOME_DIR/system-info.sh"
+  info "system-info.sh restaurado en ~/system-info.sh"
+fi
+
+# ---- 5c. Scripts de Config/opencode ----
+for _script in backup-opencode.sh setup-voz.sh web-search.sh bootstrap-ocv.sh; do
+  if [ -f "$BACKUP_DIR/$_script" ]; then
+    cp "$BACKUP_DIR/$_script" "$OC_CONFIG/$_script"
+    chmod +x "$OC_CONFIG/$_script" 2>/dev/null || true
+    info "$_script restaurado"
+  fi
+done
+
+# ---- 5d. sesion-opencode/ ----
+if [ -d "$BACKUP_DIR/sesion-opencode" ]; then
+  mkdir -p "$OC_CONFIG/sesion-opencode"
+  cp -r "$BACKUP_DIR/sesion-opencode/"* "$OC_CONFIG/sesion-opencode/" 2>/dev/null || true
+  info "sesion-opencode/ restaurado"
+fi
+
 # ---- 6. Prompts personalizados ----
-echo "--- 6/13: Prompts ---"
+echo "--- 6/18: Prompts ---"
 if [ -d "$BACKUP_DIR/prompts" ]; then
   mkdir -p "$OC_CONFIG/prompts"
   cp -r "$BACKUP_DIR/prompts/"* "$OC_CONFIG/prompts/" 2>/dev/null || true
@@ -176,7 +260,7 @@ else
 fi
 
 # ---- 7. Commands personalizados ----
-echo "--- 7/13: Commands ---"
+echo "--- 7/18: Commands ---"
 if [ -d "$BACKUP_DIR/commands" ]; then
   mkdir -p "$OC_CONFIG/commands"
   cp -r "$BACKUP_DIR/commands/"* "$OC_CONFIG/commands/" 2>/dev/null || true
@@ -186,14 +270,56 @@ else
 fi
 
 # ---- 8. Proxy ----
-echo "--- 8/13: Proxy Ollama ---"
+echo "--- 8/18: Proxy Ollama ---"
 if [ -f "$BACKUP_DIR/ollama-proxy.py" ]; then
   cp "$BACKUP_DIR/ollama-proxy.py" "$OC_CONFIG/"
   info "ollama-proxy.py copiado"
 fi
 
-# ---- 9. Plugin de voz ----
-echo "--- 9/13: Plugin opencode-voice ---"
+# ---- 9. Variables de entorno (.env) ----
+echo "--- 9/18: Variables de entorno ---"
+if [ -f "$BACKUP_DIR/.env" ]; then
+  cp "$BACKUP_DIR/.env" "$OC_CONFIG/"
+  chmod 600 "$OC_CONFIG/.env"
+  info ".env restaurado (permisos 600)"
+fi
+
+# ---- 10. init-opencode.sh ----
+echo "--- 10/18: init-opencode.sh ---"
+if [ -f "$BACKUP_DIR/init-opencode.sh" ]; then
+  cp "$BACKUP_DIR/init-opencode.sh" "$OC_CONFIG/"
+  chmod +x "$OC_CONFIG/init-opencode.sh"
+  info "init-opencode.sh restaurado"
+fi
+
+# ---- 11. Servicio systemd ----
+echo "--- 11/18: Servicio systemd ---"
+if [ -d "$BACKUP_DIR/systemd" ]; then
+  mkdir -p "$HOME_DIR/.config/systemd/user"
+  cp -r "$BACKUP_DIR/systemd/user/"* "$HOME_DIR/.config/systemd/user/" 2>/dev/null || true
+  systemctl --user daemon-reload
+  systemctl --user enable init-opencode.service 2>/dev/null || true
+  info "Servicio systemd restaurado y habilitado"
+fi
+
+# ---- 12. Datos de persistencia ----
+echo "--- 12/18: Datos de persistencia ---"
+if [ -d "$BACKUP_DIR/data" ]; then
+  mkdir -p "$OC_CONFIG/data"
+  cp -r "$BACKUP_DIR/data/"* "$OC_CONFIG/data/" 2>/dev/null || true
+  info "data/ (persistencia) restaurado"
+fi
+
+# ---- 13. Skills personalizados ----
+echo "--- 13/18: Skills ---"
+if [ -d "$BACKUP_DIR/skills" ]; then
+  mkdir -p "$OC_CONFIG/skills"
+  cp -r "$BACKUP_DIR/skills/"* "$OC_CONFIG/skills/" 2>/dev/null || true
+  info "Skills restaurados"
+fi
+
+# ---- 14. Plugin de voz ----
+echo "--- 14/18: Plugin opencode-voice ---"
 rm -rf "$PLUGIN_DIR"
 mkdir -p "$PLUGIN_DIR/lib"
 cp "$BACKUP_DIR/plugin/index.js" "$PLUGIN_DIR/"
@@ -218,15 +344,15 @@ cat > "$PLUGIN_DIR/package.json" << 'PLUGPKG'
 PLUGPKG
 info "Plugin restaurado"
 
-# ---- 10. speak script ----
-echo "--- 10/13: speak script ---"
+# ---- 15. speak script ----
+echo "--- 15/18: speak script ---"
 mkdir -p "$LOCAL_BIN"
 cp "$BACKUP_DIR/speak" "$LOCAL_BIN/"
 chmod +x "$LOCAL_BIN/speak"
 info "speak instalado en $LOCAL_BIN/speak"
 
-# ---- 11. Configurar .zshrc ----
-echo "--- 11/13: .zshrc ---"
+# ---- 16. Configurar .zshrc ----
+echo "--- 16/18: .zshrc ---"
 ZSHRC="$HOME_DIR/.zshrc"
 
 # Función ocv: reemplazar si existe
@@ -248,8 +374,8 @@ else
   info "PATH a .local/bin ya existe en .zshrc"
 fi
 
-# ---- 12. npm dependencies ----
-echo "--- 12/13: Dependencias npm ---"
+# ---- 17. npm dependencies ----
+echo "--- 17/18: Dependencias npm ---"
 cd "$OC_CONFIG"
 if [ ! -f package.json ]; then
   cat > package.json << 'NPMDEPS'
@@ -266,8 +392,8 @@ echo "Ejecutando npm install..."
 npm install --no-audit --no-fund 2>/dev/null || npm install
 info "Dependencias npm instaladas"
 
-# ---- 13. kv.json (estado TTS) ----
-echo "--- 13/13: Estado TTS (kv.json) ---"
+# ---- 18. kv.json (estado TTS) ----
+echo "--- 18/18: Estado TTS (kv.json) ---"
 if [ -f "$BACKUP_DIR/state/kv.json" ]; then
   mkdir -p "$HOME_DIR/.local/state/opencode"
   if [ -f "$HOME_DIR/.local/state/opencode/kv.json" ]; then
@@ -343,3 +469,6 @@ echo "  3. tar xzf opencode-config-latest.tar.gz"
 echo "  4. bash restore.sh"
 echo "  5. source ~/.zshrc"
 echo "  6. ocv"
+echo ""
+echo "Para ver el informe del sistema:"
+echo "  sudo ~/system-info.sh"

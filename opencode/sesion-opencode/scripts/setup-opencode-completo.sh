@@ -11,14 +11,21 @@ DIR_CONFIG="$HOME/.config/opencode"
 DIR_PROXY="$DIR_CONFIG"
 LOG_PROXY="/tmp/ollama-proxy.log"
 VENV_SEARCH="/tmp/venv-search"
+DIR_DATA="$DIR_CONFIG/data"
+DIR_MEMORY="$DIR_DATA/memory"
+DIR_BACKUPS="$HOME/Config/opencode/backups"
 
 echo "=== 1. Instalando OpenCode (si no está) ==="
 if ! command -v opencode &>/dev/null; then
     curl -fsSL https://opencode.ai/install.sh | bash
 fi
 
-echo "=== 2. Creando directorio de configuración ==="
+echo "=== 2. Creando directorios de configuración ==="
 mkdir -p "$DIR_CONFIG"
+mkdir -p "$DIR_CONFIG/prompts"
+mkdir -p "$DIR_DATA"
+mkdir -p "$DIR_MEMORY"
+mkdir -p "$DIR_BACKUPS"
 
 echo "=== 3. Instalando dependencia para búsqueda web ==="
 python3 -m venv "$VENV_SEARCH" 2>/dev/null || true
@@ -28,6 +35,14 @@ echo "=== 4. Creando opencode.json ==="
 cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
 {
   "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "build": {
+      "prompt": "{file:./prompts/read-agents.txt}"
+    },
+    "plan": {
+      "prompt": "{file:./prompts/read-agents.txt}"
+    }
+  },
   "provider": {
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
@@ -39,7 +54,7 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
       "models": {
         "deepseek-r1:8b": {
           "name": "deepseek-r1:8b",
-          "options": { "num_ctx": 16384 }
+          "options": { "num_ctx": 32768 }
         },
         "qwen3.5:9b": {
           "name": "qwen3.5:9b",
@@ -52,272 +67,220 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
         "llama3.1:8b": {
           "name": "llama3.1:8b",
           "options": { "num_ctx": 32768 }
+        },
+        "pdurugyan/qwen3.5-9b-deepseek-v4-flash-Q4_K_M-v_2:latest": {
+          "name": "pdurugyan/qwen3.5-9b-deepseek-v4-flash-Q4_K_M-v_2:latest",
+          "options": { "num_ctx": 32768 }
         }
       }
+    }
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "filesystem": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"],
+      "enabled": true
+    },
+    "memory": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
+      "enabled": true
+    },
+    "fetch": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-fetch"],
+      "enabled": true
+    },
+    "sequential_thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "enabled": true
     }
   }
 }
 JSONEOF
 
-echo "=== 5. Creando AGENTS.md (reglas de idioma y PWAs) ==="
+echo "=== 5. Creando AGENTS.md (reglas obligatorias y procedimientos) ==="
 cat > "$DIR_CONFIG/AGENTS.md" << 'AGEOF'
-# Reglas de Idioma
-- Language: Always respond in Spanish.
-- Idioma: Responde siempre en español, sin importar el idioma en el que te escriba el usuario.
-- No cambies al inglés a menos que se te pida explícitamente traducir algo.
-- Ignora emojis en la respuesta por voz
+# REGLAS OBLIGATORIAS (APLICAR SIEMPRE)
 
-# Accesos Directos Web (PWAs de Chrome)
-Chrome debe estar siempre corriendo en segundo plano con:
-`nohup /opt/google/chrome/google-chrome --user-data-dir="/tmp/chrome-debug-profile" "--profile-directory=DebugProfile" --remote-debugging-port=9222 "--remote-allow-origins=*" about:blank > /dev/null 2>&1 &`
+## Idioma
+- Responde SIEMPRE en español
+- NUNCA cambies al inglés (salvo petición expresa de traducción)
+- Español de España (no latinoamericano)
 
-# Proxy Ollama-OpenCode (si se usa modelo local)
-El proxy Python debe estar corriendo en segundo plano para traducir las llamadas de OpenCode a Ollama:
-`python3 /home/antonio/.config/opencode/ollama-proxy.py 4000 > /tmp/ollama-proxy.log 2>&1 & disown`
-El proxy escucha en `http://127.0.0.1:4000` y traduce al formato de Ollama. Si el proxy se cae, los mensajes en OpenCode se quedarán en "QUEUED". Verificar: `curl -s http://127.0.0.1:4000/v1/models`. Para reiniciar: matar proceso anterior y ejecutar el comando de arriba.
-
-**Auto-search**: Cuando el modelo local responde con una negativa ("no sé", "no puedo", etc.), el proxy busca automáticamente en internet usando DuckDuckGo, extrae contenido de la primera página, inyecta los datos en el mensaje del usuario, y reintenta la llamada. Para consultas meteorológicas usa `wttr.in` directamente (formato JSON con previsión multi-día). Si el primer reintento sigue siendo negativa, hace un segundo reintento con instrucción más directa.
-
-# Regla: solo abrir PWAs desde el escritorio
-Cuando el usuario pida abrir una PWA, NO usar una lista fija de app-id.
-En su lugar:
-1. Leer el directorio /home/antonio/Escritorio
-2. Buscar el archivo chrome-<app-id>-Profile_2.desktop que coincida con el nombre de la PWA
-3. Leer la línea Exec= del .desktop para obtener el comando exacto
-4. Ejecutar ese comando directamente
-
-Para cerrar una PWA específica:
-1. Listar páginas: curl -s http://localhost:9222/json
-2. Cerrar por URL/title: curl -s "http://localhost:9222/json/close/<ID>"
-
-Para cerrar Chrome completamente: Solo cuando el usuario diga "termina" o "cierra todo". Usar pkill -f "chrome.*remote-debugging-port".
-
-# Nota importante
-Las PWAs están instaladas en el perfil real de Chrome (~/.config/google-chrome/Profile 2), NO usar --user-data-dir.
-
-# Convenciones regionales (España)
-- Formato de fecha: dd/mm/aaaa (día/mes/año)
-- Formato de hora: 24h (ej. 14:30, 09:00)
-- Semana: empieza el lunes (no el domingo)
-- Nombres de días: Lun, Mar, Mié, Jue, Vie, Sáb, Dom
-- Sistema métrico: km/h, °C, mm, km
-- Decimales: coma (,) en lugar de punto, aunque en datos técnicos se puede usar punto
+## Formato
+- SÍ usamos emoji en pantalla (✈️ 🌤️ 😊) para expresividad visual 
+- Mi locucionero filtra estos iconos automáticamente antes del TTS, sin necesidad de configuración extra
+- Fecha: dd/mm/aaaa
+- Hora: formato 24h (14:30, no 2:30pm)
+- Decimales: coma (3,14 no 3.14)
 - Moneda: euros (€)
-- Idiomas: español de España (no latinoamericano)
+- Sistema métrico: km/h, °C, mm, km
 
-# Usuario
-- El usuario se llama Antonio.
-- Vive en Pechina (Almería, España).
+## Usuario
+- Se llama Antonio
+- Vive en Pechina (Almería, España)
+
+---
+
+# PROCEDIMIENTOS TÉCNICOS
+
+## PWAs - Cómo abrir
+1. Leer /home/antonio/Escritorio
+2. Buscar archivo chrome-<app-id>-Profile_2.desktop
+3. Ejecutar línea Exec= del archivo
+
+## PWAs - Cerrar
+- Una PWA: curl -s http://localhost:9222/json/close/<ID>
+- Todo Chrome: pkill -f "chrome.*remote-debugging-port"
+
+## Chrome debug (si no está corriendo)
+nohup /opt/google/chrome/google-chrome --user-data-dir="/tmp/chrome-debug-profile" "--profile-directory=DebugProfile" --remote-debugging-port=9222 "--remote-allow-origins=*" about:blank > /dev/null 2>&1 &
+
+## Proxy Ollama (obligatorio para conexión local)
+python3 /home/antonio/.config/opencode/ollama-proxy.py 4000 > /tmp/ollama-proxy.log 2>&1 & disown
+
+## Liberar VRAM (sin descargar el modelo)
+El modelo se mantiene cargado en VRAM 30 minutos tras cada uso gracias al keep_alive.
+NO se descarga automáticamente tras cada respuesta para evitar recargas constantes.
+Si el modelo se satura (generaciones muy largas o error), pide a OpenCode que lo haga:
+"Dime: Libera la VRAM"
+OpenCode ejecutará: ollama stop qwen3.5:9b-stock
+Esto libera la KV cache acumulada. El modelo se recargará solo en la siguiente petición.
+
+## Consultar el tiempo
+Para preguntas sobre el tiempo, usa la herramienta Fetch para consultar:
+https://wttr.in/{ciudad}?format=j1&m&lang=es
+Ejemplo: https://wttr.in/Pechina?format=j1&m&lang=es
+
+---
+
+# PERSISTENCIA DE DATOS Y RECUPERACIÓN
+
+## Variables de entorno
+El archivo .env contiene la configuración sensible. Para cargarlo:
+set -a; source /home/antonio/.config/opencode/.env; set +a
+
+## Inicialización (tras reinicio del sistema)
+Ejecutar el script de inicialización que verifica todos los componentes:
+bash /home/antonio/.config/opencode/init-opencode.sh
+Esto comprueba:
+- Proxy Ollama (puerto 4000)
+- Modelos disponibles en Ollama
+- Persistencia del grafo de memoria
+- PWAs en el Escritorio
+- Variables de entorno (.env)
+
+## Backup automático del grafo de memoria
+El grafo de conocimiento se respalda automáticamente en:
+/home/antonio/Config/opencode/backups/
+Con nombre mcp-memory-backup-{fecha}.json
+Los backups se conservan 30 días.
+
+## Recuperación del grafo de memoria
+Si el grafo se pierde o corrompe:
+1. Localizar el backup más reciente:
+   ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.json | head -1
+2. El servidor MCP Memory debería restaurarlo automáticamente al iniciar desde MEMORY_DATA_DIR
+
+## Directorios de datos
+- /home/antonio/.config/opencode/data/ - Datos de ejecución (logs, estado)
+- /home/antonio/.config/opencode/data/memory/ - Grafo de memoria persistente
+- /home/antonio/Config/opencode/backups/ - Copias de seguridad del grafo
+- /home/antonio/.config/opencode/.env - Variables de entorno seguras
+
+---
+
+# CHECKLIST ANTES DE RESPONDER
+- Respuesta en español?
+- Fecha/hora en formato España?
+- Decimales con coma?
 AGEOF
 
-echo "=== 6. Creando proxy Ollama ==="
+echo "=== 6. Creando prompts personalizados ==="
+mkdir -p "$DIR_CONFIG/prompts"
+cat > "$DIR_CONFIG/prompts/read-agents.txt" << 'PROMPTEOF'
+Al inicio de cada sesión, usa la herramienta Read para leer ~/.config/opencode/AGENTS.md y seguir las instrucciones del usuario.
+PROMPTEOF
+
+echo "=== 7. Creando proxy Ollama ==="
 cat > "$DIR_CONFIG/ollama-proxy.py" << 'PYEOF'
 #!/usr/bin/env python3
-import json, http.server, urllib.request, sys, os, subprocess, re, glob
+"""Proxy OpenCode-Ollama con monitoreo inteligente de VRAM."""
+import json, http.server, urllib.request, sys, time, uuid, threading, subprocess
 
-OLLAMA_URL = "http://localhost:11434"
+OLLAMA_BASE = "http://localhost:11434"
+NUM_CTX = 8192
+NUM_PREDICT = 16384
+VRAM_THRESHOLD = 85
+CHECK_INTERVAL = 10
 
-def sse_str(data_dict):
-    return f"data: {json.dumps(data_dict, ensure_ascii=False)}\n\n"
+_resp_counter = {}
+_counter_lock = threading.Lock()
 
-def _fix_tc(tc):
-    out = []
-    for t in tc:
-        out.append({
-            "id": t.get("id", "call_1"),
-            "type": "function",
-            "function": {
-                "name": t["function"]["name"],
-                "arguments": json.dumps(t["function"]["arguments"]),
-            },
-        })
-    return out
 
-def _ollama_chat(ollama_body):
-    req = urllib.request.Request(
-        f"{OLLAMA_URL}/api/chat",
-        data=json.dumps(ollama_body).encode(),
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=600) as r:
-        return json.load(r)
-
-def _parse_ollama_msg(result):
-    msg = result.get("message", {})
-    content = msg.get("content") or ""
-    thinking = msg.get("thinking") or ""
-    tc = msg.get("tool_calls")
-    if not content and thinking:
-        content = thinking
-    return content, tc
-
-def _is_refusal(content):
-    if not content:
-        return False
-    c = content.lower()
-    return any(p in c for p in [
-        "no puedo", "no tengo acceso", "no tengo informaci\u00f3n", "no s\u00e9",
-        "cannot", "can't", "i don't have", "i don't know", "i cannot",
-        "no puedo proporcionar", "no puedo acceder",
-        "lo siento", "sorry",
-        "no hay informaci\u00f3n", "no hay datos",
-        "no se proporcionaron", "no se proporciona",
-        "no tengo datos", "no tengo la capacidad",
-        "no est\u00e1 en mis", "no est\u00e1 dentro de mis",
-        "no tengo acceso a", "no tengo la capacidad de",
-        "i can't support", "i am not able", "i'm not able",
-        "no puedo cumplir", "no puedo hacer",
-    ])
-
-def _web_search(query):
-    script = """import json, sys, glob
-sys.path[:0] = [p for p in glob.glob('/tmp/venv-search/lib/python*/site-packages')]
-try:
-    from ddgs import DDGS
-    urls, texts = [], []
-    with DDGS() as ddgs:
-        for r in ddgs.text(QUERY, max_results=5, region='wt-wt'):
-            title = (r.get('title') or '').strip()
-            body = (r.get('body') or '').strip()
-            href = (r.get('href') or '').strip()
-            if title:
-                texts.append('**' + title + '**')
-            if body:
-                texts.append(body)
-            if href and href.startswith('http') and len(urls) < 2:
-                urls.append(href)
-    extra = ''
-    if urls:
-        for url in urls[:1]:
-            try:
-                import urllib.request
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}, method='GET')
-                with urllib.request.urlopen(req, timeout=8) as f:
-                    html = f.read().decode('utf-8', errors='replace')
-                text = re.sub(r'<[^>]+>', ' ', html)
-                text = re.sub(r'\\s+', ' ', text).strip()
-                if len(text) > 200:
-                    extra = '\\n\\n[Contenido de ' + url + ']:\\n' + text[:5000]
-            except:
-                pass
-    if not texts:
-        print(json.dumps(''))
-        sys.exit(0)
-    out = '\\n'.join(texts) + extra
-    print(json.dumps(out[:8000]))
-except Exception as e:
-    print(json.dumps(''))
-""".replace("QUERY", json.dumps(query))
+def _get_vram_usage():
     try:
-        p = subprocess.run(['/tmp/venv-search/bin/python3', '-c', script], capture_output=True, text=True, timeout=30)
-        if p.returncode == 0 and p.stdout.strip():
-            result = json.loads(p.stdout.strip())
-            return result if result else None
+        r = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.used,memory.total",
+             "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode != 0 or not r.stdout.strip():
+            return 0.0
+        parts = r.stdout.strip().split(",")
+        if len(parts) >= 2:
+            used, total = float(parts[0].strip()), float(parts[1].strip())
+            return (used / total) * 100.0 if total > 0 else 0.0
+    except Exception:
+        return 0.0
+
+
+def _cleanup_model(model):
+    try:
+        req = urllib.request.Request(
+            f"{OLLAMA_BASE}/api/generate",
+            data=json.dumps({"model": model, "prompt": "", "keep_alive": 0}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=10):
+            pass
+        print(f"[proxy] KV cache liberada para {model}", flush=True)
     except Exception:
         pass
-    return None
 
-def _wttr_weather(city="Pechina"):
-    try:
-        wreq = urllib.request.Request(f"https://wttr.in/{urllib.request.quote(city)}?format=j1&m&lang=es", headers={"User-Agent": "curl"})
-        with urllib.request.urlopen(wreq, timeout=10) as wr:
-            full = json.loads(wr.read().decode())
-        parts = []
-        for day in full.get("weather", []):
-            date = day.get("date", "")
-            if date:
-                parts.append(f"\n{date}:")
-            for h in day.get("hourly", [])[::6]:
-                cond = (h.get("weatherDesc") or [{}])[0].get("value", "")
-                temp = h.get("tempC", "?")
-                wind = h.get("windspeedKmph", "?")
-                parts.append(f"  {h['time'][:2]}h: {cond} {temp}°C viento {wind}km/h")
-        result = "\n".join(parts).strip()
-        if result:
-            return f"Pronóstico {city}: {result}"
-    except Exception:
-        try:
-            simple = urllib.request.Request(f"https://wttr.in/{urllib.request.quote(city)}?format=%l:+%C+%t+%w+%h&m&lang=es", headers={"User-Agent": "curl"})
-            with urllib.request.urlopen(simple, timeout=10) as sr:
-                return sr.read().decode().strip()
-        except Exception:
-            pass
-    return None
 
-def _call_with_retry(ollama_body):
-    result = _ollama_chat(ollama_body)
-    content, tc = _parse_ollama_msg(result)
-    if tc:
-        return content, tc
-    is_poor = _is_refusal(content)
-    if not is_poor and content:
-        c_lower = content.lower()
-        if len(content) < 30:
-            is_poor = True
-        elif any(w in c_lower for w in ["websearch", "exa web", "puede utilizar el siguiente", "utilizar el siguiente comando"]):
-            is_poor = True
-        elif '"function"' in content and ('"name"' in content or '"query"' in content):
-            is_poor = True
-        elif any(w in c_lower for w in ["contextmaxcharacters", "livecrawl", "numresults="]):
-            is_poor = True
-        elif any(w in c_lower for w in ["i don't see a specific question", "i don't see a specific", "please provide more context", "could you please provide more", "can you provide more context", "what would you like"]):
-            is_poor = True
-    if not is_poor:
-        return content, None
-    last_idx = None
-    last_question = ""
-    for i in range(len(ollama_body["messages"]) - 1, -1, -1):
-        if ollama_body["messages"][i].get("role") == "user":
-            last_idx = i
-            last_question = ollama_body["messages"][i].get("content", "")
-            break
-    if not last_question:
-        return content, None
-    ollama_body["messages"].insert(0, {
-        "role": "system",
-        "content": (
-            "INSTRUCCIÓN ESPECIAL: Puedes y debes responder a preguntas sobre cualquier tema, "
-            "incluyendo tiempo, deportes, actualidad, etc. No estás limitado a ingeniería de software. "
-            "Usa los datos disponibles en el chat para responder. Responde SIEMPRE en español."
-        ),
-    })
-    web_data = None
-    is_weather = any(kw in last_question.lower() for kw in ["tiempo", "clima", "weather", "temperatura", "lluvia", "grados", "meteorológico", "previsión"])
-    if is_weather:
-        city = "Pechina"
-        for c in re.findall(r'(?:en|de|para)\s+(\w[\w\s]{0,30}?\w?)(?:\?|\.|,|$)', last_question):
-            city = c.strip()
-            break
-        weather = _wttr_weather(city)
-        if weather:
-            web_data = weather
-    if not web_data and is_poor and last_question and not any(w in last_question.lower() for w in ["hola", "hello", "hey", "buenas", "saludos", "buen"]):
-        web_data = _web_search(last_question)
-    if web_data:
-        import datetime
-        ollama_body["messages"].append({
-            "role": "user",
-            "content": f"Datos: {web_data}"
-        })
-    result2 = _ollama_chat(ollama_body)
-    content2, tc2 = _parse_ollama_msg(result2)
-    if tc2 or not _is_refusal(content2):
-        return content2 or content, tc2 or tc
-    ollama_body["messages"].append({"role": "user", "content": "Responde directamente en español."})
-    result3 = _ollama_chat(ollama_body)
-    content3, tc3 = _parse_ollama_msg(result3)
-    if tc3 or not _is_refusal(content3):
-        return content3, tc3
-    return content3 or content2 or content, tc3 or tc2 or tc
+def _check_vram_and_clean(model):
+    vram_pct = _get_vram_usage()
+    if vram_pct > 0 and vram_pct >= VRAM_THRESHOLD:
+        print(f"[proxy] VRAM al {vram_pct:.0f}% - limpiando cache de {model}", flush=True)
+        _cleanup_model(model)
+    elif vram_pct > 0:
+        print(f"[proxy] VRAM al {vram_pct:.0f}% - OK", flush=True)
 
-class ProxyHandler(http.server.BaseHTTPRequestHandler):
+
+class Proxy(http.server.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.0"
-    def do_OPTIONS(self):
-        self.send_response(200)
+
+    def _json(self, data, code=200):
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
         self.end_headers()
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
+
+    def _sse(self, data):
+        self.wfile.write(f"data: {json.dumps(data, ensure_ascii=False)}\n\n".encode())
+        self.wfile.flush()
+
     def do_GET(self):
         if self.path in ("/v1/models", "/models"):
-            req = urllib.request.Request(f"{OLLAMA_URL}/api/tags")
+            req = urllib.request.Request(f"{OLLAMA_BASE}/api/tags")
             with urllib.request.urlopen(req) as r:
                 data = json.load(r)
             models = {"object": "list", "data": []}
@@ -326,19 +289,27 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
             self._json(models)
         else:
             self._json({"error": "not found"}, 404)
+
     def do_POST(self):
-        if self.path not in ("/v1/chat/completions", "/chat/completions"):
+        if "/chat/completions" not in self.path:
             return self._json({"error": "not found"}, 404)
-        raw_body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
-        body = json.loads(raw_body)
+        raw = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        body = json.loads(raw)
         model = body.get("model", "")
-        tools = body.get("tools", [])
-        msgs = body.get("messages", [])
-        stream = body.get("stream", False)
-        ollama_msgs = []
-        for m in msgs:
-            om = dict(m)
-            tc = om.get("tool_calls")
+        want_stream = body.get("stream", False)
+        messages = body.get("messages", [])
+
+        for m in messages:
+            c = m.get("content")
+            if isinstance(c, list):
+                texts = []
+                for part in c:
+                    if isinstance(part, dict):
+                        texts.append(str(part.get("text", "") or ""))
+                    else:
+                        texts.append(str(part))
+                m["content"] = "\n".join(texts) if texts else ""
+            tc = m.get("tool_calls")
             if tc:
                 for t in tc:
                     func = t.get("function", {})
@@ -348,27 +319,70 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
                             func["arguments"] = json.loads(args)
                         except json.JSONDecodeError:
                             pass
-            om.pop("tool_call_id", None)
-            ollama_msgs.append(om)
-        ollama_body = {"model": model, "stream": False, "messages": ollama_msgs}
-        if tools:
-            ollama_body["tools"] = tools
-        if stream:
-            self._handle_stream(ollama_body, model)
-        else:
-            self._handle_single(ollama_body, model)
-    def _handle_single(self, ollama_body, model):
+
+        ollama_body = {
+            "model": model, "stream": False, "messages": messages,
+            "keep_alive": "30m",
+            "options": {
+                "num_ctx": NUM_CTX,
+                "num_predict": body.get("max_tokens", NUM_PREDICT),
+            },
+        }
+        if "tools" in body:
+            ollama_body["tools"] = body["tools"]
+
+        print(f"[proxy] model={model} tools={'yes' if 'tools' in body else 'no'} stream={want_stream} msgs={len(messages)}", flush=True)
         try:
-            content, tc = _call_with_retry(ollama_body)
+            req_body = json.dumps(ollama_body, ensure_ascii=False)
+            req = urllib.request.Request(
+                f"{OLLAMA_BASE}/api/chat", data=req_body.encode(),
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=600) as r:
+                result = json.load(r)
         except urllib.error.HTTPError as e:
-            return self._json({"error": e.read().decode()}, e.code)
+            err_text = e.read().decode("utf-8", errors="replace")[:500]
+            print(f"[proxy] HTTP {e.code}: {err_text}", flush=True, file=sys.stderr)
+            fname = f"/tmp/proxy-error-{uuid.uuid4().hex[:8]}.json"
+            with open(fname, "w") as f:
+                f.write(req_body)
+            return self._json({"error": f"HTTP {e.code}: {err_text}"}, 502)
         except Exception as e:
+            print(f"[proxy] Error: {e}", flush=True, file=sys.stderr)
             return self._json({"error": str(e)}, 500)
-        choice = {"index": 0, "message": {"role": "assistant", "content": content or ""}, "finish_reason": "tool_calls" if tc else "stop"}
+
+        msg = result.get("message", {})
+        content = msg.get("content") or ""
+        thinking = msg.get("thinking") or ""
+        tc = msg.get("tool_calls")
+        if not content and thinking:
+            content = thinking
+        tool_calls = None
         if tc:
-            choice["message"]["tool_calls"] = _fix_tc(tc)
+            tool_calls = [
+                {
+                    "id": t.get("id", f"call_{i}"),
+                    "type": "function",
+                    "function": {
+                        "name": t["function"]["name"],
+                        "arguments": json.dumps(t["function"]["arguments"]),
+                    },
+                }
+                for i, t in enumerate(tc)
+            ]
+        _check_cleanup(model)
+        if want_stream:
+            self._send_stream(model, content, tool_calls)
+        else:
+            self._send_single(model, content, tool_calls)
+
+    def _send_single(self, model, content, tool_calls):
+        choice = {"index": 0, "message": {"role": "assistant", "content": content}, "finish_reason": "tool_calls" if tool_calls else "stop"}
+        if tool_calls:
+            choice["message"]["tool_calls"] = tool_calls
         self._json({"id": "chatcmpl-1", "object": "chat.completion", "choices": [choice], "model": model})
-    def _handle_stream(self, ollama_body, model):
+
+    def _send_stream(self, model, content, tool_calls):
         self.close_connection = True
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
@@ -376,47 +390,113 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.flush()
         try:
-            import time as _time
-            t0 = _time.time()
-            content, tc = _call_with_retry(ollama_body)
-            delta = {"role": "assistant"}
-            if tc:
-                delta["tool_calls"] = _fix_tc(tc)
+            if tool_calls:
+                self._sse({"id": "chatcmpl-1", "object": "chat.completion.chunk", "choices": [{"index": 0, "delta": {"role": "assistant", "tool_calls": tool_calls}, "finish_reason": "tool_calls"}], "model": model})
             else:
-                delta["content"] = content or ""
-            chunk_data = {"id": "chatcmpl-1", "object": "chat.completion.chunk", "choices": [{"index": 0, "delta": delta, "finish_reason": "tool_calls" if tc else "stop"}], "model": model}
-            self.wfile.write(sse_str(chunk_data).encode())
-            self.wfile.flush()
-        except Exception as e:
-            try:
-                self.wfile.write(sse_str({"id": "chatcmpl-1", "object": "chat.completion.chunk", "choices": [{"index": 0, "delta": {"content": f"\n\nError: {e}"}, "finish_reason": "stop"}], "model": model}).encode())
-            except Exception:
-                pass
+                content = content or ""
+                for i in range(0, len(content), 20):
+                    self._sse({"id": "chatcmpl-1", "object": "chat.completion.chunk", "choices": [{"index": 0, "delta": {"content": content[i:i+20]}, "finish_reason": None}], "model": model})
+                    time.sleep(0.005)
+                self._sse({"id": "chatcmpl-1", "object": "chat.completion.chunk", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}], "model": model})
+        except Exception:
+            pass
         try:
             self.wfile.write(b"data: [DONE]\n\n")
             self.wfile.flush()
         except Exception:
             pass
         try:
-            self.connection.shutdown(__import__('socket').SHUT_WR)
+            self.connection.shutdown(__import__("socket").SHUT_WR)
         except Exception:
             pass
-    def _json(self, data, code=200):
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
+
+
+def _check_cleanup(model):
+    with _counter_lock:
+        _resp_counter[model] = _resp_counter.get(model, 0) + 1
+        count = _resp_counter[model]
+        if count >= CHECK_INTERVAL:
+            _resp_counter[model] = 0
+            t = threading.Thread(target=_check_vram_and_clean, args=(model,), daemon=True)
+            t.start()
+
 
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 4000
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", port), ProxyHandler)
-    print(f"Proxy on http://127.0.0.1:{port}", flush=True)
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Proxy)
+    print(f"Proxy en http://127.0.0.1:{port}", flush=True)
+    print(f"VRAM threshold: {VRAM_THRESHOLD}%, check each {CHECK_INTERVAL} respuestas, num_ctx={NUM_CTX}", flush=True)
     server.serve_forever()
 PYEOF
 
 chmod +x "$DIR_CONFIG/ollama-proxy.py"
 
-echo "=== 7. Añadiendo OPENCODE_ENABLE_EXA=1 al ~/.zshrc (si no está ya) ==="
+echo "=== 8. Creando script de inicialización (init-opencode.sh) ==="
+cat > "$DIR_CONFIG/init-opencode.sh" << 'INITEOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+LOG_FILE="$HOME/.config/opencode/data/init.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+
+{
+  echo "[$(date '+%H:%M')] === INICIALIZACIÓN DE OPENCODE ==="
+} > "$LOG_FILE"
+
+log() {
+  echo "[$(date '+%H:%M')] $*"
+  echo "[$(date '+%H:%M')] $*" >> "$LOG_FILE"
+}
+
+# 1. Verificar Chrome debug
+if pgrep -f "chrome.*remote-debugging-port" &>/dev/null; then
+  log "El proceso Chrome debug ya está ejecutándose."
+else
+  nohup /opt/google/chrome/google-chrome --user-data-dir="/tmp/chrome-debug-profile" "--profile-directory=DebugProfile" --remote-debugging-port=9222 "--remote-allow-origins=*" about:blank > /dev/null 2>&1 &
+  log "Chrome debug iniciado."
+fi
+
+# 2. Proxy Ollama
+if pgrep -f "ollama-proxy" &>/dev/null; then
+  log "Proxy Ollama ya está ejecutándose."
+else
+  nohup python3 /home/antonio/.config/opencode/ollama-proxy.py 4000 > /tmp/ollama-proxy.log 2>&1 &
+  log "Proxy Ollama iniciado."
+fi
+
+# 3. Verificar conexión a Ollama
+sleep 1
+if curl -sf http://localhost:4000/v1/models &>/dev/null; then
+  log "Conexión a Ollama establecida."
+else
+  log "No se pudo conectar a Ollama en puerto 4000."
+fi
+
+# 4. Verificar .env
+if [ -f "$HOME/.config/opencode/.env" ]; then
+  log "Archivo .env encontrado."
+else
+  log "No se encontró .env"
+fi
+
+# 5. Verificar backups
+BK_DIR="$HOME/Config/opencode/backups"
+if [ -d "$BK_DIR" ]; then
+  LATEST=$(ls -t "$BK_DIR"/opencode-config-*.tar.gz 2>/dev/null | head -1)
+  if [ -n "$LATEST" ]; then
+    log "Último backup: $(basename "$LATEST")"
+  fi
+fi
+
+log "=== INICIALIZACIÓN COMPLETADA ==="
+echo ""
+echo "Inicialización de OpenCode completada."
+echo "Ver detalles en: $LOG_FILE"
+INITEOF
+
+chmod +x "$DIR_CONFIG/init-opencode.sh"
+
+echo "=== 9. Añadiendo OPENCODE_ENABLE_EXA=1 al ~/.zshrc (si no está ya) ==="
 if ! grep -q "OPENCODE_ENABLE_EXA" "$HOME/.zshrc" 2>/dev/null; then
     cat >> "$HOME/.zshrc" << 'ZEOF'
 
@@ -447,7 +527,10 @@ echo ""
 echo "  3. Verifica que funciona:"
 echo "     curl -s http://127.0.0.1:4000/v1/models"
 echo ""
-echo "  4. Arranca OpenCode:"
+echo "  4. Ejecuta init si es necesario:"
+echo "     bash $DIR_CONFIG/init-opencode.sh"
+echo ""
+echo "  5. Arranca OpenCode:"
 echo "     opencode"
 echo ""
 echo "Para REINICIAR el proxy:"
@@ -459,5 +542,7 @@ echo "Archivos instalados:"
 echo "  - $DIR_CONFIG/opencode.json"
 echo "  - $DIR_CONFIG/AGENTS.md"
 echo "  - $DIR_CONFIG/ollama-proxy.py"
+echo "  - $DIR_CONFIG/init-opencode.sh"
+echo "  - $DIR_CONFIG/prompts/read-agents.txt"
 echo "  - $VENV_SEARCH (entorno virtual con ddgs)"
 echo "============================================"
