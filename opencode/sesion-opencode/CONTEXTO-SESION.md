@@ -41,6 +41,8 @@ Provider `@ai-sdk/openai-compatible` → `http://127.0.0.1:4000/v1`. Modelos con
 
 ### `config/AGENTS.md`
 Idioma español, PWAs desde escritorio, proxy startup, auto-search, usuario en Pechina.
+Incluye sección 💻 **Consultar hardware del sistema**: cuando el usuario pregunte
+por CPU/RAM/GPU/etc., leer `data/hardware/index.json` en vez de ejecutar comandos.
 
 ### `scripts/ollama-proxy.py` (~390 líneas)
 - Traduce OpenAI ↔ Ollama
@@ -51,7 +53,22 @@ Idioma español, PWAs desde escritorio, proxy startup, auto-search, usuario en P
 - Reintento sin tools si error 400
 
 ### `scripts/setup-opencode-completo.sh`
-Script de instalación todo-en-uno.
+Script de instalación todo-en-uno. Incluye:
+- AGENTS.md con instrucción hardware
+- init-opencode.sh con check_hardware
+- .env con HARDWARE_INDEX_PATH
+- Copia `data/hardware/index.json` y `hardware-query.sh` desde backup
+
+### `data/hardware/index.json`
+Inventario completo del sistema (18 secciones):
+CPU (Zen4, vulnerabilidades), RAM (DDR5@6000, SPD temps, ZRAM),
+motherboard (MSI X870, BIOS), GPU NVIDIA (Ada, 16GB, runtime),
+iGPU AMD, displays (2× LG HDR 4K), audio (6 tarjetas, mic TONOR),
+USB (webcam, Xbox, Logitech), storage (6 dispositivos, dual boot),
+network (WiFi 7, BT 5.4, VMware, Docker), sensores, kernel boot.
+
+### `hardware-query.sh`
+Consulta rápida: `source hardware-query.sh && hw_query status|cpu|gpu|ram|...
 
 ## Dependencias
 - **ddgs**: DuckDuckGo Search (`/tmp/venv-search/`)

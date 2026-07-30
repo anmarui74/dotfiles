@@ -1,0 +1,99 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  
+  // 🔑 PEQUEÑO MODELO ← MISMO QUE EL PRINCIPAL (evita VRAM contención con 12GB libre)
+  "small_model": "lmstudio/qwen3.5-9b",
+  
+  "instructions": ["AGENTS.md"],
+  "default_agent": "local",
+  
+  // ===================== PERMISIONES =====================
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "sudo *": "deny",
+      "pkexec *": "allow",
+      "*": "ask"
+    }
+  },
+  
+  // ===================== AGENTES (LM Studio qwen3.5 optimizado) =====================
+  "agent": {
+    "local": {
+      "description": "Agente local con LM Studio - qwen3.5-9b optimizado RTX 4070",
+      "mode": "primary",
+      "model": "lmstudio/qwen/qwen3.5-9b",
+      // maxTokens: ajuste según tu caso (262k para herramienta + código largo, ideal con contexto grande si LM Studio lo permite)
+    }
+  },
+  
+  // ===================== PROVEEDORES =====================
+  "provider": {
+    "lmstudio": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LM Studio (RTX 4070 Ti SUPER) 🚀",
+      "model": "qwen3.5-9b",
+      "options": {
+        "baseURL": "http://localhost:1234/v1"
+      },
+      "models": {
+        "qwen/qwen3.5-9b": {
+          "name": "Qwen 3.5 - Tool Calling Excellence (LM Studio)",
+          "tools": true,
+          "limit": {
+            "context": 262144,   // 262k tokens para herramienta + código complejo
+            "output": 8192       // Respuestas largas sin cortarse
+          }
+        }
+      }
+    }
+  },
+  
+  // ===================== MCP SERVERS =====================
+  // ✅ Filesystem + Fetch activos, Memory + otros deshabilitados (ahorra contexto)
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": false
+    },
+    "filesystem": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/antonio"
+      ],
+      "enabled": true
+    },
+    "memory": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "enabled": false
+    },
+    "fetch": {
+      "type": "local",
+      "command": ["npx", "-y", "mcp-fetch-server"],
+      "enabled": true
+    },
+    "sequential_thinking": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": false
+    },
+    "duckduckgo_search": {
+      "type": "local",
+      "command": ["duckduckgo-mcp-server"],
+      "enabled": false
+    }
+  }
+}

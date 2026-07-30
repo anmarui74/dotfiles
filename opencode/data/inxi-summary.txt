@@ -1,0 +1,67 @@
+System:
+  Kernel: 7.1.5-1-cachyos arch: x86_64 bits: 64
+  Desktop: GNOME v: 50.3 Distro: CachyOS
+Machine:
+  Type: Desktop Mobo: Micro-Star model: MAG X870 TOMAHAWK WIFI (MS-7E51) v: 1.0
+    serial: <superuser required> Firmware: UEFI vendor: American Megatrends LLC. v: 1.A70
+    date: 12/02/2025
+CPU:
+  Info: 12-core model: AMD Ryzen 9 7900 bits: 64 type: MT MCP cache: L2: 12 MiB
+  Speed (MHz): avg: 5450 min/max: 430/5485 cores: 1: 5450 2: 5450 3: 5450 4: 5450 5: 5450 6: 5450
+    7: 5450 8: 5450 9: 5450 10: 5450 11: 5450 12: 5450 13: 5450 14: 5450 15: 5450 16: 5450 17: 5450
+    18: 5450 19: 5450 20: 5450 21: 5450 22: 5450 23: 5450 24: 5450
+Graphics:
+  Device-1: NVIDIA AD103 [GeForce RTX 4070 Ti SUPER] driver: nvidia v: 610.43.03
+  Device-2: Advanced Micro Devices [AMD/ATI] Raphael driver: amdgpu v: kernel
+  Device-3: Microdia UGREEN Camera 2K driver: snd-usb-audio,uvcvideo type: USB
+  Display: wayland server: X.Org v: 24.1.13 with: Xwayland v: 24.1.13 compositor: gnome-shell
+    driver: gpu: nv_platform,nvidia,nvidia-nvswitch resolution: 1: 5760x3240~60Hz 2: 5760x3240~60Hz
+  API: EGL v: 1.5 drivers: nvidia,radeonsi,swrast platforms: gbm,wayland,x11,surfaceless,device
+  API: OpenGL v: 4.6.0 compat-v: 4.6 vendor: nvidia mesa v: 610.43.03 renderer: NVIDIA GeForce
+    RTX 4070 Ti SUPER/PCIe/SSE2
+  API: Vulkan v: 1.4.350 drivers: nvidia,radv surfaces: N/A
+  Info: Tools: api: eglinfo, glxinfo, vulkaninfo gpu: nvidia-settings,nvidia-smi wl: wdisplays
+    x11: xdpyinfo, xprop, xrandr
+Audio:
+  Device-1: NVIDIA AD103 High Definition Audio driver: snd_hda_intel
+  Device-2: Advanced Micro Devices [AMD/ATI] Radeon High Definition Audio driver: snd_hda_intel
+  Device-3: Advanced Micro Devices [AMD] Ryzen HD Audio driver: snd_hda_intel
+  Device-4: Microdia UGREEN Camera 2K driver: snd-usb-audio,uvcvideo type: USB
+  Device-5: TONOR TD510 Air Mic driver: hid-generic,snd-usb-audio,usbhid type: USB
+  Device-6: Micro Star USB Audio driver: hid-generic,snd-usb-audio,usbhid type: USB
+  API: ALSA v: k7.1.5-1-cachyos status: kernel-api
+  Server-1: PipeWire v: 1.6.8 status: active
+Network:
+  Device-1: Qualcomm WCN785x Wi-Fi 7 320MHz 2x2 [FastConnect 7800] driver: ath12k_wifi7_pci
+  IF: wlan0 state: up mac: <filter>
+  Device-2: Realtek RTL8126 5GbE driver: r8169
+  IF: enp8s0 state: down mac: <filter>
+  IF-ID-1: br-fcdd3c4a6fbd state: down mac: <filter>
+  IF-ID-2: docker0 state: down mac: <filter>
+  IF-ID-3: vmnet1 state: unknown speed: N/A duplex: N/A mac: <filter>
+  IF-ID-4: vmnet8 state: unknown speed: N/A duplex: N/A mac: <filter>
+Bluetooth:
+  Device-1: Foxconn / Hon Hai driver: btusb type: USB
+  Report: btmgmt ID: hci0 state: up address: <filter> bt-v: 5.4
+Drives:
+  Local Storage: total: 16.37 TiB used: 424.45 GiB (2.5%)
+  ID-1: /dev/nvme0n1 vendor: Kingston model: SFYRD4000G size: 3.64 TiB
+  ID-2: /dev/nvme1n1 vendor: Kingston model: SFYRS1000G size: 931.51 GiB
+  ID-3: /dev/sda vendor: Crucial model: CT1000MX500SSD1 size: 931.51 GiB
+  ID-4: /dev/sdb vendor: Toshiba model: HDWE140 size: 3.64 TiB
+  ID-5: /dev/sdc vendor: Toshiba model: HDWE140 size: 3.64 TiB
+  ID-6: /dev/sdd vendor: Seagate model: ST4000NM0035-1V4107 size: 3.64 TiB
+Partition:
+  ID-1: / size: 929.51 GiB used: 424.45 GiB (45.7%) fs: btrfs dev: /dev/nvme1n1p2
+  ID-2: /boot/efi size: 2 GiB used: 636 KiB (0.0%) fs: vfat dev: /dev/nvme1n1p1
+  ID-3: /home size: 929.51 GiB used: 424.45 GiB (45.7%) fs: btrfs dev: /dev/nvme1n1p2
+  ID-4: /var/log size: 929.51 GiB used: 424.45 GiB (45.7%) fs: btrfs dev: /dev/nvme1n1p2
+  ID-5: /var/tmp size: 929.51 GiB used: 424.45 GiB (45.7%) fs: btrfs dev: /dev/nvme1n1p2
+Swap:
+  ID-1: swap-1 type: zram size: 61.85 GiB used: 4.7 MiB (0.0%) dev: /dev/zram0
+Sensors:
+  System Temperatures: cpu: 77.8 C mobo: 58.5 C gpu: amdgpu temp: 58.0 C
+  Fan Speeds (rpm): N/A
+Info:
+  Memory: total: 64 GiB note: est. available: 61.85 GiB used: 13.24 GiB (21.4%)
+  Processes: 538 Uptime: 56m Client: Unknown Client: opencode inxi: 3.3.41

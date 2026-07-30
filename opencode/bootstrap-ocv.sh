@@ -18,15 +18,15 @@ err()  { echo -e "\e[1;31m[ERR]\e[0m $*" >&2; }
 
 # ---- 1. Dependencias del sistema ----
 log "Instalando dependencias del sistema..."
-sudo apt-get update -qq
-sudo apt-get install -y -qq \
+pkexec apt-get update -qq
+pkexec apt-get install -y -qq \
   sox \
   pulseaudio-utils \
   whisper-cpp \
   pipx \
   nodejs npm 2>/dev/null || {
   warn "Algunos paquetes no están disponibles en los repositorios, se instalarán por otros medios."
-  sudo apt-get install -y -qq sox pulseaudio-utils pipx nodejs npm 2>/dev/null || true
+  pkexec apt-get install -y -qq sox pulseaudio-utils pipx nodejs npm 2>/dev/null || true
 }
 
 mkdir -p "${LOCAL_BIN}"

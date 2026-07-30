@@ -1,0 +1,40 @@
+{
+  "language": "es",
+  "downloadsFolder": "/home/antonio/.lmstudio/models",
+  "sidebar": {
+    "showButtonNames": false,
+    "monochromeSidebarIcons": true
+  },
+  "configs": {
+    "expandConfigsOnClick": true
+  },
+  "chat": {
+    "alwaysShowPromptTemplate": false,
+    "useShiftEnterToSendMessage": false,
+    "showChatUtilityMenuLabels": false,
+    "aiNamingMode": "auto",
+    "neverAskForToolConfirmation": false,
+    "pinnedPlugins": [],
+    "chatFullWidth": false,
+    "scrollLastMessageToTop": "scrollToTopNoLatch"
+  },
+  "developer": {
+    "showExperimentalFeatures": false,
+    "appUpdateChannel": "stable",
+    "autoUpdateExtensionPacks": true
+  },
+  "ui": {
+    "missionControlFullscreen": false,
+    "contextDisplayMode": "percentage",
+    "appNavigationBarPosition": "left"
+  },
+  "configPresetInclusiveness": {
+    "speculativeDecoding": false
+  },
+  "developerMode": true,
+  "userInterfaceComplexityLevel": 0,
+  "autoLoadBundledLLM": true,
+  "modelLoadingGuardrails": {
+    "mode": "high"
+  }
+}

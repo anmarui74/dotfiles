@@ -1,0 +1,362 @@
+#!/usr/bin/env bash
+# restore.sh — Restauración completa y autónoma de OpenCode con voz
+# Uso: bash restore.sh
+# NO requiere scripts externos. Instala dependencias, descarga modelos,
+# restaura configuración, plugin, speak, .zshrc y estado.
+
+set -euo pipefail
+
+# Colores
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
+info()  { echo -e "${GREEN}[✓]${NC} $1"; }
+warn()  { echo -e "${YELLOW}[!]${NC} $1"; }
+err()   { echo -e "${RED}[✗]${NC} $1"; }
+
+HOME_DIR="$HOME"
+BACKUP_DIR="$(cd "$(dirname "$0")" && pwd)"
+LOCAL_BIN="$HOME_DIR/.local/bin"
+OC_CONFIG="$HOME_DIR/.config/opencode"
+PLUGIN_DIR="$OC_CONFIG/opencode-voice-modified"
+SHARE_DIR="$HOME_DIR/.local/share"
+WHISPER_DIR="$SHARE_DIR/whisper-cpp"
+
+echo "=============================================="
+echo "  Restauración completa de OpenCode con Voz"
+echo "=============================================="
+echo ""
+
+# ---- 1. Dependencias del sistema ----
+echo "--- 1/18: Dependencias del sistema ---"
+sudo apt-get update -qq
+sudo apt-get install -y -qq \
+  sox pulseaudio-utils whisper-cpp pipx nodejs npm 2>/dev/null || {
+  warn "Algunos paquetes no disponibles, instalando los esenciales..."
+  sudo apt-get install -y -qq sox pulseaudio-utils pipx nodejs npm 2>/dev/null || true
+}
+info "Dependencias del sistema instaladas"
+
+# ---- 2. whisper-cli wrapper ----
+echo "--- 2/18: whisper-cli wrapper ---"
+mkdir -p "$LOCAL_BIN"
+if [ ! -f "$LOCAL_BIN/whisper-cli" ]; then
+  if [ -f "$BACKUP_DIR/whisper-cli" ]; then
+    cp "$BACKUP_DIR/whisper-cli" "$LOCAL_BIN/"
+    info "whisper-cli restaurado del backup"
+  else
+    cat > "$LOCAL_BIN/whisper-cli" << 'WHISPERWRAP'
+#!/usr/bin/env bash
+exec /usr/bin/whisper-cli -l es "$@"
+WHISPERWRAP
+    info "whisper-cli wrapper creado"
+  fi
+  chmod +x "$LOCAL_BIN/whisper-cli"
+else
+  info "whisper-cli ya existe"
+fi
+
+# ---- 3. edge-tts via pipx ----
+echo "--- 3/18: edge-tts ---"
+if pipx list 2>/dev/null | grep -q edge-tts; then
+  info "edge-tts ya instalado via pipx"
+else
+  pipx install edge-tts >/dev/null 2>&1 && info "edge-tts instalado via pipx" || warn "pipx install edge-tts fallo, instalando con pip..."
+  command -v edge-tts &>/dev/null || pip install edge-tts 2>/dev/null || warn "Instala edge-tts manualmente: pip install edge-tts"
+fi
+
+# ---- 4. Modelos whisper ----
+echo "--- 4/18: Modelos whisper ---"
+mkdir -p "$WHISPER_DIR"
+download_model() {
+  local name="$1"
+  local file="$2"
+  if [ -f "${WHISPER_DIR}/${file}" ]; then
+    info "Modelo ${name} ya presente"
+  else
+    echo "Descargando modelo whisper: ${name}..."
+    wget -q --show-progress "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${file}" -O "${WHISPER_DIR}/${file}" && info "Modelo ${name} descargado" || warn "Fallo al descargar ${name}"
+  fi
+}
+download_model "large-v3-turbo-q5_0" "ggml-large-v3-turbo-q5_0.bin"
+download_model "small" "ggml-small.bin"
+download_model "base" "ggml-base.bin"
+
+# ---- 5. Configuración principal ----
+echo "--- 5/18: Configuración principal ---"
+mkdir -p "$OC_CONFIG"
+cp "$BACKUP_DIR/opencode.json" "$OC_CONFIG/"
+[ -f "$BACKUP_DIR/opencode-local.json" ] && cp "$BACKUP_DIR/opencode-local.json" "$OC_CONFIG/"
+[ -f "$BACKUP_DIR/opencode-cloud.json" ] && cp "$BACKUP_DIR/opencode-cloud.json" "$OC_CONFIG/"
+[ -f "$BACKUP_DIR/opencode.jsonc" ] && cp "$BACKUP_DIR/opencode.jsonc" "$OC_CONFIG/"
+cp "$BACKUP_DIR/tui.json" "$OC_CONFIG/"
+cp "$BACKUP_DIR/AGENTS.md" "$OC_CONFIG/"
+info "Archivos de configuración copiados"
+
+# ---- 5b. system-info.sh ----
+if [ -f "$BACKUP_DIR/system-info.sh" ]; then
+  cp "$BACKUP_DIR/system-info.sh" "$HOME_DIR/system-info.sh"
+  chmod +x "$HOME_DIR/system-info.sh"
+  info "system-info.sh restaurado en ~/system-info.sh"
+fi
+
+# ---- 5c. Scripts de Config/opencode ----
+for _script in backup-opencode.sh setup-voz.sh web-search.sh bootstrap-ocv.sh setup-lmstudio-models.sh switch-mcp-profile.sh; do
+  if [ -f "$BACKUP_DIR/$_script" ]; then
+    cp "$BACKUP_DIR/$_script" "$OC_CONFIG/$_script"
+    chmod +x "$OC_CONFIG/$_script" 2>/dev/null || true
+    info "$_script restaurado"
+  fi
+done
+
+# ---- 5d. setup-models.sh (verificación de modelos) ----
+echo "--- 5d/18: Verificación de modelos LM Studio ---"
+if [ -f "$BACKUP_DIR/setup-lmstudio-models.sh" ]; then
+  info "Ejecutando setup-models.sh..."
+  if bash "$BACKUP_DIR/setup-lmstudio-models.sh"; then
+    info "Modelos verificados correctamente"
+  else
+    warn "Error al verificar modelos. Puedes ejecutarlo manualmente:"
+    warn "  bash $OC_CONFIG/setup-lmstudio-models.sh"
+  fi
+else
+  warn "setup-models.sh no encontrado en el backup"
+fi
+
+# ---- 5d. sesion-opencode/ ----
+if [ -d "$BACKUP_DIR/sesion-opencode" ]; then
+  mkdir -p "$OC_CONFIG/sesion-opencode"
+  cp -r "$BACKUP_DIR/sesion-opencode/"* "$OC_CONFIG/sesion-opencode/" 2>/dev/null || true
+  info "sesion-opencode/ restaurado"
+fi
+
+# ---- 6. Prompts personalizados ----
+echo "--- 6/18: Prompts ---"
+if [ -d "$BACKUP_DIR/prompts" ]; then
+  mkdir -p "$OC_CONFIG/prompts"
+  cp -r "$BACKUP_DIR/prompts/"* "$OC_CONFIG/prompts/" 2>/dev/null || true
+  info "Prompts restaurados"
+else
+  info "No hay prompts en el backup"
+fi
+
+# ---- 7. Commands personalizados ----
+echo "--- 7/18: Commands ---"
+if [ -d "$BACKUP_DIR/commands" ]; then
+  mkdir -p "$OC_CONFIG/commands"
+  cp -r "$BACKUP_DIR/commands/"* "$OC_CONFIG/commands/" 2>/dev/null || true
+  info "Commands restaurados"
+else
+  info "No hay commands en el backup"
+fi
+
+# ---- 8. LM Studio ----
+echo "--- 8/18: LM Studio ---"
+if command -v lms &>/dev/null || [ -f "/home/antonio/.lmstudio/bin/lms" ]; then
+  info "LM Studio CLI (lms) disponible"
+  # Iniciar servidor si no lo está
+  if ! curl -s -o /dev/null -w "" http://127.0.0.1:1234/v1/models 2>/dev/null; then
+    warn "Servidor LM Studio no está corriendo. Inícialo con: lms server start"
+  else
+    info "Servidor LM Studio activo en puerto 1234"
+  fi
+else
+  warn "LM Studio CLI no encontrado. Asegúrate de que LM Studio esté instalado."
+fi
+
+# ---- 9. Variables de entorno (.env) ----
+echo "--- 9/18: Variables de entorno ---"
+if [ -f "$BACKUP_DIR/.env" ]; then
+  cp "$BACKUP_DIR/.env" "$OC_CONFIG/"
+  chmod 600 "$OC_CONFIG/.env"
+  info ".env restaurado (permisos 600)"
+fi
+
+# ---- 10. init-opencode.sh ----
+echo "--- 10/18: init-opencode.sh ---"
+if [ -f "$BACKUP_DIR/init-opencode.sh" ]; then
+  cp "$BACKUP_DIR/init-opencode.sh" "$OC_CONFIG/"
+  chmod +x "$OC_CONFIG/init-opencode.sh"
+  info "init-opencode.sh restaurado"
+fi
+
+# ---- 11. Servicio systemd ----
+echo "--- 11/18: Servicios systemd ---"
+if [ -d "$BACKUP_DIR/systemd" ]; then
+  mkdir -p "$HOME_DIR/.config/systemd/user"
+  cp -r "$BACKUP_DIR/systemd/user/"* "$HOME_DIR/.config/systemd/user/" 2>/dev/null || true
+  systemctl --user daemon-reload
+  systemctl --user enable init-opencode.service 2>/dev/null || true
+  systemctl --user enable opencode-sync.timer 2>/dev/null || true
+  systemctl --user start opencode-sync.timer 2>/dev/null || true
+  info "Servicios systemd restaurados y habilitados"
+fi
+
+# ---- 11a. Restaurar settings.lmstudio.json ----
+echo "--- 11a/18: settings.lmstudio.json ---"
+if [ -f "$BACKUP_DIR/settings.lmstudio.json" ]; then
+  mkdir -p "$HOME_DIR/.lmstudio"
+  cp "$BACKUP_DIR/settings.lmstudio.json" "$HOME_DIR/.lmstudio/settings.json"
+  chmod 644 "$HOME_DIR/.lmstudio/settings.json"
+  info "settings.json de LM Studio restaurado (contexto 81920 tokens)"
+fi
+
+# ---- 11b. sync-opencode.sh ----
+echo "--- 11b/18: sync-opencode.sh ---"
+if [ -f "$BACKUP_DIR/sync-opencode.sh" ]; then
+  cp "$BACKUP_DIR/sync-opencode.sh" "$OC_CONFIG/"
+  chmod +x "$OC_CONFIG/sync-opencode.sh"
+  info "sync-opencode.sh restaurado"
+fi
+
+# ---- 12. Datos de persistencia ----
+echo "--- 12/18: Datos de persistencia ---"
+if [ -d "$BACKUP_DIR/data" ]; then
+  mkdir -p "$OC_CONFIG/data"
+  cp -r "$BACKUP_DIR/data/"* "$OC_CONFIG/data/" 2>/dev/null || true
+  info "data/ (persistencia) restaurado"
+fi
+
+# ---- 13. Skills personalizados ----
+echo "--- 13/18: Skills ---"
+if [ -d "$BACKUP_DIR/skills" ]; then
+  mkdir -p "$OC_CONFIG/skills"
+  cp -r "$BACKUP_DIR/skills/"* "$OC_CONFIG/skills/" 2>/dev/null || true
+  info "Skills restaurados"
+fi
+
+# ---- 14. Plugin de voz ----
+echo "--- 14/18: Plugin opencode-voice ---"
+rm -rf "$PLUGIN_DIR"
+mkdir -p "$PLUGIN_DIR/lib"
+cp "$BACKUP_DIR/plugin/index.js" "$PLUGIN_DIR/"
+cp "$BACKUP_DIR/plugin/lib/stt.js" "$PLUGIN_DIR/lib/"
+cp "$BACKUP_DIR/plugin/lib/tts.js" "$PLUGIN_DIR/lib/"
+cp "$BACKUP_DIR/plugin/lib/session.js" "$PLUGIN_DIR/lib/"
+cp "$BACKUP_DIR/plugin/lib/logger.js" "$PLUGIN_DIR/lib/"
+cp "$BACKUP_DIR/plugin/lib/llm-client.js" "$PLUGIN_DIR/lib/"
+
+# package.json del plugin (necesario para npm/yarn)
+cat > "$PLUGIN_DIR/package.json" << 'PLUGPKG'
+{
+  "name": "@renjfk/opencode-voice",
+  "version": "0.6.0",
+  "description": "Speech-to-text and text-to-speech for OpenCode.",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "exports": { ".": { "import": "./index.js" }, "./tui": { "import": "./index.js" } },
+  "files": ["index.js", "lib"]
+}
+PLUGPKG
+info "Plugin restaurado"
+
+# ---- 15. speak script ----
+echo "--- 15/18: speak script ---"
+mkdir -p "$LOCAL_BIN"
+cp "$BACKUP_DIR/speak" "$LOCAL_BIN/"
+chmod +x "$LOCAL_BIN/speak"
+info "speak instalado en $LOCAL_BIN/speak"
+
+# ---- 16. Restaurar .zshrc completo ----
+echo "--- 16/18: .zshrc ---"
+ZSHRC="$HOME_DIR/.zshrc"
+ZSH_BAK="$HOME_DIR/.zshrc.backup-$(date +%Y%m%d-%H%M%S)"
+
+if [ -f "$BACKUP_DIR/.zshrc" ]; then
+  if [ -f "$ZSHRC" ]; then
+    # Hacer backup del existente antes de restaurar
+    cp "$ZSHRC" "$ZSH_BAK"
+    info "Backup del .zshrc actual guardado: $(basename "$ZSH_BAK")"
+  fi
+  # Restaurar .zshrc completo del backup
+  cp "$BACKUP_DIR/.zshrc" "$ZSHRC"
+  info ".zshrc restaurado completo desde el backup"
+else
+  info "No hay .zshrc en el backup, configurando solo partes de OpenCode..."
+  # Fallback: añadir solo lo necesario
+  if ! grep -q "function ocv" "$ZSHRC" 2>/dev/null; then
+    echo "" >> "$ZSHRC"
+    echo "# OCV - OpenCode con voz" >> "$ZSHRC"
+    echo 'function ocv() {' >> "$ZSHRC"
+    echo '    script -q -f -c "opencode $*" /dev/null 2>&1' >> "$ZSHRC"
+    echo '}' >> "$ZSHRC"
+  fi
+  if ! grep -q "alias opencode-local" "$ZSHRC" 2>/dev/null; then
+    echo "" >> "$ZSHRC"
+    echo "# Aliases para OpenCode con perfiles de configuración" >> "$ZSHRC"
+    echo 'alias opencode-local="bash ~/.config/opencode/switch-mcp-profile.sh local && opencode"' >> "$ZSHRC"
+    echo 'alias opencode-cloud="bash ~/.config/opencode/switch-mcp-profile.sh cloud && opencode"' >> "$ZSHRC"
+    echo 'alias ocv-local="bash ~/.config/opencode/switch-mcp-profile.sh local && ocv"' >> "$ZSHRC"
+    echo 'alias ocv-cloud="bash ~/.config/opencode/switch-mcp-profile.sh cloud && ocv"' >> "$ZSHRC"
+  fi
+  if ! grep -q '\.local/bin' "$ZSHRC" 2>/dev/null; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ZSHRC"
+  fi
+  info "Partes de OpenCode añadidas al .zshrc existente"
+fi
+
+# ---- 17. npm dependencies ----
+echo "--- 17/18: Dependencias npm ---"
+cd "$OC_CONFIG"
+if [ ! -f package.json ]; then
+  cat > package.json << 'NPMDEPS'
+{
+  "dependencies": {
+    "@opencode-ai/plugin": "1.17.13",
+    "@renjfk/opencode-voice": "^0.6.0"
+  }
+}
+NPMDEPS
+  info "package.json creado en $OC_CONFIG"
+fi
+echo "Ejecutando npm install..."
+npm install --no-audit --no-fund 2>/dev/null || npm install
+info "Dependencias npm instaladas"
+
+# ---- 18. kv.json (estado TTS) ----
+echo "--- 18/18: Estado TTS (kv.json) ---"
+if [ -f "$BACKUP_DIR/state/kv.json" ]; then
+  mkdir -p "$HOME_DIR/.local/state/opencode"
+  if [ -f "$HOME_DIR/.local/state/opencode/kv.json" ]; then
+    BACKUP_TTS=$(python3 -c "import json; d=json.load(open('$BACKUP_DIR/state/kv.json')); print(d.get('tts.mode','on'))" 2>/dev/null || echo "on")
+    python3 -c "
+import json
+with open('$HOME_DIR/.local/state/opencode/kv.json') as f: d=json.load(f)
+d['tts.mode']='$BACKUP_TTS'
+with open('$HOME_DIR/.local/state/opencode/kv.json','w') as f: json.dump(d,f)
+" 2>/dev/null || cp "$BACKUP_DIR/state/kv.json" "$HOME_DIR/.local/state/opencode/kv.json"
+    info "kv.json fusionado (tts.mode=$BACKUP_TTS)"
+  else
+    cp "$BACKUP_DIR/state/kv.json" "$HOME_DIR/.local/state/opencode/kv.json"
+    info "kv.json restaurado"
+  fi
+else
+  # Forzar TTS on aunque no haya backup
+  mkdir -p "$HOME_DIR/.local/state/opencode"
+  echo '{"tts.mode":"on"}' > "$HOME_DIR/.local/state/opencode/kv.json"
+  info "kv.json creado con tts.mode=on"
+fi
+
+echo ""
+echo "=============================================="
+echo -e "${GREEN}  Restauración completada${NC}"
+echo "=============================================="
+echo ""
+echo "Resumen:"
+echo "  sox          $(command -v sox &>/dev/null && echo 'OK' || echo 'FALTA')"
+echo "  edge-tts     $(command -v edge-tts &>/dev/null && echo 'OK' || echo 'FALTA')"
+echo "  whisper-cli  $(command -v whisper-cli &>/dev/null && echo 'OK' || echo 'FALTA')"
+echo "  speak        $(command -v speak &>/dev/null && echo 'OK' || echo 'FALTA')"
+echo "  plugin       $( [ -f $PLUGIN_DIR/index.js ] && echo 'OK' || echo 'FALTA')"
+echo ""
+echo "Uso:"
+echo "  source ~/.zshrc"
+echo "  ocv                    → Inicia OpenCode con voz"
+echo "  Ctrl+R                 → Grabar / Parar + transcribir + enviar"
+echo "  <leader>v (Espacio+v)  → Activar/desactivar TTS automático"
+echo "  <leader>s (Espacio+s)  → Leer última respuesta"
+echo "  Escape                 → Parar reproducción"
+echo ""
+echo "Variables de entorno (opcional):"
+echo "  SPEAK_VOICE=es-ES-AlvaroNeural"
+echo "  SPEAK_RATE=+5%"
+echo "  SPEAK_PITCH=+0Hz"

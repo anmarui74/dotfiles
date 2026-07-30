@@ -1,0 +1,44 @@
+{
+  "model": {
+    "name": "Qwen/Qwen3-8B-Instruct-GGUF (Q6_K optimized)",
+    "path": "./qwen-qwen3.5-9b-q6k.Q6_K_Q.gguf",
+    "quantization": "q6_k_m",
+    "size_gb": "~7.9 compressed (~8.5GB VRAM real used)"
+  },
+  
+  "inference": {
+    "num_threads": 24,
+    "gpu_layers": "all",
+    "cpu_offload_layers": 0,
+    "max_context_size": 81920,
+    "flash_attn": true,
+    "batch_size_mb_prefill": 90,
+    "batch_size_mb_decode": 128,
+    "gpu_memory_utilization": 0.85
+  },
+  
+  "generation": {
+    "temperature_default": 0.7,
+    "top_p": 0.95,
+    "top_k": 40,
+    "min_p": 0.0,
+    "repeat_penalty": 1.2,
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "max_tokens_to_sample": 4096
+  },
+  
+  "optimization": {
+    "use_rocm_fallback": false,
+    "use_flash_attention_v2": true,
+    "flash_infer_batch_size": 32,
+    "quantization_error_tolerance": 0.01
+  },
+  
+  "rag": {
+    "enabled": false,
+    "max_documents_per_query": 10,
+    "retrieve_from_vector_store": false,
+    "top_k_results": 10
+  }
+}

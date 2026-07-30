@@ -1,0 +1,323 @@
+#!/usr/bin/env python3
+"""Proxy OpenCode ↔ Ollama: no-streaming interno, contexto grande, maneja thinking."""
+import json, http.server, urllib.request, sys, time, uuid, threading, subprocess, re
+
+OLLAMA_BASE = "http://localhost:11434"
+NUM_CTX_DEFAULT = 16384 # Contexto por defecto (usado SOLO si OpenCode no especifica num_ctx)
+NUM_PREDICT_DEFAULT = 8192  # Tokens máximos de salida
+VRAM_THRESHOLD = 75     # % de VRAM que dispara cleanup automático (antes 85)
+CHECK_INTERVAL = 2      # Cada N respuestas, verificar VRAM (antes 5)
+
+# Contador de respuestas por modelo
+_resp_counter: dict[str, int] = {}
+_counter_lock = threading.Lock()
+
+
+def _get_vram_usage() -> float:
+    """Devuelve el porcentaje de VRAM usado (0-100). 0 si no se puede determinar."""
+    try:
+        result = subprocess.run(
+            [
+                "nvidia-smi", "--query-gpu=memory.used,memory.total",
+                "--format=csv,noheader,nounits",
+            ],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode != 0:
+            return 0.0
+        line = result.stdout.strip()
+        if not line:
+            return 0.0
+        parts = line.split(",")
+        if len(parts) >= 2:
+            used = float(parts[0].strip())
+            total = float(parts[1].strip())
+            if total > 0:
+                return (used / total) * 100.0
+    except Exception:
+        pass
+    return 0.0
+
+
+def _cleanup_model(model: str) -> None:
+    """Fuerza a Ollama a liberar la KV cache del modelo (descarga y recarga)."""
+    try:
+        req = urllib.request.Request(
+            f"{OLLAMA_BASE}/api/generate",
+            data=json.dumps({"model": model, "prompt": "", "keep_alive": 0}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as _:
+            pass
+        print(f"[proxy] KV cache liberada para {model}", flush=True)
+    except Exception:
+        pass
+
+
+def _check_vram_and_clean(model: str) -> None:
+    """Verifica uso de VRAM y limpia si supera el umbral."""
+    vram_pct = _get_vram_usage()
+    if vram_pct <= 0:
+        return  # No se pudo leer VRAM, omitir
+    if vram_pct >= VRAM_THRESHOLD:
+        print(
+            f"[proxy] VRAM al {vram_pct:.0f}% (umbral {VRAM_THRESHOLD}%) "
+            f"— limpiando cache de {model}",
+            flush=True,
+        )
+        _cleanup_model(model)
+    else:
+        print(f"[proxy] VRAM al {vram_pct:.0f}% — OK", flush=True)
+
+
+class Proxy(http.server.BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.0"
+
+    def _json(self, data: object, code: int = 200) -> None:
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
+
+    def _sse(self, data: dict) -> None:
+        self.wfile.write(f"data: {json.dumps(data, ensure_ascii=False)}\n\n".encode())
+        self.wfile.flush()
+
+    def do_GET(self) -> None:
+        if self.path in ("/v1/models", "/models"):
+            req = urllib.request.Request(f"{OLLAMA_BASE}/api/tags")
+            with urllib.request.urlopen(req) as r:
+                data = json.load(r)
+            models: dict = {"object": "list", "data": []}
+            for m in data.get("models", []):
+                models["data"].append({"id": m["name"], "object": "model"})
+            self._json(models)
+        else:
+            self._json({"error": "not found"}, 404)
+
+    def do_POST(self) -> None:
+        if "/chat/completions" not in self.path:
+            return self._json({"error": "not found"}, 404)
+
+        raw = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        body = json.loads(raw)
+        model: str = body.get("model", "")
+        want_stream: bool = body.get("stream", False)
+        messages: list[dict] = body.get("messages", [])
+
+        # Normalizar contenido: OpenAI puede enviar content como array de partes
+        for m in messages:
+            c = m.get("content")
+            if isinstance(c, list):
+                texts: list[str] = []
+                for part in c:
+                    if isinstance(part, dict):
+                        if part.get("type") == "text":
+                            texts.append(part.get("text", ""))
+                        elif part.get("type") == "tool_result":
+                            texts.append(str(part.get("content", "")))
+                        else:
+                            texts.append(str(part.get("text", "") or ""))
+                    else:
+                        texts.append(str(part))
+                m["content"] = "\n".join(texts) if texts else ""
+
+            # Convertir arguments de tool_calls (OpenAI los envia como string,
+            # Ollama los espera como objeto)
+            tc = m.get("tool_calls")
+            if tc:
+                for t in tc:
+                    func = t.get("function", {})
+                    args = func.get("arguments")
+                    if isinstance(args, str):
+                        try:
+                            func["arguments"] = json.loads(args)
+                        except json.JSONDecodeError:
+                            pass
+
+        # Forzar no-streaming cuando hay herramientas para evitar problemas con thinking
+        # Extraer num_ctx de OpenCode si lo envía; si no, usar valor por defecto
+        opencode_ctx = body.get("options", {}).get("num_ctx")
+        ctx = opencode_ctx if opencode_ctx else NUM_CTX_DEFAULT
+        # num_predict: el que mande OpenCode o el default, NUNCA mas de 8192
+        np = min(body.get("max_tokens", NUM_PREDICT_DEFAULT), 8192)
+        ollama_body: dict = {
+            "model": model,
+            "stream": False,  # Siempre no-streaming internamente
+            "messages": messages,
+            "keep_alive": "10m",
+            "options": {
+                "num_ctx": ctx,
+                "num_predict": np,
+            },
+        }
+        if "tools" in body:
+            ollama_body["tools"] = body["tools"]
+            # Desactivar razonamiento cuando hay herramientas para evitar problemas con thinking
+            ollama_body["reasoning_effort"] = "none"
+
+        # Llamar a Ollama
+        print(
+            f"[proxy] model={model} tools={'yes' if 'tools' in body else 'no'} "
+            f"stream={want_stream} msgs={len(messages)} ctx={ctx} np={np}",
+            flush=True,
+        )
+        try:
+            req_body: str = json.dumps(ollama_body, ensure_ascii=False)
+            req = urllib.request.Request(
+                f"{OLLAMA_BASE}/api/chat",
+                data=req_body.encode(),
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=600) as r:
+                result: dict = json.load(r)
+        except urllib.error.HTTPError as e:
+            err_text: str = e.read().decode("utf-8", errors="replace")[:500]
+            print(f"[proxy] HTTP {e.code}: {err_text}", flush=True, file=sys.stderr)
+            print(
+                f"[proxy] body({len(req_body)}b): {req_body[:2000]}",
+                flush=True,
+                file=sys.stderr,
+            )
+            fname: str = f"/tmp/proxy-error-{uuid.uuid4().hex[:8]}.json"
+            with open(fname, "w") as f:
+                f.write(req_body)
+            print(f"[proxy] Body guardado en {fname}", flush=True, file=sys.stderr)
+            return self._json({"error": f"HTTP {e.code}: {err_text}"}, 502)
+        except Exception as e:
+            print(f"[proxy] Error: {e}", flush=True, file=sys.stderr)
+            return self._json({"error": str(e)}, 500)
+
+        msg: dict = result.get("message", {})
+        content: str = msg.get("content") or ""
+        thinking: str = msg.get("thinking") or ""
+        tc = msg.get("tool_calls")
+
+        # Modelos de razonamiento: NO usar thinking como content si hay tool_calls
+        # Solo usar thinking si no hay tool_calls y no hay content
+        if not content and not tc and thinking:
+            content = thinking
+
+        # Convertir tool_calls a formato OpenAI
+        tool_calls = None
+        if tc:
+            tool_calls = [
+                {
+                    "id": t.get("id", f"call_{i}"),
+                    "type": "function",
+                    "function": {
+                        "name": t["function"]["name"],
+                        "arguments": json.dumps(t["function"]["arguments"]),
+                    },
+                }
+                for i, t in enumerate(tc)
+            ]
+
+        # Verificar VRAM periódicamente (antes de devolver, para que la próxima
+        # llamada arranque con VRAM limpia. Además hacemos limpieza preventiva.)
+        _check_vram_and_clean(model)
+        _check_cleanup(model)
+
+        if want_stream:
+            self._send_stream(model, content, tool_calls)
+        else:
+            self._send_single(model, content, tool_calls)
+
+    def _send_single(self, model: str, content: str, tool_calls: list | None) -> None:
+        choice: dict = {
+            "index": 0,
+            "message": {"role": "assistant", "content": content},
+            "finish_reason": "tool_calls" if tool_calls else "stop",
+        }
+        if tool_calls:
+            choice["message"]["tool_calls"] = tool_calls
+        self._json({
+            "id": "chatcmpl-1",
+            "object": "chat.completion",
+            "choices": [choice],
+            "model": model,
+        })
+
+    def _send_stream(self, model: str, content: str, tool_calls: list | None) -> None:
+        self.close_connection = True
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.flush()
+
+        try:
+            if tool_calls:
+                delta: dict = {"role": "assistant", "tool_calls": tool_calls}
+                chunk: dict = {
+                    "id": "chatcmpl-1",
+                    "object": "chat.completion.chunk",
+                    "choices": [
+                        {"index": 0, "delta": delta, "finish_reason": "tool_calls"}
+                    ],
+                    "model": model,
+                }
+                self._sse(chunk)
+            else:
+                content = content or ""
+                chunk_size: int = 20
+                for i in range(0, len(content), chunk_size):
+                    delta = {"content": content[i : i + chunk_size]}
+                    chunk = {
+                        "id": "chatcmpl-1",
+                        "object": "chat.completion.chunk",
+                        "choices": [
+                            {"index": 0, "delta": delta, "finish_reason": None}
+                        ],
+                        "model": model,
+                    }
+                    self._sse(chunk)
+                    time.sleep(0.005)
+                chunk = {
+                    "id": "chatcmpl-1",
+                    "object": "chat.completion.chunk",
+                    "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                    "model": model,
+                }
+                self._sse(chunk)
+        except Exception:
+            pass
+
+        try:
+            self.wfile.write(b"data: [DONE]\n\n")
+            self.wfile.flush()
+        except Exception:
+            pass
+
+        try:
+            self.connection.shutdown(__import__("socket").SHUT_WR)
+        except Exception:
+            pass
+
+
+def _check_cleanup(model: str) -> None:
+    """Incrementa contador y verifica VRAM cada CHECK_INTERVAL respuestas."""
+    with _counter_lock:
+        _resp_counter[model] = _resp_counter.get(model, 0) + 1
+        count: int = _resp_counter[model]
+        if count >= CHECK_INTERVAL:
+            _resp_counter[model] = 0
+            # Verificar VRAM en hilo separado (no bloquea la respuesta)
+            t = threading.Thread(
+                target=_check_vram_and_clean, args=(model,), daemon=True
+            )
+            t.start()
+
+
+if __name__ == "__main__":
+    port: int = int(sys.argv[1]) if len(sys.argv) > 1 else 4000
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Proxy)
+    print(f"Proxy en http://127.0.0.1:{port}", flush=True)
+    print(
+        f"VRAM threshold: {VRAM_THRESHOLD}%, "
+        f"check each {CHECK_INTERVAL} respuestas, "
+        f"num_ctx_default={NUM_CTX_DEFAULT}, "
+        f"num_predict_default={NUM_PREDICT_DEFAULT}",
+        flush=True,
+    )
+    server.serve_forever()

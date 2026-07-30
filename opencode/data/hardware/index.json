@@ -1,0 +1,452 @@
+{
+  "meta": {
+    "generated": "28/07/2026 19:20 CEST",
+    "source_commands": [
+      "inxi -Fc", "lscpu", "lspci -nn", "lsusb", "nvidia-smi",
+      "sensors", "df -hT", "lsblk", "findmnt", "dmidecode",
+      "proc_cpuinfo", "proc_meminfo", "proc_cmdline"
+    ],
+    "lmstudio_model": "qwen/qwen3.5-9b",
+    "note": "Index completo reconstruido. 26 secciones vs 10 originales."
+  },
+
+  "os": {
+    "distribution": "CachyOS Linux",
+    "distro_family": "Arch Linux (rolling)",
+    "kernel": "7.1.5-1-cachyos",
+    "kernel_type": "SMP PREEMPT_DYNAMIC",
+    "arch": "x86_64",
+    "desktop": "GNOME 50.3",
+    "display_server": "Wayland",
+    "display_manager": "GDM (GNOME Display Manager)",
+    "shell": "/usr/bin/zsh",
+    "locale": "es_ES.UTF-8",
+    "timezone": "Europe/Madrid (CEST +0200)",
+    "theme_gtk": "Adwaita-dark",
+    "theme_icons": "Adwaita",
+    "theme_font": "Adwaita Sans 11",
+    "hostname": "cachyos",
+    "boot_time": "18:11:59 CEST",
+    "uptime": "1h 9m (al generar)",
+    "load_avg": [0.86, 0.98, 0.95]
+  },
+
+  "cpu": {
+    "vendor": "AMD",
+    "model": "AMD Ryzen 9 7900 12-Core Processor",
+    "architecture": "Zen 4",
+    "socket": "AM5",
+    "cores": 12,
+    "threads": 24,
+    "familia": 25,
+    "modelo": 97,
+    "stepping": 2,
+    "microcode": "0xa60120c",
+    "boost_enabled": true,
+    "speed_max_mhz": 5485.41,
+    "speed_min_mhz": 429.58,
+    "speed_avg_mhz": 5450,
+    "bogomips": 7399.78,
+    "cache_l1d": "384 KiB (12 instancias)",
+    "cache_l1i": "384 KiB (12 instancias)",
+    "cache_l2": "12 MiB (12 instancias)",
+    "cache_l3": "64 MiB (2 instancias)",
+    "virtualization": "AMD-V",
+    "numa_nodes": 1,
+    "vulnerabilities": {
+      "gather_data_sampling": "Not affected",
+      "ghostwrite": "Not affected",
+      "indirect_target_selection": "Not affected",
+      "spec_rstack_overflow": "Mitigation: Safe RET",
+      "spec_store_bypass": "Mitigation: prctl",
+      "spectre_v1": "Mitigation: usercopy/swapgs barriers",
+      "spectre_v2": "Mitigation: Enhanced/Automatic IBRS",
+      "tsa": "Mitigation: Clear CPU buffers",
+      "vmscape": "Mitigation: IBPB before exit"
+    },
+    "flags_isa": [
+      "x86_64", "MMX", "SSE", "SSE2", "SSE3", "SSSE3", "SSE4_1", "SSE4_2",
+      "SSE4A", "AVX", "AVX2", "AVX-512 (F, DQ, IFMA, CD, BW, VL, BF16, VBMI, VBMI2, VNNI, BITALG, VPOPCNTDQ)",
+      "FMA", "F16C", "AES", "SHA_NI", "VAES", "VPCLMULQDQ", "GFNI",
+      "BMI1", "BMI2", "ABM", "CLZERO", "CLFLUSHOPT", "CLWB", "FSGSBASE",
+      "INVPCID", "RDPID", "RDRAND", "RDSEED", "SMAP", "SMEP", "UMIP",
+      "XSAVE", "XSAVEC", "XSAVEOPT", "XGETBV1", "XSAVES",
+      "IBRS", "IBPB", "STIBP", "SSBD", "INTEL_PPIN",
+      "AMD_LBR_V2", "PERFMON_V2", "CPPC", "CPB", "HW_PSTATE"
+    ]
+  },
+
+  "ram": {
+    "total_gb": 64,
+    "total_kb": 64855516,
+    "available_gb": 48.4,
+    "usage_percent": 21.4,
+    "technology": "DDR5 Unbuffered (ECC)",
+    "speed_mts": 6000,
+    "speed_mhz": 3000,
+    "module_id": "CMK64GX5M2B6000Z30",
+    "manufacturer": "Kingston",
+    "voltage": "1.1V",
+    "dimms_count": 4,
+    "max_capacity_dmidecode_gb": 128,
+    "cl_timings_typical": [30, 32, 36],
+    "spd_temps_celsius": {
+      "dimma1": 52.8,
+      "dimma2": 54.8
+    },
+    "max_capacity_gb": 128,
+    "swap": {
+      "type": "zram",
+      "device": "/dev/zram0",
+      "size_gb": 61.9,
+      "algorithm": "zstd",
+      "used_gb": 0.0046,
+      "compressed_gb": 0.001,
+      "total_gb": 0.002,
+      "streams": 4
+    }
+  },
+
+  "motherboard": {
+    "vendor": "Micro-Star International (MSI)",
+    "model": "MAG X870 TOMAHAWK WIFI",
+    "product_name": "MS-7E51",
+    "socket": "Socket AM5",
+    "chipset": "AMD X870",
+    "form_factor": "ATX",
+    "firmware_vendor": "American Megatrends LLC",
+    "firmware_version": "1.A70",
+    "bios_date": "12/02/2025",
+    "uefi": true,
+    "chassis_type": "Desktop (3)"
+  },
+
+  "gpu_nvidia": {
+    "device_id": "AD103",
+    "pci_id": "10de:2705",
+    "model": "NVIDIA GeForce RTX 4070 Ti SUPER",
+    "brand": "GeForce",
+    "architecture": "Ada Lovelace",
+    "driver": "nvidia v610.43.03",
+    "cuda_version": "13.3",
+    "vbios": "95.03.45.C0.10",
+    "vram_gb": 16,
+    "vram_mib": 16376,
+    "vram_used_mib": 10116,
+    "vram_free_mib": 5849,
+    "vram_usage_percent": 62,
+    "power_watts": 13.34,
+    "temperature_celsius": 49,
+    "utilization_percent": 13,
+    "gpu_uuid": "GPU-1456df33-45c3-e23b-2289-ac8d8d6e0a63",
+    "display_server": "Wayland",
+    "os_display_server": "X.Org v24.1.13",
+    "gl_api_version": "OpenGL 4.6",
+    "vulkan_api_version": "Vulkan 1.4.350",
+    "display_connected": true,
+    "display_active": "Enabled"
+  },
+
+  "gpu_amd_integrated": {
+    "device_id": "Raphael",
+    "pci_id": "1002:164e",
+    "model": "AMD Radeon Graphics (integrated)",
+    "driver": "amdgpu kernel",
+    "voltage_mv": 984,
+    "power_watts": 39.01,
+    "temperature_celsius": 55,
+    "sclk_mhz": 600,
+    "vddnb_v": 1.30
+  },
+
+  "displays": [
+    {
+      "make": "LG (GSM)",
+      "model": "LG HDR 4K",
+      "size_cm": "60 x 34",
+      "size_inches": 27,
+      "native_resolution": "3840x2160",
+      "refresh_rate_hz": 60,
+      "bit_depth": 10,
+      "interface": "DisplayPort",
+      "hdr": "SMPTE ST2084 (HDR10)",
+      "luminance_max_cdm2": 295.37,
+      "gamma": 2.20,
+      "serial_1": "255609",
+      "manufacture_week": 11,
+      "manufacture_year": 2020
+    },
+    {
+      "make": "LG (GSM)",
+      "model": "LG HDR 4K",
+      "size_cm": "60 x 34",
+      "size_inches": 27,
+      "native_resolution": "3840x2160",
+      "refresh_rate_hz": 60,
+      "bit_depth": 10,
+      "interface": "DisplayPort",
+      "hdr": "SMPTE ST2084 (HDR10)",
+      "luminance_max_cdm2": 295.37,
+      "gamma": 2.20,
+      "serial_2": "2210",
+      "manufacture_week": 10,
+      "manufacture_year": 2020
+    }
+  ],
+
+  "audio": {
+    "cards": [
+      {
+        "id": 0,
+        "name": "UGREEN Camera 2K",
+        "driver": "snd-usb-audio",
+        "type": "USB Audio",
+        "capture": true,
+        "playback": false
+      },
+      {
+        "id": 1,
+        "name": "HDA NVidia",
+        "driver": "snd-hda-intel",
+        "type": "HDMI Audio",
+        "outputs": [
+          "HDMI 0: LG HDR 4K",
+          "HDMI 1: LG HDR 4K",
+          "HDMI 2: HDMI 2"
+        ],
+        "capture": false,
+        "playback": true
+      },
+      {
+        "id": 2,
+        "name": "HD-Audio Generic (AMD Radeon)",
+        "driver": "snd-hda-intel",
+        "type": "HDMI/DP Audio"
+      },
+      {
+        "id": 3,
+        "name": "HD-Audio Generic (AMD Ryzen)",
+        "driver": "snd-hda-intel",
+        "type": "HD Audio"
+      },
+      {
+        "id": 4,
+        "name": "USB Audio (MSI)",
+        "driver": "snd-usb-audio",
+        "type": "USB Audio"
+      },
+      {
+        "id": 5,
+        "name": "TONOR TD510 Air Mic",
+        "driver": "snd-usb-audio",
+        "type": "USB Microphone",
+        "capture": true,
+        "playback": false
+      }
+    ],
+    "pulseaudio_protocol": 35,
+    "server": "pulseaudio (run/user/1000)"
+  },
+
+  "usb_devices": [
+    {"vendor": "UGREEN", "product": "Camera 2K", "id": "0c45:636f", "type": "Webcam + Mic", "speed": "480M"},
+    {"vendor": "Micro Star International", "product": "USB Audio", "id": "0db0:cd0e", "type": "Audio"},
+    {"vendor": "TONOR", "product": "TD510 Air Mic", "id": "37d3:0201", "type": "Microphone USB", "speed": "12M"},
+    {"vendor": "Micro Star International", "product": "MYSTIC LIGHT", "id": "0db0:0076", "type": "RGB Controller"},
+    {"vendor": "Microsoft", "product": "Xbox Controller", "id": "045e:0b12", "type": "Gamepad", "speed": "12M"},
+    {"vendor": "Foxconn / Hon Hai", "product": "Bluetooth", "id": "0489:e10a", "type": "BT USB"},
+    {"vendor": "RDMCTMZT", "product": "Wireless 2.4G Dongle", "id": "36b0:3002", "type": "Wireless"},
+    {"vendor": "Logitech", "product": "Logi Bolt Receiver", "id": "046d:c548", "type": "Receiver"}
+  ],
+
+  "storage_devices": [
+    {
+      "name": "nvme0n1",
+      "vendor": "Kingston",
+      "model": "SFYRD4000G (FURY Renegade)",
+      "protocol": "NVMe PCIe 4.0",
+      "size_tb": 3.64,
+      "sectors": 7814037168,
+      "partitions": [
+        {"num": 1, "size": "100M", "fstype": "vfat", "label": null},
+        {"num": 2, "size": "16M", "fstype": null, "label": null},
+        {"num": 3, "size": "3.6T", "fstype": "ntfs", "label": "WINDOWS"},
+        {"num": 4, "size": "825M", "fstype": "ntfs", "label": null}
+      ],
+      "os": "Windows (dual boot)",
+      "mount_point": null
+    },
+    {
+      "name": "nvme1n1",
+      "vendor": "Kingston",
+      "model": "SFYRS1000G (FURY Renegade)",
+      "protocol": "NVMe PCIe 4.0",
+      "size_gb": 931.51,
+      "partitions": [
+        {"num": 1, "size": "2G", "fstype": "vfat", "mount": "/boot/efi"},
+        {"num": 2, "size": "929.5G", "fstype": "btrfs", "label": "cachyos", "mount": "/ (subvolumes)"}
+      ],
+      "os": "CachyOS Linux",
+      "filesystem": "btrfs",
+      "btrfs_subvolumes": ["@", "@home", "@root", "@srv", "@cache", "@log", "@tmp"],
+      "btrfs_opts": "compress=zstd:3, noatime, ssd, discard=async, commit=120",
+      "used_gb": 425,
+      "available_gb": 505,
+      "used_percent": 46,
+      "mount_point": "/"
+    },
+    {
+      "name": "sda",
+      "vendor": "Crucial",
+      "model": "CT1000MX500SSD1",
+      "protocol": "SATA III",
+      "size_gb": 931.51,
+      "partitions": [
+        {"num": 1, "size": "931.5G", "fstype": "btrfs", "label": "CRUCIAL"}
+      ],
+      "mount_point": null
+    },
+    {
+      "name": "sdb",
+      "vendor": "Toshiba",
+      "model": "HDWE140",
+      "protocol": "SATA III",
+      "size_tb": 3.64,
+      "partitions": [
+        {"num": 3, "size": "3.6T", "fstype": "ntfs", "label": "TOSHIBA"}
+      ],
+      "mount_point": null
+    },
+    {
+      "name": "sdc",
+      "vendor": "Toshiba",
+      "model": "HDWE140",
+      "protocol": "SATA III",
+      "size_tb": 3.64,
+      "partitions": [
+        {"num": 3, "size": "3.6T", "fstype": "ntfs", "label": "TOSHIBA"}
+      ],
+      "mount_point": null
+    },
+    {
+      "name": "sdd",
+      "vendor": "Seagate",
+      "model": "ST4000NM0035-1V4107",
+      "protocol": "SATA III",
+      "size_tb": 3.64,
+      "partitions": [
+        {"num": 1, "size": "3.6T", "fstype": "ntfs", "label": "SEAGATE"}
+      ],
+      "mount_point": null
+    }
+  ],
+
+  "storage_summary": {
+    "total_raw_tb": 16.26,
+    "total_mounted_used_gb": 425,
+    "total_mounted_available_gb": 505,
+    "os_drive": "nvme1n1 (btrfs @)",
+    "windows_drive": "nvme0n1 (NTFS WINDOWS)",
+    "crucial_ssd": "sda (btrfs, CRUCIAL, no montado)",
+    "hdd_toshiba_1": "sdb (NTFS, no montado)",
+    "hdd_toshiba_2": "sdc (NTFS, no montado)",
+    "hdd_seagate": "sdd (NTFS, no montado)"
+  },
+
+  "network": {
+    "wifi": {
+      "vendor": "Qualcomm",
+      "model": "WCN785x Wi-Fi 7 (802.11be)",
+      "technology": "FastConnect 7800",
+      "max_bandwidth_mhz": 320,
+      "driver": "ath12k_wifi7_pci",
+      "interface": "wlan0",
+      "state": "up",
+      "connected_ssid": "ZIPE",
+      "frequency_mhz": 5220,
+      "channel_width_mhz": 80,
+      "rx_bitrate_mbps": 1200.9,
+      "tx_bitrate_mbps": 1200.9,
+      "signal_dbm": -37,
+      "he_nss": 2,
+      "he_gi": 0,
+      "ip": "192.168.31.112/24",
+      "mac_bssid": "64:64:4a:bc:af:70",
+      "rx_bytes": 392373330,
+      "tx_bytes": 31449358
+    },
+    "bluetooth": {
+      "vendor": "Foxconn / Hon Hai",
+      "type": "USB btusb",
+      "driver": "btmgmt",
+      "interface": "hci0",
+      "version": "5.4",
+      "state": "up"
+    },
+    "ethernet": {
+      "vendor": "Realtek",
+      "model": "RTL8126 5GbE",
+      "interface": "enp8s0",
+      "speed_gbps": 5,
+      "state": "down",
+      "driver": "r8169"
+    },
+    "virtual": {
+      "vmware_nat": {"interface": "vmnet8", "ip": "192.168.73.1/24"},
+      "vmware_host": {"interface": "vmnet1", "ip": "192.168.123.1/24"},
+      "docker_default": {"interface": "docker0", "ip": "172.17.0.1/16", "state": "down"},
+      "docker_custom": {"interface": "br-fcdd3c4a6fbd", "ip": "172.18.0.1/16", "state": "down"}
+    }
+  },
+
+  "pci_devices": {
+    "chipset": "AMD X870",
+    "usb4": {"vendor": "ASMedia", "model": "ASM4242 USB4 / Thunderbolt 3", "type": "USB4"},
+    "usb_controller_x870": {"vendor": "AMD", "model": "800 Series Chipset USB 3.x XHCI"},
+    "sata_controller_600": {"vendor": "AMD", "model": "600 Series Chipset SATA", "type": "SATA"},
+    "sata_controller_asmedia": {"vendor": "ASMedia", "model": "ASM1064 SATA", "type": "SATA"},
+    "smbus": {"vendor": "AMD", "model": "FCH SMBus Controller"}
+  },
+
+  "sensors": {
+    "cpu_tctl_celsius": 64.0,
+    "cpu_tccd1_celsius": 53.0,
+    "cpu_tccd2_celsius": 51.5,
+    "motherboard_celsius": 58.0,
+    "gpu_nvidia_celsius": 49,
+    "gpu_amd_celsius": 55.0,
+    "nvme1_composite_celsius": 50.9,
+    "nvme1_sensor2_celsius": 72.8,
+    "nvme0_reading": "not available",
+    "wifi_ath12k_celsius": 66.0,
+    "ethernet_rtl8169_celsius": 56.0,
+    "ram_spd_dimm1_celsius": 52.8,
+    "ram_spd_dimm2_celsius": 54.8,
+    "gpu_nvidia_power_watts": 13.34,
+    "gpu_nvidia_fan_rpm": null,
+    "gpu_amd_power_watts": 39.01
+  },
+
+  "kernel_boot": {
+    "cmdline": "BOOT_IMAGE=/@/boot/vmlinuz-linux-cachyos root=UUID=e6e55857-3d35-44a6-83e8-29f82e275f69 rw rootflags=subvol=@ nowatchdog nvme_load=YES zswap.enabled=0 splash loglevel=3",
+    "grub_theme": "cachyos",
+    "grub_timeout": 5,
+    "grub_default": "CachyOS (vmlinuz-linux-cachyos)"
+  },
+
+  "virtualization": {
+    "type": "host (bare metal)",
+    "vmware_present": true,
+    "docker_present": true
+  },
+
+  "gpu_nvidia_details_runtime": {
+    "power_watts": 13.34,
+    "temperature_celsius": 49,
+    "utilization_percent": 13,
+    "vram_used_mib": 10116,
+    "vram_free_mib": 5849,
+    "vram_total_mib": 16376,
+    "pcie_link": "not checked"
+  }
+}

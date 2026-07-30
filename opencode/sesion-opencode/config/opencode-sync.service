@@ -1,0 +1,9 @@
+[Unit]
+Description=OpenCode sync: .config/opencode → Config/opencode + backup
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.config/opencode/sync-opencode.sh
+StandardOutput=journal
+StandardError=journal

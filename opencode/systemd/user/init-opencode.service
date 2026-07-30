@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenCode - arranca LM Studio, modelo 80K y proxy
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/home/antonio/.config/opencode/init-opencode.sh
+StandardOutput=append:/home/antonio/.config/opencode/data/init.log
+StandardError=append:/home/antonio/.config/opencode/data/init.log
+
+[Install]
+WantedBy=default.target

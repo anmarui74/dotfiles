@@ -1,0 +1,179 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "small_model": "lmstudio/models-qwen3.5-9b",
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "default_agent": "cloud",
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "sudo *": "deny",
+      "pkexec *": "allow",
+      "*": "ask"
+    }
+  },
+  "agent": {
+    "build": {
+      "prompt": "{file:./prompts/read-agents.txt}"
+    },
+    "plan": {
+      "prompt": "{file:./prompts/read-agents.txt}"
+    },
+    "local": {
+      "description": "Agente local - Qwen 3.5",
+      "mode": "fallback",
+      "model": "lmstudio/models-qwen3.5-9b"
+    },
+    "cloud": {
+      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
+      "mode": "primary",
+      "model": "opencode-go/deepseek-v4-flash"
+    }
+  },
+  "provider": {
+    "lmstudio": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen 3.5 Q6_K",
+      "model": "models-qwen3.5-9b",
+      "options": {
+        "baseURL": "http://localhost:4001/v1"
+      },
+      "models": {
+        "models-qwen3.5-9b": {
+          "name": "Qwen 3.5 - Tool Calling Excellence",
+          "tools": true,
+          "limit": {
+            "context": 81920,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "anthropic": {
+      "npm": "@ai-sdk/anthropic",
+      "name": "Claude Sonnet 4",
+      "model": "claude-sonnet-4-20250514",
+      "options": {
+        "apiKey": "ANTHROPIC_API_KEY"
+      },
+      "models": {
+        "claude-sonnet-4-20250514": {
+          "name": "Claude Sonnet 4 - Reasoning Superior",
+          "tools": true,
+          "limit": {
+            "context": 200000,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "google": {
+      "npm": "@ai-sdk/google",
+      "name": "Gemini Advanced",
+      "model": "gemini-2.0-flash-exp",
+      "options": {
+        "apiKey": "GOOGLE_API_KEY"
+      },
+      "models": {
+        "gemini-2.0-flash-exp": {
+          "name": "Gemini 2.0 Flash - Multimodal Excellence",
+          "tools": true,
+          "limit": {
+            "context": 1000000,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "opencode-go": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OpenCode Go",
+      "options": {
+        "baseURL": "https://opencode.ai/zen/go/v1"
+      },
+      "models": {
+        "deepseek-v4-flash": {
+          "name": "DeepSeek V4 Flash via OpenCode Go",
+          "tools": true,
+          "limit": {
+            "context": 128000,
+            "output": 8192
+          }
+        },
+        "deepseek-v4-pro": {
+          "name": "DeepSeek V4 Pro via OpenCode Go",
+          "tools": true,
+          "limit": {
+            "context": 128000,
+            "output": 8192
+          }
+        },
+        "qwen3.7-plus": {
+          "name": "Qwen 3.7 Plus via OpenCode Go",
+          "tools": true,
+          "limit": {
+            "context": 256000,
+            "output": 8192
+          }
+        },
+        "kimi-k2.7-code": {
+          "name": "Kimi K2.7 Code via OpenCode Go",
+          "tools": true,
+          "limit": {
+            "context": 128000,
+            "output": 8192
+          }
+        },
+        "glm-5.2": {
+          "name": "GLM-5.2 via OpenCode Go",
+          "tools": true,
+          "limit": {
+            "context": 128000,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "filesystem": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/antonio"
+      ],
+      "enabled": false
+    },
+    "memory": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "enabled": true
+    },
+    "fetch": {
+      "type": "remote",
+      "url": "https://mcp-fetch-server.vercel.app",
+      "enabled": true
+    },
+    "sequential_thinking": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": false
+    }
+  }
+}
