@@ -69,22 +69,29 @@ patrón, o llama a read_file para cada archivo individual.
 - Ejecuta `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball con restore.sh actualizado
 
 ## Atención al script setup-opencode-completo.sh (IMPORTANTE)
-El script `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh` (y su copia en
-`scripts/`) es el INSTALADOR COMPLETO desde cero. Contiene toda la configuración
-embebida. Por tanto:
-- Cada vez que modifiques cualquier archivo en `~/.config/opencode/`, el
-  `setup-opencode-completo.sh` debe actualizarse para reflejar esos cambios
-- Además, existe una copia espejo en `~/.config/opencode/sesion-opencode/scripts/`
-  que debe estar SIEMPRE idéntica a la de `~/Config/opencode/sesion-opencode/`
-  (ya sea copiándola manualmente o ejecutando el backup)
+El script `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh` es el
+INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por tanto:
+- **ÚNICA copia en disco**: vive SOLO en `~/Config/opencode/sesion-opencode/`
+  (carpeta de respaldo) y dentro del tarball del backup. NO debe existir en la raíz
+  de `~/.config/opencode/` ni en ningún `scripts/`.
+- El `sync-opencode.sh` (timer systemd `opencode-sync.timer`, cada 2 minutos)
+  sincroniza el resto de archivos desde `~/.config/opencode/`, pero NO crea copias
+  del setup: ese se edita directamente en `~/Config/opencode/sesion-opencode/`.
+- El `backup-opencode.sh` lo incluye automáticamente en el tarball desde
+  `~/Config/opencode/sesion-opencode/`.
 - Cuando Antonio pida un backup, DEBES:
   1. Revisar `setup-opencode-completo.sh` por completo
   2. Comprobar que incluye TODOS los archivos actuales de `~/.config/opencode/`
      (JSON, scripts, AGENTS.md, .env, etc.) con su contenido real
-  3. Si falta algo o está desactualizado, actualizarlo antes del backup
-  4. Copiarlo a `~/Config/opencode/sesion-opencode/` (ambas copias: raíz y scripts/)
-  5. **Copiar también** a `~/.config/opencode/sesion-opencode/scripts/` para mantener la copia espejo sincronizada
+  3. Si falta algo o está desactualizado, actualizarlo ANTES del backup en
+     `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh`
+     (única copia en disco)
+  4. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
+  5. Verificar que el tarball contiene el setup actualizado y que no hay copias
+     del setup en `~/.config/opencode/` (ni en la raíz ni en `sesion-opencode/scripts/`)
 - El `backup-opencode.sh` ya lo incluye automáticamente desde `~/Config/opencode/sesion-opencode/`
+- Al RESTAURAR desde un tarball, el `restore.sh` coloca el setup en
+  `~/Config/opencode/sesion-opencode/`, no en la raíz de `~/.config/opencode/`
 
 ---
 
@@ -97,7 +104,9 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 ```
 
 ## Inicialización (tras reinicio del sistema)
-Ejecutar el script de inicialización que verifica todos los componentes:
+El servicio systemd `init-opencode.service` está DESHABILITADO.
+Al abrir `opencode` u `ocv` se carga LM Studio + modelo + proxy automáticamente.
+Para verificar componentes manualmente:
 ```bash
 bash /home/antonio/.config/opencode/init-opencode.sh
 ```
@@ -144,12 +153,22 @@ Si el grafo se pierde o corrompe:
 ## Chrome debug (si no está corriendo)
 nohup /opt/google/chrome/google-chrome --user-data-dir="/tmp/chrome-debug-profile" "--profile-directory=DebugProfile" --remote-debugging-port=9222 "--remote-allow-origins=*" about:blank > /dev/null 2>&1 &
 
-## Iniciar LM Studio + Qwen3.5-9B Q6_K (80k contexto)
+## Carga automática al abrir opencode/ocv
+Al ejecutar `opencode` u `ocv`, el lanzador
+`start-opencode-server.sh` carga automáticamente:
+- Servidor LM Studio (puerto 1234)
+- Modelo Qwen3.5-9B Q6_K con 80k de contexto
+- Proxy en puerto 4001 con métricas de tokens/s
+
+El servicio systemd `init-opencode.service` está DESHABILITADO
+(no carga el modelo al iniciar sesión). La carga ocurre solo
+al abrir opencode/ocv.
+
+## Iniciar LM Studio manualmente
 ```bash
-bash /home/antonio/.config/opencode/start-lmstudio.sh
+bash /home/antonio/.config/opencode/start-lmstudio.sh      # servidor + modelo + proxy
+bash /home/antonio/.config/opencode/start-lmstudio-server.sh  # solo servidor + proxy
 ```
-Esto arranca el servidor, carga el modelo Q6_K con 80k de contexto
-y lanza el proxy en el puerto 4001 con métricas de tokens/s.
 
 ## Liberar VRAM
 Si el modelo se satura, usar:

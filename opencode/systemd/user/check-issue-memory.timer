@@ -1,0 +1,12 @@
+[Unit]
+Description=Check OpenCode issue #39908 status every 6 hours
+
+[Timer]
+# Primera ejecución: cada 6 horas
+OnCalendar=*-*-* 00/6:00:00
+# Pequeño retardo aleatorio para evitar picos
+RandomizedDelaySec=15m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

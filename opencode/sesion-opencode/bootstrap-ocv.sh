@@ -22,7 +22,6 @@ pkexec apt-get update -qq
 pkexec apt-get install -y -qq \
   sox \
   pulseaudio-utils \
-  whisper-cpp \
   pipx \
   nodejs npm 2>/dev/null || {
   warn "Algunos paquetes no están disponibles en los repositorios, se instalarán por otros medios."
@@ -31,12 +30,42 @@ pkexec apt-get install -y -qq \
 
 mkdir -p "${LOCAL_BIN}"
 
-# whisper-cli wrapper (forzando idioma español)
-if [ ! -f "${LOCAL_BIN}/whisper-cli" ]; then
-  log "Creando wrapper whisper-cli..."
+# whisper-cli desde release oficial (no disponible en apt)
+WHISPER_BIN="${SHARE_DIR}/whisper-cpp/bin/whisper-cli"
+if [ ! -x "${LOCAL_BIN}/whisper-cli" ]; then
+  mkdir -p "${SHARE_DIR}/whisper-cpp/bin"
+  # Opción A: compilar con CUDA si hay GPU y nvcc (transcripción rápida)
+  if command -v nvcc >/dev/null 2>&1 && command -v cmake >/dev/null 2>&1 && command -v gcc >/dev/null 2>&1; then
+    log "Compilando whisper.cpp con CUDA (transcripción por GPU)..."
+    WHISPER_TMP="$(mktemp -d)"
+    git clone --depth 1 --branch v1.9.1 "https://github.com/ggml-org/whisper.cpp" "${WHISPER_TMP}/whisper-src"
+    cmake -B "${WHISPER_TMP}/whisper-src/build" \
+      -DGGML_CUDA=ON -DCMAKE_BUILD_TYPE=Release \
+      "${WHISPER_TMP}/whisper-src" 2>/dev/null
+    cmake --build "${WHISPER_TMP}/whisper-src/build" --config Release -j "$(nproc)" 2>/dev/null || true
+    if [ -x "${WHISPER_TMP}/whisper-src/build/bin/whisper-cli" ]; then
+      cp "${WHISPER_TMP}/whisper-src/build/bin/whisper-cli" "${WHISPER_BIN}"
+      cp "${WHISPER_TMP}"/whisper-src/build/bin/libggml*.so* "${SHARE_DIR}/whisper-cpp/bin/" 2>/dev/null || true
+      log "whisper.cpp compilado con CUDA"
+    else
+      warn "Falló la compilación CUDA, usando versión CPU"
+    fi
+    rm -rf "${WHISPER_TMP}"
+  fi
+  # Opción B: descargar binario CPU si no se compiló
+  if [ ! -x "${WHISPER_BIN}" ]; then
+    log "Descargando whisper.cpp v1.9.1 (CPU)..."
+    WHISPER_TMP="$(mktemp -d)"
+    curl -sL -o "${WHISPER_TMP}/whisper-bin.tar.gz" \
+      "https://github.com/ggml-org/whisper.cpp/releases/download/v1.9.1/whisper-bin-ubuntu-x64.tar.gz"
+    tar -xzf "${WHISPER_TMP}/whisper-bin.tar.gz" -C "${WHISPER_TMP}"
+    cp "${WHISPER_TMP}"/whisper-bin-ubuntu-x64/whisper-cli "${WHISPER_BIN}"
+    cp "${WHISPER_TMP}"/whisper-bin-ubuntu-x64/*.so* "${SHARE_DIR}/whisper-cpp/bin/" 2>/dev/null || true
+    rm -rf "${WHISPER_TMP}"
+  fi
   cat > "${LOCAL_BIN}/whisper-cli" << 'WHISPEREOF'
-#!/usr/bin/env bash
-exec /usr/bin/whisper-cli -l es "$@"
+#!/bin/bash
+exec /home/antonio/.local/share/whisper-cpp/bin/whisper-cli "$@"
 WHISPEREOF
   chmod +x "${LOCAL_BIN}/whisper-cli"
 fi
@@ -77,9 +106,14 @@ mkdir -p "${PLUGIN_DIR}"
 # ---- 5. plugin/package.json (instalación via npm) ----
 cat > "${PLUGIN_DIR}/package.json" << 'EOF'
 {
-  "dependencies": {
-    "@renjfk/opencode-voice": "^0.6.0"
-  }
+  "name": "@renjfk/opencode-voice",
+  "version": "0.6.0",
+  "description": "Speech-to-text and text-to-speech for OpenCode.",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "exports": { ".": { "import": "./index.js" }, "./tui": { "import": "./index.js" } },
+  "files": ["index.js", "lib"]
 }
 EOF
 
@@ -140,13 +174,25 @@ cat > "${CONFIG_DIR}/tui.json" << 'TUIEOF'
 {
   "$schema": "https://opencode.ai/tui.json",
   "keybinds": {
-    "session_rename": "none"
+    "session_rename": "f8"
   },
   "plugin": [
-    "/home/antonio/.config/opencode/opencode-voice-modified"
+    [
+      "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
+      {
+        "endpoint": "http://localhost:4001/v1",
+        "model": "models-qwen3.5-9b"
+      }
+    ]
   ]
 }
 TUIEOF
+
+# Copiar archivos reales del plugin desde la copia de seguridad si existe
+if [ -d "${HOME}/Config/opencode/sesion-opencode/opencode-voice-modified" ]; then
+  log "Copiando plugin completo desde la copia de seguridad..."
+  cp -r "${HOME}/Config/opencode/sesion-opencode/opencode-voice-modified/." "${PLUGIN_DIR}/"
+fi
 
 # ---- 8. npm dependencies del plugin ----
 log "Instalando dependencias npm..."
@@ -155,8 +201,7 @@ if [ ! -f package.json ]; then
   cat > package.json << 'PKGEOF'
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.17.13",
-    "@renjfk/opencode-voice": "^0.6.0"
+    "@opencode-ai/plugin": "1.18.8"
   }
 }
 PKGEOF

@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_ACTIVO="/home/antonio/.config/opencode"
 CONFIG_BACKUP="/home/antonio/Config/opencode"
 DATE=$(date +%Y%m%d-%H%M%S)
 BACKUP_NAME="opencode-backup-${DATE}"
@@ -19,7 +19,7 @@ echo "=== Backup OpenCode - $(date '+%d/%m/%Y %H:%M') ==="
 
 mkdir -p "${BACKUP_ROOT}"
 
-# ─── 1. Copiar estructura de .config/opencode/ excluyendo runtime
+# ─── 1. Copiar estructura de .config/opencode/ excluyendo runtime y backups viejos
 echo "📦 Copiando configuración desde ~/.config/opencode/..."
 rsync -ah --delete \
   --exclude='backups/' \
@@ -37,7 +37,11 @@ rsync -ah --delete \
   --exclude='.git/' \
   --exclude='package-lock.json' \
   --exclude='package.json' \
-  "${SCRIPT_DIR}/." "${BACKUP_ROOT}/"
+  --exclude='*.tar.gz' \
+  --exclude='opencode-backup-*/' \
+  --exclude='opencode-sync-*.tar.gz' \
+  --exclude='setup-opencode-completo.sh' \
+  "${CONFIG_ACTIVO}/." "${BACKUP_ROOT}/"
 
 # ─── 2. Generar restore.sh dentro del backup
 echo "🔧 Creando restore.sh..."
@@ -62,10 +66,19 @@ fi
 # Crear directorio destino si no existe
 mkdir -p "$DEST_CONFIG"
 
-# Copiar archivos (excluyendo el propio restore.sh)
+# Copiar archivos (excluyendo el propio restore.sh y el setup completo)
 echo "Copiando archivos..."
 rsync -ah --exclude='*-restore.sh' \
+       --exclude='setup-opencode-completo.sh' \
        "$SOURCE_DIR/" "${DEST_CONFIG}/."
+
+# El setup-opencode-completo.sh vive solo en la copia de seguridad
+if [ -f "$SOURCE_DIR/setup-opencode-completo.sh" ]; then
+    mkdir -p "/home/antonio/Config/opencode/sesion-opencode"
+    cp "$SOURCE_DIR/setup-opencode-completo.sh" \
+       "/home/antonio/Config/opencode/sesion-opencode/setup-opencode-completo.sh"
+    echo "✅ setup-opencode-completo.sh restaurado en Config/opencode/sesion-opencode/"
+fi
 
 if [ $? -eq 0 ]; then
     echo ""

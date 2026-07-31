@@ -1,9 +1,9 @@
 {
   "model": {
-    "name": "Qwen/Qwen3-8B-Instruct-GGUF (Q6_K optimized)",
-    "path": "./qwen-qwen3.5-9b-q6k.Q6_K_Q.gguf",
-    "quantization": "q6_k_m",
-    "size_gb": "~7.9 compressed (~8.5GB VRAM real used)"
+    "name": "Qwen/Qwen3.5-9B-Instruct-GGUF (Q6_K)",
+    "path": "./Qwen3.5-9B-Q6_K.gguf",
+    "quantization": "q6_k",
+    "size_gb": "~7.45 GB"
   },
   
   "inference": {

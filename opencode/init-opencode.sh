@@ -166,7 +166,7 @@ log "🚀 INICIO - Inicialización de OpenCode"
 
 fijar_contexto_settings
 iniciar_lmstudio
-cargar_modelo
+# cargar_modelo  # Desactivado: modelo se carga manualmente cuando se necesite
 iniciar_proxy
 check_models
 check_memory

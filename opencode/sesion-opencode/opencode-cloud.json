@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "shell": "/usr/bin/zsh",
   "small_model": "lmstudio/models-qwen3.5-9b",
   "instructions": [
     "AGENTS.md"
@@ -22,7 +23,7 @@
     },
     "local": {
       "description": "Agente local - Qwen 3.5",
-      "mode": "fallback",
+      "mode": "subagent",
       "model": "lmstudio/models-qwen3.5-9b"
     },
     "cloud": {
@@ -49,91 +50,6 @@
           }
         }
       }
-    },
-    "anthropic": {
-      "npm": "@ai-sdk/anthropic",
-      "name": "Claude Sonnet 4",
-      "model": "claude-sonnet-4-20250514",
-      "options": {
-        "apiKey": "ANTHROPIC_API_KEY"
-      },
-      "models": {
-        "claude-sonnet-4-20250514": {
-          "name": "Claude Sonnet 4 - Reasoning Superior",
-          "tools": true,
-          "limit": {
-            "context": 200000,
-            "output": 8192
-          }
-        }
-      }
-    },
-    "google": {
-      "npm": "@ai-sdk/google",
-      "name": "Gemini Advanced",
-      "model": "gemini-2.0-flash-exp",
-      "options": {
-        "apiKey": "GOOGLE_API_KEY"
-      },
-      "models": {
-        "gemini-2.0-flash-exp": {
-          "name": "Gemini 2.0 Flash - Multimodal Excellence",
-          "tools": true,
-          "limit": {
-            "context": 1000000,
-            "output": 8192
-          }
-        }
-      }
-    },
-    "opencode-go": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "OpenCode Go",
-      "options": {
-        "baseURL": "https://opencode.ai/zen/go/v1"
-      },
-      "models": {
-        "deepseek-v4-flash": {
-          "name": "DeepSeek V4 Flash via OpenCode Go",
-          "tools": true,
-          "limit": {
-            "context": 128000,
-            "output": 8192
-          }
-        },
-        "deepseek-v4-pro": {
-          "name": "DeepSeek V4 Pro via OpenCode Go",
-          "tools": true,
-          "limit": {
-            "context": 128000,
-            "output": 8192
-          }
-        },
-        "qwen3.7-plus": {
-          "name": "Qwen 3.7 Plus via OpenCode Go",
-          "tools": true,
-          "limit": {
-            "context": 256000,
-            "output": 8192
-          }
-        },
-        "kimi-k2.7-code": {
-          "name": "Kimi K2.7 Code via OpenCode Go",
-          "tools": true,
-          "limit": {
-            "context": 128000,
-            "output": 8192
-          }
-        },
-        "glm-5.2": {
-          "name": "GLM-5.2 via OpenCode Go",
-          "tools": true,
-          "limit": {
-            "context": 128000,
-            "output": 8192
-          }
-        }
-      }
     }
   },
   "mcp": {
@@ -150,7 +66,7 @@
         "@modelcontextprotocol/server-filesystem",
         "/home/antonio"
       ],
-      "enabled": false
+      "enabled": true
     },
     "memory": {
       "type": "local",
@@ -162,8 +78,12 @@
       "enabled": true
     },
     "fetch": {
-      "type": "remote",
-      "url": "https://mcp-fetch-server.vercel.app",
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "mcp-fetch-server"
+      ],
       "enabled": true
     },
     "sequential_thinking": {
@@ -173,7 +93,7 @@
         "-y",
         "@modelcontextprotocol/server-sequential-thinking"
       ],
-      "enabled": false
+      "enabled": true
     }
   }
 }
