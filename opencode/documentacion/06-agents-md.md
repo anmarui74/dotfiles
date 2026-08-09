@@ -1,7 +1,7 @@
 # 📜 AGENTS.md — Reglas de comportamiento de OpenCode
 
-> **Fecha:** 26/07/2026 | **Usuario:** Antonio  
-> **Archivo original:** `~/.config/opencode/AGENTS.md` (164 líneas)  
+> **Fecha:** 26/07/2026 (última revisión: 09/08/2026) | **Usuario:** Antonio  
+> **Archivo original:** `~/.config/opencode/AGENTS.md` (209 líneas)  
 > **Propósito:** Instrucciones del sistema que OpenCode carga al inicio de cada sesión
 
 ---
@@ -47,7 +47,7 @@ Define **TODO** el comportamiento del asistente:
 El archivo se organiza en **5 secciones** claramente delimitadas:
 
 ```
-1. REGLAS OBLIGATORIAS (APLICAR SIEMPRE)    → Líneas 1-54
+1. REGLAS OBLIGATORIAS (APLICAR SIEMPRE)    → Líneas 1-56
    ├── Usuario
    ├── Idioma
    ├── Formato
@@ -56,24 +56,39 @@ El archivo se organiza en **5 secciones** claramente delimitadas:
    ├── Uso de herramientas
    └── Elevación de privilegios
 
-2. PROCEDIMIENTOS TÉCNICOS                   → Líneas 57-84
-   ├── Sincronización con Config/opencode
+2. PROCEDIMIENTOS TÉCNICOS                   → Líneas 58-86
+   ├── Sincronización con Config/opencode (estructura ordenada)
    └── Atención a setup-opencode-completo.sh
 
-3. PERSISTENCIA DE DATOS Y RECUPERACIÓN      → Líneas 87-125
+3. PERSISTENCIA DE DATOS Y RECUPERACIÓN      → Líneas 88-129
    ├── Variables de entorno
    ├── Inicialización
    ├── Backup del grafo de memoria
    └── Recuperación del grafo
 
-4. AVANZADO                                  → Líneas 129-155
+4. AVANZADO                                  → Líneas 131-157
    ├── PWAs - Abrir/Cerrar
    ├── Chrome debug
    ├── Servidor LM Studio
    └── Liberar VRAM
 
-5. CHECKLIST ANTES DE RESPONDER              → Líneas 159-164
+5. CHECKLIST ANTES DE RESPONDER              → Líneas 159-166
 ```
+
+### Estructura de `~/Config/opencode/` (desde 09/08/2026)
+
+```
+Config/opencode/
+├── backups/opencode/          # Tarballs de backup de OpenCode (1/día, retención 30 días)
+├── backups/                   # Backups del grafo de memoria (mcp-memory-backup-*.json)
+├── data/onlyoffice-ai/        # Integración IA de OnlyOffice
+├── documentacion/             # Documentación en Markdown
+├── sesion-opencode/           # Setup completo desde limpio + scripts sincronizados
+└── raíz: AGENTS.md, backup-opencode.sh, bootstrap-ocv.sh, sync-opencode.sh
+    + enlace simbólico setup-opencode-completo.sh → sesion-opencode/ (sin duplicar)
+```
+
+El AGENTS.md documenta esta estructura y exige mantener la raíz limpia.
 
 ---
 

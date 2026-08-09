@@ -10,14 +10,15 @@ set -euo pipefail
 
 CONFIG_ACTIVO="/home/antonio/.config/opencode"
 CONFIG_BACKUP="/home/antonio/Config/opencode"
+BACKUP_DIR="${CONFIG_BACKUP}/backups/opencode"
 DATE=$(date +%Y%m%d-%H%M%S)
 BACKUP_NAME="opencode-backup-${DATE}"
 
-BACKUP_ROOT="${CONFIG_BACKUP}/${BACKUP_NAME}"
+BACKUP_ROOT="${BACKUP_DIR}/${BACKUP_NAME}"
 
 echo "=== Backup OpenCode - $(date '+%d/%m/%Y %H:%M') ==="
 
-mkdir -p "${BACKUP_ROOT}"
+mkdir -p "${BACKUP_DIR}" "${BACKUP_ROOT}"
 
 # ─── 1. Copiar estructura de .config/opencode/ excluyendo runtime y backups viejos
 echo "📦 Copiando configuración desde ~/.config/opencode/..."
@@ -42,6 +43,13 @@ rsync -ah --delete \
   --exclude='opencode-sync-*.tar.gz' \
   --exclude='setup-opencode-completo.sh' \
   "${CONFIG_ACTIVO}/." "${BACKUP_ROOT}/"
+
+# ─── 1b. Incluir respaldo OnlyOffice-IA en el tarball ───
+if [ -d "${CONFIG_BACKUP}/data/onlyoffice-ai" ]; then
+    mkdir -p "${BACKUP_ROOT}/data"
+    cp -r "${CONFIG_BACKUP}/data/onlyoffice-ai" "${BACKUP_ROOT}/data/onlyoffice-ai"
+    echo "   ✅ Respaldo OnlyOffice-IA incluido en el backup"
+fi
 
 # ─── 2. Generar restore.sh dentro del backup
 echo "🔧 Creando restore.sh..."
@@ -71,6 +79,13 @@ echo "Copiando archivos..."
 rsync -ah --exclude='*-restore.sh' \
        --exclude='setup-opencode-completo.sh' \
        "$SOURCE_DIR/" "${DEST_CONFIG}/."
+
+# Restaurar respaldo OnlyOffice-IA en Config/opencode/data/
+if [ -d "${SOURCE_DIR}/data/onlyoffice-ai" ]; then
+    mkdir -p "/home/antonio/Config/opencode/data"
+    cp -r "${SOURCE_DIR}/data/onlyoffice-ai" "/home/antonio/Config/opencode/data/onlyoffice-ai"
+    echo "✅ Respaldo OnlyOffice-IA restaurado en Config/opencode/data/"
+fi
 
 # El setup-opencode-completo.sh vive solo en la copia de seguridad
 if [ -f "$SOURCE_DIR/setup-opencode-completo.sh" ]; then
@@ -134,21 +149,48 @@ fi
 echo ""
 echo "📦 Creando tarball..."
 cd "${BACKUP_ROOT}"
-tar -czf "${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz" .
+tar -czf "${BACKUP_DIR}/${BACKUP_NAME}.tar.gz" .
 cd - > /dev/null
 
-BACKUP_SIZE=$(ls -lh "${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz" | awk '{print $5}')
-echo "   ✅ Tarball creado (${BACKUP_SIZE}): ${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz"
+BACKUP_SIZE=$(ls -lh "${BACKUP_DIR}/${BACKUP_NAME}.tar.gz" | awk '{print $5}')
+echo "   ✅ Tarball creado (${BACKUP_SIZE}): ${BACKUP_DIR}/${BACKUP_NAME}.tar.gz"
 
 # ─── 5. Limpiar directorio temporal del backup
 echo ""
 echo "🧹 Limpiando directorio temporal..."
 rm -rf "${BACKUP_ROOT}"
 
+# ─── 5. Retención: borrar tarballs con más de 30 días (LOG_RETENTION_DAYS) ───
+RETENTION_DAYS="${LOG_RETENTION_DAYS:-30}"
+echo ""
+echo "🧹 Aplicando retención (${RETENTION_DAYS} días) en ${BACKUP_DIR}..."
+OLD_TARBALLS=$(find "${BACKUP_DIR}" -maxdepth 1 -name 'opencode-*.tar.gz' -mtime +"${RETENTION_DAYS}" 2>/dev/null | wc -l)
+if [ "${OLD_TARBALLS}" -gt 0 ]; then
+    find "${BACKUP_DIR}" -maxdepth 1 -name 'opencode-*.tar.gz' -mtime +"${RETENTION_DAYS}" -delete 2>/dev/null || true
+    echo "   🗑️  ${OLD_TARBALLS} tarballs antiguos eliminados (más de ${RETENTION_DAYS} días)"
+else
+    echo "   ✅ No hay tarballs antiguos que eliminar"
+fi
+
+# ─── 6. Poda diaria: conservar solo el ÚLTIMO tarball de cada día ───
+echo "🗂️  Podando duplicados del mismo día (se conserva el último)..."
+PODADOS=0
+for f in "${BACKUP_DIR}"/opencode-*_*.tar.gz "${BACKUP_DIR}"/opencode-*-*.tar.gz; do
+    [ -f "$f" ] || continue
+    DAY=$(basename "$f" | grep -oE '[0-9]{8}' | head -1 || true)
+    [ -n "$DAY" ] || continue
+    LAST=$(find "${BACKUP_DIR}" -maxdepth 1 -name "opencode-*-${DAY}-*.tar.gz" 2>/dev/null | sort | tail -1)
+    if [ -n "$LAST" ] && [ "$f" != "$LAST" ]; then
+        rm -f "$f"
+        PODADOS=$((PODADOS+1))
+    fi
+done
+echo "   🗑️  ${PODADOS} duplicados del mismo día eliminados"
+
 echo ""
 echo "✅ Backup completado!"
 echo ""
-echo "Ubicación: ${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz"
+echo "Ubicación: ${BACKUP_DIR}/${BACKUP_NAME}.tar.gz"
 echo "Para restaurar:"
 echo "  1. tar -xzf ${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz -C /tmp/restore-opencode"
 echo "  2. bash /tmp/restore-opencode/*-restore.sh"

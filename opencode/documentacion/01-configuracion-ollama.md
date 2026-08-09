@@ -1,8 +1,10 @@
 # 🦙 Configuración de Ollama + Proxy
 
-> **Fecha:** 26/07/2026 | **Usuario:** Antonio
+> **Fecha:** 26/07/2026 (última revisión: 09/08/2026) | **Usuario:** Antonio
 
 ---
+
+> ⚠️ **NOTA (09/08/2026):** Esta configuración está **EN DESUSO**. El sistema usa LM Studio como proveedor principal (ver doc 02). El `ollama-proxy.py` y la configuración de LiteLLM fueron **archivados y eliminados** durante la limpieza de `~/Config/opencode/`. Este documento se conserva solo como referencia histórica.
 
 ## Índice
 
@@ -20,15 +22,15 @@
 
 Ollama es el **servidor de inferencia local** que se usó inicialmente antes de migrar a LM Studio. Actualmente **no está activo como provider principal** en OpenCode, pero los modelos siguen disponibles en el sistema vía Ollama (puerto `11434`).
 
-El proxy de Ollama (`ollama-proxy.py`) está diseñado para **sortear el bug #34892** del SDK `@ai-sdk/openai-compatible`, que serializa `function.name` como `undefined` en las tool calls.
+El proxy de Ollama (`ollama-proxy.py`) estaba diseñado para **sortear el bug #34892** del SDK `@ai-sdk/openai-compatible`, que serializa `function.name` como `undefined` en las tool calls.
 
 ---
 
 ## Proxy de Ollama
 
-### Archivo: `~/.config/opencode/ollama-proxy.py` (en Config/opencode/)
+### Archivo: `~/.config/opencode/ollama-proxy.py` (archivado/eliminado)
 
-> ⚠️ Este archivo está en `~/Config/opencode/` (backup) pero **no** en `~/.config/opencode/` (activo), porque actualmente se usa LM Studio como provider principal.
+> ⚠️ Este archivo **ya no existe** en `~/Config/opencode/` (se eliminó en la limpieza del 09/08/2026). Se documenta aquí solo como referencia histórica del bug #34892.
 
 ### ¿Qué hace?
 

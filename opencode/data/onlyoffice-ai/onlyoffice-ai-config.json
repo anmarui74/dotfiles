@@ -1,0 +1,267 @@
+{
+  "version": 4,
+  "providers": {
+    "OpenAI": {
+      "name": "OpenAI",
+      "url": "https://api.openai.com",
+      "key": "",
+      "models": []
+    },
+    "Google-Gemini": {
+      "name": "Google-Gemini",
+      "url": "https://generativelanguage.googleapis.com",
+      "key": "",
+      "models": []
+    },
+    "Anthropic": {
+      "name": "Anthropic",
+      "url": "https://api.anthropic.com",
+      "key": "",
+      "models": []
+    },
+    "xAI": {
+      "name": "xAI",
+      "url": "https://api.x.ai",
+      "key": "",
+      "models": []
+    },
+    "Stability AI": {
+      "name": "Stability AI",
+      "url": "https://api.stability.ai",
+      "key": "",
+      "models": []
+    },
+    "Deepseek": {
+      "name": "Deepseek",
+      "url": "https://api.deepseek.com",
+      "key": "",
+      "models": []
+    },
+    "Mistral": {
+      "name": "Mistral",
+      "url": "https://api.mistral.ai",
+      "key": "",
+      "models": []
+    },
+    "Together AI": {
+      "name": "Together AI",
+      "url": "https://api.together.xyz",
+      "key": "",
+      "models": []
+    },
+    "Groq": {
+      "name": "Groq",
+      "url": "https://api.groq.com/openai",
+      "key": "",
+      "models": []
+    },
+    "OpenRouter": {
+      "name": "OpenRouter",
+      "url": "https://openrouter.ai/api",
+      "key": "",
+      "models": []
+    },
+    "Ollama": {
+      "name": "Ollama",
+      "url": "http://localhost:11434/v1",
+      "key": "",
+      "models": [
+        {
+          "id": "mistral-nemo:12b",
+          "object": "model",
+          "created": 1783632090,
+          "owned_by": "library",
+          "name": "mistral-nemo:12b",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "modelo-mistral-nemo:12b",
+          "object": "model",
+          "created": 1783631603,
+          "owned_by": "library",
+          "name": "modelo-mistral-nemo:12b",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "modelo-llama3.1:latest",
+          "object": "model",
+          "created": 1783631561,
+          "owned_by": "library",
+          "name": "modelo-llama3.1:latest",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "modelo-qwen3.5:latest",
+          "object": "model",
+          "created": 1783631460,
+          "owned_by": "library",
+          "name": "modelo-qwen3.5:latest",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "modelo-gemma4:latest",
+          "object": "model",
+          "created": 1783631376,
+          "owned_by": "library",
+          "name": "modelo-gemma4:latest",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "modelo-deepseek-r1:latest",
+          "object": "model",
+          "created": 1783627540,
+          "owned_by": "library",
+          "name": "modelo-deepseek-r1:latest",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "qwen2.5-coder:7b-base",
+          "object": "model",
+          "created": 1783158948,
+          "owned_by": "library",
+          "name": "qwen2.5-coder:7b-base",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "deepseek-coder:6.7b",
+          "object": "model",
+          "created": 1783158455,
+          "owned_by": "library",
+          "name": "deepseek-coder:6.7b",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "gemma4:e4b",
+          "object": "model",
+          "created": 1782471590,
+          "owned_by": "library",
+          "name": "gemma4:e4b",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "qwen3.5:latest",
+          "object": "model",
+          "created": 1782469914,
+          "owned_by": "library",
+          "name": "qwen3.5:latest",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "qwen3.5:9b",
+          "object": "model",
+          "created": 1782469876,
+          "owned_by": "library",
+          "name": "qwen3.5:9b",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "gemma4:latest",
+          "object": "model",
+          "created": 1782469460,
+          "owned_by": "library",
+          "name": "gemma4:latest",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "deepseek-r1:latest",
+          "object": "model",
+          "created": 1782468817,
+          "owned_by": "library",
+          "name": "deepseek-r1:latest",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "deepseek-r1:8b",
+          "object": "model",
+          "created": 1782468769,
+          "owned_by": "library",
+          "name": "deepseek-r1:8b",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "llama3.1:latest",
+          "object": "model",
+          "created": 1782468460,
+          "owned_by": "library",
+          "name": "llama3.1:latest",
+          "endpoints": [],
+          "options": {}
+        },
+        {
+          "id": "llama3.1:8b",
+          "object": "model",
+          "created": 1782468408,
+          "owned_by": "library",
+          "name": "llama3.1:8b",
+          "endpoints": [],
+          "options": {}
+        }
+      ]
+    },
+    "LM Studio": {
+      "name": "LM Studio",
+      "url": "http://localhost:1234",
+      "key": "",
+      "models": []
+    },
+    "GPT4All": {
+      "name": "GPT4All",
+      "url": "http://localhost:4891",
+      "key": "",
+      "models": []
+    },
+    "ZhiPu": {
+      "name": "ZhiPu",
+      "url": "https://open.bigmodel.cn/api/paas/v4",
+      "key": "",
+      "models": []
+    },
+    "OpenCode Local": {
+      "name": "OpenCode Local",
+      "url": "http://localhost:4001/v1",
+      "key": "lm-studio",
+      "models": [
+        {
+          "id": "models-qwen3.5-9b",
+          "object": "model",
+          "created": 1780000000,
+          "owned_by": "lmstudio",
+          "name": "models-qwen3.5-9b",
+          "endpoints": [
+            1
+          ],
+          "options": {}
+        }
+      ]
+    }
+  },
+  "models": [
+    {
+      "capabilities": 511,
+      "provider": "Ollama",
+      "name": "Ollama [modelo-gemma4:latest]",
+      "id": "modelo-gemma4:latest"
+    },
+    {
+      "capabilities": 511,
+      "provider": "OpenCode Local",
+      "name": "OpenCode Local [models-qwen3.5-9b]",
+      "id": "models-qwen3.5-9b"
+    }
+  ],
+  "customProviders": {}
+}

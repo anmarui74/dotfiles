@@ -41,9 +41,10 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "small_model": "lmstudio/qwen/qwen3.5-9b",
+  "shell": "/usr/bin/zsh",
+  "small_model": "lmstudio/models-qwen3.5-9b",
   "instructions": ["AGENTS.md"],
-  "default_agent": "local",
+  "default_agent": "cloud",
   "permission": {
     "edit": "ask",
     "bash": {
@@ -61,23 +62,23 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
     },
     "local": {
       "description": "Agente local - Qwen 3.5",
-      "mode": "primary",
-      "model": "lmstudio/qwen/qwen3.5-9b"
+      "mode": "subagent",
+      "model": "lmstudio/models-qwen3.5-9b"
     },
     "cloud": {
-      "description": "Agente para modelos cloud",
+      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
       "mode": "primary",
-      "model": "anthropic/claude-sonnet-4-20250514"
+      "model": "opencode-go/deepseek-v4-flash"
     }
   },
   "provider": {
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Qwen 3.5",
-      "model": "qwen/qwen3.5-9b",
+      "name": "Qwen 3.5 Q6_K",
+      "model": "models-qwen3.5-9b",
       "options": {"baseURL": "http://localhost:4001/v1"},
       "models": {
-        "qwen/qwen3.5-9b": {
+        "models-qwen3.5-9b": {
           "name": "Qwen 3.5 - Tool Calling Excellence",
           "tools": true,
           "limit": {"context": 81920, "output": 8192}
@@ -90,8 +91,7 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
     "filesystem": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"], "enabled": true},
     "memory": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-memory"], "enabled": true},
     "fetch": {"type": "local", "command": ["npx", "-y", "mcp-fetch-server"], "enabled": true},
-    "sequential_thinking": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"], "enabled": true},
-    "duckduckgo_search": {"type": "local", "command": ["duckduckgo-mcp-server"], "enabled": true}
+    "sequential_thinking": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"], "enabled": true}
   }
 }
 ```
@@ -105,7 +105,8 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "small_model": "lmstudio/qwen/qwen3.5-9b",
+  "shell": "/usr/bin/zsh",
+  "small_model": "lmstudio/models-qwen3.5-9b",
   "instructions": ["AGENTS.md"],
   "default_agent": "local",
   "permission": {
@@ -113,20 +114,26 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
     "bash": { "sudo *": "deny", "pkexec *": "allow", "*": "ask" }
   },
   "agent": {
+    "build": {
+      "prompt": "{file:./prompts/read-agents.txt}"
+    },
+    "plan": {
+      "prompt": "{file:./prompts/read-agents.txt}"
+    },
     "local": {
-      "description": "Agente local - Qwen 3.5 optimizado",
+      "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/qwen/qwen3.5-9b"
+      "model": "lmstudio/models-qwen3.5-9b"
     }
   },
   "provider": {
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Qwen 3.5",
-      "model": "qwen/qwen3.5-9b",
+      "name": "Qwen 3.5 Q6_K",
+      "model": "models-qwen3.5-9b",
       "options": {"baseURL": "http://localhost:4001/v1"},
       "models": {
-        "qwen/qwen3.5-9b": {
+        "models-qwen3.5-9b": {
           "name": "Qwen 3.5 - Tool Calling Excellence",
           "tools": true,
           "limit": {"context": 81920, "output": 8192}
@@ -135,12 +142,11 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
     }
   },
   "mcp": {
-    "context7": {"enabled": false},
+    "context7": {"type": "remote", "url": "https://mcp.context7.com/mcp", "enabled": false},
     "filesystem": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"], "enabled": true},
-    "memory": {"enabled": false},
+    "memory": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-memory"], "enabled": true},
     "fetch": {"type": "local", "command": ["npx", "-y", "mcp-fetch-server"], "enabled": true},
-    "sequential_thinking": {"enabled": false},
-    "duckduckgo_search": {"enabled": false}
+    "sequential_thinking": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"], "enabled": false}
   }
 }
 ```
@@ -159,23 +165,23 @@ Es idéntico al activo (`opencode.json`). Ver [sección del perfil activo](#perf
 
 | Aspecto | Local | Cloud |
 |---------|-------|-------|
-| **Agentes** | Solo `local` | `build`, `plan`, `local`, `cloud` |
-| **Modelo local** | ✅ Qwen 3.5 | ✅ Qwen 3.5 |
-| **Modelo cloud** | ❌ No | ✅ Claude Sonnet 4 |
+| **Agentes** | `build`, `plan`, `local` | `build`, `plan`, `local`, `cloud` |
+| **Agente principal** | `local` (Qwen 3.5 local) | `cloud` (OpenCode Go: deepseek-v4-flash) |
+| **Modelo local** | ✅ Qwen 3.5 Q6_K | ✅ Qwen 3.5 Q6_K (subagente) |
+| **Modelo cloud** | ❌ No | ✅ OpenCode Go (deepseek-v4-flash) |
 | **context7** | ❌ | ✅ |
 | **filesystem** | ✅ | ✅ |
-| **memory** | ❌ | ✅ |
+| **memory** | ✅ | ✅ |
 | **fetch** | ✅ | ✅ |
 | **sequential_thinking** | ❌ | ✅ |
-| **duckduckgo_search** | ❌ | ✅ |
-| **Uso típico** | Tareas simples/sin internet | Tareas complejas/con internet |
+| **Uso típico** | Tareas locales sin internet | Tareas complejas con todo activo |
 
 ### ¿Cuándo usar cada perfil?
 
 | Perfil | Cuándo usarlo |
 |--------|--------------|
-| **Local** | Cuando trabajes offline, tareas que no requieran búsqueda web ni memoria persistente. Menos consumo de VRAM (solo filesystem + fetch). |
-| **Cloud** | Cuando necesites toda la potencia: documentación (context7), búsqueda web (duckduckgo), memoria persistente, razonamiento estructurado (sequential_thinking). |
+| **Local** | Cuando trabajes offline o quieras que todo el procesamiento sea local (privacidad). Menos MCPs activos (context7 y sequential_thinking desactivados). |
+| **Cloud** | Cuando necesites toda la potencia: documentación (context7), razonamiento estructurado (sequential_thinking) y modelos en la nube (OpenCode Go). |
 
 ---
 
@@ -251,8 +257,8 @@ Define agentes (personas/modos del asistente):
 
 - **build:** Agente especial para tareas de construcción (lee AGENTS.md al inicio)
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
-- **local:** Modo principal, usa el modelo local Qwen 3.5
-- **cloud:** Modo cloud, usa Claude Sonnet 4 (requiere API key de Anthropic)
+- **local:** Agente local, usa el modelo Qwen 3.5 Q6_K vía LM Studio (puerto 4001). En el perfil activo es **subagente**
+- **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`)
 
 Cada agente puede tener su propio modelo y prompt de sistema.
 
@@ -261,7 +267,7 @@ Proveedores de modelos. Actualmente solo `lmstudio`, configurado como:
 
 - **SDK:** `@ai-sdk/openai-compatible` (interfaz OpenAI para LM Studio)
 - **URL:** `http://localhost:4001/v1` (proxy local)
-- **Modelo:** `qwen/qwen3.5-9b`
+- **Modelo:** `models-qwen3.5-9b`
 - **Límites:** 81.920 tokens de contexto, 8.192 de salida
 - **Tools:** Habilitadas
 
@@ -275,7 +281,6 @@ Servidores MCP (Model Context Protocol). Cada uno proporciona **herramientas** q
 | **memory** | Local | `@modelcontextprotocol/server-memory` | Grafo de conocimiento persistente |
 | **fetch** | Local | `mcp-fetch-server` | Obtener contenido web |
 | **sequential_thinking** | Local | `@modelcontextprotocol/server-sequential-thinking` | Razonamiento estructurado paso a paso |
-| **duckduckgo_search** | Local | `duckduckgo-mcp-server` | Búsqueda web |
 
 ### Dependencias npm
 

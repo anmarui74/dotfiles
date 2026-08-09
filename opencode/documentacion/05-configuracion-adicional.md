@@ -159,7 +159,7 @@ HARDWARE_INDEX_PATH=/home/antonio/.config/opencode/data/hardware/index.json
 | Variable | Valor | Propósito |
 |----------|-------|-----------|
 | `OLLAMA_API_KEY` | `ollama` | API key para Ollama (no necesita autenticación real) |
-| `OLLAMA_PROXY_PORT` | `4000` | Puerto del proxy de Ollama |
+| `OLLAMA_PROXY_PORT` | `4000` | Puerto del proxy de Ollama (en desuso) |
 | `MCP_CONTEXT7_URL` | `https://mcp.context7.com/mcp` | Endpoint del servidor MCP de documentación |
 | `CHROME_DEBUG_PROFILE` | `/tmp/chrome-debug-profile` | Perfil temporal de Chrome para depuración de PWAs |
 | `REMOTE_DEBUGGING_PORT` | `9222` | Puerto de depuración remota de Chrome |
@@ -170,8 +170,10 @@ HARDWARE_INDEX_PATH=/home/antonio/.config/opencode/data/hardware/index.json
 | `MEMORY_BACKUP_ENABLED` | `true` | Activa backups automáticos del grafo |
 | `MEMORY_BACKUP_PATH` | `Config/opencode/backups/...` | Ruta de los backups del grafo |
 | `LOG_FILE` | `data/init.log` | Archivo de log de inicialización |
-| `LOG_RETENTION_DAYS` | `30` | Días de retención de logs |
+| `LOG_RETENTION_DAYS` | `30` | Días de retención de logs y tarballs de backup |
 | `AUDIT_ENABLED` | `true` | Auditoría de actividad |
+| `ENABLE_METRICS` | — | Métricas de tokens/s (proxy LM Studio) |
+| `METRICS_EXPORT_PATH` | — | Ruta de exportación de métricas |
 | `HARDWARE_INDEX_PATH` | `data/hardware/index.json` | Ruta al índice de hardware |
 
 ### Cargar el .env
@@ -188,11 +190,12 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 
 ### ¿Qué hace?
 
-1. **Sincroniza** archivos de `~/.config/opencode/` → `~/Config/opencode/`
-2. Copia archivos individuales (excepto `__pycache__`, `node_modules`, `build`, ocultos)
-3. Copia directorios completos: `commands/`, `prompts/`, `data/`, `skills/`
-4. Sincroniza `setup-opencode-completo.sh` con su copia en `scripts/`
-5. **Regenera** el tarball de backup si existe `backup-opencode.sh`
+1. **Sincroniza** archivos de `~/.config/opencode/` → `~/Config/opencode/sesion-opencode/`
+2. Copia archivos individuales (JSON, scripts, md, `.env`) al directorio de sesión
+3. Copia directorios: `commands/`, `prompts/`, `skills/`, `skills-disabled/`, `tui.json`, plugin de voz
+4. **Regenera** el tarball de backup ejecutando `backup-opencode.sh`
+
+> 📌 El backup completo se genera en `~/Config/opencode/backups/opencode/` con retención de 30 días y poda de 1 tarball por día.
 
 ### ¿Cuándo se ejecuta?
 
@@ -228,6 +231,8 @@ WantedBy=default.target
 ```
 
 **Propósito:** Arranca LM Studio, carga el modelo con 80K de contexto e inicia el proxy al iniciar sesión.
+
+> ⚠️ **Estado actual: DESHABILITADO.** La carga del modelo ocurre automáticamente al abrir `opencode` u `ocv` (vía `start-opencode-server.sh`), no al iniciar sesión. No es necesario habilitarlo.
 
 ### `opencode-sync.service`
 
@@ -421,31 +426,40 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 
 ### `~/Config/opencode/` (backup)
 
-Misma estructura que `.config/opencode/` más:
+Estructura **ordenada** de respaldo (reorganizada el 09/08/2026):
 
 ```
 Config/opencode/
-├── backup-opencode.sh        # Script de backup completo
-├── restore.sh                # (dentro del tarball de backup)
-├── ollama-proxy.py           # Proxy de Ollama (histórico)
-├── .zshrc                    # Config ZSH con alias de OpenCode
-├── optimizacion-26-07-2026.md
-├── systemd/
-│   ├── init-opencode.service
-│   └── user/
-│       ├── init-opencode.service
-│       ├── opencode-sync.service
-│       └── opencode-sync.timer
-├── sesion-opencode/
-│   ├── setup-opencode-completo.sh   # Instalador completo
-│   ├── scripts/
-│   │   └── setup-opencode-completo.sh
-│   └── config/
-│       └── opencode.json
-├── instalar-voz-opencode-v2/
-├── setup-voz.sh
-└── backups/                  # Backups del grafo de memoria
-    ├── mcp-memory-backup-*.json
-    └── 20260726_1220/
-        └── opencode.json
+├── AGENTS.md                  # Copia de respaldo de las reglas
+├── backup-opencode.sh         # Script de backup (genera tarball + retención + poda)
+├── sync-opencode.sh           # Copia de respaldo del sincronizador
+├── bootstrap-ocv.sh           # Instalador de voz desde limpio
+├── setup-opencode-completo.sh # 🔗 ENLACE SIMBÓLICO → sesion-opencode/ (instalador completo, sin duplicar)
+│
+├── backups/                   # 🎯 CARPETA DE BACKUPS
+│   ├── opencode/              # Tarballs opencode-backup-*.tar.gz (1/día, 30 días)
+│   └── mcp-memory-backup-*.json  # Backups del grafo de memoria
+│
+├── data/
+│   ├── onlyoffice-ai/         # Integración IA de OnlyOffice (script + snapshot + doc)
+│   ├── hardware/              # Índice de hardware
+│   └── ...                    # Logs y estado
+│
+├── documentacion/             # 📚 Documentación en Markdown (este README y docs 01-06)
+├── sesion-opencode/           # Setup completo + scripts sincronizados cada 2 min
+│   ├── setup-opencode-completo.sh   # Instalador completo (con PASO 19: OnlyOffice)
+│   ├── AGENTS.md
+│   ├── backup-opencode.sh
+│   └── ...                    # Resto de scripts/config sincronizados
+│
+└── (legacy/ y respaldo-config/ fueron eliminados el 09/08/2026 por obsoletos)
 ```
+
+### Política de retención de backups
+
+| Regla | Detalle |
+|-------|---------|
+| **Retención** | Tarballs con más de 30 días (`LOG_RETENTION_DAYS`) se borran automáticamente |
+| **Poda diaria** | Solo se conserva el **primer** tarball de cada día |
+| **Total esperado** | ~30 tarballs (~50 MB) en estado estable |
+| **Carpeta** | `~/Config/opencode/backups/opencode/` |

@@ -2,8 +2,8 @@
 
 > **Usuario:** Antonio 🧑‍💻  
 > **Ubicación:** Pechina, Almería, España 📍  
-> **Fecha:** 26/07/2026  
-> **Modelo activo:** Qwen 3.5 (9B) con 80K contexto 🤖
+> **Fecha:** 09/08/2026  
+> **Modelo principal:** OpenCode Go (deepseek-v4-flash) ☁️ + Qwen 3.5 (9B) local 🤖
 
 ---
 
@@ -11,12 +11,22 @@
 
 | # | Documento | Descripción |
 |---|-----------|-------------|
-| 01 | [Configuración de Ollama + Proxy](01-configuracion-ollama.md) | 🦙 Proxy de Ollama, LiteLLM, modelos disponibles, bug #34892 |
+| 01 | [Configuración de Ollama + Proxy](01-configuracion-ollama.md) | 🦙 Proxy de Ollama (EN DESUSO), LiteLLM, modelos disponibles, bug #34892 |
 | 02 | [Configuración de LM Studio + Proxy](02-configuracion-lmstudio.md) | 🖥️ Proxy de LM Studio, init-opencode, systemd, carga de modelo |
 | 03 | [Configuración completa de Voz](03-configuracion-voz.md) | 🎤 STT (sox→whisper→LLM), TTS (edge-tts→paplay), plugin, speak |
 | 04 | [Los tres perfiles de opencode.json](04-perfiles-opencode-json.md) | 📋 Perfiles local/cloud/activo, MCPs, proveedores, agentes |
 | 05 | [Configuración adicional](05-configuracion-adicional.md) | ⚙️ .env, sync, systemd, scripts, estructura |
-| 06 | [AGENTS.md al detalle](06-agents-md.md) | 📜 Explicación línea por línea de las reglas de comportamiento |
+| 06 | [AGENTS.md al detalle](06-agents-md.md) | 📜 Explicación de las reglas de comportamiento |
+| 07 | [OnlyOffice IA + OpenCode](../data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md) | 📝 Integración del plugin IA de OnlyOffice con el modelo local |
+
+### Notas y seguimientos
+
+| Archivo | Descripción |
+|---------|-------------|
+| [notas-opencode-go.md](notas-opencode-go.md) | ☁️ Modelos de OpenCode Go alojados en China (opt-in) |
+| [seguimiento-issue-memory.md](seguimiento-issue-memory.md) | 🐛 Seguimiento del issue MCP memory (draft-07 vs 2020-12) |
+| [README-hardware.md](README-hardware.md) | 🖥️ Comandos rápidos de consulta de hardware |
+| [hardware-info.md](hardware-info.md) | 📊 Información completa del hardware |
 
 ---
 
@@ -37,9 +47,10 @@
                     ┌──────────▼───────────────────────┐
                     │        OPENCODE                  │
                     │  ┌──────────────────────────┐   │
-                    │  │  Modelo: Qwen 3.5 (9B)   │   │
-                    │  │  Contexto: 80K tokens    │   │
-                    │  │  Tools: 6 MCP servers    │   │
+                    │  │  Agente cloud (principal)│   │
+                    │  │  deepseek-v4-flash       │   │
+                    │  │  + Qwen 3.5 local (sub)  │   │
+                    │  │  Tools: 5 MCP servers    │   │
                     │  │  Skills: 68 activos      │   │
                     │  └──────────┬───────────────┘   │
                     └─────────────┼───────────────────┘
@@ -60,12 +71,15 @@
 ```
 LM Studio API ──── http://localhost:1234 ──── Proxy (4001) ──── OpenCode
      │                                                   
-     ├── Modelo: qwen/qwen3.5-9b (80K contexto)
-     ├── lms server start (systemd)
+     ├── Modelo: models-qwen3.5-9b (80K contexto)
+     ├── lms server start (a través de start-opencode.sh)
      └── lms load / unload
 
-Ollama API ────── http://localhost:11434 ──── Proxy (4000) ──── (en desuso)
+OpenCode Go (cloud) ──── agente principal (deepseek-v4-flash)
      │
+     └── https://opencode.ai (suscripción Go)
+
+Ollama API ────── http://localhost:11434 ──── Proxy (4000) ──── (en desuso)
      ├── Modelos: llama3.1, gemma4, deepseek-r1, qwen3.5
      └── LiteLLM como capa de abstracción
 ```
@@ -112,7 +126,7 @@ bash ~/.config/opencode/switch-mcp-profile.sh cloud   # Todo activo
 # Sincronizar configuración
 bash ~/.config/opencode/sync-opencode.sh
 
-# Regenerar backup completo
+# Regenerar backup completo (va a backups/opencode/, retención 30 días + 1/día)
 bash ~/Config/opencode/backup-opencode.sh
 
 # Cargar variables de entorno
@@ -122,4 +136,6 @@ set -a; source ~/.config/opencode/.env; set +a
 ---
 
 > 📁 **Ubicación de estos documentos:** `~/Config/opencode/documentacion/`  
+> 🎯 **Backups de OpenCode:** `~/Config/opencode/backups/opencode/`  
+> 🧠 **Grafo de memoria:** `~/Config/opencode/backups/` (mcp-memory-backup-*.json)  
 > 🔄 **Se actualizan manualmente** cuando cambia la configuración.

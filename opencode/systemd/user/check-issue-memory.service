@@ -1,6 +1,0 @@
-[Unit]
-Description=Check OpenCode issue #39908 (MCP memory draft-07)
-
-[Service]
-Type=oneshot
-ExecStart=/home/antonio/.config/opencode/check-issue-memory.sh

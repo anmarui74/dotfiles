@@ -59,6 +59,16 @@ patrón, o llama a read_file para cada archivo individual.
 ## Sincronización con Config/opencode (OBLIGATORIO)
 - `~/.config/opencode/` es la configuración ACTIVA (la que usa OpenCode)
 - `~/Config/opencode/` es la copia de SEGURIDAD para instalaciones desde limpio
+- Estructura ordenada de `~/Config/opencode/`:
+  - `backups/opencode/` → tarballs de backup de OpenCode (`opencode-backup-*.tar.gz`)
+  - `backups/` (raíz) → backups del grafo de memoria (`mcp-memory-backup-*.json`)
+  - `data/` → datos auxiliares (p. ej. `onlyoffice-ai/`)
+  - `documentacion/` → documentación en Markdown
+  - `sesion-opencode/` → setup completo desde limpio + scripts sincronizados
+  - `respaldo-config/` → snapshot antiguo de la configuración
+  - `legacy/` → scripts y carpetas obsoletos
+  - En la raíz solo viven: `AGENTS.md`, `backup-opencode.sh`, `bootstrap-ocv.sh`, `sync-opencode.sh`
+    y el enlace simbólico `setup-opencode-completo.sh` → `sesion-opencode/setup-opencode-completo.sh`
 - Cada vez que modifiques, crees o elimines algo en `~/.config/opencode/`:
   1. **Copia el archivo** a `~/Config/opencode/` (manteniendo la misma estructura)
   2. **Actualiza los scripts** de instalación si es necesario:
@@ -67,6 +77,7 @@ patrón, o llama a read_file para cada archivo individual.
      - `restore.sh` (va dentro del tarball, lo genera backup-opencode.sh)
   3. Si el cambio afecta al proceso de instalación/restauración, modifica los scripts para reflejarlo
 - Ejecuta `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball con restore.sh actualizado
+- El tarball se genera en `~/Config/opencode/backups/opencode/`
 
 ## Atención al script setup-opencode-completo.sh (IMPORTANTE)
 El script `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh` es el
@@ -74,6 +85,8 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
 - **ÚNICA copia en disco**: vive SOLO en `~/Config/opencode/sesion-opencode/`
   (carpeta de respaldo) y dentro del tarball del backup. NO debe existir en la raíz
   de `~/.config/opencode/` ni en ningún `scripts/`.
+- **Acceso directo**: en la raíz de `~/Config/opencode/` hay un ENLACE SIMBÓLICO
+  `setup-opencode-completo.sh` → `sesion-opencode/` para tenerlo a mano SIN duplicarlo.
 - El `sync-opencode.sh` (timer systemd `opencode-sync.timer`, cada 2 minutos)
   sincroniza el resto de archivos desde `~/.config/opencode/`, pero NO crea copias
   del setup: ese se edita directamente en `~/Config/opencode/sesion-opencode/`.
@@ -122,7 +135,6 @@ El grafo de conocimiento se respalda automáticamente en:
 `/home/antonio/Config/opencode/backups/`
 Con nombre `mcp-memory-backup-{fecha}.json`
 Los backups se conservan 30 días (según LOG_RETENTION_DAYS en .env)
-
 ## Recuperación del grafo de memoria
 Si el grafo se pierde o corrompe:
 1. Localizar el backup más reciente:
@@ -134,7 +146,8 @@ Si el grafo se pierde o corrompe:
 ## Directorios de datos
 - `/home/antonio/.config/opencode/data/` - Datos de ejecución (logs, estado)
 - `/home/antonio/.config/opencode/data/memory/` - Grafo de memoria persistente
-- `/home/antonio/Config/opencode/backups/` - Copias de seguridad del grafo
+- `/home/antonio/Config/opencode/backups/` - Backups del grafo de memoria (`mcp-memory-backup-*.json`)
+- `/home/antonio/Config/opencode/backups/opencode/` - Tarballs de backup de OpenCode
 - `/home/antonio/.config/opencode/.env` - Variables de entorno seguras
 
 ---

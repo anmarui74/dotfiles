@@ -597,6 +597,16 @@ patrón, o llama a read_file para cada archivo individual.
 ## Sincronización con Config/opencode (OBLIGATORIO)
 - `~/.config/opencode/` es la configuración ACTIVA (la que usa OpenCode)
 - `~/Config/opencode/` es la copia de SEGURIDAD para instalaciones desde limpio
+- Estructura ordenada de `~/Config/opencode/`:
+  - `backups/opencode/` → tarballs de backup de OpenCode (`opencode-backup-*.tar.gz`)
+  - `backups/` (raíz) → backups del grafo de memoria (`mcp-memory-backup-*.json`)
+  - `data/` → datos auxiliares (p. ej. `onlyoffice-ai/`)
+  - `documentacion/` → documentación en Markdown
+  - `sesion-opencode/` → setup completo desde limpio + scripts sincronizados
+  - `respaldo-config/` → snapshot antiguo de la configuración
+  - `legacy/` → scripts y carpetas obsoletos
+  - En la raíz solo viven: `AGENTS.md`, `backup-opencode.sh`, `bootstrap-ocv.sh`, `sync-opencode.sh`
+    y el enlace simbólico `setup-opencode-completo.sh` → `sesion-opencode/setup-opencode-completo.sh`
 - Cada vez que modifiques, crees o elimines algo en `~/.config/opencode/`:
   1. **Copia el archivo** a `~/Config/opencode/` (manteniendo la misma estructura)
   2. **Actualiza los scripts** de instalación si es necesario:
@@ -605,6 +615,7 @@ patrón, o llama a read_file para cada archivo individual.
      - `restore.sh` (va dentro del tarball, lo genera backup-opencode.sh)
   3. Si el cambio afecta al proceso de instalación/restauración, modifica los scripts para reflejarlo
 - Ejecuta `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball con restore.sh actualizado
+- El tarball se genera en `~/Config/opencode/backups/opencode/`
 
 ## Atención al script setup-opencode-completo.sh (IMPORTANTE)
 El script `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh` es el
@@ -612,6 +623,8 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
 - **ÚNICA copia en disco**: vive SOLO en `~/Config/opencode/sesion-opencode/`
   (carpeta de respaldo) y dentro del tarball del backup. NO debe existir en la raíz
   de `~/.config/opencode/` ni en ningún `scripts/`.
+- **Acceso directo**: en la raíz de `~/Config/opencode/` hay un ENLACE SIMBÓLICO
+  `setup-opencode-completo.sh` → `sesion-opencode/` para tenerlo a mano SIN duplicarlo.
 - El `sync-opencode.sh` (timer systemd `opencode-sync.timer`, cada 2 minutos)
   sincroniza el resto de archivos desde `~/.config/opencode/`, pero NO crea copias
   del setup: ese se edita directamente en `~/Config/opencode/sesion-opencode/`.
@@ -660,7 +673,6 @@ El grafo de conocimiento se respalda automáticamente en:
 `/home/antonio/Config/opencode/backups/`
 Con nombre `mcp-memory-backup-{fecha}.json`
 Los backups se conservan 30 días (según LOG_RETENTION_DAYS en .env)
-
 ## Recuperación del grafo de memoria
 Si el grafo se pierde o corrompe:
 1. Localizar el backup más reciente:
@@ -672,7 +684,8 @@ Si el grafo se pierde o corrompe:
 ## Directorios de datos
 - `/home/antonio/.config/opencode/data/` - Datos de ejecución (logs, estado)
 - `/home/antonio/.config/opencode/data/memory/` - Grafo de memoria persistente
-- `/home/antonio/Config/opencode/backups/` - Copias de seguridad del grafo
+- `/home/antonio/Config/opencode/backups/` - Backups del grafo de memoria (`mcp-memory-backup-*.json`)
+- `/home/antonio/Config/opencode/backups/opencode/` - Tarballs de backup de OpenCode
 - `/home/antonio/.config/opencode/.env` - Variables de entorno seguras
 
 ---
@@ -1291,6 +1304,51 @@ cat > "$HOME/.lmstudio/settings.json" << 'SETEOF'
 SETEOF
 info "settings.json de LM Studio creado (contexto 80K)"
 
+# ── settings.lmstudio.json: copia de respaldo de la config de LM Studio ──
+cat > "$DIR_CONFIG/settings.lmstudio.json" << 'LMSETEOF'
+{
+  "language": "es",
+  "downloadsFolder": "/home/antonio/.lmstudio/models",
+  "sidebar": {
+    "showButtonNames": false,
+    "monochromeSidebarIcons": true
+  },
+  "configs": {
+    "expandConfigsOnClick": true
+  },
+  "chat": {
+    "alwaysShowPromptTemplate": false,
+    "useShiftEnterToSendMessage": false,
+    "showChatUtilityMenuLabels": false,
+    "aiNamingMode": "auto",
+    "neverAskForToolConfirmation": false,
+    "pinnedPlugins": [],
+    "chatFullWidth": false,
+    "scrollLastMessageToTop": "scrollToTopNoLatch"
+  },
+  "developer": {
+    "showExperimentalFeatures": false,
+    "appUpdateChannel": "stable",
+    "autoUpdateExtensionPacks": true
+  },
+  "ui": {
+    "missionControlFullscreen": false,
+    "contextDisplayMode": "percentage",
+    "appNavigationBarPosition": "left"
+  },
+  "configPresetInclusiveness": {
+    "speculativeDecoding": false
+  },
+  "developerMode": true,
+  "userInterfaceComplexityLevel": 0,
+  "autoLoadBundledLLM": true,
+  "modelLoadingGuardrails": {
+    "mode": "high"
+  }
+}
+LMSETEOF
+info "settings.lmstudio.json de respaldo creado"
+
 # ═══════════════════════════════════════════════════════════
 # PASO 12: Lanzador OpenCode (carga modelo + proxy automáticamente)
 # ═══════════════════════════════════════════════════════════
@@ -1335,6 +1393,61 @@ exec "${REAL_OPENCODE}" "$@"
 STARTEOF
 chmod +x "$DIR_CONFIG/start-opencode-server.sh"
 info "start-opencode-server.sh creado"
+
+# ── start-opencode.sh: lanzador que verifica/arranca LM Studio y abre OpenCode ──
+cat > "$DIR_CONFIG/start-opencode.sh" << 'OPENCODEEOF'
+#!/usr/bin/env bash
+# Lanzador de OpenCode: verifica/arranca LM Studio, luego abre OpenCode
+set -e
+
+# Colores para output
+VERDE='\033[0;32m'
+AMARILLO='\033[1;33m'
+ROJO='\033[0;31m'
+NC='\033[0m'
+
+info()  { echo -e "${VERDE}[+]${NC} $1"; }
+aviso() { echo -e "${AMARILLO}[!]${NC} $1"; }
+error() { echo -e "${ROJO}[X]${NC} $1"; }
+
+LMS_BIN="/home/antonio/.lmstudio/bin/lms"
+LM_PORT=1234
+
+# 1. Verificar / arrancar LM Studio (servidor API en puerto 1234)
+if curl -s -o /dev/null -w "" "http://127.0.0.1:${LM_PORT}/v1/models" 2>/dev/null; then
+    info "LM Studio ya está corriendo en el puerto ${LM_PORT}"
+else
+    aviso "Servidor de LM Studio no responde en el puerto ${LM_PORT}. Iniciándolo..."
+    if command -v lms &>/dev/null; then
+        lms server start
+    elif [ -x "$LMS_BIN" ]; then
+        "$LMS_BIN" server start
+    else
+        error "No se encuentra el comando 'lms' ni en PATH ni en ${LMS_BIN}"
+        exit 1
+    fi
+    # Esperar a que responda
+    for i in $(seq 1 15); do
+        if curl -s -o /dev/null -w "" "http://127.0.0.1:${LM_PORT}/v1/models" 2>/dev/null; then
+            info "LM Studio arrancado correctamente"
+            break
+        fi
+        sleep 1
+    done
+    if ! curl -s -o /dev/null -w "" "http://127.0.0.1:${LM_PORT}/v1/models" 2>/dev/null; then
+        error "No se pudo arrancar el servidor de LM Studio."
+        error "Asegúrate de que LM Studio (GUI) esté abierto o ejecuta manualmente: lms server start"
+        exit 1
+    fi
+fi
+
+# 2. Ejecutar OpenCode (binario real)
+REAL_OPENCODE="${REAL_OPENCODE:-/usr/bin/opencode}"
+info "Lanzando ${REAL_OPENCODE}..."
+exec "${REAL_OPENCODE}" "$@"
+OPENCODEEOF
+chmod +x "$DIR_CONFIG/start-opencode.sh"
+info "start-opencode.sh creado"
 
 # ═══════════════════════════════════════════════════════════
 # PASO 13: Scripts auxiliares
@@ -1591,14 +1704,15 @@ set -euo pipefail
 
 CONFIG_ACTIVO="/home/antonio/.config/opencode"
 CONFIG_BACKUP="/home/antonio/Config/opencode"
+BACKUP_DIR="${CONFIG_BACKUP}/backups/opencode"
 DATE=$(date +%Y%m%d-%H%M%S)
 BACKUP_NAME="opencode-backup-${DATE}"
 
-BACKUP_ROOT="${CONFIG_BACKUP}/${BACKUP_NAME}"
+BACKUP_ROOT="${BACKUP_DIR}/${BACKUP_NAME}"
 
 echo "=== Backup OpenCode - $(date '+%d/%m/%Y %H:%M') ==="
 
-mkdir -p "${BACKUP_ROOT}"
+mkdir -p "${BACKUP_DIR}" "${BACKUP_ROOT}"
 
 # ─── 1. Copiar estructura de .config/opencode/ excluyendo runtime y backups viejos
 echo "📦 Copiando configuración desde ~/.config/opencode/..."
@@ -1623,6 +1737,13 @@ rsync -ah --delete \
   --exclude='opencode-sync-*.tar.gz' \
   --exclude='setup-opencode-completo.sh' \
   "${CONFIG_ACTIVO}/." "${BACKUP_ROOT}/"
+
+# ─── 1b. Incluir respaldo OnlyOffice-IA en el tarball ───
+if [ -d "${CONFIG_BACKUP}/data/onlyoffice-ai" ]; then
+    mkdir -p "${BACKUP_ROOT}/data"
+    cp -r "${CONFIG_BACKUP}/data/onlyoffice-ai" "${BACKUP_ROOT}/data/onlyoffice-ai"
+    echo "   ✅ Respaldo OnlyOffice-IA incluido en el backup"
+fi
 
 # ─── 2. Generar restore.sh dentro del backup
 echo "🔧 Creando restore.sh..."
@@ -1652,6 +1773,13 @@ echo "Copiando archivos..."
 rsync -ah --exclude='*-restore.sh' \
        --exclude='setup-opencode-completo.sh' \
        "$SOURCE_DIR/" "${DEST_CONFIG}/."
+
+# Restaurar respaldo OnlyOffice-IA en Config/opencode/data/
+if [ -d "${SOURCE_DIR}/data/onlyoffice-ai" ]; then
+    mkdir -p "/home/antonio/Config/opencode/data"
+    cp -r "${SOURCE_DIR}/data/onlyoffice-ai" "/home/antonio/Config/opencode/data/onlyoffice-ai"
+    echo "✅ Respaldo OnlyOffice-IA restaurado en Config/opencode/data/"
+fi
 
 # El setup-opencode-completo.sh vive solo en la copia de seguridad
 if [ -f "$SOURCE_DIR/setup-opencode-completo.sh" ]; then
@@ -1715,21 +1843,48 @@ fi
 echo ""
 echo "📦 Creando tarball..."
 cd "${BACKUP_ROOT}"
-tar -czf "${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz" .
+tar -czf "${BACKUP_DIR}/${BACKUP_NAME}.tar.gz" .
 cd - > /dev/null
 
-BACKUP_SIZE=$(ls -lh "${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz" | awk '{print $5}')
-echo "   ✅ Tarball creado (${BACKUP_SIZE}): ${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz"
+BACKUP_SIZE=$(ls -lh "${BACKUP_DIR}/${BACKUP_NAME}.tar.gz" | awk '{print $5}')
+echo "   ✅ Tarball creado (${BACKUP_SIZE}): ${BACKUP_DIR}/${BACKUP_NAME}.tar.gz"
 
 # ─── 5. Limpiar directorio temporal del backup
 echo ""
 echo "🧹 Limpiando directorio temporal..."
 rm -rf "${BACKUP_ROOT}"
 
+# ─── 5. Retención: borrar tarballs con más de 30 días (LOG_RETENTION_DAYS) ───
+RETENTION_DAYS="${LOG_RETENTION_DAYS:-30}"
+echo ""
+echo "🧹 Aplicando retención (${RETENTION_DAYS} días) en ${BACKUP_DIR}..."
+OLD_TARBALLS=$(find "${BACKUP_DIR}" -maxdepth 1 -name 'opencode-*.tar.gz' -mtime +"${RETENTION_DAYS}" 2>/dev/null | wc -l)
+if [ "${OLD_TARBALLS}" -gt 0 ]; then
+    find "${BACKUP_DIR}" -maxdepth 1 -name 'opencode-*.tar.gz' -mtime +"${RETENTION_DAYS}" -delete 2>/dev/null || true
+    echo "   🗑️  ${OLD_TARBALLS} tarballs antiguos eliminados (más de ${RETENTION_DAYS} días)"
+else
+    echo "   ✅ No hay tarballs antiguos que eliminar"
+fi
+
+# ─── 6. Poda diaria: conservar solo el ÚLTIMO tarball de cada día ───
+echo "🗂️  Podando duplicados del mismo día (se conserva el último)..."
+PODADOS=0
+for f in "${BACKUP_DIR}"/opencode-*_*.tar.gz "${BACKUP_DIR}"/opencode-*-*.tar.gz; do
+    [ -f "$f" ] || continue
+    DAY=$(basename "$f" | grep -oE '[0-9]{8}' | head -1 || true)
+    [ -n "$DAY" ] || continue
+    LAST=$(find "${BACKUP_DIR}" -maxdepth 1 -name "opencode-*-${DAY}-*.tar.gz" 2>/dev/null | sort | tail -1)
+    if [ -n "$LAST" ] && [ "$f" != "$LAST" ]; then
+        rm -f "$f"
+        PODADOS=$((PODADOS+1))
+    fi
+done
+echo "   🗑️  ${PODADOS} duplicados del mismo día eliminados"
+
 echo ""
 echo "✅ Backup completado!"
 echo ""
-echo "Ubicación: ${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz"
+echo "Ubicación: ${BACKUP_DIR}/${BACKUP_NAME}.tar.gz"
 echo "Para restaurar:"
 echo "  1. tar -xzf ${CONFIG_BACKUP}/${BACKUP_NAME}.tar.gz -C /tmp/restore-opencode"
 echo "  2. bash /tmp/restore-opencode/*-restore.sh"
@@ -3559,6 +3714,456 @@ fi
 if [ -f "$HOME/Config/opencode/backup-opencode.sh" ]; then
     echo "  Regenerando backup..."
     bash "$HOME/Config/opencode/backup-opencode.sh" 2>/dev/null || true
+fi
+
+# ═══════════════════════════════════════════════════════════
+# PASO 19: OnlyOffice Desktop Editors + integración IA con OpenCode
+# ═══════════════════════════════════════════════════════════
+echo "--- 19/19: Instalando OnlyOffice e integrando IA ---"
+
+# 19.1 Instalar OnlyOffice Desktop Editors desde pacman (repos extra)
+if ! command -v onlyoffice-desktopeditors &>/dev/null; then
+    info "Instalando onlyoffice-desktopeditors desde pacman..."
+    if ! pkexec pacman -S --needed --noconfirm onlyoffice-desktopeditors; then
+        error "No se pudo instalar OnlyOffice. Ejecuta manualmente: pkexec pacman -S onlyoffice-desktopeditors"
+    else
+        info "OnlyOffice instalado correctamente"
+    fi
+else
+    info "OnlyOffice ya está instalado"
+fi
+
+# 19.2 Preparar el script de inyección del proveedor IA
+mkdir -p "$DIR_CONFIG/data/onlyoffice-ai"
+cat > "$DIR_CONFIG/data/onlyoffice-ai/inject-provider.py" << 'INJECTEOF'
+#!/usr/bin/env python3
+"""
+inject-provider.py — Restaura el proveedor "OpenCode Local" (opencode → OnlyOffice AI)
+
+Inyecta en el LevelDB del localStorage del plugin IA de OnlyOffice Desktop Editors
+el proveedor compatible con la API de OpenAI que apunta a opencode local (puerto 4001).
+
+Uso:
+    python3 inject-provider.py            # inyecta (requiere OnlyOffice cerrado)
+    python3 inject-provider.py --check    # solo verifica el estado actual
+
+La configuración original extraída está en: onlyoffice-ai-config.json
+"""
+import struct, os, json, sys
+
+LVL = os.path.expanduser('~/.local/share/onlyoffice/desktopeditors/data/cache/Local Storage/leveldb')
+LOG = os.path.join(LVL, '000003.log')
+KEY = b'_onlyoffice://plugin\x00\x01onlyoffice_ai_plugin_storage_key'
+PROVIDER_NAME = "OpenCode Local"
+MODEL_ID = "models-qwen3.5-9b"
+BASE_URL = "http://localhost:4001/v1"
+API_KEY = "lm-studio"
+
+# ── CRC32C (polinomio 0x82F63B78) ─────────────────────────────
+def _crc32c_table():
+    poly = 0x82F63B78
+    return [((lambda c: c if c <= 0xFFFFFFFF else c & 0xFFFFFFFF)(
+                (lambda c: (c >> 1) ^ poly if c & 1 else c >> 1)(
+                    (lambda c: (c >> 1) ^ poly if c & 1 else c >> 1)(
+                        (lambda c: (c >> 1) ^ poly if c & 1 else c >> 1)(
+                            (lambda c: (c >> 1) ^ poly if c & 1 else c >> 1)(
+                                (lambda c: (c >> 1) ^ poly if c & 1 else c >> 1)(
+                                    (lambda c: (c >> 1) ^ poly if c & 1 else c >> 1)(
+                                        (lambda c: (c >> 1) ^ poly if c & 1 else c >> 1)(i)
+                                    )))))) )) for i in range(256)]
+
+_TABLE = _crc32c_table()
+
+def crc32c(data, crc=0):
+    crc ^= 0xffffffff
+    for b in data:
+        crc = _TABLE[(crc ^ b) & 0xff] ^ (crc >> 8)
+    return (crc ^ 0xffffffff) & 0xffffffff
+
+def mask(crc):
+    return (((crc >> 15) | (crc << 17)) + 0xa282ead8) & 0xffffffff
+
+# ── Lectura de records del log ─────────────────────────────────
+def _read_varint(buf, off):
+    result, shift = 0, 0
+    while True:
+        b = buf[off]; off += 1
+        result |= (b & 0x7f) << shift
+        if not (b & 0x80): break
+        shift += 7
+    return result, off
+
+def parse_log(path):
+    data = open(path, 'rb').read()
+    off, entries = 0, []
+    while off + 7 <= len(data):
+        checksum, length, rtype = struct.unpack_from('<IHB', data, off)
+        off += 7
+        if off + length > len(data): break
+        payload = data[off:off+length]; off += length
+        if rtype != 1 or len(payload) < 12: continue
+        real = mask(crc32c(b'\x01' + payload))
+        seq, count = struct.unpack_from('<QI', payload, 0)
+        p = 12
+        for _ in range(count):
+            if p >= len(payload): break
+            et = payload[p]; p += 1
+            klen, p = _read_varint(payload, p)
+            key = payload[p:p+klen]; p += klen
+            if et == 1:
+                vlen, p = _read_varint(payload, p)
+                val = payload[p:p+vlen]; p += vlen
+            else:
+                val = b'<DEL>'
+            entries.append({'seq': seq, 'type': 'put' if et == 1 else 'del',
+                            'key': key, 'val': val, 'cksum_ok': (real == checksum)})
+    return entries
+
+# ── Escritura ───────────────────────────────────────────────────
+def _enc_varint(n):
+    out = b''
+    while True:
+        b = n & 0x7f; n >>= 7
+        out += bytes([b | 0x80]) if n else bytes([b])
+        if not n: break
+    return out
+
+def make_record(seq, key, value):
+    payload = struct.pack('<QI', seq, 1) + b'\x01'
+    payload += _enc_varint(len(key)) + key
+    payload += _enc_varint(len(value)) + value
+    return struct.pack('<IHB', mask(crc32c(b'\x01' + payload)), len(payload), 1) + payload
+
+def get_current():
+    best = None
+    if os.path.exists(LOG):
+        for e in parse_log(LOG):
+            if e['key'] == KEY and e['type'] == 'put':
+                if best is None or e['seq'] > best['seq']:
+                    best = e
+    return best
+
+def ensure_dirs():
+    """Crea los directorios del perfil de OnlyOffice si no existen (instalación limpia)."""
+    os.makedirs(LVL, exist_ok=True)
+
+def main():
+    check_only = '--check' in sys.argv
+    ensure_dirs()
+    cur = get_current()
+
+    if cur:
+        cfg = json.loads(cur['val'][1:])
+        prov = cfg['providers'].get(PROVIDER_NAME)
+        print(f"ℹ️  Configuración actual: version={cfg.get('version')}, providers={len(cfg['providers'])}")
+        if prov:
+            print(f"✅ Proveedor '{PROVIDER_NAME}' YA presente -> {prov['url']}")
+            models = [m['id'] for m in cfg.get('models', [])]
+            print(f"   Modelos registrados: {models}")
+            return 0
+        if check_only:
+            print(f"❌ Proveedor '{PROVIDER_NAME}' NO presente")
+            return 1
+        print(f"➕ Añadiendo proveedor '{PROVIDER_NAME}' a la configuración existente...")
+    else:
+        if check_only:
+            print("❌ No hay configuración del plugin AI")
+            return 1
+        print("➕ No había configuración previa; creándola desde cero...")
+        cfg = {"version": 4, "providers": {}, "models": [], "customProviders": {}}
+
+    cfg['providers'][PROVIDER_NAME] = {
+        "name": PROVIDER_NAME, "url": BASE_URL, "key": API_KEY,
+        "models": [{"id": MODEL_ID, "object": "model", "created": 1780000000,
+                    "owned_by": "lmstudio", "name": MODEL_ID,
+                    "endpoints": [1], "options": {}}]
+    }
+    exists = any(m.get('id') == MODEL_ID and m.get('provider') == PROVIDER_NAME for m in cfg.get('models', []))
+    if not exists:
+        cfg.setdefault('models', []).append({
+            "capabilities": 511, "provider": PROVIDER_NAME,
+            "name": f"{PROVIDER_NAME} [{MODEL_ID}]", "id": MODEL_ID
+        })
+
+    new_value = b'\x01' + json.dumps(cfg, ensure_ascii=False).encode('utf-8')
+    max_seq = max((e['seq'] for e in parse_log(LOG)), default=0) if os.path.exists(LOG) else 0
+    seq = max_seq + 10
+
+    with open(LOG, 'ab') as f:
+        f.write(make_record(seq, KEY, new_value))
+    print(f"✅ Record añadido al LevelDB (seq={seq})")
+
+    # Verificar
+    for e in parse_log(LOG):
+        if e['key'] == KEY and e['seq'] == seq and e['type'] == 'put':
+            ok = e['cksum_ok'] and e['val'] == new_value
+            cfg2 = json.loads(e['val'][1:])
+            print(f"✅ Verificado: cksum={'OK' if e['cksum_ok'] else 'FAIL'}, "
+                  f"'{PROVIDER_NAME}' -> {cfg2['providers'][PROVIDER_NAME]['url']}")
+            print(f"   Modelos: {[m['id'] for m in cfg2['models']]}")
+            return 0 if ok else 1
+    print("❌ Verificación fallida")
+    return 1
+
+if __name__ == '__main__':
+    sys.exit(main())
+INJECTEOF
+chmod +x "$DIR_CONFIG/data/onlyoffice-ai/inject-provider.py"
+
+# 19.3 Documentación de la integración
+cat > "$DIR_CONFIG/data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md" << 'MDEOF'
+# 🤖 OnlyOffice IA + OpenCode Local (proveedor OpenAI-compatible)
+
+> **Fecha:** 09/08/2026
+> **Autor:** Antonio (configurado por OpenCode)
+> **Ubicación del backup:** `~/Config/opencode/data/onlyoffice-ai/`
+
+---
+
+## 📌 Resumen
+
+Integración del **plugin IA de ONLYOFFICE Desktop Editors** con **opencode local**
+(modelo Qwen 3.5 Q6_K) usando el endpoint OpenAI-compatible que opencode expone
+a través de su proxy en el puerto **4001**.
+
+De esta forma, el asistente de IA de OnlyOffice (chat, resumen, traducción,
+análisis de texto, ayuda con código...) usa el modelo local, **sin depender de
+servicios en la nube ni enviar datos fuera del equipo**.
+
+---
+
+## 🔧 Datos técnicos
+
+| Parámetro | Valor |
+|---|---|
+| **Proveedor (nombre)** | `OpenCode Local` |
+| **URL base** | `http://localhost:4001/v1` |
+| **Modelo** | `models-qwen3.5-9b` |
+| **API key** | `lm-studio` (cualquiera; el proxy no la valida) |
+| **Capacidades** | 511 (todas: chat, resumen, traducción, análisis, código, etc.) |
+| **Aplicación** | ONLYOFFICE Desktop Editors |
+| **Plugin IA** | `asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}` (versión 3.2.2) |
+
+### Arquitectura
+
+```
+OnlyOffice (plugin IA)
+        │  peticiones OpenAI-compatible
+        ▼
+http://localhost:4001/v1  ← lmstudio-proxy.py (proxy opencode)
+        │  reenvía
+        ▼
+http://localhost:1234     ← LM Studio server (modelo Qwen 3.5 Q6_K)
+```
+
+---
+
+## 📋 Pasos seguidos (configuración realizada)
+
+### 1. Verificación del backend de opencode
+
+Comprobado que el proxy responde y el modelo está cargado:
+
+```bash
+curl -s http://localhost:4001/v1/models          # → lista modelos (OK)
+curl -s http://localhost:4001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"di hola"}]}'
+# → {"choices":[{"message":{"content":"¡Hola!"}}]}  (OK)
+```
+
+### 2. Localización del almacenamiento del plugin IA
+
+El plugin IA guarda su configuración en el `localStorage` interno de OnlyOffice,
+que en Linux se encuentra en un **LevelDB**:
+
+```
+~/.local/share/onlyoffice/desktopeditors/data/cache/Local Storage/leveldb/000003.log
+```
+
+- **Clave:** `_onlyoffice://plugin\x00\x01onlyoffice_ai_plugin_storage_key`
+- **Valor:** `\x01` + JSON (el `\x01` es el marcador de codificación UTF-8 de Chromium)
+
+### 3. Backup de seguridad previo
+
+Antes de tocar nada se copió el almacenamiento completo:
+
+```bash
+cp -r ~/.local/share/onlyoffice/desktopeditors/data/cache/Local\ Storage/ \
+      ~/LocalStorage-backup-<fecha>/
+```
+
+### 4. Análisis del formato LevelDB
+
+Se escribió un parser en Python (sin dependencias externas) para leer los
+records del log de LevelDB:
+- Checksum **CRC32C** enmascarado (`masked crc32c + 0xa282ead8`)
+- Cabecera: checksum(4) + longitud(2) + tipo(1)
+- Payload: WriteBatch con `sequence(8) + count(4) + entradas(key/value con varint32)`
+
+### 5. Inyección del proveedor
+
+Se añadió un **nuevo record** (`Put`) al final del log con una `sequence` mayor
+que las existentes (el último `Put` de una clave es el que gana al abrir):
+
+```json
+"OpenCode Local": {
+  "name": "OpenCode Local",
+  "url": "http://localhost:4001/v1",
+  "key": "lm-studio",
+  "models": [{ "id": "models-qwen3.5-9b", "endpoints": [1], ... }]
+}
+```
+
+Y el modelo registrado para todas las tareas:
+
+```json
+{
+  "capabilities": 511,
+  "provider": "OpenCode Local",
+  "name": "OpenCode Local [models-qwen3.5-9b]",
+  "id": "models-qwen3.5-9b"
+}
+```
+
+### 6. Verificación final
+
+- Checksum del record nuevo: **OK**
+- Relectura del log tras abrir OnlyOffice: la configuración persiste ✅
+- Resultado: el proveedor aparece en **IA → Ajustes → Editar modelos de IA**
+
+---
+
+## 🖱️ Método alternativo (manual, sin tocar LevelDB)
+
+Si en el futuro se quiere añadir otro proveedor por la interfaz:
+
+1. Abrir un documento en OnlyOffice
+2. Pestaña **IA** → **Ajustes** → **Editar modelos de IA**
+3. **+** → rellenar URL `http://localhost:4001/v1`, modelo `models-qwen3.5-9b`,
+   API key `lm-studio`
+4. Marcar las tareas deseadas → **OK**
+
+### Archivo de proveedor personalizado (JS)
+
+También se puede subir un archivo JS (método oficial de ONLYOFFICE para
+proveedores personalizados) — ver `opencode-provider.js` en esta carpeta:
+
+```js
+"use strict";
+
+class Provider extends AI.Provider {
+    constructor() {
+        super("OpenCode Local", "http://localhost:4001", "lm-studio", "v1");
+    }
+}
+```
+
+Ruta de subida: **IA → Ajustes → Editar modelos de IA → + → Custom providers → +**
+
+---
+
+## ♻️ Restauración de esta configuración
+
+Hay **tres niveles** de restauración, de más a menos fino:
+
+### Opción A — Script de inyección (recomendada)
+
+```bash
+# Requisito: cerrar OnlyOffice primero
+python3 ~/Config/opencode/data/onlyoffice-ai/inject-provider.py
+# Comprobar sin modificar:
+python3 ~/Config/opencode/data/onlyoffice-ai/inject-provider.py --check
+```
+
+Reconstruye el proveedor y el modelo sobre la configuración existente o la crea
+desde cero si no hay ninguna.
+
+### Opción B — Copia del LevelDB completo (snapshot)
+
+Restaurar el directorio completo del snapshot:
+
+```bash
+# SoloOffice cerrado:
+cp -r ~/Config/opencode/data/onlyoffice-ai/localstorage-snapshot/leveldb/* \
+      ~/.local/share/onlyoffice/desktopeditors/data/cache/Local\ Storage/leveldb/
+```
+
+⚠️ Restaura también el resto de claves del localStorage de esa fecha.
+
+### Opción C — Configuración JSON legible
+
+El archivo `onlyoffice-ai-config.json` contiene la configuración completa
+(15 proveedores + modelo OpenCode Local) por si se necesita inspeccionar,
+editar o migrar.
+
+---
+
+## 🚀 Instalación automática (setup-opencode-completo.sh)
+
+El instalador completo `setup-opencode-completo.sh` incluye el **PASO 19**
+que automatiza todo este proceso:
+
+1. **Instala** OnlyOffice Desktop Editors desde **pacman** (repos extra):
+   `pkexec pacman -S --needed --noconfirm onlyoffice-desktopeditors`
+2. **Embe** el script `inject-provider.py` y este documento en
+   `~/.config/opencode/data/onlyoffice-ai/`
+3. **Inicializa el perfil** de OnlyOffice (primera ejecución breve) si no
+   existe el almacenamiento del plugin IA
+4. **Inyecta el proveedor** "OpenCode Local" automáticamente y lo verifica
+   con `--check`
+
+Al reinstalar el sistema desde cero, basta con ejecutar el setup y la
+integración IA de OnlyOffice queda lista sin intervención manual.
+
+---
+
+## 📁 Archivos incluidos en este backup
+
+| Archivo | Descripción |
+|---|---|
+| `ONLYOFFICE-AI-OPENCODE.md` | Este documento |
+| `onlyoffice-ai-config.json` | Configuración completa del plugin IA (legible) |
+| `inject-provider.py` | Script de restauración del proveedor (autocontenido) |
+| `opencode-provider.js` | Archivo JS del proveedor (método manual oficial) |
+| `localstorage-snapshot/` | Snapshot del LevelDB del localStorage (estado exacto) |
+
+---
+
+## ⚠️ Consideraciones
+
+- **Modelo en VRAM:** para que OnlyOffice responda, el modelo debe estar cargado
+  (arrancar con `opencode` u `ocv`, o `bash ~/.config/opencode/start-lmstudio.sh`).
+  Si no, LM Studio devuelve error de modelo no cargado.
+- **Solo local:** el proxy escucha en `127.0.0.1:4001`, por lo que esta
+  configuración funciona únicamente en este equipo.
+- **Document Server (Docker):** si se usara OnlyOffice en Docker, habría que:
+  1. Hacer que el proxy escuche en `0.0.0.0`
+  2. Usar `http://host.docker.internal:4001/v1` (o IP del host) como URL
+  3. Añadir cabeceras CORS al proxy (`Access-Control-Allow-Origin`)
+- **Privacidad:** al ser 100% local, los documentos no salen del equipo. 🔒
+- **Seguridad:** el backup de esta carpeta debe incluirse en cualquier copia
+  general de `~/Config/opencode/`.
+MDEOF
+
+# 19.4 Inicializar el perfil de OnlyOffice (primera ejecución) si hace falta
+OA_LVL="$HOME/.local/share/onlyoffice/desktopeditors/data/cache/Local Storage/leveldb"
+mkdir -p "$OA_LVL"
+if ! grep -q "onlyoffice_ai_plugin_storage_key" "$OA_LVL/000003.log" 2>/dev/null; then
+    info "Primera ejecución de OnlyOffice para inicializar el perfil IA..."
+    setsid onlyoffice-desktopeditors &>/dev/null &
+    sleep 25
+    pkill -f onlyoffice-desktopeditors 2>/dev/null || true
+    sleep 2
+fi
+
+# 19.5 Inyectar el proveedor OpenCode Local (Qwen local en :4001)
+info "Configurando proveedor IA 'OpenCode Local' (http://localhost:4001/v1)..."
+python3 "$DIR_CONFIG/data/onlyoffice-ai/inject-provider.py" || true
+if python3 "$DIR_CONFIG/data/onlyoffice-ai/inject-provider.py" --check; then
+    info "✅ Integración IA OnlyOffice + OpenCode lista"
+else
+    aviso "La integración IA no se pudo verificar; revísala manualmente tras abrir OnlyOffice"
 fi
 
 echo ""

@@ -359,7 +359,7 @@ Si quisieras pasar opciones (por ejemplo, para normalización externa), sería:
 ```json
 ["/ruta/plugin", {
   "endpoint": "http://localhost:4001/v1",
-  "model": "qwen/qwen3.5-9b",
+  "model": "models-qwen3.5-9b",
   "maxTokens": 2048
 }]
 ```
@@ -381,7 +381,7 @@ Se pasa desde `tui.json` en `options` del plugin:
 ```javascript
 const cfg = {
   endpoint: pluginOptions?.endpoint,      // Ej: http://localhost:4001/v1
-  model: pluginOptions?.model,            // Ej: qwen/qwen3.5-9b
+  model: pluginOptions?.model,            // Ej: models-qwen3.5-9b
   apiKeyEnv: pluginOptions?.apiKeyEnv,    // Variable de entorno con API key
   maxTokens: 2048,
   reasoningEffort: null,
