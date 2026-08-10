@@ -2,8 +2,9 @@
 
 > **Usuario:** Antonio 🧑‍💻  
 > **Ubicación:** Pechina, Almería, España 📍  
-> **Fecha:** 09/08/2026  
-> **Modelo principal:** OpenCode Go (deepseek-v4-flash) ☁️ + Qwen 3.5 (9B) local 🤖
+> **Fecha:** 10/08/2026  
+> **Modelo principal:** OpenCode Go (deepseek-v4-flash) ☁️ + Qwen 3.5 (9B) local 🤖  
+> **LSPs:** 11 servidores configurados el 10/08/2026 (Python, C/C++, Rust, TS/JS, Go, JSON, YAML, Bash, Zsh, Markdown) 🛠️
 
 ---
 
@@ -27,6 +28,15 @@
 | [seguimiento-issue-memory.md](seguimiento-issue-memory.md) | 🐛 Seguimiento del issue MCP memory (draft-07 vs 2020-12) |
 | [README-hardware.md](README-hardware.md) | 🖥️ Comandos rápidos de consulta de hardware |
 | [hardware-info.md](hardware-info.md) | 📊 Información completa del hardware |
+
+### Proyectos Rust de Antonio (10/08/2026)
+
+| Documento | Descripción |
+|-----------|-------------|
+| [README-arcman.md](../../../Documentos/dotfiles/utilidades%20rust/arcman/README-arcman.md) | 🦀 arcman (CLI): gestor de paquetes Arch en Rust, comandos, mejoras aplicadas |
+| [README-arcman-gui.md](../../../Documentos/dotfiles/utilidades%20rust/arcman-gui/README-arcman-gui.md) | 🖥️ arcman-gui: versión gráfica (Iced), pantallas, fix GPU NVIDIA, compilación |
+
+> 📌 Ambos proyectos también están respaldados en `~/Config/utilidades rust/` con sus README.
 
 ---
 
@@ -123,15 +133,24 @@ bash ~/.config/opencode/start-opencode.sh
 bash ~/.config/opencode/switch-mcp-profile.sh local   # Solo esencial
 bash ~/.config/opencode/switch-mcp-profile.sh cloud   # Todo activo
 
-# Sincronizar configuración
+# Sincronizar configuración (el timer la hace cada 30 min automáticamente)
 bash ~/.config/opencode/sync-opencode.sh
 
-# Regenerar backup completo (va a backups/opencode/, retención 30 días + 1/día)
+# Regenerar backup completo (verifica el setup automáticamente; si falla, aborta)
 bash ~/Config/opencode/backup-opencode.sh
+
+# Ver historial COMPLETO de peticiones (el timeline TUI solo muestra las últimas ~6)
+timeline-completo                    # Sesión actual
+timeline-completo --sesiones         # Listar sesiones
+timeline-completo --buscar "texto"   # Buscar en todas las sesiones
 
 # Cargar variables de entorno
 set -a; source ~/.config/opencode/.env; set +a
 ```
+
+> 🕐 **Nota timeline:** la TUI de OpenCode solo muestra las últimas ~6 peticiones (PR #26861 sin mergear). El script `timeline-completo` lee todas desde `opencode.db`. Un timer systemd (`check-timeline-fix.timer`, cada 3 días) vigila el PR para avisar cuando se arregle.
+>
+> 💾 **Nota backup:** el backup automático (`opencode-sync.timer`, cada 30 min) hace **exactamente lo mismo** que el manual: ejecuta `backup-opencode.sh`, que verifica el setup (`check-setup-completo.sh`) antes de generar el tarball. Si el setup estuviera incorrecto, el backup se aborta.
 
 ---
 

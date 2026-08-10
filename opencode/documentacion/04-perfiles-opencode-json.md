@@ -1,6 +1,6 @@
 # 📋 Los Tres Perfiles de `opencode.json`
 
-> **Fecha:** 26/07/2026 | **Usuario:** Antonio
+> **Fecha:** 26/07/2026 (actualizado 10/08/2026: sección `lsp`) | **Usuario:** Antonio
 
 ---
 
@@ -26,7 +26,7 @@ Existen **tres archivos** de configuración principal para OpenCode, más un arc
 | `opencode.json` | **Activo** - Configuración en uso actualmente |
 | `opencode-local.json` | Perfil **local** - Solo MCPs esenciales |
 | `opencode-cloud.json` | Perfil **cloud** - Todos los MCPs activos |
-| `opencode.jsonc` | Configuración de shell |
+| ~~`opencode.jsonc`~~ | ~~Configuración de shell~~ (obsoleto, ver sección 6) |
 
 Los tres archivos están en `~/.config/opencode/`. Para cambiar entre local y cloud se usa el script `switch-mcp-profile.sh`.
 
@@ -86,6 +86,52 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
       }
     }
   },
+  "lsp": {
+    "python": {
+      "command": ["/home/antonio/.local/bin/basedpyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyw"]
+    },
+    "c": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".c", ".h"]
+    },
+    "cpp": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".cpp", ".hpp", ".cc", ".cxx"]
+    },
+    "rust": {
+      "command": ["/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"],
+      "extensions": [".rs"]
+    },
+    "typescript": {
+      "command": ["/home/antonio/.npm-global/bin/typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
+    },
+    "go": {
+      "command": ["/home/antonio/go/bin/gopls"],
+      "extensions": [".go"]
+    },
+    "json": {
+      "command": ["/home/antonio/.npm-global/bin/vscode-json-language-server", "--stdio"],
+      "extensions": [".json", ".jsonc"]
+    },
+    "yaml": {
+      "command": ["/home/antonio/.npm-global/bin/yaml-language-server", "--stdio"],
+      "extensions": [".yaml", ".yml"]
+    },
+    "bash": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".sh", ".bash"]
+    },
+    "zsh": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".zsh", ".zshrc"]
+    },
+    "markdown": {
+      "command": ["/usr/bin/marksman"],
+      "extensions": [".md", ".markdown"]
+    }
+  },
   "mcp": {
     "context7": {"type": "remote", "url": "https://mcp.context7.com/mcp", "enabled": true},
     "filesystem": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"], "enabled": true},
@@ -141,6 +187,52 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
       }
     }
   },
+  "lsp": {
+    "python": {
+      "command": ["/home/antonio/.local/bin/basedpyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyw"]
+    },
+    "c": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".c", ".h"]
+    },
+    "cpp": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".cpp", ".hpp", ".cc", ".cxx"]
+    },
+    "rust": {
+      "command": ["/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"],
+      "extensions": [".rs"]
+    },
+    "typescript": {
+      "command": ["/home/antonio/.npm-global/bin/typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
+    },
+    "go": {
+      "command": ["/home/antonio/go/bin/gopls"],
+      "extensions": [".go"]
+    },
+    "json": {
+      "command": ["/home/antonio/.npm-global/bin/vscode-json-language-server", "--stdio"],
+      "extensions": [".json", ".jsonc"]
+    },
+    "yaml": {
+      "command": ["/home/antonio/.npm-global/bin/yaml-language-server", "--stdio"],
+      "extensions": [".yaml", ".yml"]
+    },
+    "bash": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".sh", ".bash"]
+    },
+    "zsh": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".zsh", ".zshrc"]
+    },
+    "markdown": {
+      "command": ["/usr/bin/marksman"],
+      "extensions": [".md", ".markdown"]
+    }
+  },
   "mcp": {
     "context7": {"type": "remote", "url": "https://mcp.context7.com/mcp", "enabled": false},
     "filesystem": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"], "enabled": true},
@@ -174,6 +266,7 @@ Es idéntico al activo (`opencode.json`). Ver [sección del perfil activo](#perf
 | **memory** | ✅ | ✅ |
 | **fetch** | ✅ | ✅ |
 | **sequential_thinking** | ❌ | ✅ |
+| **LSPs** | ✅ (los 6) | ✅ (los 6) |
 | **Uso típico** | Tareas locales sin internet | Tareas complejas con todo activo |
 
 ### ¿Cuándo usar cada perfil?
@@ -185,16 +278,11 @@ Es idéntico al activo (`opencode.json`). Ver [sección del perfil activo](#perf
 
 ---
 
-## Archivo `opencode.jsonc`
+## Archivo `opencode.jsonc` (OBSOLETO desde 10/08/2026)
 
 ### Archivo: `~/.config/opencode/opencode.jsonc`
 
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "shell": "/usr/bin/zsh"
-}
-```
+> ⚠️ **Ya no se usa.** El shell se define directamente en los **tres perfiles** (`opencode.json`, `opencode-local.json`, `opencode-cloud.json`) con `"shell": "/usr/bin/zsh"`. El `opencode.jsonc` quedó como resto de una versión anterior y se eliminó del backup el 10/08/2026.
 
 Define el **shell** que usa OpenCode para ejecutar comandos bash. En este caso, `/usr/bin/zsh` (Z shell).
 
@@ -271,10 +359,29 @@ Proveedores de modelos. Actualmente solo `lmstudio`, configurado como:
 - **Límites:** 81.920 tokens de contexto, 8.192 de salida
 - **Tools:** Habilitadas
 
-### `mcp`
-Servidores MCP (Model Context Protocol). Cada uno proporciona **herramientas** que el modelo puede usar:
+### `lsp`
+Servidores de lenguaje (Language Server Protocol) que OpenCode lanza localmente para **ayudar a la IA** a analizar el código: localizar definiciones y referencias, detectar errores al editar y entender la estructura del proyecto. Configurados el **10/08/2026** en los tres perfiles:
 
-| MCP | Tipo | Comando/URL | Qué hace |
+| Lenguaje | Servidor | Ruta | Extensiones |
+|----------|----------|------|-------------|
+| Python | basedpyright | `~/.local/bin/basedpyright-langserver` | `.py`, `.pyw` |
+| C | clangd | `/usr/bin/clangd` | `.c`, `.h` |
+| C++ | clangd | `/usr/bin/clangd` | `.cpp`, `.hpp`, `.cc`, `.cxx` |
+| Rust | rust-analyzer | `~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer` | `.rs` |
+| TypeScript/JS | typescript-language-server | `~/.npm-global/bin/typescript-language-server` | `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs` |
+| Go | gopls | `~/go/bin/gopls` | `.go` |
+| JSON | vscode-json-language-server | `~/.npm-global/bin/vscode-json-language-server` | `.json`, `.jsonc` |
+| YAML | yaml-language-server | `~/.npm-global/bin/yaml-language-server` | `.yaml`, `.yml` |
+| Bash | bash-language-server | `~/.npm-global/bin/bash-language-server` | `.sh`, `.bash` |
+| Zsh | bash-language-server (forzado) | `~/.npm-global/bin/bash-language-server` | `.zsh`, `.zshrc` |
+| Markdown | marksman | `/usr/bin/marksman` | `.md`, `.markdown` |
+
+> 📌 **Nota zsh:** no existe un LSP dedicado para zsh (el parser tree-sitter-zsh está abandonado). Se fuerza `bash-language-server` en archivos `.zsh`/`.zshrc`: funciona para navegación, símbolos y renombrado (~90%), pero **sin diagnósticos** de shellcheck (que solo aplica a bash puro).
+
+> 💡 **Nota:** Los LSPs son independientes del modelo LLM (local o cloud). En el editor de Antonio (Neovim/VSCode) ya hay LSPs propios; los de OpenCode son una ayuda extra para que la IA trabaje con más precisión. No son imprescindibles: la IA puede revisar código leyendo los archivos sin ellos. Los servidores JSON y YAML se añadieron el 10/08/2026 para gestionar mejor los archivos de configuración (opencode.json, tui.json, etc.).
+
+### `mcp`
+Servidores MCP (Model Context Protocol). Cada uno proporciona **herramientas** que el modelo puede usar:| MCP | Tipo | Comando/URL | Qué hace |
 |-----|------|-------------|----------|
 | **context7** | Remote | `https://mcp.context7.com/mcp` | Documentación técnica actualizada |
 | **filesystem** | Local | `@modelcontextprotocol/server-filesystem` | Leer/escribir archivos |

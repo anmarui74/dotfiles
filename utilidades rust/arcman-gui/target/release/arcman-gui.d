@@ -1,0 +1,1 @@
+/home/antonio/Documentos/dotfiles/utilidades\ rust/arcman-gui/target/release/arcman-gui: /home/antonio/Documentos/dotfiles/utilidades\ rust/arcman-gui/arcman-font.otf /home/antonio/Documentos/dotfiles/utilidades\ rust/arcman-gui/src/main.rs

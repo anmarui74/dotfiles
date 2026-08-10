@@ -196,15 +196,24 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 4. **Regenera** el tarball de backup ejecutando `backup-opencode.sh`
 
 > 📌 El backup completo se genera en `~/Config/opencode/backups/opencode/` con retención de 30 días y poda de 1 tarball por día.
+>
+> 💡 **Nota (10/08/2026):** el backup automático hace **exactamente lo mismo** que el manual: al final ejecuta el mismo `backup-opencode.sh`, que incluye la **verificación automática del setup** (`check-setup-completo.sh`). Si el setup estuviera incorrecto, el backup se aborta (y se registra en `data/sync.log`).
 
 ### ¿Cuándo se ejecuta?
 
-- Automáticamente cada **2 minutos** vía systemd timer
+- Automáticamente cada **30 minutos** vía systemd timer (cambió de 2 min a 30 min el 10/08/2026)
 - También se puede ejecutar manualmente
 
 ### Lock file
 
 Usa `/tmp/opencode-sync.lock` para evitar ejecuciones simultáneas.
+
+> ⚠️ **Consejo:** al hacer un backup manual, conviene parar el timer primero para evitar que el sync (cada 30 min) interfiera copiando archivos durante el proceso:
+> ```bash
+> systemctl --user stop opencode-sync.timer
+> bash ~/Config/opencode/backup-opencode.sh
+> systemctl --user start opencode-sync.timer
+> ```
 
 ---
 
@@ -250,12 +259,12 @@ ExecStart=/home/antonio/.config/opencode/sync-opencode.sh
 
 ```ini
 [Timer]
-OnBootSec=1min
-OnUnitActiveSec=2min
+OnBootSec=5min
+OnUnitActiveSec=30min
 Unit=opencode-sync.service
 ```
 
-**Propósito:** Ejecuta la sincronización cada 2 minutos.
+**Propósito:** Ejecuta la sincronización cada 30 minutos (cambiado de 2 min a 30 min el 10/08/2026).
 
 ### Gestión de servicios
 
@@ -303,11 +312,82 @@ Servidor MCP de búsqueda DuckDuckGo (fallback HTML). Se usa cuando `duckduckgo-
 
 Verifica el estado del **issue #39164** de OpenCode (un bug que afecta al sistema).
 
+### `check-timeline-fix.sh` (10/08/2026)
+
+**Archivo:** `~/.config/opencode/check-timeline-fix.sh`
+
+Vigila el **PR #26861** de OpenCode (fix del timeline TUI). Se ejecuta automáticamente cada 3 días vía el timer systemd `check-timeline-fix.timer` y registra el resultado en `data/timeline-fix.log`. Si el PR se mergea, avisa para retirar el script `timeline-completo`.
+
+### `check-setup-completo.sh` (10/08/2026)
+
+**Archivo:** `~/.config/opencode/check-setup-completo.sh`
+
+**Verificación OBLIGATORIA del setup antes de cada backup.** Comprueba automáticamente que `setup-opencode-completo.sh` está correcto y completo:
+
+- `bash -n` (sintaxis)
+- `shellcheck` (sin errores reales; SC2016 en heredocs = OK)
+- **20 heredocs embebidos** comparados uno a uno contra los archivos activos
+- Estructura completa de pasos (1-19 + sub-pasos)
+- Comandos necesarios presentes en el sistema
+
+Está **integrado en `backup-opencode.sh`** (sección 0): se ejecuta SIEMPRE al hacer un backup (manual o automático) y **si el setup no está correcto, el backup se ABORTA**. No depende de la memoria del asistente — es automático.
+
 ### `setup-lmstudio-models.sh`
 
 **Archivo:** `~/.config/opencode/setup-lmstudio-models.sh`
 
 Verifica qué modelos están disponibles en LM Studio.
+
+---
+
+## Timeline completo (`timeline-completo`, 10/08/2026)
+
+El timeline de la TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado; el PR #26861 sigue abierto). El script **`~/.local/bin/timeline-completo`** lee el historial completo directamente de `opencode.db` (sqlite3):
+
+```bash
+timeline-completo                # Historial completo de la sesión actual
+timeline-completo <id_sesión>    # Historial de una sesión concreta
+timeline-completo --sesiones     # Lista las sesiones recientes con título
+timeline-completo --buscar "txt" # Busca peticiones en TODAS las sesiones
+```
+
+Todas las peticiones de Antonio están guardadas en `~/.local/share/opencode/opencode.db` aunque la TUI no las muestre.
+
+---
+
+## Servidores LSP (10/08/2026)
+
+OpenCode tiene **11 servidores LSP** configurados en la sección `lsp` de los tres perfiles (`opencode.json`, `opencode-local.json`, `opencode-cloud.json`). Ayudan a la IA a analizar código: localizar funciones, detectar errores y entender la estructura del proyecto.
+
+### Instalados vía npm (`~/.npm-global/bin/`)
+
+| Servidor | Paquete | Para |
+|----------|---------|------|
+| `typescript-language-server` | `typescript-language-server` | TS/JS |
+| `vscode-json-language-server` | `vscode-langservers-extracted` | JSON (y de regalo CSS, HTML, ESLint, Markdown) |
+| `yaml-language-server` | `yaml-language-server` | YAML |
+| `bash-language-server` | `bash-language-server` | Bash y Zsh (forzado) |
+| `marksman` | `pacman -S marksman` (binario autónomo) | Markdown |
+
+### Instalados por otros medios
+
+| Servidor | Cómo | Para |
+|----------|------|------|
+| `basedpyright-langserver` | `pipx install basedpyright` | Python |
+| `clangd` | `pacman -S clang` | C/C++ |
+| `rust-analyzer` | `rustup component add rust-analyzer` | Rust |
+| `gopls` | `go install golang.org/x/tools/gopls@latest` | Go |
+
+### Herramientas auxiliares
+
+| Herramienta | Cómo | Función |
+|-------------|------|---------|
+| `shellcheck` | `pacman -S shellcheck` | Linting de scripts bash |
+| `shfmt` | `pacman -S shfmt` | Formateo de scripts bash |
+
+> 📌 **Nota zsh:** no existe LSP zsh dedicado (parser tree-sitter-zsh abandonado). Se fuerza `bash-language-server` en `.zsh`/`.zshrc`: navegación y símbolos sí, diagnósticos no.
+>
+> 📌 **Nota instalación:** el `setup-opencode-completo.sh` (PASO 4b) instala todos los servidores LSP automáticamente en instalaciones desde cero.
 
 ---
 
@@ -361,7 +441,6 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── opencode.json              # Config principal (perfil activo)
 ├── opencode-local.json        # Perfil local
 ├── opencode-cloud.json        # Perfil cloud
-├── opencode.jsonc             # Config shell
 ├── tui.json                   # Config TUI (plugin voz)
 ├── AGENTS.md                  # Instrucciones del sistema
 ├── .env                       # Variables de entorno
@@ -373,12 +452,14 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── start-opencode.sh          # Lanzador interactivo
 ├── start-lmstudio.sh          # Arranque rápido LM Studio
 ├── setup-lmstudio-models.sh   # Verificar modelos
-├── switch-mcp-profile.sh      # Cambiar perfil MCP
-├── sync-opencode.sh           # Sincronización
-├── bootstrap-ocv.sh           # Instalador de voz
-├── check-fix.sh               # Verificar issue #39164
-├── web-search.sh              # MCP búsqueda web
-├── hardware-query.sh          # Consulta hardware
+ ├── switch-mcp-profile.sh      # Cambiar perfil MCP
+ ├── sync-opencode.sh           # Sincronización
+ ├── bootstrap-ocv.sh           # Instalador de voz
+ ├── check-fix.sh               # Verificar issue #39164
+ ├── check-timeline-fix.sh      # Vigilar PR #26861 (fix timeline)
+ ├── check-setup-completo.sh    # Verificar setup antes de cada backup
+ ├── web-search.sh              # MCP búsqueda web
+ ├── hardware-query.sh          # Consulta hardware
 │
 ├── settings.lmstudio.json     # Settings de LM Studio
 ├── litellm-config.yaml        # Config LiteLLM
@@ -446,7 +527,7 @@ Config/opencode/
 │   └── ...                    # Logs y estado
 │
 ├── documentacion/             # 📚 Documentación en Markdown (este README y docs 01-06)
-├── sesion-opencode/           # Setup completo + scripts sincronizados cada 2 min
+├── sesion-opencode/           # Setup completo + scripts sincronizados cada 30 min
 │   ├── setup-opencode-completo.sh   # Instalador completo (con PASO 19: OnlyOffice)
 │   ├── AGENTS.md
 │   ├── backup-opencode.sh

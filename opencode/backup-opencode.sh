@@ -18,6 +18,25 @@ BACKUP_ROOT="${BACKUP_DIR}/${BACKUP_NAME}"
 
 echo "=== Backup OpenCode - $(date '+%d/%m/%Y %H:%M') ==="
 
+# ─── 0. VERIFICACIÓN OBLIGATORIA DEL SETUP (AGENTS.md) ───
+# El setup-opencode-completo.sh debe estar CORRECTO y COMPLETO antes
+# de generar el backup. Si la verificación falla, se ABORTA.
+echo "🔍 Verificando setup-opencode-completo.sh (check-setup-completo.sh)..."
+if [ -f "$HOME/.config/opencode/check-setup-completo.sh" ]; then
+    if bash "$HOME/.config/opencode/check-setup-completo.sh"; then
+        echo "✅ Setup verificado correctamente. Continuando backup..."
+    else
+        echo ""
+        echo "❌❌❌ VERIFICACIÓN DEL SETUP FALLIDA ❌❌❌"
+        echo "   El setup-opencode-completo.sh no está correcto/completo."
+        echo "   Corrige el setup ANTES de hacer el backup (ver AGENTS.md)."
+        echo "   El backup se ABORTA para no guardar un setup defectuoso."
+        exit 1
+    fi
+else
+    echo "⚠️ check-setup-completo.sh no encontrado. ¿Se instaló correctamente?"
+fi
+
 mkdir -p "${BACKUP_DIR}" "${BACKUP_ROOT}"
 
 # ─── 1. Copiar estructura de .config/opencode/ excluyendo runtime y backups viejos

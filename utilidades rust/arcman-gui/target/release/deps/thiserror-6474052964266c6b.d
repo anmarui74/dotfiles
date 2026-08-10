@@ -1,0 +1,14 @@
+/home/antonio/Documentos/dotfiles/utilidades rust/arcman-gui/target/release/deps/thiserror-6474052964266c6b.d: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/aserror.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/display.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/var.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/private.rs /home/antonio/Documentos/dotfiles/utilidades\ rust/arcman-gui/target/release/build/thiserror-985218200e0ec3ef/out/private.rs
+
+/home/antonio/Documentos/dotfiles/utilidades rust/arcman-gui/target/release/deps/libthiserror-6474052964266c6b.rlib: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/aserror.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/display.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/var.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/private.rs /home/antonio/Documentos/dotfiles/utilidades\ rust/arcman-gui/target/release/build/thiserror-985218200e0ec3ef/out/private.rs
+
+/home/antonio/Documentos/dotfiles/utilidades rust/arcman-gui/target/release/deps/libthiserror-6474052964266c6b.rmeta: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/aserror.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/display.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/var.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/private.rs /home/antonio/Documentos/dotfiles/utilidades\ rust/arcman-gui/target/release/build/thiserror-985218200e0ec3ef/out/private.rs
+
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/lib.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/aserror.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/display.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/var.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/src/private.rs:
+/home/antonio/Documentos/dotfiles/utilidades\ rust/arcman-gui/target/release/build/thiserror-985218200e0ec3ef/out/private.rs:
+
+# env-dep:OUT_DIR=/home/antonio/Documentos/dotfiles/utilidades rust/arcman-gui/target/release/build/thiserror-985218200e0ec3ef/out

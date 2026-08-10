@@ -1,0 +1,11 @@
+/home/antonio/Documentos/dotfiles/utilidades rust/arcman-gui/target/debug/deps/tinyvec-044c469dc31ad248.d: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/array.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/array/const_generic_impl.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/arrayvec.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/arrayvec_drain.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/slicevec.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/tinyvec.rs
+
+/home/antonio/Documentos/dotfiles/utilidades rust/arcman-gui/target/debug/deps/libtinyvec-044c469dc31ad248.rmeta: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/array.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/array/const_generic_impl.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/arrayvec.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/arrayvec_drain.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/slicevec.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/tinyvec.rs
+
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/lib.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/array.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/array/const_generic_impl.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/arrayvec.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/arrayvec_drain.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/slicevec.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0/src/tinyvec.rs:

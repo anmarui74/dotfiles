@@ -52,6 +52,17 @@ patrón, o llama a read_file para cada archivo individual.
 - Usa SIEMPRE `pkexec` en su lugar: así saldrá una ventana gráfica pidiendo la contraseña
 - Ejemplo: `pkexec apt update` en vez de `sudo apt update`
 
+## 📖 Consultar documentación oficial ante problemas (OBLIGATORIO)
+Cuando algo te esté dando problemas (herramientas que fallan, configuraciones que no
+funcionan, errores desconocidos, etc.):
+1. **Accede PRIMERO a la documentación/wiki oficial** de la herramienta afectada
+2. Busca información en la web (issues, foros, stackoverflow)
+3. NO te quedes dando vueltas probando a ciegas: si tras 2-3 intentos propios no
+   lo resuelves, consulta fuentes externas
+4. Para OpenCode: https://opencode.ai/docs (y el esquema https://opencode.ai/config.json)
+5. Para LSPs concretos: consulta la wiki del servidor (ej. github del proyecto)
+Anota siempre la solución encontrada en la memoria.
+
 ---
 
 # PROCEDIMIENTOS TÉCNICOS
@@ -87,7 +98,7 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   de `~/.config/opencode/` ni en ningún `scripts/`.
 - **Acceso directo**: en la raíz de `~/Config/opencode/` hay un ENLACE SIMBÓLICO
   `setup-opencode-completo.sh` → `sesion-opencode/` para tenerlo a mano SIN duplicarlo.
-- El `sync-opencode.sh` (timer systemd `opencode-sync.timer`, cada 2 minutos)
+- El `sync-opencode.sh` (timer systemd `opencode-sync.timer`, cada 30 minutos)
   sincroniza el resto de archivos desde `~/.config/opencode/`, pero NO crea copias
   del setup: ese se edita directamente en `~/Config/opencode/sesion-opencode/`.
 - El `backup-opencode.sh` lo incluye automáticamente en el tarball desde
@@ -102,6 +113,25 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   4. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
   5. Verificar que el tarball contiene el setup actualizado y que no hay copias
      del setup en `~/.config/opencode/` (ni en la raíz ni en `sesion-opencode/scripts/`)
+
+  ### ✅ CHECKLIST OBLIGATORIO del punto 1 (revisar el setup POR COMPLETO):
+  - [ ] `bash -n` del setup (sintaxis)
+  - [ ] `shellcheck` del setup (sin warnings/errors reales; SC2016 en heredocs = OK)
+  - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
+        (opencode.json, opencode-local.json, tui.json, AGENTS.md, .env, y TODOS
+        los scripts: switch-mcp-profile, sync, init, start-*, hardware-query,
+        check-fix, check-timeline-fix, web-search, lmstudio-proxy.py,
+        backup-opencode, bootstrap-ocv, timeline-completo) — no solo los JSON
+  - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
+  - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
+
+  ### ⚡ VERIFICACIÓN AUTOMÁTICA (NO DEPENDE DE MI MEMORIA):
+  El script `~/.config/opencode/check-setup-completo.sh` hace TODO el checklist
+  automáticamente (sintaxis, shellcheck, heredocs uno a uno, estructura, comandos).
+  Está INTEGRADO en `backup-opencode.sh`: se ejecuta SIEMPRE al hacer un backup y
+  si el setup no está correcto, el backup se ABORTA. NO es opcional ni manual.
+  Si Antonio pide un backup, simplemente ejecuta `bash ~/Config/opencode/backup-opencode.sh`
+  — la verificación ocurre sola. Si algo falla, el script dirá exactamente qué corregir.
 - El `backup-opencode.sh` ya lo incluye automáticamente desde `~/Config/opencode/sesion-opencode/`
 - Al RESTAURAR desde un tarball, el `restore.sh` coloca el setup en
   `~/Config/opencode/sesion-opencode/`, no en la raíz de `~/.config/opencode/`
@@ -142,6 +172,40 @@ Si el grafo se pierde o corrompe:
    ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.json | head -1
    ```
 2. El servidor MCP Memory debería restaurarlo automáticamente al iniciar desde `MEMORY_DATA_DIR`
+
+## ⚠️ Recordatorio MCP memory (IMPORTANTE)
+Al usar la herramienta `memory_add_observations` (o `memory_delete_observations`),
+CADA observación del array DEBE incluir el campo `entityName` junto a `contents`:
+```json
+{"observations": [
+  {"entityName": "Nombre de la entidad", "contents": ["observación 1", "observación 2"]}
+]}
+```
+Si falta `entityName` el MCP devuelve error `-32602` (Input validation error).
+Mismo formato para `memory_create_relations`: cada relación necesita `from`, `to`, `relationType`.
+
+## 🕐 Timeline completo de sesiones (script timeline-completo)
+El timeline de la TUI de OpenCode (Ctrl+X G) SOLO muestra las últimas ~6 peticiones
+(límite hardcodeado; el PR #26861 que lo arregla sigue abierto, sin mergear).
+Para ver el historial COMPLETO de cualquier sesión, usar el script:
+```
+~/.local/bin/timeline-completo
+```
+- `timeline-completo` → historial completo de la sesión actual (todas las peticiones con fecha/hora)
+- `timeline-completo <id_sesión>` → historial de una sesión concreta
+- `timeline-completo --sesiones` → lista las sesiones recientes con su título
+- `timeline-completo --buscar "<texto>"` → busca peticiones en TODAS las sesiones
+Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3).
+TODAS las peticiones de Antonio están guardadas ahí aunque la TUI no las muestre.
+Cuando Antonio pregunte por su historial/timeline de peticiones, usa este script.
+
+## 👁️ Vigilancia del fix del timeline (timer systemd)
+El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861
+de OpenCode (fix del timeline) se ha mergeado. Se ejecuta automáticamente cada
+3 días vía el timer systemd `check-timeline-fix.timer` y registra el resultado
+en `~/.config/opencode/data/timeline-fix.log`.
+- Si el PR se mergea: se avisa (log + notificación) para retirar timeline-completo.
+- Consultar el log si Antonio pregunta por el estado del fix.
 
 ## Directorios de datos
 - `/home/antonio/.config/opencode/data/` - Datos de ejecución (logs, estado)

@@ -1,0 +1,12 @@
+/home/antonio/Documentos/dotfiles/utilidades rust/arcman-gui/target/debug/deps/ahash-be03561591f02903.d: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/convert.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/fallback_hash.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/operations.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/random_state.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/specialize.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/hash_map.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/hash_set.rs
+
+/home/antonio/Documentos/dotfiles/utilidades rust/arcman-gui/target/debug/deps/libahash-be03561591f02903.rmeta: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/convert.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/fallback_hash.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/operations.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/random_state.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/specialize.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/hash_map.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/hash_set.rs
+
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/lib.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/convert.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/fallback_hash.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/operations.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/random_state.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/specialize.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/hash_map.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/hash_set.rs:

@@ -11,6 +11,9 @@ set -euo pipefail
 # ============================================================
 
 DIR_CONFIG="$HOME/.config/opencode"
+# LOG_PROXY="/tmp/ollama-proxy.log"  # En desuso (config de Ollama archivada 09/08/2026).
+# Se conserva comentada por si en el futuro se reactiva Ollama como proveedor.
+# shellcheck disable=SC2034
 LOG_PROXY="/tmp/ollama-proxy.log"
 DIR_DATA="$DIR_CONFIG/data"
 DIR_MEMORY="$DIR_DATA/memory"
@@ -119,7 +122,11 @@ fi
 # ═══════════════════════════════════════════════════════════
 echo "--- 4/19: Dependencias de voz ---"
 if ! pipx list 2>/dev/null | grep -q edge-tts; then
-    pipx install edge-tts >/dev/null 2>&1 && info "edge-tts instalado" || warn "Fallo edge-tts"
+    if pipx install edge-tts >/dev/null 2>&1; then
+        info "edge-tts instalado"
+    else
+        warn "Fallo edge-tts"
+    fi
 fi
 mkdir -p "$LOCAL_BIN"
 if [ ! -f "$LOCAL_BIN/whisper-cli" ]; then
@@ -162,6 +169,145 @@ exec /home/antonio/.local/share/whisper-cpp/bin/whisper-cli "$@"
 WHISPERWRAP
     chmod +x "$LOCAL_BIN/whisper-cli"
     info "whisper-cli wrapper creado"
+fi
+
+# ═══════════════════════════════════════════════════════════
+# PASO 4b: Servidores LSP (basedpyright, tsserver, gopls, rust-analyzer, clangd)
+# ═══════════════════════════════════════════════════════════
+echo "--- 4b/19: Servidores LSP ---"
+# Python: basedpyright (mejor rendimiento que pyright)
+if ! command -v basedpyright-langserver >/dev/null 2>&1; then
+    if pipx install basedpyright >/dev/null 2>&1; then
+        info "basedpyright instalado"
+    else
+        warn "Fallo basedpyright (instala: pipx install basedpyright)"
+    fi
+else
+    info "basedpyright ya instalado"
+fi
+# TypeScript/JavaScript: typescript-language-server (requiere npm con prefix ~/.npm-global)
+if ! command -v typescript-language-server >/dev/null 2>&1; then
+    npm config set prefix "$HOME/.npm-global" >/dev/null 2>&1 || true
+    if npm install -g typescript-language-server typescript >/dev/null 2>&1; then
+        info "typescript-language-server instalado"
+    else
+        warn "Fallo tsserver (instala: npm i -g typescript-language-server typescript)"
+    fi
+else
+    info "typescript-language-server ya instalado"
+fi
+# JSON: vscode-json-language-server (del paquete vscode-langservers-extracted)
+if ! command -v vscode-json-language-server >/dev/null 2>&1; then
+    if npm install -g vscode-langservers-extracted >/dev/null 2>&1; then
+        info "vscode-json-language-server instalado"
+    else
+        warn "Fallo json-lsp (instala: npm i -g vscode-langservers-extracted)"
+    fi
+else
+    info "vscode-json-language-server ya instalado"
+fi
+# YAML: yaml-language-server
+if ! command -v yaml-language-server >/dev/null 2>&1; then
+    if npm install -g yaml-language-server >/dev/null 2>&1; then
+        info "yaml-language-server instalado"
+    else
+        warn "Fallo yaml-lsp (instala: npm i -g yaml-language-server)"
+    fi
+else
+    info "yaml-language-server ya instalado"
+fi
+# Bash/Zsh: bash-language-server + shellcheck + shfmt
+if ! command -v bash-language-server >/dev/null 2>&1; then
+    if npm install -g bash-language-server >/dev/null 2>&1; then
+        info "bash-language-server instalado"
+    else
+        warn "Fallo bash-lsp (instala: npm i -g bash-language-server)"
+    fi
+else
+    info "bash-language-server ya instalado"
+fi
+if ! command -v shellcheck >/dev/null 2>&1; then
+    if command -v pacman >/dev/null 2>&1; then
+        if pkexec pacman -S --needed --noconfirm shellcheck >/dev/null 2>&1; then
+            info "shellcheck instalado"
+        else
+            warn "Fallo shellcheck"
+        fi
+    else
+        warn "shellcheck no instalado (linting bash desactivado)"
+    fi
+else
+    info "shellcheck ya instalado"
+fi
+if ! command -v shfmt >/dev/null 2>&1; then
+    if command -v pacman >/dev/null 2>&1; then
+        if pkexec pacman -S --needed --noconfirm shfmt >/dev/null 2>&1; then
+            info "shfmt instalado"
+        else
+            warn "Fallo shfmt"
+        fi
+    else
+        warn "shfmt no instalado (formateo bash desactivado)"
+    fi
+else
+    info "shfmt ya instalado"
+fi
+# Markdown: marksman (LSP de Markdown, binario autónomo)
+if ! command -v marksman >/dev/null 2>&1; then
+    if command -v pacman >/dev/null 2>&1; then
+        if pkexec pacman -S --needed --noconfirm marksman >/dev/null 2>&1; then
+            info "marksman instalado"
+        else
+            warn "Fallo marksman (instala: pkexec pacman -S marksman)"
+        fi
+    else
+        warn "marksman no instalado (descarga binario desde github.com/artempyanykh/marksman)"
+    fi
+else
+    info "marksman ya instalado"
+fi
+# Go: gopls (requiere Go instalado)
+if command -v go >/dev/null 2>&1; then
+    if [ ! -x "$HOME/go/bin/gopls" ]; then
+        if go install golang.org/x/tools/gopls@latest >/dev/null 2>&1; then
+            info "gopls instalado"
+        else
+            warn "Fallo gopls (instala: go install golang.org/x/tools/gopls@latest)"
+        fi
+    else
+        info "gopls ya instalado"
+    fi
+else
+    warn "Go no está instalado, gopls se omitirá"
+fi
+# Rust: rust-analyzer (componente de rustup)
+if command -v rustup >/dev/null 2>&1; then
+    RA_REAL="$HOME/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"
+    if [ ! -x "$RA_REAL" ]; then
+        if rustup component add rust-analyzer >/dev/null 2>&1; then
+            info "rust-analyzer instalado"
+        else
+            warn "Fallo rust-analyzer (instala: rustup component add rust-analyzer)"
+        fi
+    else
+        info "rust-analyzer ya instalado"
+    fi
+else
+    warn "rustup no está instalado, rust-analyzer se omitirá"
+fi
+# C/C++: clangd (vía gestor de paquetes)
+if ! command -v clangd >/dev/null 2>&1; then
+    if command -v pacman >/dev/null 2>&1; then
+        if pkexec pacman -S --needed --noconfirm clang >/dev/null 2>&1; then
+            info "clangd instalado (pacman)"
+        else
+            warn "Fallo clangd (instala: pkexec pacman -S clang)"
+        fi
+    else
+        warn "clangd no instalado (instala el paquete clang de tu distro)"
+    fi
+else
+    info "clangd ya instalado"
 fi
 
 # ═══════════════════════════════════════════════════════════
@@ -230,6 +376,52 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
           }
         }
       }
+    }
+  },
+  "lsp": {
+    "python": {
+      "command": ["/home/antonio/.local/bin/basedpyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyw"]
+    },
+    "c": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".c", ".h"]
+    },
+    "cpp": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".cpp", ".hpp", ".cc", ".cxx"]
+    },
+    "rust": {
+      "command": ["/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"],
+      "extensions": [".rs"]
+    },
+    "typescript": {
+      "command": ["/home/antonio/.npm-global/bin/typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
+    },
+    "go": {
+      "command": ["/home/antonio/go/bin/gopls"],
+      "extensions": [".go"]
+    },
+    "json": {
+      "command": ["/home/antonio/.npm-global/bin/vscode-json-language-server", "--stdio"],
+      "extensions": [".json", ".jsonc"]
+    },
+    "yaml": {
+      "command": ["/home/antonio/.npm-global/bin/yaml-language-server", "--stdio"],
+      "extensions": [".yaml", ".yml"]
+    },
+    "bash": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".sh", ".bash"]
+    },
+    "zsh": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".zsh", ".zshrc"]
+    },
+    "markdown": {
+      "command": ["/usr/bin/marksman"],
+      "extensions": [".md", ".markdown"]
     }
   },
   "mcp": {
@@ -320,6 +512,52 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
           "limit": {"context": 81920, "output": 8192}
         }
       }
+    }
+  },
+  "lsp": {
+    "python": {
+      "command": ["/home/antonio/.local/bin/basedpyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyw"]
+    },
+    "c": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".c", ".h"]
+    },
+    "cpp": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".cpp", ".hpp", ".cc", ".cxx"]
+    },
+    "rust": {
+      "command": ["/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"],
+      "extensions": [".rs"]
+    },
+    "typescript": {
+      "command": ["/home/antonio/.npm-global/bin/typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
+    },
+    "go": {
+      "command": ["/home/antonio/go/bin/gopls"],
+      "extensions": [".go"]
+    },
+    "json": {
+      "command": ["/home/antonio/.npm-global/bin/vscode-json-language-server", "--stdio"],
+      "extensions": [".json", ".jsonc"]
+    },
+    "yaml": {
+      "command": ["/home/antonio/.npm-global/bin/yaml-language-server", "--stdio"],
+      "extensions": [".yaml", ".yml"]
+    },
+    "bash": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".sh", ".bash"]
+    },
+    "zsh": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".zsh", ".zshrc"]
+    },
+    "markdown": {
+      "command": ["/usr/bin/marksman"],
+      "extensions": [".md", ".markdown"]
     }
   },
   "mcp": {
@@ -495,11 +733,11 @@ SYSEOF
 
 cat > "$HOME/.config/systemd/user/opencode-sync.timer" << 'TIMEREOF'
 [Unit]
-Description=Sync OpenCode each 2 min
+Description=Sync OpenCode each 30 min
 
 [Timer]
-OnBootSec=1min
-OnUnitActiveSec=2min
+OnBootSec=5min
+OnUnitActiveSec=30min
 Unit=opencode-sync.service
 
 [Install]
@@ -523,11 +761,270 @@ StandardError=append:/home/antonio/.config/opencode/data/init.log
 WantedBy=default.target
 INITSEOF
 
+# ─── Vigilancia del fix del timeline (PR #26861) ───
+cat > "$DIR_CONFIG/check-timeline-fix.sh" << 'TIMELINE-FIX_SHEOF'
+#!/usr/bin/env bash
+# ============================================================
+# check-timeline-fix.sh — Vigila el PR #26861 de OpenCode
+# (fix del timeline: historial completo en la TUI)
+#
+# Consulta el estado del PR en GitHub. Si está MERGEADO,
+# avisa para que podamos retirar el script timeline-completo.
+# Se ejecuta automáticamente vía systemd timer.
+# ============================================================
+
+LOG_FILE="$HOME/.config/opencode/data/timeline-fix.log"
+PR_URL="https://api.github.com/repos/anomalyco/opencode/pulls/26861"
+
+log() {
+    echo "[$(date '+%d/%m/%Y %H:%M:%S')] $*" >> "$LOG_FILE"
+}
+
+# Consultar el estado del PR
+STATUS=$(curl -s --max-time 10 "$PR_URL" 2>/dev/null | python3 -c "
+import json,sys
+try:
+    d = json.load(sys.stdin)
+    state = d.get('state', 'unknown')
+    merged = d.get('merged_at')
+    title = d.get('title', '')
+    if merged:
+        print(f'MERGEADO|{merged}|{title}')
+    else:
+        print(f'{state}|-|{title}')
+except Exception:
+    print('ERROR|-|-')
+" 2>/dev/null)
+
+if [ -z "$STATUS" ] || [ "$STATUS" = "ERROR|-|-" ]; then
+    log "⚠️ No se pudo consultar GitHub (sin conexión o API caída)"
+    exit 0
+fi
+
+STATE="${STATUS%%|*}"
+REST="${STATUS#*|}"
+MERGED="${REST%%|*}"
+
+case "$STATE" in
+    MERGEADO)
+        log "🎉 ¡EL PR #26861 SE HA MERGEADO! Fecha: $MERGED"
+        log "👉 Ya se puede retirar el script timeline-completo."
+        log "👉 Comprobar si la nueva versión de OpenCode incluye el fix."
+        # Notificación de escritorio (opcional, si hay notify-send)
+        if command -v notify-send >/dev/null 2>&1; then
+            notify-send -u normal "OpenCode: fix del timeline mergeado" \
+                "El PR #26861 se ha mergeado ($MERGED). Ya puedes dejar de usar timeline-completo." 2>/dev/null || true
+        fi
+        ;;
+    open)
+        log "🔍 PR #26861 sigue ABIERTO (sin mergear). Se mantiene timeline-completo."
+        ;;
+    closed)
+        log "ℹ️ PR #26861 CERRADO sin mergear. Se mantiene timeline-completo."
+        ;;
+    *)
+        log "⚠️ Estado desconocido del PR: $STATE"
+        ;;
+esac
+TIMELINE-FIX_SHEOF
+chmod +x "$DIR_CONFIG/check-timeline-fix.sh"
+
+# ─── check-setup-completo: verificación OBLIGATORIA del setup antes de backup ───
+cat > "$DIR_CONFIG/check-setup-completo.sh" << 'CHECK-SETUP_SHEOF'
+#!/usr/bin/env bash
+# ============================================================
+# check-setup-completo.sh — Verificación OBLIGATORIA del
+# setup-opencode-completo.sh ANTES de cada backup.
+#
+# Comprueba que el setup:
+#  1. Tiene sintaxis válida (bash -n)
+#  2. Pasa shellcheck sin errores reales (SC2016 en heredocs = OK)
+#  3. TODOS los heredocs embebidos == archivos activos (uno a uno)
+#  4. Contiene la estructura completa de pasos (1-19 + sub-pasos)
+#  5. Los comandos que usa existen en el sistema
+#
+# Este script se ejecuta AUTOMÁTICAMENTE desde backup-opencode.sh.
+# Si falla algún punto, el backup se ABORTA (no se genera tarball).
+# ============================================================
+
+SETUP="$HOME/Config/opencode/sesion-opencode/setup-opencode-completo.sh"
+ACTIVO="$HOME/.config/opencode"
+LOG="$HOME/.config/opencode/data/setup-check.log"
+
+log() { echo "[$(date '+%d/%m/%Y %H:%M:%S')] $*" | tee -a "$LOG"; }
+
+ERRORS=0
+WARNINGS=0
+
+mkdir -p "$(dirname "$LOG")"
+log "═══════════ VERIFICACIÓN DEL SETUP ═══════════"
+log "Setup: $SETUP"
+
+# ─── 1. ¿Existe el setup? ───
+if [ ! -f "$SETUP" ]; then
+    log "❌ ERROR: No existe $SETUP"
+    log "El backup se ABORTA."
+    exit 1
+fi
+log "✅ Setup encontrado ($(wc -l < "$SETUP") líneas)"
+
+# ─── 2. Sintaxis (bash -n) ───
+if bash -n "$SETUP" 2>/dev/null; then
+    log "✅ Sintaxis válida (bash -n)"
+else
+    log "❌ ERROR: Sintaxis inválida"
+    ERRORS=$((ERRORS+1))
+fi
+
+# ─── 3. Shellcheck (solo errores/warnings reales; SC2016 info = OK) ───
+SC_OUT=$(shellcheck "$SETUP" 2>&1 | grep -E "SC[0-9]+" || true)
+SC_INFO=$(echo "$SC_OUT" | grep -c "SC2016" || true)
+SC_OTHER=$(echo "$SC_OUT" | grep -vE "SC2016" | grep -c "SC[0-9]+" || true)
+if [ "$SC_OTHER" -gt 0 ] 2>/dev/null; then
+    log "❌ ERROR: shellcheck reporta $SC_OTHER avisos no-SC2016"
+    ERRORS=$((ERRORS+1))
+else
+    log "✅ Shellcheck limpio (${SC_INFO:-0} notas SC2016 intencionales, 0 errores)"
+fi
+
+# ─── 4. Estructura de pasos (1-19 + sub-pasos) ───
+PASOS=$(grep -c '# PASO' "$SETUP")
+if [ "$PASOS" -ge 19 ] 2>/dev/null; then
+    log "✅ Estructura completa ($PASOS pasos)"
+else
+    log "❌ ERROR: Solo $PASOS pasos (esperado >= 19)"
+    ERRORS=$((ERRORS+1))
+fi
+
+# ─── 5. Heredocs embebidos vs archivos activos (UNO A UNO) ───
+# Usamos python3 para comparar byte a byte
+HERE_RESULT=$(python3 - "$SETUP" "$ACTIVO" << 'PYEOF'
+import re, json, sys
+
+setup_path = sys.argv[1]
+activo_dir = sys.argv[2]
+
+with open(setup_path) as f:
+    c = f.read()
+
+def extract(delim):
+    marker = f"<< '{delim}'\n"
+    if marker not in c: return None
+    start = c.index(marker) + len(marker)
+    end = c.index(f"\n{delim}", start)
+    return c[start:end+1]
+
+def norm(s): return json.dumps(json.loads(s), sort_keys=True)
+
+# Mapeo archivo -> delimitador (TODOS los embebidos)
+archivos = {
+    'opencode.json': 'JSONEOF', 'opencode-local.json': 'LOCALEOF', 'tui.json': 'TUIEOF',
+    'AGENTS.md': 'AGEOF', '.env': 'ENVEOF',
+    'switch-mcp-profile.sh': 'SWITCHEOF', 'sync-opencode.sh': 'SYNCEOF',
+    'init-opencode.sh': 'INITEOF', 'start-lmstudio-server.sh': 'SERVEREOF',
+    'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
+    'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
+    'check-fix.sh': 'CHECK-FIX_SHEOF', 'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
+    'web-search.sh': 'WEB-SEARCH_SHEOF', 'lmstudio-proxy.py': 'LMPROXYEOF',
+    'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
+    'settings.lmstudio.json': 'LMSETEOF',
+}
+
+ok = 0
+fails = []
+for fname, delim in archivos.items():
+    emb = extract(delim)
+    act_path = f"{activo_dir}/{fname}"
+    if emb is None:
+        fails.append(f"{fname} (heredoc {delim} no encontrado)")
+        continue
+    try:
+        with open(act_path) as f:
+            act = f.read()
+    except FileNotFoundError:
+        fails.append(f"{fname} (no existe en activo)")
+        continue
+    if fname.endswith('.json'):
+        match = norm(emb) == norm(act)
+    else:
+        match = emb == act
+    if match:
+        ok += 1
+    else:
+        fails.append(f"{fname} (DIFIERE: activo {len(act)} vs embebido {len(emb)} chars)")
+
+print(f"OK:{ok}")
+for f in fails:
+    print(f"FAIL:{f}")
+PYEOF
+)
+
+HERE_OK=$(echo "$HERE_RESULT" | grep "^OK:" | cut -d: -f2)
+HERE_FAILS=$(echo "$HERE_RESULT" | grep "^FAIL:" | sed 's/^FAIL://')
+
+if [ -n "$HERE_FAILS" ]; then
+    log "❌ ERROR: ${HERE_FAILS}"
+    ERRORS=$((ERRORS+1))
+else
+    log "✅ Heredocs embebidos: ${HERE_OK}/20 coinciden con el activo"
+fi
+
+# ─── 6. Comandos que usa el setup existen ───
+MISSING=""
+for cmd in pkexec pacman pipx npm rustup go curl git sqlite3 systemctl; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        MISSING="$MISSING $cmd"
+    fi
+done
+if [ -n "$MISSING" ]; then
+    log "❌ ERROR: Comandos faltantes:$MISSING"
+    ERRORS=$((ERRORS+1))
+else
+    log "✅ Comandos necesarios presentes (pkexec, pacman, pipx, npm, rustup, go, curl, git, sqlite3, systemctl)"
+fi
+
+# ─── Resultado final ───
+if [ "$ERRORS" -gt 0 ]; then
+    log "❌❌❌ VERIFICACIÓN FALLIDA ($ERRORS errores) — EL BACKUP SE ABORTA ❌❌❌"
+    exit 1
+else
+    log "✅✅✅ VERIFICACIÓN COMPLETA: SETUP CORRECTO — SE PUEDE HACER EL BACKUP ✅✅✅"
+    exit 0
+fi
+CHECK-SETUP_SHEOF
+chmod +x "$DIR_CONFIG/check-setup-completo.sh"
+info "check-setup-completo.sh creado (verifica el setup antes de cada backup)"
+info "check-timeline-fix.sh creado (vigila PR #26861)"
+
+cat > "$HOME/.config/systemd/user/check-timeline-fix.service" << 'TLSERVEOF'
+[Unit]
+Description=Check OpenCode PR #26861 (timeline fix) status
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.config/opencode/check-timeline-fix.sh
+TLSERVEOF
+
+cat > "$HOME/.config/systemd/user/check-timeline-fix.timer" << 'TLTIMEREOF'
+[Unit]
+Description=Check OpenCode timeline fix (PR #26861) every 3 days
+
+[Timer]
+OnCalendar=*-*-* 10:00:00
+OnUnitActiveSec=3d
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+TLTIMEREOF
+
 systemctl --user daemon-reload 2>/dev/null || true
 systemctl --user disable init-opencode.service 2>/dev/null || true
 systemctl --user enable opencode-sync.timer 2>/dev/null || true
 systemctl --user start opencode-sync.timer 2>/dev/null || true
-info "Servicios systemd: sync activado, init deshabilitado (sin modelo auto)"
+systemctl --user enable --now check-timeline-fix.timer 2>/dev/null || true
+info "Servicios systemd: sync activado, init deshabilitado, check-timeline-fix activado"
 echo ""
 
 # ═══════════════════════════════════════════════════════════
@@ -590,6 +1087,17 @@ patrón, o llama a read_file para cada archivo individual.
 - Usa SIEMPRE `pkexec` en su lugar: así saldrá una ventana gráfica pidiendo la contraseña
 - Ejemplo: `pkexec apt update` en vez de `sudo apt update`
 
+## 📖 Consultar documentación oficial ante problemas (OBLIGATORIO)
+Cuando algo te esté dando problemas (herramientas que fallan, configuraciones que no
+funcionan, errores desconocidos, etc.):
+1. **Accede PRIMERO a la documentación/wiki oficial** de la herramienta afectada
+2. Busca información en la web (issues, foros, stackoverflow)
+3. NO te quedes dando vueltas probando a ciegas: si tras 2-3 intentos propios no
+   lo resuelves, consulta fuentes externas
+4. Para OpenCode: https://opencode.ai/docs (y el esquema https://opencode.ai/config.json)
+5. Para LSPs concretos: consulta la wiki del servidor (ej. github del proyecto)
+Anota siempre la solución encontrada en la memoria.
+
 ---
 
 # PROCEDIMIENTOS TÉCNICOS
@@ -625,7 +1133,7 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   de `~/.config/opencode/` ni en ningún `scripts/`.
 - **Acceso directo**: en la raíz de `~/Config/opencode/` hay un ENLACE SIMBÓLICO
   `setup-opencode-completo.sh` → `sesion-opencode/` para tenerlo a mano SIN duplicarlo.
-- El `sync-opencode.sh` (timer systemd `opencode-sync.timer`, cada 2 minutos)
+- El `sync-opencode.sh` (timer systemd `opencode-sync.timer`, cada 30 minutos)
   sincroniza el resto de archivos desde `~/.config/opencode/`, pero NO crea copias
   del setup: ese se edita directamente en `~/Config/opencode/sesion-opencode/`.
 - El `backup-opencode.sh` lo incluye automáticamente en el tarball desde
@@ -640,6 +1148,25 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   4. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
   5. Verificar que el tarball contiene el setup actualizado y que no hay copias
      del setup en `~/.config/opencode/` (ni en la raíz ni en `sesion-opencode/scripts/`)
+
+  ### ✅ CHECKLIST OBLIGATORIO del punto 1 (revisar el setup POR COMPLETO):
+  - [ ] `bash -n` del setup (sintaxis)
+  - [ ] `shellcheck` del setup (sin warnings/errors reales; SC2016 en heredocs = OK)
+  - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
+        (opencode.json, opencode-local.json, tui.json, AGENTS.md, .env, y TODOS
+        los scripts: switch-mcp-profile, sync, init, start-*, hardware-query,
+        check-fix, check-timeline-fix, web-search, lmstudio-proxy.py,
+        backup-opencode, bootstrap-ocv, timeline-completo) — no solo los JSON
+  - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
+  - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
+
+  ### ⚡ VERIFICACIÓN AUTOMÁTICA (NO DEPENDE DE MI MEMORIA):
+  El script `~/.config/opencode/check-setup-completo.sh` hace TODO el checklist
+  automáticamente (sintaxis, shellcheck, heredocs uno a uno, estructura, comandos).
+  Está INTEGRADO en `backup-opencode.sh`: se ejecuta SIEMPRE al hacer un backup y
+  si el setup no está correcto, el backup se ABORTA. NO es opcional ni manual.
+  Si Antonio pide un backup, simplemente ejecuta `bash ~/Config/opencode/backup-opencode.sh`
+  — la verificación ocurre sola. Si algo falla, el script dirá exactamente qué corregir.
 - El `backup-opencode.sh` ya lo incluye automáticamente desde `~/Config/opencode/sesion-opencode/`
 - Al RESTAURAR desde un tarball, el `restore.sh` coloca el setup en
   `~/Config/opencode/sesion-opencode/`, no en la raíz de `~/.config/opencode/`
@@ -680,6 +1207,40 @@ Si el grafo se pierde o corrompe:
    ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.json | head -1
    ```
 2. El servidor MCP Memory debería restaurarlo automáticamente al iniciar desde `MEMORY_DATA_DIR`
+
+## ⚠️ Recordatorio MCP memory (IMPORTANTE)
+Al usar la herramienta `memory_add_observations` (o `memory_delete_observations`),
+CADA observación del array DEBE incluir el campo `entityName` junto a `contents`:
+```json
+{"observations": [
+  {"entityName": "Nombre de la entidad", "contents": ["observación 1", "observación 2"]}
+]}
+```
+Si falta `entityName` el MCP devuelve error `-32602` (Input validation error).
+Mismo formato para `memory_create_relations`: cada relación necesita `from`, `to`, `relationType`.
+
+## 🕐 Timeline completo de sesiones (script timeline-completo)
+El timeline de la TUI de OpenCode (Ctrl+X G) SOLO muestra las últimas ~6 peticiones
+(límite hardcodeado; el PR #26861 que lo arregla sigue abierto, sin mergear).
+Para ver el historial COMPLETO de cualquier sesión, usar el script:
+```
+~/.local/bin/timeline-completo
+```
+- `timeline-completo` → historial completo de la sesión actual (todas las peticiones con fecha/hora)
+- `timeline-completo <id_sesión>` → historial de una sesión concreta
+- `timeline-completo --sesiones` → lista las sesiones recientes con su título
+- `timeline-completo --buscar "<texto>"` → busca peticiones en TODAS las sesiones
+Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3).
+TODAS las peticiones de Antonio están guardadas ahí aunque la TUI no las muestre.
+Cuando Antonio pregunte por su historial/timeline de peticiones, usa este script.
+
+## 👁️ Vigilancia del fix del timeline (timer systemd)
+El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861
+de OpenCode (fix del timeline) se ha mergeado. Se ejecuta automáticamente cada
+3 días vía el timer systemd `check-timeline-fix.timer` y registra el resultado
+en `~/.config/opencode/data/timeline-fix.log`.
+- Si el PR se mergea: se avisa (log + notificación) para retirar timeline-completo.
+- Consultar el log si Antonio pregunta por el estado del fix.
 
 ## Directorios de datos
 - `/home/antonio/.config/opencode/data/` - Datos de ejecución (logs, estado)
@@ -1621,6 +2182,86 @@ WEB-SEARCH_SHEOF
 chmod +x "$DIR_CONFIG/web-search.sh"
 info "web-search.sh creado"
 
+# ─── timeline-completo: historial completo de sesiones (lee opencode.db) ───
+mkdir -p "$LOCAL_BIN"
+cat > "$LOCAL_BIN/timeline-completo" << 'TIMELINE_SHEOF'
+#!/usr/bin/env bash
+# ============================================================
+# timeline-completo.sh — Ver el historial COMPLETO de peticiones
+# de OpenCode desde la base de datos (opencode.db)
+#
+# Uso:
+#   timeline-completo                → historial de la sesión actual
+#   timeline-completo <sesión_id>    → historial de una sesión concreta
+#   timeline-completo --sesiones     → listar todas las sesiones
+#   timeline-completo --buscar <txt> → buscar peticiones que contengan texto
+#
+# NOTA: el timeline de la TUI solo muestra las últimas ~6 peticiones
+# (límite hardcodeado en OpenCode). Este script lee TODOS los mensajes
+# directamente de opencode.db.
+# ============================================================
+
+DB="$HOME/.local/share/opencode/opencode.db"
+
+if [ ! -f "$DB" ]; then
+    echo "❌ No se encontró la base de datos en $DB"
+    exit 1
+fi
+
+if ! command -v sqlite3 >/dev/null 2>&1; then
+    echo "❌ sqlite3 no está instalado"
+    exit 1
+fi
+
+# ─── Listar sesiones ───
+if [ "$1" = "--sesiones" ]; then
+    echo "=== SESIONES DE OPENCODE ==="
+    sqlite3 -separator " | " "$DB" "
+    SELECT substr(id, 1, 20) || '...' || '  ' ||
+           datetime(time_created/1000, 'unixepoch', 'localtime') || '  ' ||
+           title
+    FROM session ORDER BY time_created DESC LIMIT 20;" 2>/dev/null
+    exit 0
+fi
+
+# ─── Buscar texto ───
+if [ "$1" = "--buscar" ]; then
+    if [ -z "$2" ]; then
+        echo "Uso: timeline-completo --buscar <texto>"
+        exit 1
+    fi
+    echo "=== PETICIONES QUE CONTIENEN: $2 ==="
+    sqlite3 -separator " | " "$DB" "
+    SELECT datetime(m.time_created/1000, 'unixepoch', 'localtime') || '  ' ||
+           substr(replace(replace(json_extract(p.data, '\$.text'), char(10), ' '), char(13), ' '), 1, 80)
+    FROM message m
+    JOIN part p ON p.message_id = m.id
+    WHERE json_extract(m.data, '\$.role') = 'user'
+      AND json_extract(p.data, '\$.type') = 'text'
+      AND json_extract(p.data, '\$.text') LIKE '%$2%'
+    ORDER BY m.time_created ASC;" 2>/dev/null
+    exit 0
+fi
+
+# ─── Sesión actual (por defecto) o la indicada ───
+SES="${1:-$(sqlite3 "$DB" "SELECT id FROM session ORDER BY time_created DESC LIMIT 1;" 2>/dev/null)}"
+
+echo "=== HISTORIAL COMPLETO DE LA SESIÓN ==="
+echo "Sesión: $SES"
+echo ""
+sqlite3 -separator " | " "$DB" "
+SELECT printf('%02d', ROW_NUMBER() OVER (ORDER BY m.time_created)) || '. ' ||
+       datetime(m.time_created/1000, 'unixepoch', 'localtime') || '  ' ||
+       substr(replace(replace(json_extract(p.data, '\$.text'), char(10), ' '), char(13), ' '), 1, 70)
+FROM message m
+JOIN part p ON p.message_id = m.id
+WHERE m.session_id = '$SES' AND json_extract(m.data, '\$.role') = 'user'
+  AND json_extract(p.data, '\$.type') = 'text' AND json_extract(p.data, '\$.text') IS NOT NULL
+ORDER BY m.time_created ASC;" 2>/dev/null
+TIMELINE_SHEOF
+chmod +x "$LOCAL_BIN/timeline-completo"
+info "timeline-completo creado en ~/.local/bin (historial completo de sesiones)"
+
 # ═══════════════════════════════════════════════════════════
 # PASO 14: Proxy LM Studio
 # ═══════════════════════════════════════════════════════════
@@ -1711,6 +2352,25 @@ BACKUP_NAME="opencode-backup-${DATE}"
 BACKUP_ROOT="${BACKUP_DIR}/${BACKUP_NAME}"
 
 echo "=== Backup OpenCode - $(date '+%d/%m/%Y %H:%M') ==="
+
+# ─── 0. VERIFICACIÓN OBLIGATORIA DEL SETUP (AGENTS.md) ───
+# El setup-opencode-completo.sh debe estar CORRECTO y COMPLETO antes
+# de generar el backup. Si la verificación falla, se ABORTA.
+echo "🔍 Verificando setup-opencode-completo.sh (check-setup-completo.sh)..."
+if [ -f "$HOME/.config/opencode/check-setup-completo.sh" ]; then
+    if bash "$HOME/.config/opencode/check-setup-completo.sh"; then
+        echo "✅ Setup verificado correctamente. Continuando backup..."
+    else
+        echo ""
+        echo "❌❌❌ VERIFICACIÓN DEL SETUP FALLIDA ❌❌❌"
+        echo "   El setup-opencode-completo.sh no está correcto/completo."
+        echo "   Corrige el setup ANTES de hacer el backup (ver AGENTS.md)."
+        echo "   El backup se ABORTA para no guardar un setup defectuoso."
+        exit 1
+    fi
+else
+    echo "⚠️ check-setup-completo.sh no encontrado. ¿Se instaló correctamente?"
+fi
 
 mkdir -p "${BACKUP_DIR}" "${BACKUP_ROOT}"
 

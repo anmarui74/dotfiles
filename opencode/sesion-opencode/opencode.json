@@ -52,6 +52,52 @@
       }
     }
   },
+  "lsp": {
+    "python": {
+      "command": ["/home/antonio/.local/bin/basedpyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyw"]
+    },
+    "c": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".c", ".h"]
+    },
+    "cpp": {
+      "command": ["/usr/bin/clangd"],
+      "extensions": [".cpp", ".hpp", ".cc", ".cxx"]
+    },
+    "rust": {
+      "command": ["/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"],
+      "extensions": [".rs"]
+    },
+    "typescript": {
+      "command": ["/home/antonio/.npm-global/bin/typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
+    },
+    "go": {
+      "command": ["/home/antonio/go/bin/gopls"],
+      "extensions": [".go"]
+    },
+    "json": {
+      "command": ["/home/antonio/.npm-global/bin/vscode-json-language-server", "--stdio"],
+      "extensions": [".json", ".jsonc"]
+    },
+    "yaml": {
+      "command": ["/home/antonio/.npm-global/bin/yaml-language-server", "--stdio"],
+      "extensions": [".yaml", ".yml"]
+    },
+    "bash": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".sh", ".bash"]
+    },
+    "zsh": {
+      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
+      "extensions": [".zsh", ".zshrc"]
+    },
+    "markdown": {
+      "command": ["/usr/bin/marksman"],
+      "extensions": [".md", ".markdown"]
+    }
+  },
   "mcp": {
     "context7": {
       "type": "remote",

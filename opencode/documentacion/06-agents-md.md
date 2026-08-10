@@ -1,7 +1,7 @@
 # 📜 AGENTS.md — Reglas de comportamiento de OpenCode
 
 > **Fecha:** 26/07/2026 (última revisión: 09/08/2026) | **Usuario:** Antonio  
-> **Archivo original:** `~/.config/opencode/AGENTS.md` (209 líneas)  
+> **Archivo original:** `~/.config/opencode/AGENTS.md` (276 líneas)  
 > **Propósito:** Instrucciones del sistema que OpenCode carga al inicio de cada sesión
 
 ---
@@ -47,7 +47,7 @@ Define **TODO** el comportamiento del asistente:
 El archivo se organiza en **5 secciones** claramente delimitadas:
 
 ```
-1. REGLAS OBLIGATORIAS (APLICAR SIEMPRE)    → Líneas 1-56
+1. REGLAS OBLIGATORIAS (APLICAR SIEMPRE)    → Líneas 1-67
    ├── Usuario
    ├── Idioma
    ├── Formato
@@ -56,23 +56,26 @@ El archivo se organiza en **5 secciones** claramente delimitadas:
    ├── Uso de herramientas
    └── Elevación de privilegios
 
-2. PROCEDIMIENTOS TÉCNICOS                   → Líneas 58-86
+2. PROCEDIMIENTOS TÉCNICOS                   → Líneas 68-140
    ├── Sincronización con Config/opencode (estructura ordenada)
    └── Atención a setup-opencode-completo.sh
 
-3. PERSISTENCIA DE DATOS Y RECUPERACIÓN      → Líneas 88-129
+3. PERSISTENCIA DE DATOS Y RECUPERACIÓN      → Líneas 141-217
    ├── Variables de entorno
    ├── Inicialización
    ├── Backup del grafo de memoria
-   └── Recuperación del grafo
+   ├── Recuperación del grafo
+   ├── Recordatorio MCP memory (entityName)
+   ├── Timeline completo (timeline-completo)
+   └── Vigilancia del fix del timeline
 
-4. AVANZADO                                  → Líneas 131-157
+4. AVANZADO                                  → Líneas 219-269
    ├── PWAs - Abrir/Cerrar
    ├── Chrome debug
    ├── Servidor LM Studio
    └── Liberar VRAM
 
-5. CHECKLIST ANTES DE RESPONDER              → Líneas 159-166
+5. CHECKLIST ANTES DE RESPONDER              → Líneas 271-276
 ```
 
 ### Estructura de `~/Config/opencode/` (desde 09/08/2026)
@@ -103,7 +106,7 @@ El AGENTS.md documenta esta estructura y exige mantener la raíz limpia.
 
 Razón: El asistente debe saber a quién se dirige. Antonio es de Pechina, un pueblo de Almería. Esto permite personalizar respuestas (ej. el tiempo en su ubicación).
 
-### Idioma (líneas 8-10)
+### Idioma (líneas 7-10)
 
 ```
 - Responde SIEMPRE en español
@@ -194,7 +197,7 @@ Ejemplo de lo que NO debe hacer:
 Ejemplo de lo que SÍ debe hacer:
 > *(llama directamente a la herramienta Read)*
 
-### 🛠️ Elevación de privilegios (líneas 50-53)
+### 🛠️ Elevación de privilegios (líneas 50-54)
 
 ```
 - NUNCA uses `sudo` para comandos que requieran contraseña
@@ -208,7 +211,7 @@ Razón: `sudo` pide la contraseña por terminal, pero OpenCode se ejecuta en un 
 
 ## Sección 2: PROCEDIMIENTOS TÉCNICOS
 
-### Sincronización con Config/opencode (líneas 59-69) — OBLIGATORIO
+### Sincronización con Config/opencode (líneas 70-92) — OBLIGATORIO
 
 Explica el **sistema de dos directorios**:
 
@@ -229,7 +232,7 @@ Explica el **sistema de dos directorios**:
 4. Ejecuta: bash ~/Config/opencode/backup-opencode.sh
 ```
 
-### Atención a setup-opencode-completo.sh (líneas 71-83) — IMPORTANTE
+### Atención a setup-opencode-completo.sh (líneas 93-140) — IMPORTANTE
 
 Este script es el **instalador completo embebido**. Contiene toda la configuración dentro de sí mismo (es un script autocontenido).
 
@@ -243,7 +246,7 @@ Este script es el **instalador completo embebido**. Contiene toda la configuraci
 
 ## Sección 3: PERSISTENCIA DE DATOS Y RECUPERACIÓN
 
-### Variables de entorno (líneas 89-93)
+### Variables de entorno (líneas 143-147)
 
 ```bash
 set -a; source /home/antonio/.config/opencode/.env; set +a
@@ -252,7 +255,7 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 - Usa `set -a` para exportar automáticamente todas las variables
 - El `.env` contiene credenciales y rutas sensibles
 
-### Inicialización tras reinicio (líneas 95-105)
+### Inicialización tras reinicio (líneas 149-161)
 
 ```bash
 bash /home/antonio/.config/opencode/init-opencode.sh
@@ -265,7 +268,7 @@ Verifica:
 4. **PWAs** en el Escritorio
 5. **Variables de entorno** (.env)
 
-### Backup del grafo de memoria (líneas 107-111)
+### Backup del grafo de memoria (líneas 163-166)
 
 ```
 Directorio: /home/antonio/Config/opencode/backups/
@@ -275,7 +278,7 @@ Retención:  30 días
 
 El grafo de memoria es un **JSON** que contiene todas las entidades, observaciones y relaciones que el asistente ha aprendido.
 
-### Recuperación del grafo (líneas 113-119)
+### Recuperación del grafo (líneas 168-174)
 
 Si el grafo se pierde o corrompe:
 
@@ -286,7 +289,44 @@ ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.json | head -1
 # 2. El servidor MCP Memory restaura automáticamente desde MEMORY_DATA_DIR
 ```
 
-### Directorios de datos (líneas 121-125)
+### Recordatorio MCP memory (líneas 176-185) — IMPORTANTE
+
+Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observación**
+del array DEBE incluir el campo `entityName` junto a `contents`. Si falta `entityName`,
+el MCP devuelve error `-32602` (Input validation error). Formato correcto:
+
+```json
+{"observations": [
+  {"entityName": "Nombre de la entidad", "contents": ["observación 1", "observación 2"]}
+]}
+```
+
+> 📌 Este recordatorio se añadió el **10/08/2026** porque el asistente repetía el error
+> de omitir `entityName` al usar las herramientas de memoria. Mismo formato para
+> `memory_create_relations` (cada relación necesita `from`, `to`, `relationType`).
+
+### Timeline completo (líneas 187-200)
+
+La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado;
+el PR #26861 que lo arregla sigue abierto, sin mergear). Para ver el historial completo:
+
+```bash
+~/.local/bin/timeline-completo                # Sesión actual
+~/.local/bin/timeline-completo <id_sesión>    # Sesión concreta
+~/.local/bin/timeline-completo --sesiones     # Listar sesiones
+~/.local/bin/timeline-completo --buscar "txt" # Buscar en todas
+```
+
+Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3). Todas las peticiones
+de Antonio están guardadas ahí aunque la TUI no las muestre.
+
+### Vigilancia del fix del timeline (líneas 202-208)
+
+El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861 se ha mergeado.
+Se ejecuta cada 3 días vía el timer systemd `check-timeline-fix.timer` y registra en
+`~/.config/opencode/data/timeline-fix.log`. Si se mergea, avisa para retirar `timeline-completo`.
+
+### Directorios de datos (líneas 210-217)
 
 | Directorio | Contenido |
 |------------|-----------|
@@ -301,7 +341,7 @@ ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.json | head -1
 
 Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otros modelos que puedan necesitar instrucciones más detalladas para tareas específicas.
 
-### PWAs - Abrir (líneas 131-134)
+### PWAs - Abrir (líneas 221-224)
 
 ```
 1. Leer /home/antonio/Escritorio
@@ -311,7 +351,7 @@ Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otr
 
 Las PWAs (Progressive Web Apps) se instalan como accesos directos en el Escritorio con nombres como `chrome-<app-id>-Profile_2.desktop`. La línea `Exec=` contiene el comando completo para lanzarlas.
 
-### PWAs - Cerrar (líneas 136-138)
+### PWAs - Cerrar (líneas 226-228)
 
 ```bash
 # Cerrar una PWA específica
@@ -323,7 +363,7 @@ pkill -f "chrome.*remote-debugging-port"
 
 Usa el puerto de depuración remota (9222) para comunicarse con Chrome.
 
-### Chrome debug (líneas 140-141)
+### Chrome debug (líneas 230-231)
 
 ```bash
 nohup /opt/google/chrome/google-chrome \
@@ -336,7 +376,7 @@ nohup /opt/google/chrome/google-chrome \
 
 Lanza Chrome en modo depuración con un perfil temporal, necesario para controlar PWAs remotamente.
 
-### Servidor LM Studio (líneas 143-148)
+### Servidor LM Studio (líneas 233-242)
 
 ```bash
 lms server start
@@ -344,7 +384,7 @@ lms server start
 
 **Obligatorio** para que OpenCode pueda conectarse al modelo local.
 
-### Liberar VRAM (líneas 150-155)
+### Liberar VRAM (líneas 250-254)
 
 ```
 Si el modelo se satura:

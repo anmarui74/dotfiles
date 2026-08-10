@@ -10,10 +10,6 @@ const RED: &str = "\x1b[31m";
 const CYAN: &str = "\x1b[36m";
 const RESET: &str = "\x1b[0m";
 
-fn print_bold(s: &str)  { print!("{BOLD}{s}{RESET}"); }
-fn print_green(s: &str) { print!("{GREEN}{s}{RESET}"); }
-fn print_yellow(s: &str){ print!("{YELLOW}{s}{RESET}"); }
-fn print_red(s: &str)   { print!("{RED}{s}{RESET}"); }
 fn print_cyan(s: &str)  { print!("{CYAN}{s}{RESET}"); }
 fn println_bold(s: &str)  { println!("{BOLD}{s}{RESET}"); }
 fn println_green(s: &str) { println!("{GREEN}{s}{RESET}"); }
@@ -33,7 +29,7 @@ fn pause() {
 }
 
 fn confirm(msg: &str) -> bool {
-    print!("  {YELLOW}¿{msg}?{RESET} (s/N): ");
+    print!("  {YELLOW}{msg}{RESET} (s/N): ");
     _ = io::stdout().flush();
     let mut r = String::new();
     _ = io::stdin().read_line(&mut r);
@@ -95,7 +91,8 @@ fn run_sudo(args: &[&str]) {
         .status();
     match status {
         Ok(s) if s.success() => {}
-        _ => println_red("[ERROR] El comando falló."),
+        Ok(s) => println_red(&format!("[ERROR] El comando falló (código {})", s.code().unwrap_or(-1))),
+        Err(e) => println_red(&format!("[ERROR] No se pudo ejecutar: {e}")),
     }
 }
 
@@ -110,6 +107,20 @@ fn run_cmd(args: &[&str]) -> Option<String> {
         Some(String::from_utf8_lossy(&out.stdout).to_string())
     } else {
         None
+    }
+}
+
+fn check_network() -> bool {
+    let out = Command::new("sh")
+        .args(["-c", "curl -sI --max-time 5 https://archlinux.org >/dev/null 2>&1"])
+        .output()
+        .ok();
+    match out {
+        Some(o) if o.status.success() => true,
+        _ => {
+            println_red("  [ERROR] No hay conexión a internet. Cancela la operación.");
+            false
+        }
     }
 }
 
@@ -202,7 +213,13 @@ fn do_update() {
         return;
     }
     println_cyan(&format!("  Usando gestor: {}", pm_name(&pm)));
-    if !confirm("¿Deseas actualizar todos los paquetes") {
+    if !confirm("¿Deseas actualizar todos los paquetes?") {
+        println_yellow("  Cancelado.");
+        pause();
+        return;
+    }
+    println!();
+    if !check_network() {
         println_yellow("  Cancelado.");
         pause();
         return;
@@ -275,7 +292,7 @@ fn do_install(args: &[String]) {
         args.to_vec()
     };
 
-    if !confirm(&format!("¿Instalar '{}'", pkgs.join(" "))) {
+    if !confirm(&format!("¿Instalar '{}'?", pkgs.join(" "))) {
         println_yellow("  Cancelado.");
         pause();
         return;
@@ -319,7 +336,7 @@ fn do_remove(args: &[String]) {
         args.to_vec()
     };
 
-    if !confirm(&format!("¿Eliminar '{}'", pkgs.join(" "))) {
+    if !confirm(&format!("¿Eliminar '{}'?", pkgs.join(" "))) {
         println_yellow("  Cancelado.");
         pause();
         return;
@@ -329,12 +346,12 @@ fn do_remove(args: &[String]) {
     let pkg_refs: Vec<&str> = pkgs.iter().map(|s| s.as_str()).collect();
     match pm {
         PkgManager::Yay | PkgManager::Paru => {
-            let mut cmd = vec![pm_name(&pm), "-Rsnc"];
+            let mut cmd = vec![pm_name(&pm), "-Rns"];
             cmd.extend(pkg_refs.iter().copied());
             run_sudo(&cmd);
         }
         PkgManager::Pacman => {
-            let mut cmd = vec!["pacman", "-Rsnc"];
+            let mut cmd = vec!["pacman", "-Rns"];
             cmd.extend(pkg_refs.iter().copied());
             run_sudo(&cmd);
         }
@@ -364,7 +381,7 @@ fn do_orphans() {
         println_red(&format!("    {p}"));
     }
     println!();
-    if confirm("¿Eliminar paquetes huérfanos") {
+    if confirm("¿Eliminar paquetes huérfanos?") {
         println!();
         run_sudo(&{
             let mut v = vec!["pacman", "-Rns"];
@@ -379,25 +396,48 @@ fn do_orphans() {
     pause();
 }
 
+fn clean_aur_cache() {
+    let pm = detect_pkg_manager();
+    match pm {
+        PkgManager::Yay => {
+            if confirm("¿Limpiar también la caché de yay (AUR)?") {
+                println!();
+                run_sudo(&["yay", "-Sc"]);
+                println_green("  Caché de yay limpiada.");
+            }
+        }
+        PkgManager::Paru => {
+            if confirm("¿Limpiar también la caché de paru (AUR)?") {
+                println!();
+                run_sudo(&["paru", "-Sc"]);
+                println_green("  Caché de paru limpiada.");
+            }
+        }
+        _ => {}
+    }
+}
+
 fn do_clean() {
     clear();
     println!("\n  {}Limpiar caché de pacman{}\n", BOLD, RESET);
     if which("paccache") {
-        if confirm("¿Limpiar caché (manteniendo 3 versiones)") {
+        if confirm("¿Limpiar caché (manteniendo 3 versiones)?") {
             println!();
             run_sudo(&["paccache", "-r"]);
-            println_green("\n  Caché limpiada.");
+            println_green("  Caché limpiada.");
         } else {
             println_yellow("  Omitido.");
         }
     } else {
         println_yellow("  paccache no está instalado. Instala 'pacman-contrib'.");
-        if confirm("¿Limpiar con pacman -Sc en su lugar") {
+        if confirm("¿Limpiar con pacman -Sc en su lugar?") {
             println!();
             run_sudo(&["pacman", "-Sc"]);
-            println_green("\n  Caché limpiada.");
+            println_green("  Caché limpiada.");
         }
     }
+    println!();
+    clean_aur_cache();
     println!();
     pause();
 }
@@ -412,7 +452,13 @@ fn do_full() {
         return;
     }
     println_cyan(&format!("  Usando gestor: {}", pm_name(&pm)));
-    if !confirm("¿Realizar mantenimiento completo (update + clean + orphans)") {
+    if !confirm("¿Realizar mantenimiento completo (update + clean + orphans)?") {
+        println_yellow("  Cancelado.");
+        pause();
+        return;
+    }
+    println!();
+    if !check_network() {
         println_yellow("  Cancelado.");
         pause();
         return;
@@ -431,6 +477,8 @@ fn do_full() {
         println_yellow("  paccache no instalado, omitiendo limpieza de caché.");
     }
     println!();
+    clean_aur_cache();
+    println!();
     do_orphans_inner();
     println!();
     println_green(&format!("{BOLD}========================================{RESET}"));
@@ -445,6 +493,14 @@ fn do_orphans_inner() {
     let orphans: Vec<&str> = out.lines().filter(|l| !l.is_empty()).collect();
     if orphans.is_empty() {
         println_green("  No hay paquetes huérfanos.");
+        return;
+    }
+    println_yellow(&format!("  {} paquetes huérfanos encontrados:", orphans.len()));
+    for p in &orphans {
+        println_red(&format!("    {p}"));
+    }
+    if !confirm("¿Eliminar paquetes huérfanos?") {
+        println_yellow("  Omitido.");
         return;
     }
     println_yellow(&format!("  Eliminando {} paquetes huérfanos...", orphans.len()));

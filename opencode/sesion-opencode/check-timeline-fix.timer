@@ -1,0 +1,14 @@
+[Unit]
+Description=Check OpenCode timeline fix (PR #26861) every 3 days
+
+[Timer]
+# Primera ejecución: mañana a las 10:00
+OnCalendar=*-*-* 10:00:00
+# Repetir cada 3 días después de la última ejecución
+OnUnitActiveSec=3d
+# Pequeño retardo aleatorio para evitar picos
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
