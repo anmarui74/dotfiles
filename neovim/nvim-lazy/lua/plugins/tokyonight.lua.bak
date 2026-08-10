@@ -1,0 +1,16 @@
+return {
+  {
+    "folke/tokyonight.nvim",
+    lazy = false, -- Carga el tema inmediatamente al iniciar Neovim
+    priority = 1000, -- Asegura que se cargue antes que otros plugins
+    opts = {
+      -- style = "storm", -- Selecciona específicamente el estilo Storm
+      style = "night", -- Selecciona específicamente el estilo Night
+      transparent = false, -- Cambiar a true si quieres fondo transparente
+    },
+    config = function(_, opts)
+      require("tokyonight").setup(opts)
+      vim.cmd("colorscheme tokyonight")
+    end,
+  },
+}

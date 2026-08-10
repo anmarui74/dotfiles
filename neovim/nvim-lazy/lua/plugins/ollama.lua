@@ -27,7 +27,7 @@ return {
 
   ---@type Ollama.Config
   opts = {
-    model = "deepseek-r1:8b-llama-distill-q8_0",
+    model = "deepseek-r1:8b",
     url = "http://127.0.0.1:11434",
     serve = {
       on_start = false,
@@ -41,7 +41,7 @@ return {
       Sample_Prompt = {
         prompt = "This is a sample prompt that receives $input and $sel(ection), among others.",
         input_label = "> ",
-        model = "deepseek-r1:8b-llama-distill-q8_0",
+        model = "deepseek-r1:8b",
         action = "display",
       },
     },
