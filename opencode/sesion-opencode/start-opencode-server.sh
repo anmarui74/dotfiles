@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # start-opencode-server.sh - Carga LM Studio + modelo Qwen3.5-9B + proxy, luego abre OpenCode/OCV
+# Si SKIP_LMSTUDIO=1 (perfil cloud), NO carga el modelo local en VRAM.
 set -e
 
 # Colores para output
@@ -15,8 +16,10 @@ error() { echo -e "${ROJO}[X]${NC} $1"; }
 LMS_SCRIPT="/home/antonio/.config/opencode/start-lmstudio.sh"
 REAL_OPENCODE="${REAL_OPENCODE:-/usr/bin/opencode}"
 
-# 1. Cargar LM Studio + modelo Qwen3.5-9B + proxy
-if [ -x "$LMS_SCRIPT" ]; then
+# 1. Cargar LM Studio + modelo Qwen3.5-9B + proxy (solo si no es perfil cloud)
+if [ -n "$SKIP_LMSTUDIO" ]; then
+    aviso "Perfil cloud: NO se carga el modelo local en VRAM."
+elif [ -x "$LMS_SCRIPT" ]; then
     info "Cargando LM Studio (modelo Qwen3.5-9B + proxy)..."
     bash "$LMS_SCRIPT" || {
         error "Falló al cargar LM Studio + modelo."

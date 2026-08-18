@@ -370,8 +370,8 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
       "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
-      "description": "Agente local - Qwen 3.5",
-      "mode": "subagent",
+      "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
+      "mode": "primary",
       "model": "lmstudio/models-qwen3.5-9b"
     },
     "cloud": {
@@ -380,9 +380,11 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "temperature": 1,
+      "top_p": 0.95
     }
   },
   "provider": {
@@ -410,7 +412,11 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
         "nvidia/nemotron-nano-12b-v2-vl",
         "nvidia/nvidia-nemotron-nano-9b-v2",
         "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
-      ]
+      ],
+      "options": {
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      }
     },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
@@ -597,9 +603,12 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.5-9b",
+  "small_model": "opencode-go/deepseek-v4-flash",
   "instructions": [
     "AGENTS.md"
+  ],
+  "disabled_providers": [
+    "lmstudio"
   ],
   "default_agent": "cloud",
   "permission": {
@@ -619,9 +628,10 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
       "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
-      "description": "Agente local - Qwen 3.5",
-      "mode": "subagent",
-      "model": "lmstudio/models-qwen3.5-9b"
+      "description": "Agente local desactivado en perfil cloud",
+      "mode": "primary",
+      "model": "lmstudio/models-qwen3.5-9b",
+      "disable": true
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
@@ -629,9 +639,11 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "temperature": 1,
+      "top_p": 0.95
     }
   },
   "provider": {
@@ -659,24 +671,10 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
         "nvidia/nemotron-nano-12b-v2-vl",
         "nvidia/nvidia-nemotron-nano-9b-v2",
         "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
-      ]
-    },
-    "lmstudio": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Qwen 3.5 Q6_K",
-      "model": "models-qwen3.5-9b",
+      ],
       "options": {
-        "baseURL": "http://localhost:4001/v1"
-      },
-      "models": {
-        "models-qwen3.5-9b": {
-          "name": "Qwen 3.5 - Tool Calling Excellence",
-          "tools": true,
-          "limit": {
-            "context": 81920,
-            "output": 8192
-          }
-        }
+        "timeout": 600000,
+        "chunkTimeout": 60000
       }
     }
   },
@@ -878,12 +876,44 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "temperature": 1,
+      "top_p": 0.95
     }
   },
   "provider": {
+    "nvidia": {
+      "whitelist": [
+        "minimaxai/minimax-m3",
+        "z-ai/glm-5.2",
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+        "stepfun-ai/step-3.7-flash",
+        "thinkingmachines/inkling",
+        "meta/llama-3.1-8b-instruct",
+        "meta/llama-3.1-70b-instruct",
+        "meta/llama-3.2-11b-vision-instruct",
+        "meta/llama-3.3-70b-instruct",
+        "meta/muse-glimmer-30b",
+        "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "nvidia/nemotron-3-nano-30b-a3b",
+        "nvidia/nemotron-3-super-120b-a12b",
+        "nvidia/nemotron-3-ultra-550b-a55b",
+        "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "nvidia/nemotron-mini-4b-instruct",
+        "nvidia/nemotron-nano-12b-v2-vl",
+        "nvidia/nvidia-nemotron-nano-9b-v2",
+        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+      ],
+      "options": {
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      }
+    },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.5 Q6_K",
@@ -1083,61 +1113,6 @@ cat > "$DIR_CONFIG/tui.json" << 'TUIEOF'
 TUIEOF
 info "tui.json creado"
 
-cat > "$DIR_CONFIG/switch-mcp-profile.sh" << 'SWITCHEOF'
-#!/bin/bash
-
-# Script para cambiar entre configuraciones de OpenCode (local/cloud)
-# Uso: switch-mcp-profile.sh [local|cloud]
-
-CONFIG_DIR="$HOME/.config/opencode"
-
-if [ -z "$1" ]; then
-    echo "Uso: $0 [local|cloud]"
-    echo ""
-    echo "  local  - Filesystem, fetch y memory (para modelos locales)"
-    echo "  cloud  - Context7, memory, fetch y sequential_thinking (para modelos cloud)"
-    exit 1
-fi
-
-PROFILE="$1"
-
-if [ "$PROFILE" != "local" ] && [ "$PROFILE" != "cloud" ]; then
-    echo "Error: Perfil no válido. Usa 'local' o 'cloud'"
-    exit 1
-fi
-
-SOURCE_FILE="$CONFIG_DIR/opencode-$PROFILE.json"
-TARGET_FILE="$CONFIG_DIR/opencode.json"
-
-if [ ! -f "$SOURCE_FILE" ]; then
-    echo "Error: No existe $SOURCE_FILE"
-    exit 1
-fi
-
-cp "$SOURCE_FILE" "$TARGET_FILE"
-
-echo "✅ Configuración cambiada a: $PROFILE"
-echo ""
-echo "MCPs activos:"
-if [ "$PROFILE" = "local" ]; then
-    echo "  - filesystem"
-    echo "  - fetch"
-    echo "  - memory"
-else
-    echo "  - context7"
-    echo "  - memory"
-    echo "  - fetch"
-    echo "  - sequential_thinking"
-fi
-
-echo ""
-echo "⚠️  Reinicia OpenCode para aplicar los cambios:"
-echo "   exit"
-echo "   ocv"
-SWITCHEOF
-chmod +x "$DIR_CONFIG/switch-mcp-profile.sh"
-info "switch-mcp-profile.sh creado"
-
 cat > "$DIR_CONFIG/sync-opencode.sh" << 'SYNCEOF'
 #!/usr/bin/env bash
 # sync-opencode.sh — Sincroniza .config/opencode/ → Config/opencode/ + regenera backup
@@ -1186,9 +1161,13 @@ for f in "$CONFIG_ACTIVO"/*.json "$CONFIG_ACTIVO"/*.sh "$CONFIG_ACTIVO"/*.md "$C
     cp "$f" "$SESION_DIR/" 2>/dev/null || true
 done
 
-# Directorios (sin data/, models/, node_modules/)
-for dir in commands prompts skills skills-disabled tui.json; do
-    [ -d "$CONFIG_ACTIVO/$dir" ] && cp -r "$CONFIG_ACTIVO/$dir" "$SESION_DIR/" 2>/dev/null || true
+# Directorios (sin data/, models/, node_modules/) — sincronizar: borrar destino antes
+# para que la copia refleje exactamente el origen (elimina obsoletos)
+for dir in commands prompts skills skills-disabled; do
+    if [ -d "$CONFIG_ACTIVO/$dir" ]; then
+        rm -rf "$SESION_DIR/$dir"
+        cp -r "$CONFIG_ACTIVO/$dir" "$SESION_DIR/" 2>/dev/null || true
+    fi
 done
 
 # Plugin de voz
@@ -1410,19 +1389,28 @@ def extract(delim):
 
 def norm(s): return json.dumps(json.loads(s), sort_keys=True)
 
-# Mapeo archivo -> delimitador (TODOS los embebidos)
+# Mapeo archivo -> delimitador (TODOS los embebidos en ~/.config/opencode)
 archivos = {
-    'opencode.json': 'JSONEOF', 'opencode-local.json': 'LOCALEOF', 'tui.json': 'TUIEOF',
+    'opencode.json': 'JSONEOF', 'opencode-local.json': 'LOCALEOF', 'opencode-cloud.json': 'CLOUDEOF',
+    'tui.json': 'TUIEOF',
     'AGENTS.md': 'AGEOF', '.env': 'ENVEOF',
-    'switch-mcp-profile.sh': 'SWITCHEOF', 'sync-opencode.sh': 'SYNCEOF',
+    'sync-opencode.sh': 'SYNCEOF',
     'init-opencode.sh': 'INITEOF', 'start-lmstudio-server.sh': 'SERVEREOF',
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
+    'hardware-query.py': 'HARDWARE-QUERY_PYEOF',
     'check-fix.sh': 'CHECK-FIX_SHEOF', 'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
-    'web-search.sh': 'WEB-SEARCH_SHEOF', 'lmstudio-proxy.py': 'LMPROXYEOF',
+    'lmstudio-proxy.py': 'LMPROXYEOF',
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
 }
+
+# Archivos embebidos fuera de activo_dir (con su ruta real)
+extra_archivos = [
+    ('timeline-completo', 'TIMELINE_SHEOF', '/home/antonio/.local/bin/timeline-completo'),
+    ('speak', 'SPEAKEOF', '/home/antonio/.local/bin/speak'),
+    ('package.json (plugin voz)', 'PLUGPKG', '/home/antonio/.config/opencode/opencode-voice-modified/package.json'),
+]
 
 ok = 0
 fails = []
@@ -1447,20 +1435,42 @@ for fname, delim in archivos.items():
     else:
         fails.append(f"{fname} (DIFIERE: activo {len(act)} vs embebido {len(emb)} chars)")
 
+for fname, delim, path in extra_archivos:
+    emb = extract(delim)
+    if emb is None:
+        fails.append(f"{fname} (heredoc {delim} no encontrado)")
+        continue
+    try:
+        with open(path) as f:
+            act = f.read()
+    except FileNotFoundError:
+        fails.append(f"{fname} (no existe en {path})")
+        continue
+    if emb == act:
+        ok += 1
+    else:
+        fails.append(f"{fname} (DIFIERE: activo {len(act)} vs embebido {len(emb)} chars)")
+
+total = len(archivos) + len(extra_archivos)
 print(f"OK:{ok}")
+print(f"TOTAL:{total}")
 for f in fails:
     print(f"FAIL:{f}")
 PYEOF
 )
 
 HERE_OK=$(echo "$HERE_RESULT" | grep "^OK:" | cut -d: -f2)
+HERE_TOTAL=$(echo "$HERE_RESULT" | grep "^TOTAL:" | cut -d: -f2)
 HERE_FAILS=$(echo "$HERE_RESULT" | grep "^FAIL:" | sed 's/^FAIL://')
 
-if [ -n "$HERE_FAILS" ]; then
+if [ -z "$HERE_OK" ]; then
+    log "❌ ERROR: La comparación de heredocs falló (python)"
+    ERRORS=$((ERRORS+1))
+elif [ -n "$HERE_FAILS" ]; then
     log "❌ ERROR: ${HERE_FAILS}"
     ERRORS=$((ERRORS+1))
 else
-    log "✅ Heredocs embebidos: ${HERE_OK}/20 coinciden con el activo"
+    log "✅ Heredocs embebidos: ${HERE_OK}/${HERE_TOTAL:-0} coinciden con el activo"
 fi
 
 # ─── 6. Comandos que usa el setup existen ───
@@ -1655,10 +1665,11 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] `bash -n` del setup (sintaxis)
   - [ ] `shellcheck` del setup (sin warnings/errors reales; SC2016 en heredocs = OK)
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
-        (opencode.json, opencode-local.json, tui.json, AGENTS.md, .env, y TODOS
-        los scripts: switch-mcp-profile, sync, init, start-*, hardware-query,
-        check-fix, check-timeline-fix, hardware-query.py, lmstudio-proxy.py,
-        backup-opencode, bootstrap-ocv, timeline-completo) — no solo los JSON
+        (opencode.json, opencode-local.json, opencode-cloud.json, tui.json,
+        AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
+        hardware-query, check-fix, check-timeline-fix, hardware-query.py,
+        lmstudio-proxy.py, backup-opencode, bootstrap-ocv, timeline-completo)
+        — no solo los JSON
   - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
   - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
 
@@ -1783,6 +1794,22 @@ Al ejecutar `opencode` u `ocv`, el lanzador
 El servicio systemd `init-opencode.service` está DESHABILITADO
 (no carga el modelo al iniciar sesión). La carga ocurre solo
 al abrir opencode/ocv.
+
+## Perfiles por lanzador (sin copias)
+Cada comando usa SU archivo de config vía `OPENCODE_CONFIG`. **Nada se copia
+nunca sobre `opencode.json`**, que es solo el perfil por defecto.
+
+| Comando | Archivo de config | LM Studio (VRAM) |
+|---------|-------------------|------------------|
+| `ocv`, `opencode` | `opencode.json` | ✅ Carga modelo (todos los agentes y MCPs activos) |
+| `ocv-local`, `opencode-local` | `opencode-local.json` | ✅ Carga modelo (todos los agentes, MCPs esenciales) |
+| `ocv-cloud`, `opencode-cloud` | `opencode-cloud.json` | ❌ NO carga modelo (`SKIP_LMSTUDIO=1`) |
+
+- En cloud, el agente local está **desactivado** (`agent.local.disable`) y `small_model`
+  apunta a la nube (`opencode-go/deepseek-v4-flash`); el provider LM Studio está
+  bloqueado (`disabled_providers`).
+- El antiguo `switch-mcp-profile.sh` (copiaba local/cloud sobre `opencode.json`)
+  está ELIMINADO desde el 18/08/2026.
 
 ## Iniciar LM Studio manualmente
 ```bash
@@ -2429,6 +2456,7 @@ echo "--- 12/19: start-opencode-server.sh ---"
 cat > "$DIR_CONFIG/start-opencode-server.sh" << 'STARTEOF'
 #!/usr/bin/env bash
 # start-opencode-server.sh - Carga LM Studio + modelo Qwen3.5-9B + proxy, luego abre OpenCode/OCV
+# Si SKIP_LMSTUDIO=1 (perfil cloud), NO carga el modelo local en VRAM.
 set -e
 
 # Colores para output
@@ -2444,8 +2472,10 @@ error() { echo -e "${ROJO}[X]${NC} $1"; }
 LMS_SCRIPT="/home/antonio/.config/opencode/start-lmstudio.sh"
 REAL_OPENCODE="${REAL_OPENCODE:-/usr/bin/opencode}"
 
-# 1. Cargar LM Studio + modelo Qwen3.5-9B + proxy
-if [ -x "$LMS_SCRIPT" ]; then
+# 1. Cargar LM Studio + modelo Qwen3.5-9B + proxy (solo si no es perfil cloud)
+if [ -n "$SKIP_LMSTUDIO" ]; then
+    aviso "Perfil cloud: NO se carga el modelo local en VRAM."
+elif [ -x "$LMS_SCRIPT" ]; then
     info "Cargando LM Studio (modelo Qwen3.5-9B + proxy)..."
     bash "$LMS_SCRIPT" || {
         error "Falló al cargar LM Studio + modelo."
@@ -3982,50 +4012,105 @@ EOF
 log "Instalando script speak..."
 cat > "${LOCAL_BIN}/speak" << 'SPEAKEOF'
 #!/usr/bin/env python3
-import sys, subprocess, tempfile, os, time, re
+import sys
+import subprocess
+import tempfile
+import os
+import re
+import signal
 
 ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x1b]*\x1b\\|\x1b[PX^_]|[^\x1b]*\x1b\\|\x1b][0-9;]*[\x07\x1b]|\x1b[=<>FGH]|\x1b[NOPQ\\]')
 BOX_RE = re.compile(r'[\u2500-\u257f\u2500-\u257f\u2580-\u259f\u25a0-\u25ff]')
+EMOJI_RE = re.compile(
+    '['
+    '\U0001F300-\U0001F9FF'   # Pictogramas, emoticonos, transporte, banderas
+    '\U0001FA00-\U0001FA6F'   # Símbolos de ajedrez
+    '\U0001FA70-\U0001FAFF'   # Símbolos adicionales
+    '\u2600-\u27BF'           # Misceláneos y dingbats (✅, ⚠, ☀, ✂, etc.)
+    '\u2300-\u23FF'           # Técnicos misceláneos (⏳, ⌨, ⏩, etc.)
+    '\u25A0-\u25FF'           # Formas geométricas (■, □, ▲, ▼)
+    '\u2B05-\u2B55'           # Flechas y símbolos varios (⬅, ⬛, ⭐)
+    '\u2934-\u2935'           # Flechas suplementarias
+    '\u3030\u303D'            # Símbolos de onda y alternancia
+    '\u3297\u3299'            # Felicitaciones y secreto
+    '\uFE00-\uFE0F'           # Selectores de variación de emoji
+    '\u200D'                  # Zero width joiner
+    ']+'
+)
 
 VOICE = os.environ.get("SPEAK_VOICE", "es-ES-AlvaroNeural")
 RATE = os.environ.get("SPEAK_RATE", "+5%")
 PITCH = os.environ.get("SPEAK_PITCH", "+0Hz")
 
-def speak(text):
-    text = text.strip()
-    if not text or len(text) < 3: return
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f: fname = f.name
-    try:
-        cmd = ["edge-tts", "--voice", VOICE, "--rate", RATE, "--pitch", PITCH, "--text", text, "--write-media", fname]
-        subprocess.run(cmd, capture_output=True, timeout=30)
-        subprocess.run(["paplay", fname], capture_output=True)
-    except Exception: pass
-    finally:
-        try: os.unlink(fname)
-        except OSError: pass
+_current_paplay = None
+
+def _sigterm_handler(signum, frame):
+    global _current_paplay
+    if _current_paplay and _current_paplay.poll() is None:
+        _current_paplay.kill()
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, _sigterm_handler)
 
 def clean_line(text):
     text = ANSI_RE.sub("", text)
     text = BOX_RE.sub("", text)
+    text = EMOJI_RE.sub("", text)
+    text = re.sub(r'[⬝■▣●▸▀▄╹┃╻━┏┓┗┛┣┫┳┻╋┠┨┷┯┥┝┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋]+', '', text)
+    text = re.sub(r'[▰▱▔▏▎▍▌▋▊▉]+', '', text)
     text = ' '.join(text.split())
     return text.strip()
 
+def ensure_ending_punctuation(text):
+    """Asegura que la linea termine con un punto para pausa natural"""
+    if not text:
+        return text
+    if text[-1] in '.!?':
+        return text
+    # Si ya termina con ..., se queda igual
+    if text.endswith('...'):
+        return text
+    return text + '.'
+
+def speak(text):
+    global _current_paplay
+    if not text:
+        return
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        fname = f.name
+    try:
+        cmd = ["edge-tts", "--voice", VOICE, "--rate", RATE, "--pitch", PITCH,
+               "--text", text, "--write-media", fname]
+        subprocess.run(cmd, capture_output=True, timeout=60)
+        _current_paplay = subprocess.Popen(["paplay", fname], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _current_paplay.wait()
+        _current_paplay = None
+    except Exception:
+        pass
+    finally:
+        try:
+            os.unlink(fname)
+        except OSError:
+            pass
+
 def main():
-    buffer = ""
+    lines = []
     for line in sys.stdin:
         line = line.rstrip("\n")
-        print(line, flush=True)
         clean = clean_line(line)
-        if not clean or len(clean) < 4: continue
-        if clean.lower() in ('build', 'opencode zen', 'max', 'tab', 'agents', 'ctrl+p', 'commands', 'tip'): continue
-        buffer += clean + " "
-        if clean.endswith((".", "?", "!", ":", "...")):
-            speak(buffer)
-            time.sleep(0.2)
-            buffer = ""
-    if buffer.strip(): speak(buffer)
+        if not clean or len(clean) < 4:
+            continue
+        if clean.lower() in ('build', 'opencode zen', 'max', 'tab', 'agents', 'ctrl+p', 'commands', 'tip'):
+            continue
+        lines.append(clean)
 
-if __name__ == "__main__": main()
+    if lines:
+        # Unir con punto y espacio para pausa natural entre segmentos
+        text = '. '.join(ensure_ending_punctuation(l) for l in lines)
+        speak(text)
+
+if __name__ == "__main__":
+    main()
 SPEAKEOF
 chmod +x "${LOCAL_BIN}/speak"
 
@@ -4347,101 +4432,85 @@ chmod +x "$DIR_CONFIG/hardware-info.md" 2>/dev/null || true
 info "hardware-info.md creado"
 
 cat > "$DIR_CONFIG/README-hardware.md" << 'READMEHWEOF'
-=============================================
+# 🖥️ Comandos rápidos de hardware
 
-Comandos rápidos disponibles para información de hardware:
-═══════════════════════════════════════════════
+> Guía de comandos para consultar la información del equipo.
+> Para un escaneo completo y automático: `python3 ~/.config/opencode/hardware-query.py scan`
 
-🖥️  CPU (Processor Info)
-------------------------
+## ⚡ Consulta rápida (recomendado)
+
+| Comando | Qué muestra |
+|---|---|
+| `source ~/.config/opencode/hardware-query.sh && hw_query status` | Resumen general (CPU, RAM, GPU, placa, kernel, WiFi, discos) |
+| `hw_query cpu` | Detalle de la CPU (JSON) |
+| `hw_query gpu` | GPU NVIDIA + iGPU AMD (JSON) |
+| `hw_query ram` | Memoria + swap (JSON) |
+| `hw_query wifi` | WiFi: chipset, conexión, señal (JSON) |
+| `hw_query all` | Índice completo (JSON) |
+| `python3 ~/.config/opencode/hardware-query.py scan` | Reescaneo completo del hardware |
+
+## Comandos manuales equivalentes
+
+### CPU
+
 ```bash
 grep 'model name' /proc/cpuinfo | head -1 | cut -d: -f2 | sed 's/^ //'
 ```
+
 Resultado esperado: `AMD Ryzen 9 7900 12-Core Processor`
 
-═══════════════════════════════════════════════
+### Memoria
 
-
-💾 MEMORY (RAM)
-───────────────
 ```bash
 awk '/MemTotal/{printf "%.2f GB", $2/1024/1024}' /proc/meminfo
 ```
-Resultado: 64.85 GB total | Libre: ~32-50GB
 
-═══════════════════════════════════════════════
+Resultado: 64,85 GB total.
 
-🔌 MOTHERBOARD (Exact Model)
-─────────────────────────────
+### Placa base
+
 ```bash
 cat /sys/devices/virtual/dmi/id/board_name
 ```
+
 Resultado: `MAG X870 TOMAHAWK WIFI (MS-7E51)`
 
-═══════════════════════════════════════════════
+### GPU NVIDIA
 
-
-🎮 GPU NVIDIA Info
-──────────────────
 ```bash
-nvidia-smi --query-gpu=index,name,memory.total,memory.used,temperature.gpu,power.draw --format=csv,noheader,nounits  || \"AMD/Intel - usa lspci | grep -iE VGA|Display\"" 
+nvidia-smi --query-gpu=index,name,memory.total,memory.used,temperature.gpu,power.draw --format=csv,noheader,nounits
 ```
 
-═══════════════════════════════════════════════
+### WiFi
 
-
-📶 WI-FI CONTROLLER (PCI Express Vendor)
-─────────────────────────────────────────
 ```bash
-lspci | grep -iE 'wifi|wireless' || echo "Integrado WiFi (AM5 platform)"
+lspci | grep -iE 'wifi|wireless'
 ```
 
-═══════════════════════════════════════════════
+### Interfaces de red
 
-
-🖧 NETWORK Interfaces
-─────────────────────
 ```bash
 ip link show | grep -oE '^[0-9]+[[:space:]]+[a-z]+' | sed 's/^[^[:space:]]*[[:space:]]*//'
 ```
 
-═══════════════════════════════════════════════
+### Almacenamiento
 
-
-💾 STORAGE (NVMe/SATA)
-───────────────────────
 ```bash
-lsblk -nd -o NAME,MODEL,SERIAL,size,KBYTES,MOUNTPOINT || true
+lsblk -nd -o NAME,MODEL,SERIAL,size,KBYTES,MOUNTPOINT
 ```
 
-═══════════════════════════════════════════════
+### Topología y frecuencia de la CPU
 
-
-📊 VRAM Status
-─────────────────── 
 ```bash
-nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv 2>/dev/null
+grep 'processor' /proc/cpuinfo | wc -l
+grep 'cpu MHz' /proc/cpuinfo | head -1 | cut -d: -f2 | sed 's/^ //'
 ```
 
-═══════════════════════════════════════════════
+## Notas
 
-
-⚙️  CPU Topology & Frequency
-────────────────────────────
-```bash  
-grep 'processor' /proc/cpuinfo | wc -l && \
-grep 'cpu MHz' /proc/cpuinfo | head -1 | cut -d: -f2 | sed 's/^ //'  
-```
-
-═══════════════════════════════════════════════
-
-
-📝 Notes
-───────────────────
-All commands output directly to terminal. Use `bash ~/.config/opencode/common-cmds.sh [cmd]` when script is functional. For individual info, execute each command from any terminal.
-
-MDEOF && \
-echo "✓ README-hardware.md creado en config/opencode/"</dev/null && head -50 ~/.config/opencode/hardware-info-status.txt || true 2>/dev/null || echo "--- ---"
+- Todos los comandos devuelven la salida directamente a terminal.
+- El índice JSON vive en `~/.config/opencode/data/hardware/index.json`.
+- Detalle completo del equipo: ver [hardware-info.md](hardware-info.md).
 READMEHWEOF
 chmod +x "$DIR_CONFIG/README-hardware.md" 2>/dev/null || true
 info "README-hardware.md creado"
@@ -5615,15 +5684,28 @@ if ! grep -q "function ocv" "$ZSHRC" 2>/dev/null; then
     cat >> "$ZSHRC" << 'ZSHEOF'
 
 # OCV - OpenCode con voz (pasa por el lanzador que verifica LM Studio)
+# Perfil por defecto: opencode.json
 function ocv() {
     script -q -f -c "REAL_OPENCODE=/usr/bin/opencode /home/antonio/.local/bin/opencode $*" /dev/null 2>&1
 }
 
-# Alias para perfiles local/cloud
-alias opencode-local="bash ~/.config/opencode/switch-mcp-profile.sh local && opencode"
-alias opencode-cloud="bash ~/.config/opencode/switch-mcp-profile.sh cloud && opencode"
-alias ocv-local="bash ~/.config/opencode/switch-mcp-profile.sh local && ocv"
-alias ocv-cloud="bash ~/.config/opencode/switch-mcp-profile.sh cloud && ocv"
+# Perfiles por lanzador: cada uno usa SU archivo de config vía OPENCODE_CONFIG.
+# NUNCA copian nada sobre opencode.json.
+function opencode-local() {
+    OPENCODE_CONFIG="$HOME/.config/opencode/opencode-local.json" opencode "$@"
+}
+
+function opencode-cloud() {
+    OPENCODE_CONFIG="$HOME/.config/opencode/opencode-cloud.json" SKIP_LMSTUDIO=1 opencode "$@"
+}
+
+function ocv-local() {
+    script -q -f -c "OPENCODE_CONFIG=$HOME/.config/opencode/opencode-local.json REAL_OPENCODE=/usr/bin/opencode /home/antonio/.local/bin/opencode $*" /dev/null 2>&1
+}
+
+function ocv-cloud() {
+    script -q -f -c "OPENCODE_CONFIG=$HOME/.config/opencode/opencode-cloud.json SKIP_LMSTUDIO=1 REAL_OPENCODE=/usr/bin/opencode /home/antonio/.local/bin/opencode $*" /dev/null 2>&1
+}
 export OPENCODE_ENABLE_EXA=1
 export LMSTUDIO_API_KEY="lm-studio"
 ZSHEOF

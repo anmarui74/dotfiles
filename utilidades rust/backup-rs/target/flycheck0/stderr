@@ -1,0 +1,5 @@
+    Updating crates.io index
+error: failed to select a version for the requirement `serde_toml = "^1.0"`
+candidate versions found which didn't match: 0.0.1
+location searched: crates.io index
+required by package `backup-rs v1.0.0 (/home/antonio/backup-rs)`

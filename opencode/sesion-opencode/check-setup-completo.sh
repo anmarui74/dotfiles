@@ -83,12 +83,12 @@ def extract(delim):
 
 def norm(s): return json.dumps(json.loads(s), sort_keys=True)
 
-# Mapeo archivo -> delimitador (TODOS los embebidos)
+# Mapeo archivo -> delimitador (TODOS los embebidos en ~/.config/opencode)
 archivos = {
     'opencode.json': 'JSONEOF', 'opencode-local.json': 'LOCALEOF', 'opencode-cloud.json': 'CLOUDEOF',
     'tui.json': 'TUIEOF',
     'AGENTS.md': 'AGEOF', '.env': 'ENVEOF',
-    'switch-mcp-profile.sh': 'SWITCHEOF', 'sync-opencode.sh': 'SYNCEOF',
+    'sync-opencode.sh': 'SYNCEOF',
     'init-opencode.sh': 'INITEOF', 'start-lmstudio-server.sh': 'SERVEREOF',
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
@@ -98,6 +98,13 @@ archivos = {
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
 }
+
+# Archivos embebidos fuera de activo_dir (con su ruta real)
+extra_archivos = [
+    ('timeline-completo', 'TIMELINE_SHEOF', '/home/antonio/.local/bin/timeline-completo'),
+    ('speak', 'SPEAKEOF', '/home/antonio/.local/bin/speak'),
+    ('package.json (plugin voz)', 'PLUGPKG', '/home/antonio/.config/opencode/opencode-voice-modified/package.json'),
+]
 
 ok = 0
 fails = []
@@ -122,20 +129,42 @@ for fname, delim in archivos.items():
     else:
         fails.append(f"{fname} (DIFIERE: activo {len(act)} vs embebido {len(emb)} chars)")
 
+for fname, delim, path in extra_archivos:
+    emb = extract(delim)
+    if emb is None:
+        fails.append(f"{fname} (heredoc {delim} no encontrado)")
+        continue
+    try:
+        with open(path) as f:
+            act = f.read()
+    except FileNotFoundError:
+        fails.append(f"{fname} (no existe en {path})")
+        continue
+    if emb == act:
+        ok += 1
+    else:
+        fails.append(f"{fname} (DIFIERE: activo {len(act)} vs embebido {len(emb)} chars)")
+
+total = len(archivos) + len(extra_archivos)
 print(f"OK:{ok}")
+print(f"TOTAL:{total}")
 for f in fails:
     print(f"FAIL:{f}")
 PYEOF
 )
 
 HERE_OK=$(echo "$HERE_RESULT" | grep "^OK:" | cut -d: -f2)
+HERE_TOTAL=$(echo "$HERE_RESULT" | grep "^TOTAL:" | cut -d: -f2)
 HERE_FAILS=$(echo "$HERE_RESULT" | grep "^FAIL:" | sed 's/^FAIL://')
 
-if [ -n "$HERE_FAILS" ]; then
+if [ -z "$HERE_OK" ]; then
+    log "❌ ERROR: La comparación de heredocs falló (python)"
+    ERRORS=$((ERRORS+1))
+elif [ -n "$HERE_FAILS" ]; then
     log "❌ ERROR: ${HERE_FAILS}"
     ERRORS=$((ERRORS+1))
 else
-    log "✅ Heredocs embebidos: ${HERE_OK}/20 coinciden con el activo"
+    log "✅ Heredocs embebidos: ${HERE_OK}/${HERE_TOTAL:-0} coinciden con el activo"
 fi
 
 # ─── 6. Comandos que usa el setup existen ───

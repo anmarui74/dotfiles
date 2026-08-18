@@ -126,10 +126,11 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] `bash -n` del setup (sintaxis)
   - [ ] `shellcheck` del setup (sin warnings/errors reales; SC2016 en heredocs = OK)
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
-        (opencode.json, opencode-local.json, tui.json, AGENTS.md, .env, y TODOS
-        los scripts: switch-mcp-profile, sync, init, start-*, hardware-query,
-        check-fix, check-timeline-fix, hardware-query.py, lmstudio-proxy.py,
-        backup-opencode, bootstrap-ocv, timeline-completo) — no solo los JSON
+        (opencode.json, opencode-local.json, opencode-cloud.json, tui.json,
+        AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
+        hardware-query, check-fix, check-timeline-fix, hardware-query.py,
+        lmstudio-proxy.py, backup-opencode, bootstrap-ocv, timeline-completo)
+        — no solo los JSON
   - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
   - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
 
@@ -254,6 +255,22 @@ Al ejecutar `opencode` u `ocv`, el lanzador
 El servicio systemd `init-opencode.service` está DESHABILITADO
 (no carga el modelo al iniciar sesión). La carga ocurre solo
 al abrir opencode/ocv.
+
+## Perfiles por lanzador (sin copias)
+Cada comando usa SU archivo de config vía `OPENCODE_CONFIG`. **Nada se copia
+nunca sobre `opencode.json`**, que es solo el perfil por defecto.
+
+| Comando | Archivo de config | LM Studio (VRAM) |
+|---------|-------------------|------------------|
+| `ocv`, `opencode` | `opencode.json` | ✅ Carga modelo (todos los agentes y MCPs activos) |
+| `ocv-local`, `opencode-local` | `opencode-local.json` | ✅ Carga modelo (todos los agentes, MCPs esenciales) |
+| `ocv-cloud`, `opencode-cloud` | `opencode-cloud.json` | ❌ NO carga modelo (`SKIP_LMSTUDIO=1`) |
+
+- En cloud, el agente local está **desactivado** (`agent.local.disable`) y `small_model`
+  apunta a la nube (`opencode-go/deepseek-v4-flash`); el provider LM Studio está
+  bloqueado (`disabled_providers`).
+- El antiguo `switch-mcp-profile.sh` (copiaba local/cloud sobre `opencode.json`)
+  está ELIMINADO desde el 18/08/2026.
 
 ## Iniciar LM Studio manualmente
 ```bash

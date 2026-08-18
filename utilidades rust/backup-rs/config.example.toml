@@ -1,0 +1,69 @@
+# Configuración de backup-rs
+# Ubicación real: ~/.config/backup-rs/config.toml
+# Genera este archivo con: backup init
+# Edítalo después para personalizar rutas y opciones.
+
+[backup]
+# Punto de montaje del disco de destino (SSD Crucial)
+destination = "/run/media/antonio/CRUCIAL"
+# Nombre de la carpeta raíz donde vive todo el backup
+folder_name = "Backup"
+# Máximo número de versiones snapshot a conservar (null = ilimitado)
+max_versions = 50
+# Compresión (reservado; de momento siempre false)
+compression = false
+
+[[sources]]
+path = "/home/antonio/Config"
+include_hidden = true
+exclude_patterns = []
+
+[[sources]]
+path = "/home/antonio/Documentos"
+include_hidden = true
+exclude_patterns = []
+
+[[sources]]
+path = "/home/antonio/Descargas"
+include_hidden = true
+exclude_patterns = []
+
+[[sources]]
+path = "/home/antonio/Imágenes"
+include_hidden = true
+exclude_patterns = []
+
+[[sources]]
+path = "/home/antonio/Vídeos"
+include_hidden = true
+exclude_patterns = []
+
+[[sources]]
+path = "/home/antonio/Cursos informatica"
+include_hidden = true
+exclude_patterns = []
+
+[[sources]]
+path = "/home/antonio/Varios Linux"
+include_hidden = true
+exclude_patterns = []
+
+[[sources]]
+path = "/home/antonio/start-lmstudio.sh"
+include_hidden = true
+exclude_patterns = []
+
+[[sources]]
+path = "/home/antonio/system-info.sh"
+include_hidden = true
+exclude_patterns = []
+
+[watch]
+enabled = true
+debounce_ms = 1000
+recursive = true
+
+# Espejos planos (machacan: copian, sobrescriben y borran según el origen)
+[[mirrors]]
+name = "SEAGATE"
+destination = "/run/media/antonio/SEAGATE/Linux"

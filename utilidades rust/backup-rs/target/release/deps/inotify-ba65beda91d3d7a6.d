@@ -1,0 +1,12 @@
+/home/antonio/backup-rs/target/release/deps/inotify-ba65beda91d3d7a6.d: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/events.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/fd_guard.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/inotify.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/util.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/watches.rs
+
+/home/antonio/backup-rs/target/release/deps/libinotify-ba65beda91d3d7a6.rlib: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/events.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/fd_guard.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/inotify.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/util.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/watches.rs
+
+/home/antonio/backup-rs/target/release/deps/libinotify-ba65beda91d3d7a6.rmeta: /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/lib.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/events.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/fd_guard.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/inotify.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/util.rs /home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/watches.rs
+
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/lib.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/events.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/fd_guard.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/inotify.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/util.rs:
+/home/antonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inotify-0.9.6/src/watches.rs:

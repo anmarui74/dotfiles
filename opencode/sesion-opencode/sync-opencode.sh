@@ -45,9 +45,13 @@ for f in "$CONFIG_ACTIVO"/*.json "$CONFIG_ACTIVO"/*.sh "$CONFIG_ACTIVO"/*.md "$C
     cp "$f" "$SESION_DIR/" 2>/dev/null || true
 done
 
-# Directorios (sin data/, models/, node_modules/)
-for dir in commands prompts skills skills-disabled tui.json; do
-    [ -d "$CONFIG_ACTIVO/$dir" ] && cp -r "$CONFIG_ACTIVO/$dir" "$SESION_DIR/" 2>/dev/null || true
+# Directorios (sin data/, models/, node_modules/) — sincronizar: borrar destino antes
+# para que la copia refleje exactamente el origen (elimina obsoletos)
+for dir in commands prompts skills skills-disabled; do
+    if [ -d "$CONFIG_ACTIVO/$dir" ]; then
+        rm -rf "$SESION_DIR/$dir"
+        cp -r "$CONFIG_ACTIVO/$dir" "$SESION_DIR/" 2>/dev/null || true
+    fi
 done
 
 # Plugin de voz

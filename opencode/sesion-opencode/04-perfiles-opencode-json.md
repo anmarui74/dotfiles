@@ -24,16 +24,22 @@
 
 ## Descripción general
 
-Existen **tres archivos** de configuración principal para OpenCode, más un archivo complementario:
+Existen **tres archivos** de configuración para OpenCode, más un archivo complementario:
 
 | Archivo | Propósito |
 |---------|-----------|
-| `opencode.json` | **Activo** - Configuración en uso actualmente |
+| `opencode.json` | **Perfil por defecto** - Todos los MCPs y agentes activos |
 | `opencode-local.json` | Perfil **local** - Solo MCPs esenciales |
-| `opencode-cloud.json` | Perfil **cloud** - Todos los MCPs activos |
+| `opencode-cloud.json` | Perfil **cloud** - Todos los MCPs, sin agente local |
 | ~~`opencode.jsonc`~~ | ~~Configuración de shell~~ (obsoleto, ver sección 6) |
 
-Los tres archivos están en `~/.config/opencode/`. Para cambiar entre local y cloud se usa el script `switch-mcp-profile.sh`.
+Los tres archivos están en `~/.config/opencode/`. Cada perfil se activa con **su propio lanzador** vía `OPENCODE_CONFIG`. **Nada se copia nunca sobre `opencode.json`** (el antiguo `switch-mcp-profile.sh`, que sobrescribía `opencode.json`, está ELIMINADO desde el 18/08/2026).
+
+| Lanzador | Config | Agente local | MCPs | LM Studio |
+|----------|--------|--------------|------|-----------|
+| `ocv` / `opencode` | `opencode.json` | ✅ activo (primario) | Todos | ✅ Carga modelo |
+| `ocv-local` / `opencode-local` | `opencode-local.json` | ✅ activo (primario) | Esenciales | ✅ Carga modelo |
+| `ocv-cloud` / `opencode-cloud` | `opencode-cloud.json` | ❌ desactivado | Todos | ❌ No carga modelo (`SKIP_LMSTUDIO=1`) |
 
 ---
 
@@ -41,7 +47,7 @@ Los tres archivos están en `~/.config/opencode/`. Para cambiar entre local y cl
 
 ### Archivo: `~/.config/opencode/opencode.json`
 
-Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
+Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos** (local, cloud y NVIDIA) y **todos los MCPs activos**.
 
 ```json
 {
@@ -67,8 +73,8 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
       "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
-      "description": "Agente local - Qwen 3.5",
-      "mode": "subagent",
+      "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
+      "mode": "primary",
       "model": "lmstudio/models-qwen3.5-9b"
     },
     "cloud": {
@@ -77,12 +83,44 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "temperature": 1,
+      "top_p": 0.95
     }
   },
   "provider": {
+    "nvidia": {
+      "whitelist": [
+        "minimaxai/minimax-m3",
+        "z-ai/glm-5.2",
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+        "stepfun-ai/step-3.7-flash",
+        "thinkingmachines/inkling",
+        "meta/llama-3.1-8b-instruct",
+        "meta/llama-3.1-70b-instruct",
+        "meta/llama-3.2-11b-vision-instruct",
+        "meta/llama-3.3-70b-instruct",
+        "meta/muse-glimmer-30b",
+        "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "nvidia/nemotron-3-nano-30b-a3b",
+        "nvidia/nemotron-3-super-120b-a12b",
+        "nvidia/nemotron-3-ultra-550b-a55b",
+        "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "nvidia/nemotron-mini-4b-instruct",
+        "nvidia/nemotron-nano-12b-v2-vl",
+        "nvidia/nvidia-nemotron-nano-9b-v2",
+        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+      ],
+      "options": {
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      }
+    },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.5 Q6_K",
@@ -146,7 +184,7 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
   "mcp": {
     "context7": {"type": "remote", "url": "https://mcp.context7.com/mcp", "enabled": true},
     "filesystem": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"], "enabled": true},
-    "memory": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-memory"], "enabled": true},
+    "memory": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-memory"], "environment": {"MEMORY_FILE_PATH": "/home/antonio/.config/opencode/data/memory/memory.jsonl"}, "enabled": true},
     "fetch": {"type": "local", "command": ["npx", "-y", "mcp-fetch-server"], "enabled": true},
     "sequential_thinking": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"], "enabled": true}
   }
@@ -271,33 +309,42 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
 
 ### Archivo: `~/.config/opencode/opencode-cloud.json`
 
-Es idéntico al activo (`opencode.json`). Ver [sección del perfil activo](#perfil-activo).
+Perfil para `ocv-cloud` / `opencode-cloud`. Tiene **todos los MCPs activos** y el agente
+local **desactivado** (`agent.local.disable: true`). Como el modelo local no se va a
+usar, `small_model` apunta a la nube (`opencode-go/deepseek-v4-flash`) y el lanzador
+no carga el modelo en VRAM (`SKIP_LMSTUDIO=1`).
+
+La diferencia con `opencode.json` (por defecto) es:
+- `small_model`: nube en lugar de LM Studio local
+- Agente `local`: `disable: true` (en `opencode.json` es el agente activo)
 
 ---
 
 ## Comparativa
 
-| Aspecto | Local | Cloud |
-|---------|-------|-------|
-| **Agentes** | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `local`, `cloud`, `nvidia` |
-| **Agente principal** | `local` (Qwen 3.5 local) | `cloud` (OpenCode Go: deepseek-v4-flash) |
-| **Modelo local** | ✅ Qwen 3.5 Q6_K | ✅ Qwen 3.5 Q6_K (subagente) |
-| **Modelo cloud** | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) |
-| **Agente NVIDIA** | ✅ Nemotron 3 Ultra 550B | ✅ Nemotron 3 Ultra 550B |
-| **context7** | ❌ | ✅ |
-| **filesystem** | ✅ | ✅ |
-| **memory** | ✅ | ✅ |
-| **fetch** | ✅ | ✅ |
-| **sequential_thinking** | ❌ | ✅ |
-| **LSPs** | ✅ (los 6) | ✅ (los 6) |
-| **Uso típico** | Tareas locales sin internet | Tareas complejas con todo activo |
+| Aspecto | `opencode.json` (defecto) | Local | Cloud |
+|---------|---------------------------|-------|-------|
+| **Agentes** | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `cloud`, `nvidia` |
+| **Agente principal** | `cloud` (OpenCode Go) | `local` (Qwen 3.5 local) | `cloud` (OpenCode Go) |
+| **Agente local** | ✅ activo (primario) | ✅ activo (primario) | ❌ desactivado |
+| **Modelo cloud** | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) |
+| **Agente NVIDIA** | ✅ Nemotron 3 Ultra 550B | ✅ Nemotron 3 Ultra 550B | ✅ Nemotron 3 Ultra 550B |
+| **context7** | ✅ | ❌ | ✅ |
+| **filesystem** | ✅ | ✅ | ✅ |
+| **memory** | ✅ | ✅ | ✅ |
+| **fetch** | ✅ | ✅ | ✅ |
+| **sequential_thinking** | ✅ | ❌ | ✅ |
+| **LSPs** | ✅ (los 11) | ✅ (los 11) | ✅ (los 11) |
+| **LM Studio (VRAM)** | ✅ Carga modelo | ✅ Carga modelo | ❌ No carga |
+| **Uso típico** | Uso general con todo activo | Tareas locales sin internet | Todo en la nube, sin ocupar VRAM |
 
 ### ¿Cuándo usar cada perfil?
 
 | Perfil | Cuándo usarlo |
 |--------|--------------|
+| **`opencode.json` (defecto)** | Uso general: todos los agentes y MCPs disponibles, con el modelo local cargado para cuando lo necesites. |
 | **Local** | Cuando trabajes offline o quieras que todo el procesamiento sea local (privacidad). Menos MCPs activos (context7 y sequential_thinking desactivados). |
-| **Cloud** | Cuando necesites toda la potencia: documentación (context7), razonamiento estructurado (sequential_thinking) y modelos en la nube (OpenCode Go). |
+| **Cloud** | Cuando necesites toda la potencia (documentación, razonamiento estructurado y modelos en la nube) sin ocupar VRAM con el modelo local. |
 
 ---
 
@@ -313,25 +360,40 @@ Define el **shell** que usa OpenCode para ejecutar comandos bash. En este caso, 
 
 ## Cambio entre perfiles
 
-### Script: `~/.config/opencode/switch-mcp-profile.sh`
+### Lanzadores (desde el 18/08/2026)
+
+Cada perfil se activa con **su propio lanzador** (definidos en `~/.zshrc`). Usan la
+variable `OPENCODE_CONFIG` de OpenCode, que carga el archivo indicado **sin copiar
+nada sobre `opencode.json`**.
 
 ```bash
-# Cambiar a perfil local
-bash ~/.config/opencode/switch-mcp-profile.sh local
+# Perfil por defecto
+ocv                        # o: opencode
 
-# Cambiar a perfil cloud
-bash ~/.config/opencode/switch-mcp-profile.sh cloud
+# Perfil local (MCPs esenciales, carga modelo en VRAM)
+ocv-local                  # o: opencode-local
+
+# Perfil cloud (todos los MCPs, sin modelo local en VRAM)
+ocv-cloud                  # o: opencode-cloud
 ```
 
 ### ¿Cómo funciona?
 
-Simplemente copia el archivo correspondiente sobre `opencode.json`:
+El lanzador exporta `OPENCODE_CONFIG` apuntando al archivo del perfil:
 
-```bash
-cp "$CONFIG_DIR/opencode-$PROFILE.json" "$CONFIG_DIR/opencode.json"
+```zsh
+function ocv-cloud() {
+    script -q -f -c "OPENCODE_CONFIG=$HOME/.config/opencode/opencode-cloud.json \
+        SKIP_LMSTUDIO=1 REAL_OPENCODE=/usr/bin/opencode \
+        /home/antonio/.local/bin/opencode $*" /dev/null 2>&1
+}
 ```
 
-> ⚠️ **Importante:** Hay que reiniciar OpenCode para que los cambios surtan efecto.
+- `OPENCODE_CONFIG` carga el perfil indicado (OpenCode lo fusiona sobre la global).
+- `SKIP_LMSTUDIO=1` hace que `start-opencode-server.sh` **no cargue el modelo local** en VRAM.
+- El antiguo `switch-mcp-profile.sh` (que copiaba local/cloud sobre `opencode.json`) está **ELIMINADO**.
+
+> ⚠️ **Importante:** Los cambios de config requieren reiniciar OpenCode para que surtan efecto.
 
 ---
 
@@ -368,7 +430,7 @@ Define agentes (personas/modos del asistente):
 
 - **build:** Agente especial para tareas de construcción (lee AGENTS.md al inicio). Desde el **18/08/2026** usa **DeepSeek V4 Flash** como modelo explícito
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
-- **local:** Agente local, usa el modelo Qwen 3.5 Q6_K vía LM Studio (puerto 4001). En el perfil activo es **subagente**; en el perfil local es el **principal**
+- **local:** Agente local, usa el modelo Qwen 3.5 Q6_K vía LM Studio (puerto 4001). Es **primario** en el perfil activo y en el perfil local; **desactivado** (`disable: true`) en el perfil cloud
 - **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`)
 - **nvidia:** Agente NVIDIA añadido el **18/08/2026**, usa **Nemotron 3 Ultra 550B** (`nvidia/nvidia/nemotron-3-ultra-550b-a55b`). Modelo frontier de NVIDIA para agentes complejos, 1M de contexto
 

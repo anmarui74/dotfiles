@@ -110,9 +110,10 @@ bash ~/.config/opencode/init-opencode.sh
 # Lanzar OpenCode
 bash ~/.config/opencode/start-opencode.sh      # o directamente: ocv
 
-# Cambiar perfil MCP
-bash ~/.config/opencode/switch-mcp-profile.sh local   # Solo esencial
-bash ~/.config/opencode/switch-mcp-profile.sh cloud   # Todo activo
+# Perfiles por lanzador (cada uno usa SU config, sin copiar nada)
+ocv / opencode                                   # opencode.json (todos los agentes activos)
+ocv-local / opencode-local                       # opencode-local.json (MCPs esenciales)
+ocv-cloud / opencode-cloud                       # opencode-cloud.json (sin modelo local en VRAM)
 
 # Sincronizar configuración (timer automático cada 30 min)
 bash ~/.config/opencode/sync-opencode.sh

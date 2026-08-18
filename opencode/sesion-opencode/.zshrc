@@ -131,23 +131,33 @@ export EDITOR=nvim
 export PATH="$HOME/.local/bin:$PATH"
 
 # opencode con TUI completo + voz (pasa por el lanzador que verifica LM Studio)
+# Perfil por defecto: ~/.config/opencode/opencode.json
 function ocv() {
     script -q -f -c "REAL_OPENCODE=/usr/bin/opencode /home/antonio/.local/bin/opencode $*" /dev/null 2>&1
 }
 
+# Perfiles por lanzador: cada uno usa SU archivo de config vía OPENCODE_CONFIG.
+# NUNCA copian nada sobre opencode.json (opencode.json es solo para ocv/opencode).
+function opencode-local() {
+    OPENCODE_CONFIG="$HOME/.config/opencode/opencode-local.json" opencode "$@"
+}
+
+function opencode-cloud() {
+    OPENCODE_CONFIG="$HOME/.config/opencode/opencode-cloud.json" SKIP_LMSTUDIO=1 opencode "$@"
+}
+
+function ocv-local() {
+    script -q -f -c "OPENCODE_CONFIG=$HOME/.config/opencode/opencode-local.json REAL_OPENCODE=/usr/bin/opencode /home/antonio/.local/bin/opencode $*" /dev/null 2>&1
+}
+
+function ocv-cloud() {
+    script -q -f -c "OPENCODE_CONFIG=$HOME/.config/opencode/opencode-cloud.json SKIP_LMSTUDIO=1 REAL_OPENCODE=/usr/bin/opencode /home/antonio/.local/bin/opencode $*" /dev/null 2>&1
+}
 
 export PATH=~/.npm-global/bin:$PATH
 
 # Web search para OpenCode con modelos locales
 export OPENCODE_ENABLE_EXA=1
-
-# Aliases para OpenCode con perfiles de configuración
-alias opencode-local='bash ~/.config/opencode/switch-mcp-profile.sh local && opencode'
-alias opencode-cloud='bash ~/.config/opencode/switch-mcp-profile.sh cloud && opencode'
-
-# Aliases para OCV (OpenCode con voz) con perfiles de configuración
-alias ocv-local='bash ~/.config/opencode/switch-mcp-profile.sh local && ocv'
-alias ocv-cloud='bash ~/.config/opencode/switch-mcp-profile.sh cloud && ocv'
 
 # ── Verificar fix de OpenCode (issue #39164) ──
 alias check-fix='bash ~/.config/opencode/check-fix.sh'

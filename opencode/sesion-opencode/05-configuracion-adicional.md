@@ -172,6 +172,7 @@ HARDWARE_INDEX_PATH=/home/antonio/.config/opencode/data/hardware/index.json
 | `MAX_SEARCH_RESULTS` | `8` | Máximo de resultados de búsqueda |
 | `TIMEOUT_SECONDS` | `120` | Timeout para peticiones web |
 | `MEMORY_DATA_DIR` | `~/.config/opencode/data/memory` | Directorio del grafo de memoria persistente |
+| `MEMORY_FILE_PATH` | `~/.config/opencode/data/memory/memory.jsonl` | **Ruta del archivo del grafo que usa el servidor MCP memory** (vía `environment` en los 3 perfiles) |
 | `MEMORY_BACKUP_ENABLED` | `true` | Activa backups automáticos del grafo |
 | `MEMORY_BACKUP_PATH` | `Config/opencode/backups/...` | Ruta de los backups del grafo |
 | `LOG_FILE` | `data/init.log` | Archivo de log de inicialización |
@@ -329,7 +330,8 @@ Vigila el **PR #26861** de OpenCode (fix del timeline TUI). Se ejecuta automáti
 
 - `bash -n` (sintaxis)
 - `shellcheck` (sin errores reales; SC2016 en heredocs = OK)
-- **20 heredocs embebidos** comparados uno a uno contra los archivos activos
+- **22 heredocs embebidos** comparados uno a uno contra los archivos activos
+  (incluye `timeline-completo` y `speak` de `~/.local/bin/`)
 - Estructura completa de pasos (1-19 + sub-pasos)
 - Comandos necesarios presentes en el sistema
 
@@ -455,7 +457,7 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── start-opencode.sh          # Lanzador interactivo
 ├── start-lmstudio.sh          # Arranque rápido LM Studio
 ├── setup-lmstudio-models.sh   # Verificar modelos
- ├── switch-mcp-profile.sh      # Cambiar perfil MCP
+ ├── start-opencode-server.sh    # Lanzador OpenCode/OCV (carga LM Studio salvo SKIP_LMSTUDIO)
  ├── sync-opencode.sh           # Sincronización
  ├── bootstrap-ocv.sh           # Instalador de voz
  ├── check-fix.sh               # Verificar issue #39164

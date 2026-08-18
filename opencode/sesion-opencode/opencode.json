@@ -23,8 +23,8 @@
       "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
-      "description": "Agente local - Qwen 3.5",
-      "mode": "subagent",
+      "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
+      "mode": "primary",
       "model": "lmstudio/models-qwen3.5-9b"
     },
     "cloud": {
@@ -33,9 +33,11 @@
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "temperature": 1,
+      "top_p": 0.95
     }
   },
   "provider": {
@@ -63,7 +65,11 @@
         "nvidia/nemotron-nano-12b-v2-vl",
         "nvidia/nvidia-nemotron-nano-9b-v2",
         "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
-      ]
+      ],
+      "options": {
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      }
     },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",

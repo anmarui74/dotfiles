@@ -103,7 +103,12 @@ OpenCode reintenta automáticamente.
 
 ### Archivo: `~/.config/opencode/init-opencode.sh`
 
-Script **completo** que se ejecuta al iniciar sesión (vía systemd). Realiza 5 pasos:
+Script **completo** de inicialización y verificación (al iniciar sesión vía systemd). Realiza 5 pasos:
+
+> ⚠️ **Estado actual (18/08/2026): el servicio `init-opencode.service` está DESHABILITADO.**
+> La carga de LM Studio + modelo + proxy ocurre automáticamente al abrir `opencode` u `ocv`
+> (vía `start-opencode-server.sh`), no al iniciar sesión. `init-opencode.sh` se usa como
+> comprobación manual (`bash ~/.config/opencode/init-opencode.sh`).
 
 ### Paso 1: Servidor LM Studio
 
@@ -262,26 +267,30 @@ systemctl --user enable init-opencode.service
 systemctl --user start init-opencode.service
 ```
 
+> ⚠️ **Actualmente está DESHABILITADO** (`systemctl --user is-enabled` → `disabled`):
+> la carga se hace al abrir `opencode`/`ocv` vía `start-opencode-server.sh`.
+
 ---
 
 ## Flujo completo de arranque
 
 ```
-1. Inicio de sesión
+1. Abrir opencode / ocv / ocv-local / ocv-cloud (o terminal)
    ↓
-2. systemd --user → init-opencode.service
+2. start-opencode-server.sh (lanzador real)
    ↓
-3. init-opencode.sh:
+3. start-lmstudio.sh (salvo SKIP_LMSTUDIO=1 en perfil cloud):
    ├── 3.1. lms server start (puerto 1234)
-   ├── 3.2. lms load models-qwen3.5-9b -c 81920
-   ├── 3.3. lmstudio-proxy.py (puerto 4001)
-   ├── 3.4. Fijar contexto en settings.json
-   └── 3.5. Verificaciones (modelos, memoria, hardware, .env)
+   ├── 3.2. lms unload + lms load models-qwen3.5-9b -c 81920
+   └── 3.3. lmstudio-proxy.py (puerto 4001)
    ↓
-4. OpenCode listo para usar
+4. exec /usr/bin/opencode (con la config del perfil elegido)
    ↓
 5. OpenCode → http://localhost:4001/v1 → Proxy → http://localhost:1234/v1 → Modelo
 ```
+
+> El servicio systemd `init-opencode.service` (arranque al iniciar sesión) está
+> **DESHABILITADO** desde el 18/08/2026: la carga ocurre al abrir OpenCode.
 
 ---
 

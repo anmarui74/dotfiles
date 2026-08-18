@@ -1,0 +1,1 @@
+/home/antonio/backup-rs/target/release/backup: /home/antonio/backup-rs/src/backup.rs /home/antonio/backup-rs/src/config.rs /home/antonio/backup-rs/src/main.rs /home/antonio/backup-rs/src/watcher.rs

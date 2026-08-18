@@ -42,7 +42,7 @@ Flujo de **voz → texto → IA → respuesta**:
 | 1️⃣ | 🎤 **Tú (Antonio)** | Hablas o escribes |
 | 2️⃣ | **STT** — `sox` + `whisper-cpp` | Audio capturado y transcrito en **GPU** |
 | 3️⃣ | **TUI de OpenCode** | Teclado + comandos `/stt-*` |
-| 4️⃣ | **OpenCode** | Agente cloud `deepseek-v4-flash` + Qwen 3.5 local · 5 MCP · 68 skills |
+| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build` **deepseek-v4-flash** + `local` Qwen 3.5 + `nvidia` Nemotron 3 Ultra · 5 MCP · 68 skills |
 | 5️⃣ | **TTS** — `edge-tts` → `paplay` + **Pantalla** | 🔊 Audio por voz · 📄 Texto en pantalla |
 
 ---
@@ -53,7 +53,8 @@ Flujo de **voz → texto → IA → respuesta**:
 |----------|----------|-----|
 | **LM Studio** | `http://localhost:1234` | Modelo local `models-qwen3.5-9b` (80K contexto) |
 | **Proxy OpenCode ↔ LM Studio** | `http://localhost:4001` | Intermediario con métricas (tokens/s) |
-| **OpenCode Go (cloud)** | `https://opencode.ai` | Agente principal `deepseek-v4-flash` |
+| **OpenCode Go (cloud)** | `https://opencode.ai` | Agentes `cloud` + `build`: `deepseek-v4-flash` |
+| **NVIDIA NIM (cloud)** | `https://integrate.api.nvidia.com/v1` | Agente `nvidia`: Nemotron 3 Ultra 550B (1M contexto) |
 | **Ollama** _(en desuso)_ | `http://localhost:11434` | Modelos `llama3.1`, `gemma4`, `deepseek-r1`, `qwen3.5` (LiteLLM) |
 
 **Secuencia de arranque:**
@@ -109,9 +110,10 @@ bash ~/.config/opencode/init-opencode.sh
 # Lanzar OpenCode
 bash ~/.config/opencode/start-opencode.sh      # o directamente: ocv
 
-# Cambiar perfil MCP
-bash ~/.config/opencode/switch-mcp-profile.sh local   # Solo esencial
-bash ~/.config/opencode/switch-mcp-profile.sh cloud   # Todo activo
+# Perfiles por lanzador (cada uno usa SU config, sin copiar nada)
+ocv / opencode                                   # opencode.json (todos los agentes activos)
+ocv-local / opencode-local                       # opencode-local.json (MCPs esenciales)
+ocv-cloud / opencode-cloud                       # opencode-cloud.json (sin modelo local en VRAM)
 
 # Sincronizar configuración (timer automático cada 30 min)
 bash ~/.config/opencode/sync-opencode.sh
