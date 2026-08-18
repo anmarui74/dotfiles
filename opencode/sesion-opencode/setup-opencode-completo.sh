@@ -26,6 +26,25 @@ info()  { echo -e "${VERDE}[✓]${NC} $1"; }
 warn()  { echo -e "${AMARILLO}[!]${NC} $1"; }
 err()   { echo -e "${ROJO}[✗]${NC} $1"; }
 
+# Crear symlink libggml-cpu.so.0 (whisper-cli lo necesita en runtime)
+setup_ggml_cpu_symlink() {
+    local BIN_DIR="$HOME/.local/share/whisper-cpp/bin"
+    local VARIANT=""
+    for cand in zen4 alderlake skylakex icelake haswell cascadelake x64 sse42; do
+        if [ -f "${BIN_DIR}/libggml-cpu-${cand}.so" ]; then
+            VARIANT="${cand}"
+            break
+        fi
+    done
+    if [ -n "${VARIANT}" ] && [ -f "${BIN_DIR}/libggml-cpu-${VARIANT}.so" ]; then
+        ln -sf "libggml-cpu-${VARIANT}.so" "${BIN_DIR}/libggml-cpu.so.0"
+        ln -sf "libggml-cpu-${VARIANT}.so" "${BIN_DIR}/libggml-cpu.so"
+        info "Symlink libggml-cpu.so.0 -> libggml-cpu-${VARIANT}.so"
+    else
+        warn "No se encontró variante libggml-cpu-*.so para crear el symlink"
+    fi
+}
+
 echo "=============================================="
 echo "  Instalacion completa OpenCode + Ollama + LM Studio"
 echo "=============================================="
@@ -142,7 +161,8 @@ if [ ! -f "$LOCAL_BIN/whisper-cli" ]; then
         cmake --build "${WHISPER_TMP}/whisper-src/build" --config Release -j "$(nproc)" >/dev/null 2>&1 || true
         if [ -x "${WHISPER_TMP}/whisper-src/build/bin/whisper-cli" ]; then
             cp "${WHISPER_TMP}/whisper-src/build/bin/whisper-cli" "$HOME/.local/share/whisper-cpp/bin/whisper-cli"
-            cp "${WHISPER_TMP}"/whisper-src/build/bin/libggml*.so* "$HOME/.local/share/whisper-cpp/bin/" 2>/dev/null || true
+            cp -dP "${WHISPER_TMP}"/whisper-src/build/bin/libggml*.so* "$HOME/.local/share/whisper-cpp/bin/" 2>/dev/null || true
+            setup_ggml_cpu_symlink
             info "whisper.cpp compilado con CUDA"
         else
             warn "Falló la compilación CUDA, usando versión CPU"
@@ -159,6 +179,7 @@ if [ ! -f "$LOCAL_BIN/whisper-cli" ]; then
         tar -xzf "${WHISPER_TMP}/whisper-bin.tar.gz" -C "${WHISPER_TMP}"
         cp "${WHISPER_TMP}"/whisper-bin-ubuntu-x64/whisper-cli "$HOME/.local/share/whisper-cpp/bin/"
         cp "${WHISPER_TMP}"/whisper-bin-ubuntu-x64/*.so* "$HOME/.local/share/whisper-cpp/bin/" 2>/dev/null || true
+        setup_ggml_cpu_symlink
         rm -rf "${WHISPER_TMP}"
     fi
     cat > "$LOCAL_BIN/whisper-cli" << 'WHISPERWRAP'
@@ -342,7 +363,8 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
   },
   "agent": {
     "build": {
-      "prompt": "{file:./prompts/read-agents.txt}"
+      "prompt": "{file:./prompts/read-agents.txt}",
+      "model": "opencode-go/deepseek-v4-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -356,9 +378,40 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
       "mode": "primary",
       "model": "opencode-go/deepseek-v4-flash"
+    },
+    "nvidia": {
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "mode": "primary",
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
     }
   },
   "provider": {
+    "nvidia": {
+      "whitelist": [
+        "minimaxai/minimax-m3",
+        "z-ai/glm-5.2",
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+        "stepfun-ai/step-3.7-flash",
+        "thinkingmachines/inkling",
+        "meta/llama-3.1-8b-instruct",
+        "meta/llama-3.1-70b-instruct",
+        "meta/llama-3.2-11b-vision-instruct",
+        "meta/llama-3.3-70b-instruct",
+        "meta/muse-glimmer-30b",
+        "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "nvidia/nemotron-3-nano-30b-a3b",
+        "nvidia/nemotron-3-super-120b-a12b",
+        "nvidia/nemotron-3-ultra-550b-a55b",
+        "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "nvidia/nemotron-mini-4b-instruct",
+        "nvidia/nemotron-nano-12b-v2-vl",
+        "nvidia/nvidia-nemotron-nano-9b-v2",
+        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+      ]
+    },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.5 Q6_K",
@@ -380,48 +433,113 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
   },
   "lsp": {
     "python": {
-      "command": ["/home/antonio/.local/bin/basedpyright-langserver", "--stdio"],
-      "extensions": [".py", ".pyw"]
+      "command": [
+        "/home/antonio/.local/bin/basedpyright-langserver",
+        "--stdio"
+      ],
+      "extensions": [
+        ".py",
+        ".pyw"
+      ]
     },
     "c": {
-      "command": ["/usr/bin/clangd"],
-      "extensions": [".c", ".h"]
+      "command": [
+        "/usr/bin/clangd"
+      ],
+      "extensions": [
+        ".c",
+        ".h"
+      ]
     },
     "cpp": {
-      "command": ["/usr/bin/clangd"],
-      "extensions": [".cpp", ".hpp", ".cc", ".cxx"]
+      "command": [
+        "/usr/bin/clangd"
+      ],
+      "extensions": [
+        ".cpp",
+        ".hpp",
+        ".cc",
+        ".cxx"
+      ]
     },
     "rust": {
-      "command": ["/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"],
-      "extensions": [".rs"]
+      "command": [
+        "/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"
+      ],
+      "extensions": [
+        ".rs"
+      ]
     },
     "typescript": {
-      "command": ["/home/antonio/.npm-global/bin/typescript-language-server", "--stdio"],
-      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
+      "command": [
+        "/home/antonio/.npm-global/bin/typescript-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs"
+      ]
     },
     "go": {
-      "command": ["/home/antonio/go/bin/gopls"],
-      "extensions": [".go"]
+      "command": [
+        "/home/antonio/go/bin/gopls"
+      ],
+      "extensions": [
+        ".go"
+      ]
     },
     "json": {
-      "command": ["/home/antonio/.npm-global/bin/vscode-json-language-server", "--stdio"],
-      "extensions": [".json", ".jsonc"]
+      "command": [
+        "/home/antonio/.npm-global/bin/vscode-json-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".json",
+        ".jsonc"
+      ]
     },
     "yaml": {
-      "command": ["/home/antonio/.npm-global/bin/yaml-language-server", "--stdio"],
-      "extensions": [".yaml", ".yml"]
+      "command": [
+        "/home/antonio/.npm-global/bin/yaml-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".yaml",
+        ".yml"
+      ]
     },
     "bash": {
-      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
-      "extensions": [".sh", ".bash"]
+      "command": [
+        "/home/antonio/.npm-global/bin/bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".sh",
+        ".bash"
+      ]
     },
     "zsh": {
-      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
-      "extensions": [".zsh", ".zshrc"]
+      "command": [
+        "/home/antonio/.npm-global/bin/bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".zsh",
+        ".zshrc"
+      ]
     },
     "markdown": {
-      "command": ["/usr/bin/marksman"],
-      "extensions": [".md", ".markdown"]
+      "command": [
+        "/usr/bin/marksman"
+      ],
+      "extensions": [
+        ".md",
+        ".markdown"
+      ]
     }
   },
   "mcp": {
@@ -447,6 +565,9 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
         "-y",
         "@modelcontextprotocol/server-memory"
       ],
+      "environment": {
+        "MEMORY_FILE_PATH": "/home/antonio/.config/opencode/data/memory/memory.jsonl"
+      },
       "enabled": true
     },
     "fetch": {
@@ -472,23 +593,276 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
 JSONEOF
 info "opencode.json creado (perfil completo)"
 
-cp "$DIR_CONFIG/opencode.json" "$DIR_CONFIG/opencode-cloud.json"
-info "opencode-cloud.json creado como copia idéntica de opencode.json"
+cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "shell": "/usr/bin/zsh",
+  "small_model": "lmstudio/models-qwen3.5-9b",
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "default_agent": "cloud",
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "sudo *": "deny",
+      "pkexec *": "allow",
+      "*": "ask"
+    }
+  },
+  "agent": {
+    "build": {
+      "prompt": "{file:./prompts/read-agents.txt}",
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "plan": {
+      "prompt": "{file:./prompts/read-agents.txt}"
+    },
+    "local": {
+      "description": "Agente local - Qwen 3.5",
+      "mode": "subagent",
+      "model": "lmstudio/models-qwen3.5-9b"
+    },
+    "cloud": {
+      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
+      "mode": "primary",
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "nvidia": {
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "mode": "primary",
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
+    }
+  },
+  "provider": {
+    "nvidia": {
+      "whitelist": [
+        "minimaxai/minimax-m3",
+        "z-ai/glm-5.2",
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+        "stepfun-ai/step-3.7-flash",
+        "thinkingmachines/inkling",
+        "meta/llama-3.1-8b-instruct",
+        "meta/llama-3.1-70b-instruct",
+        "meta/llama-3.2-11b-vision-instruct",
+        "meta/llama-3.3-70b-instruct",
+        "meta/muse-glimmer-30b",
+        "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "nvidia/nemotron-3-nano-30b-a3b",
+        "nvidia/nemotron-3-super-120b-a12b",
+        "nvidia/nemotron-3-ultra-550b-a55b",
+        "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "nvidia/nemotron-mini-4b-instruct",
+        "nvidia/nemotron-nano-12b-v2-vl",
+        "nvidia/nvidia-nemotron-nano-9b-v2",
+        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+      ]
+    },
+    "lmstudio": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen 3.5 Q6_K",
+      "model": "models-qwen3.5-9b",
+      "options": {
+        "baseURL": "http://localhost:4001/v1"
+      },
+      "models": {
+        "models-qwen3.5-9b": {
+          "name": "Qwen 3.5 - Tool Calling Excellence",
+          "tools": true,
+          "limit": {
+            "context": 81920,
+            "output": 8192
+          }
+        }
+      }
+    }
+  },
+  "lsp": {
+    "python": {
+      "command": [
+        "/home/antonio/.local/bin/basedpyright-langserver",
+        "--stdio"
+      ],
+      "extensions": [
+        ".py",
+        ".pyw"
+      ]
+    },
+    "c": {
+      "command": [
+        "/usr/bin/clangd"
+      ],
+      "extensions": [
+        ".c",
+        ".h"
+      ]
+    },
+    "cpp": {
+      "command": [
+        "/usr/bin/clangd"
+      ],
+      "extensions": [
+        ".cpp",
+        ".hpp",
+        ".cc",
+        ".cxx"
+      ]
+    },
+    "rust": {
+      "command": [
+        "/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"
+      ],
+      "extensions": [
+        ".rs"
+      ]
+    },
+    "typescript": {
+      "command": [
+        "/home/antonio/.npm-global/bin/typescript-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs"
+      ]
+    },
+    "go": {
+      "command": [
+        "/home/antonio/go/bin/gopls"
+      ],
+      "extensions": [
+        ".go"
+      ]
+    },
+    "json": {
+      "command": [
+        "/home/antonio/.npm-global/bin/vscode-json-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".json",
+        ".jsonc"
+      ]
+    },
+    "yaml": {
+      "command": [
+        "/home/antonio/.npm-global/bin/yaml-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".yaml",
+        ".yml"
+      ]
+    },
+    "bash": {
+      "command": [
+        "/home/antonio/.npm-global/bin/bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".sh",
+        ".bash"
+      ]
+    },
+    "zsh": {
+      "command": [
+        "/home/antonio/.npm-global/bin/bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".zsh",
+        ".zshrc"
+      ]
+    },
+    "markdown": {
+      "command": [
+        "/usr/bin/marksman"
+      ],
+      "extensions": [
+        ".md",
+        ".markdown"
+      ]
+    }
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "filesystem": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/antonio"
+      ],
+      "enabled": true
+    },
+    "memory": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "environment": {
+        "MEMORY_FILE_PATH": "/home/antonio/.config/opencode/data/memory/memory.jsonl"
+      },
+      "enabled": true
+    },
+    "fetch": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "mcp-fetch-server"
+      ],
+      "enabled": true
+    },
+    "sequential_thinking": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": true
+    }
+  }
+}
+CLOUDEOF
+info "opencode-cloud.json creado (perfil cloud)"
 
 cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
   "small_model": "lmstudio/models-qwen3.5-9b",
-  "instructions": ["AGENTS.md"],
+  "instructions": [
+    "AGENTS.md"
+  ],
   "default_agent": "local",
   "permission": {
     "edit": "ask",
-    "bash": { "sudo *": "deny", "pkexec *": "allow", "*": "ask" }
+    "bash": {
+      "sudo *": "deny",
+      "pkexec *": "allow",
+      "*": "ask"
+    }
   },
   "agent": {
     "build": {
-      "prompt": "{file:./prompts/read-agents.txt}"
+      "prompt": "{file:./prompts/read-agents.txt}",
+      "model": "opencode-go/deepseek-v4-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -497,6 +871,16 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
       "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
       "mode": "primary",
       "model": "lmstudio/models-qwen3.5-9b"
+    },
+    "cloud": {
+      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
+      "mode": "primary",
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "nvidia": {
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "mode": "primary",
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
     }
   },
   "provider": {
@@ -504,68 +888,178 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.5 Q6_K",
       "model": "models-qwen3.5-9b",
-      "options": {"baseURL": "http://localhost:4001/v1"},
+      "options": {
+        "baseURL": "http://localhost:4001/v1"
+      },
       "models": {
         "models-qwen3.5-9b": {
           "name": "Qwen 3.5 - Tool Calling Excellence",
           "tools": true,
-          "limit": {"context": 81920, "output": 8192}
+          "limit": {
+            "context": 81920,
+            "output": 8192
+          }
         }
       }
     }
   },
   "lsp": {
     "python": {
-      "command": ["/home/antonio/.local/bin/basedpyright-langserver", "--stdio"],
-      "extensions": [".py", ".pyw"]
+      "command": [
+        "/home/antonio/.local/bin/basedpyright-langserver",
+        "--stdio"
+      ],
+      "extensions": [
+        ".py",
+        ".pyw"
+      ]
     },
     "c": {
-      "command": ["/usr/bin/clangd"],
-      "extensions": [".c", ".h"]
+      "command": [
+        "/usr/bin/clangd"
+      ],
+      "extensions": [
+        ".c",
+        ".h"
+      ]
     },
     "cpp": {
-      "command": ["/usr/bin/clangd"],
-      "extensions": [".cpp", ".hpp", ".cc", ".cxx"]
+      "command": [
+        "/usr/bin/clangd"
+      ],
+      "extensions": [
+        ".cpp",
+        ".hpp",
+        ".cc",
+        ".cxx"
+      ]
     },
     "rust": {
-      "command": ["/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"],
-      "extensions": [".rs"]
+      "command": [
+        "/home/antonio/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rust-analyzer"
+      ],
+      "extensions": [
+        ".rs"
+      ]
     },
     "typescript": {
-      "command": ["/home/antonio/.npm-global/bin/typescript-language-server", "--stdio"],
-      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
+      "command": [
+        "/home/antonio/.npm-global/bin/typescript-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs"
+      ]
     },
     "go": {
-      "command": ["/home/antonio/go/bin/gopls"],
-      "extensions": [".go"]
+      "command": [
+        "/home/antonio/go/bin/gopls"
+      ],
+      "extensions": [
+        ".go"
+      ]
     },
     "json": {
-      "command": ["/home/antonio/.npm-global/bin/vscode-json-language-server", "--stdio"],
-      "extensions": [".json", ".jsonc"]
+      "command": [
+        "/home/antonio/.npm-global/bin/vscode-json-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".json",
+        ".jsonc"
+      ]
     },
     "yaml": {
-      "command": ["/home/antonio/.npm-global/bin/yaml-language-server", "--stdio"],
-      "extensions": [".yaml", ".yml"]
+      "command": [
+        "/home/antonio/.npm-global/bin/yaml-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".yaml",
+        ".yml"
+      ]
     },
     "bash": {
-      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
-      "extensions": [".sh", ".bash"]
+      "command": [
+        "/home/antonio/.npm-global/bin/bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".sh",
+        ".bash"
+      ]
     },
     "zsh": {
-      "command": ["/home/antonio/.npm-global/bin/bash-language-server", "start"],
-      "extensions": [".zsh", ".zshrc"]
+      "command": [
+        "/home/antonio/.npm-global/bin/bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".zsh",
+        ".zshrc"
+      ]
     },
     "markdown": {
-      "command": ["/usr/bin/marksman"],
-      "extensions": [".md", ".markdown"]
+      "command": [
+        "/usr/bin/marksman"
+      ],
+      "extensions": [
+        ".md",
+        ".markdown"
+      ]
     }
   },
   "mcp": {
-    "context7": {"type": "remote", "url": "https://mcp.context7.com/mcp", "enabled": false},
-    "filesystem": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"], "enabled": true},
-    "memory": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-memory"], "enabled": true},
-    "fetch": {"type": "local", "command": ["npx", "-y", "mcp-fetch-server"], "enabled": true},
-    "sequential_thinking": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"], "enabled": false}
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": false
+    },
+    "filesystem": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/antonio"
+      ],
+      "enabled": true
+    },
+    "memory": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "environment": {
+        "MEMORY_FILE_PATH": "/home/antonio/.config/opencode/data/memory/memory.jsonl"
+      },
+      "enabled": true
+    },
+    "fetch": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "mcp-fetch-server"
+      ],
+      "enabled": true
+    },
+    "sequential_thinking": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": false
+    }
   }
 }
 LOCALEOF
@@ -1073,6 +1567,14 @@ explícitamente o que el JSON no tenga la respuesta.
 
 Consulta rápida desde terminal: `source ~/.config/opencode/hardware-query.sh && hw_query <campo>`
 
+Para REGENERAR el índice con los datos reales actuales del hardware:
+```bash
+python3 ~/.config/opencode/hardware-query.py scan
+```
+(Escanea lscpu, lspci, lsusb, nvidia-smi, sensors, lsblk, dmidecode, iw,
+xrandr, free, /proc... y actualiza data/hardware/index.json. Usa pkexec
+para dmidecode: saldrá una ventana pidiendo contraseña la primera vez.)
+
 ## 🔧 Uso de herramientas (OBLIGATORIO)
 Cuando tengas que hacer una tarea que requiera una herramienta (leer archivos,
 listar directorios, ejecutar comandos, etc.) USA LA HERRAMIENTA directamente.
@@ -1107,7 +1609,7 @@ Anota siempre la solución encontrada en la memoria.
 - `~/Config/opencode/` es la copia de SEGURIDAD para instalaciones desde limpio
 - Estructura ordenada de `~/Config/opencode/`:
   - `backups/opencode/` → tarballs de backup de OpenCode (`opencode-backup-*.tar.gz`)
-  - `backups/` (raíz) → backups del grafo de memoria (`mcp-memory-backup-*.json`)
+  - `backups/` (raíz) → backups del grafo de memoria (`mcp-memory-backup-*.jsonl`)
   - `data/` → datos auxiliares (p. ej. `onlyoffice-ai/`)
   - `documentacion/` → documentación en Markdown
   - `sesion-opencode/` → setup completo desde limpio + scripts sincronizados
@@ -1155,7 +1657,7 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
         (opencode.json, opencode-local.json, tui.json, AGENTS.md, .env, y TODOS
         los scripts: switch-mcp-profile, sync, init, start-*, hardware-query,
-        check-fix, check-timeline-fix, web-search, lmstudio-proxy.py,
+        check-fix, check-timeline-fix, hardware-query.py, lmstudio-proxy.py,
         backup-opencode, bootstrap-ocv, timeline-completo) — no solo los JSON
   - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
   - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
@@ -1198,15 +1700,21 @@ Esto comprueba:
 ## Backup automático del grafo de memoria
 El grafo de conocimiento se respalda automáticamente en:
 `/home/antonio/Config/opencode/backups/`
-Con nombre `mcp-memory-backup-{fecha}.json`
+Con nombre `mcp-memory-backup-{fecha}.jsonl`
 Los backups se conservan 30 días (según LOG_RETENTION_DAYS en .env)
 ## Recuperación del grafo de memoria
 Si el grafo se pierde o corrompe:
 1. Localizar el backup más reciente:
    ```bash
-   ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.json | head -1
+   ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl | head -1
    ```
-2. El servidor MCP Memory debería restaurarlo automáticamente al iniciar desde `MEMORY_DATA_DIR`
+2. Copiarlo a la ruta de memoria activa:
+   ```bash
+   cp /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl /home/antonio/.config/opencode/data/memory/memory.jsonl
+   ```
+3. Reiniciar OpenCode: el servidor MCP Memory cargará el grafo desde `MEMORY_FILE_PATH`
+   (definido vía `environment` en el bloque `mcp.memory` de los 3 perfiles JSON).
+   ⚠️ El servidor usa `MEMORY_FILE_PATH` (NO `MEMORY_DATA_DIR`).
 
 ## ⚠️ Recordatorio MCP memory (IMPORTANTE)
 Al usar la herramienta `memory_add_observations` (o `memory_delete_observations`),
@@ -1244,8 +1752,8 @@ en `~/.config/opencode/data/timeline-fix.log`.
 
 ## Directorios de datos
 - `/home/antonio/.config/opencode/data/` - Datos de ejecución (logs, estado)
-- `/home/antonio/.config/opencode/data/memory/` - Grafo de memoria persistente
-- `/home/antonio/Config/opencode/backups/` - Backups del grafo de memoria (`mcp-memory-backup-*.json`)
+- `/home/antonio/.config/opencode/data/memory/` - Grafo de memoria persistente (`memory.jsonl`, vía `MEMORY_FILE_PATH`)
+- `/home/antonio/Config/opencode/backups/` - Backups del grafo de memoria (`mcp-memory-backup-*.jsonl`)
 - `/home/antonio/Config/opencode/backups/opencode/` - Tarballs de backup de OpenCode
 - `/home/antonio/.config/opencode/.env` - Variables de entorno seguras
 
@@ -1360,9 +1868,12 @@ TIMEOUT_SECONDS=120
 # =============================================================================
 # --- Persistencia de datos (Memoria) ---
 # =============================================================================
+# Variable REAL que usa el servidor @modelcontextprotocol/server-memory
+# (se inyecta vía "environment" en el bloque mcp.memory de opencode.json)
+MEMORY_FILE_PATH=/home/antonio/.config/opencode/data/memory/memory.jsonl
 MEMORY_DATA_DIR=/home/antonio/.config/opencode/data/memory
 MEMORY_BACKUP_ENABLED=true
-MEMORY_BACKUP_PATH=/home/antonio/Config/opencode/backups/mcp-memory-backup-$(date '+%Y-%m-%d_%H%M').json
+MEMORY_BACKUP_PATH=/home/antonio/Config/opencode/backups/mcp-memory-backup-$(date '+%Y-%m-%d_%H%M').jsonl
 
 # =============================================================================
 # --- Logging / Auditoría ---
@@ -2017,90 +2528,905 @@ echo "--- 13/19: Scripts auxiliares ---"
 
 cat > "$DIR_CONFIG/hardware-query.sh" << 'HARDWARE-QUERY_SHEOF'
 #!/bin/bash
-# Consulta rápida de hardware via index.json
+# ============================================================
+# hardware-query.sh — Wrapper de hardware-query.py
+# (consulta rápida de hardware via index.json)
+#
 # Uso: source ~/.config/opencode/hardware-query.sh && hw_query <campo>
 # Campos: status, cpu, gpu, ram, motherboard, wifi, bluetooth, all
+# ============================================================
 
-HARDWARE_PATH="/home/antonio/.config/opencode/data/hardware/index.json"
+HW_PY="/home/antonio/.config/opencode/hardware-query.py"
 
 hw_query() {
-    local query="$1"
-
-    case "$query" in
-        status)
-            python3 -c "
-import json, sys
-d = json.load(open('$HARDWARE_PATH'))
-print('═══════════════════════════════════════════')
-print('  HARDWARE STATUS')
-print('═══════════════════════════════════════════')
-print(f'CPU:  {d[\"cpu\"][\"model\"]} ({d[\"cpu\"][\"cores\"]}C/{d[\"cpu\"][\"threads\"]}T)')
-print(f'RAM:  DDR5 @ {d[\"ram\"][\"speed_mts\"]} MT/s  ({d[\"ram\"][\"total_gb\"]} GB)')
-print(f'GPU:  NVIDIA {d[\"gpu_nvidia\"][\"model\"]}')
-print(f'MB:   {d[\"motherboard\"][\"model\"]}')
-print('───────────────────────────────────────────')
-"
-            ;;
-        cpu)
-            python3 -c "
-import json, sys
-d = json.load(open('$HARDWARE_PATH'))
-print(json.dumps(d['cpu'], indent=2, default=str))
-"
-            ;;
-        gpu)
-            python3 -c "
-import json, sys
-d = json.load(open('$HARDWARE_PATH'))
-print(json.dumps(d.get('gpu_nvidia', {}), indent=2, default=str))
-print('--- iGPU ---')
-print(json.dumps(d.get('gpu_amd_integrated', {}), indent=2, default=str))
-"
-            ;;
-        ram)
-            python3 -c "
-import json, sys
-d = json.load(open('$HARDWARE_PATH'))
-print(json.dumps(d['ram'], indent=2, default=str))
-"
-            ;;
-        motherboard)
-            python3 -c "
-import json, sys
-d = json.load(open('$HARDWARE_PATH'))
-print(json.dumps(d['motherboard'], indent=2, default=str))
-"
-            ;;
-        wifi)
-            python3 -c "
-import json, sys
-d = json.load(open('$HARDWARE_PATH'))
-print(json.dumps(d.get('wifi', {}), indent=2, default=str))
-"
-            ;;
-        bluetooth)
-            python3 -c "
-import json, sys
-d = json.load(open('$HARDWARE_PATH'))
-print(json.dumps(d.get('bluetooth', {}), indent=2, default=str))
-"
-            ;;
-        all)
-            python3 -c "
-import json, sys
-d = json.load(open('$HARDWARE_PATH'))
-print(json.dumps(d, indent=2, default=str))
-"
-            ;;
-        *)
-            echo "Uso: source hardware-query.sh && hw_query <campo>"
-            echo "Campos: status, cpu, gpu, ram, motherboard, wifi, bluetooth, all"
-            ;;
-    esac
+    if [ -x "$HW_PY" ]; then
+        python3 "$HW_PY" "$1"
+    else
+        echo "❌ No se encontró $HW_PY"
+        return 1
+    fi
 }
 HARDWARE-QUERY_SHEOF
 chmod +x "$DIR_CONFIG/hardware-query.sh"
-info "hardware-query.sh creado"
+info "hardware-query.sh creado (wrapper)"
+
+cat > "$DIR_CONFIG/hardware-query.py" << 'HARDWARE-QUERY_PYEOF'
+#!/usr/bin/env python3
+# ============================================================
+# hardware-query.py — Auditoría completa de hardware (Linux)
+#
+# Uso:
+#   hardware-query.py scan             → escanea TODO el hardware y
+#                                        actualiza data/hardware/index.json
+#   hardware-query.py status           → resumen legible del hardware
+#   hardware-query.py <campo>          → imprime el JSON de un campo
+#   hardware-query.py --campos         → lista los campos disponibles
+#
+# Campos: status, cpu, gpu, ram, motherboard, wifi, bluetooth,
+#         all, os, storage, displays, audio, usb, sensors, network, ...
+# (y cualquier otra clave presente en el index.json)
+#
+# El modo "scan" recolecta datos con las herramientas nativas del
+# sistema (lscpu, lspci, lsusb, nvidia-smi, sensors, lsblk, dmidecode,
+# iw, ip, xrandr, free, /proc...) y regenera el índice al completo.
+# ============================================================
+import datetime
+import json
+import os
+import re
+import subprocess
+import sys
+from typing import Any
+
+DATA_DIR = "/home/antonio/.config/opencode/data/hardware"
+HARDWARE_PATH = os.path.join(DATA_DIR, "index.json")
+
+# Tipos auxiliares para dicts heterogéneos (JSON-like)
+JsonDict = dict[str, Any]
+
+CAMPOS_AYUDA = ("status", "cpu", "gpu", "ram", "motherboard", "wifi",
+                "bluetooth", "all", "os", "storage", "displays", "audio",
+                "usb", "sensors", "network", "pci", "bios")
+
+
+# ─────────────────────────────────────────────────────────────
+# Utilidades de ejecución
+# ─────────────────────────────────────────────────────────────
+def run(cmd, timeout=15):
+    """Ejecuta un comando y devuelve su stdout (str) o '' si falla."""
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True,
+                           timeout=timeout, errors="replace")
+        return r.stdout.strip()
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return ""
+
+
+def run_root(cmd, timeout=20):
+    """Ejecuta con pkexec (ventana gráfica de contraseña) si es necesario."""
+    try:
+        r = subprocess.run(["pkexec"] + cmd, capture_output=True, text=True,
+                           timeout=timeout, errors="replace")
+        return r.stdout.strip()
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return ""
+
+
+def leer_proc(path):
+    """Lee un archivo de /proc. Devuelve str o ''."""
+    try:
+        with open(path) as f:
+            return f.read()
+    except (OSError, FileNotFoundError):
+        return ""
+
+
+def json_ok(texto):
+    """True si el texto es JSON parseable."""
+    try:
+        json.loads(texto)
+        return True
+    except (json.JSONDecodeError, TypeError):
+        return False
+
+
+# ─────────────────────────────────────────────────────────────
+# Recolección de cada sección
+# ─────────────────────────────────────────────────────────────
+def seccion_os():
+    os_data = {}
+    # Distribución
+    etc = leer_proc("/etc/os-release")
+    for line in etc.splitlines():
+        if line.startswith("PRETTY_NAME="):
+            os_data["distribution"] = line.split("=", 1)[1].strip('"')
+        elif line.startswith("ID="):
+            os_data["distro_id"] = line.split("=", 1)[1].strip('"')
+    if "distribution" not in os_data:
+        os_data["distribution"] = run(["cat", "/etc/os-release"])[:80]
+
+    os_data["kernel"] = run(["uname", "-r"])
+    os_data["kernel_type"] = run(["uname", "-v"])[:40]
+    os_data["arch"] = run(["uname", "-m"])
+    os_data["hostname"] = run(["hostname"])
+    os_data["shell"] = os.environ.get("SHELL", "")
+
+    # Desktop / sesión
+    xdg = os.environ.get("XDG_CURRENT_DESKTOP", "")
+    os_data["desktop"] = xdg if xdg else run(["echo", "$XDG_CURRENT_DESKTOP"])
+    os_data["display_server"] = os.environ.get("XDG_SESSION_TYPE", "")
+
+    # Tiempo / carga
+    os_data["uptime"] = run(["uptime", "-p"])
+    os_data["boot_time"] = run(["uptime", "-s"])
+    try:
+        with open("/proc/loadavg") as f:
+            os_data["load_avg"] = [float(x) for x in f.read().split()[:3]]
+    except (OSError, ValueError):
+        pass
+
+    # Localización
+    os_data["locale"] = run(["locale"]).splitlines()[0] if run(["locale"]) else ""
+    tz = run(["timedatectl", "show", "-p", "TimeZone", "--value"])
+    if not tz:
+        try:
+            tz = os.path.realpath("/etc/localtime").replace("/usr/share/zoneinfo/", "")
+        except OSError:
+            tz = ""
+    os_data["timezone"] = tz
+    return os_data
+
+
+def seccion_cpu():
+    salida = run(["lscpu"])
+    cpu = {}
+    map_es = {
+        "Nombre del modelo": "model",
+        "Model name": "model",
+        "Fabricante": "vendor",
+        "Vendor ID": "vendor",
+        "Arquitectura": "arch",
+        "Architecture": "arch",
+        "CPU(s)": "threads",
+        "Hilo(s) de procesamiento por núcleo": "threads_per_core",
+        "Thread(s) per core": "threads_per_core",
+        "Núcleo(s) por socket": "cores_per_socket",
+        "Núcleo(s) por «socket»": "cores_per_socket",
+        "Core(s) per socket": "cores_per_socket",
+        "Socket(s)": "sockets",
+        "Familia de CPU": "familia",
+        "CPU family": "familia",
+        "Modelo": "modelo",
+        "Model": "modelo",
+        "Virtualización": "virtualization",
+        "Virtualization": "virtualization",
+        "Caché L1d": "cache_l1d",
+        "L1d cache": "cache_l1d",
+        "Caché L1i": "cache_l1i",
+        "L1i cache": "cache_l1i",
+        "Caché L2": "cache_l2",
+        "L2 cache": "cache_l2",
+        "Caché L3": "cache_l3",
+        "L3 cache": "cache_l3",
+        "CPU MHz máx.": "speed_max_mhz",
+        "CPU max MHz": "speed_max_mhz",
+        "CPU MHz mín.": "speed_min_mhz",
+        "CPU min MHz": "speed_min_mhz",
+        "Modo(s) NUMA": "numa_nodes",
+        "NUMA node(s)": "numa_nodes",
+    }
+    for line in salida.splitlines():
+        if ":" not in line:
+            continue
+        key, _, val = line.partition(":")
+        key = key.strip()
+        val = val.strip()
+        if key in map_es:
+            campo = map_es[key]
+            if campo == "threads":
+                cpu["threads"] = int(val.split()[0])
+            elif campo == "cores_per_socket":
+                cpu["cores"] = int(val.split()[0])
+            elif campo == "speed_max_mhz":
+                try:
+                    cpu["speed_max_mhz"] = round(float(val.split()[0]), 2)
+                except ValueError:
+                    pass
+            elif campo == "speed_min_mhz":
+                try:
+                    cpu["speed_min_mhz"] = round(float(val.split()[0]), 2)
+                except ValueError:
+                    pass
+            else:
+                cpu[campo] = val
+
+    # /proc/cpuinfo para vendor, stepping, microcode, bogomips
+    info = leer_proc("/proc/cpuinfo")
+    if "vendor_id" in info:
+        for line in info.splitlines():
+            if ":" not in line:
+                continue
+            k, _, v = line.partition(":")
+            k, v = k.strip(), v.strip()
+            if k == "vendor_id" and "vendor" not in cpu:
+                cpu["vendor"] = v
+            elif k == "stepping" and "stepping" not in cpu:
+                cpu["stepping"] = v
+            elif k == "microcode" and "microcode" not in cpu:
+                cpu["microcode"] = v
+            elif k == "bogomips" and "bogomips" not in cpu:
+                cpu["bogomips"] = float(v.split()[0])
+
+    # Vulnerabilidades
+    vuln = {}
+    for line in info.splitlines():
+        if ":" not in line:
+            continue
+        k, _, v = line.partition(":")
+        k, v = k.strip(), v.strip()
+        if k in ("Vulnerability", "Vulnerabilidad"):
+            continue
+        if k.startswith("Vulnerability") or "mitigation" in v.lower() or "affected" in v.lower():
+            vuln[k] = v
+    # Mejor: leer de /sys/devices/system/cpu/vulnerabilities
+    vulns_dir = "/sys/devices/system/cpu/vulnerabilities"
+    if os.path.isdir(vulns_dir):
+        vuln = {}
+        for name in sorted(os.listdir(vulns_dir)):
+            try:
+                with open(os.path.join(vulns_dir, name)) as f:
+                    vuln[name] = f.read().strip()
+            except OSError:
+                pass
+    if vuln:
+        cpu["vulnerabilities"] = vuln
+
+    # Flags ISA (instrucciones soportadas)
+    flags = []
+    if "flags" in info:
+        for line in info.splitlines():
+            if line.startswith("flags"):
+                flags = line.split(":", 1)[1].split()
+                break
+    if flags:
+        cpu["flags_isa"] = flags
+    return cpu
+
+
+def seccion_ram():
+    ram = {}
+    try:
+        with open("/proc/meminfo") as f:
+            mem = f.read()
+        m = re.search(r"MemTotal:\s+(\d+) kB", mem)
+        if m:
+            ram["total_kb"] = int(m.group(1))
+            ram["total_gb"] = round(int(m.group(1)) / 1048576, 1)
+        m = re.search(r"MemAvailable:\s+(\d+) kB", mem)
+        if m:
+            ram["available_gb"] = round(int(m.group(1)) / 1048576, 1)
+        m = re.search(r"SwapTotal:\s+(\d+) kB", mem)
+        if m:
+            ram["swap_total_gb"] = round(int(m.group(1)) / 1048576, 1)
+    except OSError:
+        pass
+
+    if ram.get("total_gb"):
+        ram["usage_percent"] = round(
+            (ram["total_gb"] - ram.get("available_gb", 0)) / ram["total_gb"] * 100, 1)
+
+    # Dmidecode (RAM detallada) — requiere root
+    dmi = run_root(["dmidecode", "-t", "memory"])
+    if dmi:
+        speed = re.search(r"Configured Memory Speed:\s*(\d+) MT/s", dmi)
+        if speed:
+            ram["speed_mts"] = int(speed.group(1))
+        mod = re.search(r"Part Number:\s*(\S+)", dmi)
+        if mod:
+            ram["module_id"] = mod.group(1)
+        # Parsear por BLOQUES de Memory Device (cada bloque = un slot,
+        # con su propio Size — así no se saltan los slots vacíos)
+        dimms = []
+        for bloque in re.split(r"\n\s*Memory Device\n", dmi):
+            loc = re.search(r"Locator:\s*(DIMM\w+)", bloque)
+            if not loc:
+                continue
+            tam = re.search(r"Size:\s*(\d+)\s*GiB", bloque)
+            if tam:
+                dimms.append({"slot": loc.group(1),
+                              "size_gb": int(tam.group(1)),
+                              "installed": True})
+            else:
+                dimms.append({"slot": loc.group(1),
+                              "size_gb": 0,
+                              "installed": False})
+        ram["dimms"] = dimms
+        ram["dimms_count"] = sum(1 for d in dimms if d["installed"])
+        ram["dimms_total_slots"] = len(dimms)
+        ranks = re.findall(r"Rank:\s*(\d+)", dmi)
+        if ranks:
+            ram["rank"] = int(ranks[0])
+
+    # Zram (swap comprimido)
+    if os.path.exists("/sys/block/zram0/disksize"):
+        try:
+            with open("/sys/block/zram0/disksize") as f:
+                size = int(f.read().strip()) / 1073741824
+            ram["swap"] = {
+                "type": "zram",
+                "device": "/dev/zram0",
+                "size_gb": round(size, 1),
+            }
+            try:
+                with open("/sys/block/zram0/comp_algorithm") as f:
+                    ram["swap"]["algorithm"] = f.read().strip()
+            except OSError:
+                pass
+        except (OSError, ValueError):
+            pass
+    return ram
+
+
+def seccion_motherboard():
+    mb = {}
+    dmi = run_root(["dmidecode", "-t", "baseboard", "-t", "bios"])
+    if not dmi:
+        # Fallback sin root
+        dmi = run(["dmidecode", "-t", "baseboard", "-t", "bios"])
+    m = re.search(r"Manufacturer:\s*(.+)", dmi)
+    if m:
+        mb["vendor"] = m.group(1).strip()
+    m = re.search(r"Product Name:\s*(.+)", dmi)
+    if m:
+        mb["model"] = m.group(1).strip()
+        mb["product_name"] = m.group(1).strip()
+    m = re.search(r"Version:\s*(\S+)", dmi)
+    if m:
+        mb["firmware_version"] = m.group(1).strip()
+    m = re.search(r"BIOS Revision:\s*(.+)", dmi)
+    if m:
+        mb["bios_revision"] = m.group(1).strip()
+    m = re.search(r"Release Date:\s*(.+)", dmi)
+    if m:
+        mb["bios_date"] = m.group(1).strip()
+    m = re.search(r"Chassis Type:\s*(.+)", dmi)
+    if m:
+        mb["chassis_type"] = m.group(1).strip()
+    mb["uefi"] = os.path.isdir("/sys/firmware/efi")
+    return mb
+
+
+def seccion_gpu_nvidia():
+    gpu = {}
+    smi = run(["nvidia-smi",
+               "--query-gpu=name,driver_version,memory.total,memory.used,"
+               "memory.free,temperature.gpu,power.draw,utilization.gpu,"
+               "uuid,pcie.link.gen.current,pcie.link.width.current",
+               "--format=csv,noheader,nounits"])
+    if smi:
+        parts = [p.strip() for p in smi.split(",")]
+        if len(parts) >= 8:
+            gpu["model"] = parts[0]
+            gpu["driver"] = f"nvidia v{parts[1]}"
+            gpu["driver_version"] = parts[1]
+            try:
+                gpu["vram_mib"] = int(parts[2])
+                gpu["vram_gb"] = round(int(parts[2]) / 1024, 1)
+                gpu["vram_used_mib"] = int(parts[3])
+                gpu["vram_free_mib"] = int(parts[4])
+                if int(parts[2]) > 0:
+                    gpu["vram_usage_percent"] = round(
+                        int(parts[3]) / int(parts[2]) * 100, 1)
+                gpu["temperature_celsius"] = int(parts[5])
+                gpu["power_watts"] = round(float(parts[6]), 2)
+                gpu["utilization_percent"] = int(parts[7])
+            except ValueError:
+                pass
+            if len(parts) >= 9:
+                gpu["gpu_uuid"] = parts[8]
+            if len(parts) >= 11:
+                gpu["pcie_gen"] = parts[9]
+                gpu["pcie_lanes"] = parts[10]
+
+    # Arquitectura vía lspci
+    lspci = run(["lspci"])
+    for line in lspci.splitlines():
+        if "VGA" in line and ("NVIDIA" in line or "AD10" in line):
+            gpu["pci_line"] = line
+            m = re.search(r"\[(AD\d+)\]", line)
+            if m:
+                gpu["device_id"] = m.group(1)
+            m = re.search(r"\[([0-9a-f]{4}:[0-9a-f]{4})\]", line)
+            if m:
+                gpu["pci_id"] = m.group(1)
+            break
+
+    # Vulkan / CUDA
+    nvcc = run(["nvcc", "--version"])
+    m = re.search(r"release\s+([\d.]+)", nvcc)
+    if m:
+        gpu["cuda_version"] = m.group(1)
+    # fallback: version.json
+    if "cuda_version" not in gpu and os.path.exists("/opt/cuda/version.json"):
+        try:
+            with open("/opt/cuda/version.json") as f:
+                gpu["cuda_version"] = json.load(f)["cuda"]["version"]
+        except Exception:
+            pass
+    return gpu
+
+
+def seccion_gpu_amd():
+    gpu = {}
+    lspci = run(["lspci"])
+    for line in lspci.splitlines():
+        if "VGA" in line and "AMD" in line:
+            gpu["model"] = "AMD Radeon Graphics (integrated)"
+            m = re.search(r"\[(1002:[0-9a-f]{4})\]", line)
+            if m:
+                gpu["pci_id"] = m.group(1)
+            if "Raphael" in line:
+                gpu["device_id"] = "Raphael"
+            break
+    gpu["driver"] = "amdgpu kernel"
+    return gpu
+
+
+def seccion_displays():
+    displays: list[JsonDict] = []
+    xrandr = run(["xrandr"], timeout=5)
+    for line in xrandr.splitlines():
+        if " connected" not in line:
+            continue
+        parts = line.split()
+        conn = parts[0]
+        # Resolución activa: "5760x3240+0+0" o "3840x2160+0+0"
+        res = ""
+        geom = next((p for p in parts if re.match(r"\d+x\d+\+\d+\+\d+", p)), "")
+        if geom:
+            res = geom.split("+")[0]
+        d: JsonDict = {"interface": conn, "active_resolution": res}
+        m = re.search(r"(\d+)mm x (\d+)mm", line)
+        if m:
+            w_cm, h_cm = int(m.group(1)) / 10, int(m.group(2)) / 10
+            d["size_cm"] = f"{w_cm:.0f}x{h_cm:.0f}"
+            diag = (w_cm ** 2 + h_cm ** 2) ** 0.5 / 2.54
+            d["size_inches"] = round(diag, 1)
+        d["primary"] = "primary" in line
+        d["active_resolution"] = res
+        displays.append(d)
+    # Fallback: /sys/class/drm
+    if not displays:
+        for conn in sorted(os.listdir("/sys/class/drm")):
+            if not conn.startswith("card") or "-" not in conn:
+                continue
+            try:
+                with open(f"/sys/class/drm/{conn}/status") as f:
+                    if f.read().strip() == "connected":
+                        displays.append({"interface": conn.split("-", 1)[1]})
+            except OSError:
+                pass
+    return displays
+
+
+def seccion_storage():
+    discos = []
+    salida = run(["lsblk", "-b", "-o", "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL"])
+    actual = None
+    for line in salida.splitlines()[1:]:
+        nombre, resto = line.split(maxsplit=1) if line.strip() else ("", "")
+        if nombre and not nombre.startswith(("└", "├", "`", "|")):
+            # Disco físico
+            parts = line.split()
+            if len(parts) >= 3:
+                model = " ".join(parts[5:]) if len(parts) > 5 else ""
+                discos.append({
+                    "name": parts[0],
+                    "size_bytes": int(parts[1]),
+                    "size_tb": round(int(parts[1]) / 1099511627776, 2),
+                    "type": parts[2],
+                    "fstype": parts[3] if len(parts) > 3 else "",
+                    "mountpoint": parts[4] if len(parts) > 4 else "",
+                    "model": model,
+                })
+    return discos
+
+
+def seccion_network():
+    red: JsonDict = {}
+
+    # ── Información del CHIP WiFi (lspci) ──
+    chip: JsonDict = {}
+    lspci_out = run(["lspci", "-nn"])
+    for line in lspci_out.splitlines():
+        if "Network controller" in line and ("Qualcomm" in line or "802.11" in line or "WCN" in line):
+            chip["pci_line"] = line
+            m = re.search(r"Qualcomm Technologies, Inc (.+?)\s*\[", line)
+            if m:
+                chip["model"] = m.group(1).strip()
+            m = re.search(r"\[([0-9a-f]{4}:[0-9a-f]{4})\]\s*\(rev (\d+)\)", line)
+            if m:
+                chip["pci_id"] = m.group(1)
+                chip["revision"] = m.group(2)
+            break
+    # Subsistema (fabricante de la tarjeta instalada)
+    sub = run(["lspci", "-nn", "-v", "-s", "07:00.0"])
+    m = re.search(r"Subsystem: (.+?)\s*\[", sub)
+    if m:
+        chip["subsystem"] = m.group(1).strip()
+    m = re.search(r"Kernel modules:\s*(\S+)", sub)
+    if m:
+        chip["kernel_module"] = m.group(1)
+
+    # ── WiFi (estado actual) ──
+    wifi: JsonDict = {}
+    link = run(["iw", "dev", "wlan0", "link"])
+    if link:
+        for line in link.splitlines():
+            line = line.strip()
+            if line.startswith("SSID:"):
+                wifi["connected_ssid"] = line.split(":", 1)[1].strip()
+            elif "freq:" in line:
+                wifi["frequency_mhz"] = int(float(line.split("freq:", 1)[1].split()[0]))
+            elif "signal:" in line:
+                wifi["signal_dbm"] = int(line.split("signal:", 1)[1].split()[0])
+            elif "tx bitrate:" in line:
+                parts = line.split("tx bitrate:", 1)[1].split()
+                try:
+                    wifi["tx_bitrate_mbps"] = float(parts[0])
+                except ValueError:
+                    pass
+                m = re.search(r"(\d+)MHz", line)
+                if m:
+                    wifi["channel_width_mhz"] = int(m.group(1))
+                m = re.search(r"(HE|VHT|HT)-\w+", line)
+                if m:
+                    wifi["phy_mode"] = m.group(0)
+            elif "rx bitrate:" in line:
+                parts = line.split("rx bitrate:", 1)[1].split()
+                try:
+                    wifi["rx_bitrate_mbps"] = float(parts[0])
+                except ValueError:
+                    pass
+    if wifi:
+        wifi["interface"] = "wlan0"
+        wifi["driver"] = run(["sh", "-c", "readlink /sys/class/net/wlan0/device/driver | xargs basename"])
+        # MAC + modo + wiphy
+        info = run(["iw", "dev", "wlan0", "info"])
+        m = re.search(r"addr\s+([0-9a-f:]+)", info)
+        if m:
+            wifi["mac"] = m.group(1)
+        m = re.search(r"type\s+(\S+)", info)
+        if m:
+            wifi["mode"] = m.group(1)
+        m = re.search(r"wiphy\s+(\d+)", info)
+        if m:
+            wifi["wiphy"] = int(m.group(1))
+        # IP
+        ip = run(["ip", "-4", "addr", "show", "wlan0"])
+        m = re.search(r"inet\s+(\S+)", ip)
+        if m:
+            wifi["ip"] = m.group(1)
+        # Bytes transmitidos/recibidos
+        try:
+            with open("/sys/class/net/wlan0/statistics/rx_bytes") as f:
+                wifi["rx_bytes"] = int(f.read().strip())
+            with open("/sys/class/net/wlan0/statistics/tx_bytes") as f:
+                wifi["tx_bytes"] = int(f.read().strip())
+        except OSError:
+            pass
+        # Señal mín/máx recientes (iwinfo o /proc)
+        if chip:
+            wifi["chipset"] = chip
+        red["wifi"] = wifi
+
+    # Ethernet
+    eth = run(["ethtool", "enp8s0"])
+    red["ethernet"] = {
+        "interface": "enp8s0",
+        "state": "down" if not eth or "Link detected: no" in eth else "up",
+    }
+    m = re.search(r"Speed:\s*(\d+\w+)", eth)
+    if m:
+        red["ethernet"]["speed"] = m.group(1)
+
+    # Bluetooth
+    bt = run(["bluetoothctl", "show"])
+    if bt:
+        m = re.search(r"Controller\s+([0-9A-F:]+)\s+(.+)", bt)
+        if m:
+            red["bluetooth"] = {
+                "controller_mac": m.group(1),
+                "name": m.group(2).strip(),
+                "state": "up" if "Powered: yes" in bt else "down",
+            }
+
+    # Interfaces virtuales (docker/vmware)
+    virtual = {}
+    for iface in ("vmnet1", "vmnet8", "docker0"):
+        ip = run(["ip", "-4", "addr", "show", iface])
+        m = re.search(r"inet\s+(\S+)", ip)
+        if m:
+            virtual[iface] = {"ip": m.group(1)}
+    if virtual:
+        red["virtual"] = virtual
+    return red
+
+
+def seccion_sensors():
+    sens = {}
+    out = run(["sensors"])
+    # Mapeo heurístico de los sensores más comunes
+    patrones = {
+        "Tctl": "cpu_tctl_celsius",
+        "Tccd1": "cpu_tccd1_celsius",
+        "Tccd2": "cpu_tccd2_celsius",
+        "Composite": "nvme_composite_celsius",
+        "edge": "gpu_amd_edge_celsius",
+        "temp1": "temp1_celsius",
+    }
+    for line in out.splitlines():
+        m = re.match(r"(\w+):\s+\+?([\d.]+)°C", line)
+        if m:
+            key, val = m.group(1), float(m.group(2))
+            campo = patrones.get(key)
+            if campo:
+                sens[campo] = val
+    # GPU NVIDIA
+    smi = run(["nvidia-smi", "--query-gpu=temperature.gpu,power.draw",
+               "--format=csv,noheader,nounits"])
+    if smi:
+        parts = [p.strip() for p in smi.split(",")]
+        if len(parts) == 2:
+            try:
+                sens["gpu_nvidia_celsius"] = int(parts[0])
+                sens["gpu_nvidia_power_watts"] = round(float(parts[1]), 2)
+            except ValueError:
+                pass
+    return sens
+
+
+def seccion_usb():
+    dispositivos = []
+    out = run(["lsusb"])
+    for line in out.splitlines():
+        m = re.match(r"Bus (\d+) Device (\d+): ID ([0-9a-f]{4}:[0-9a-f]{4})\s+(.+)", line)
+        if m:
+            vid_pid = m.group(3)
+            nombre = m.group(4).strip()
+            # Acortar nombres muy largos
+            if len(nombre) > 60:
+                nombre = nombre[:60] + "..."
+            dispositivos.append({"id": vid_pid, "product": nombre})
+    return dispositivos
+
+
+def seccion_audio():
+    audio: JsonDict = {"server": "pipewire" if run(["pactl", "info"]).count("PipeWire") else "pulseaudio"}
+    sinks = run(["pactl", "list", "short", "sinks"])
+    audio["sinks"] = [l.split("\t")[1] for l in sinks.splitlines() if l.strip()]
+    sources = run(["pactl", "list", "short", "sources"])
+    audio["sources"] = [l.split("\t")[1] for l in sources.splitlines() if l.strip()]
+    return audio
+
+
+def seccion_kernel_boot():
+    kb = {}
+    cmdline = leer_proc("/proc/cmdline")
+    if cmdline:
+        kb["cmdline"] = cmdline.strip()
+    return kb
+
+
+# ─────────────────────────────────────────────────────────────
+# Generación del índice
+# ─────────────────────────────────────────────────────────────
+def escanear():
+    """Recolecta todo el hardware y actualiza index.json."""
+    print("🔍 Escaneando hardware...")
+    datos = {}
+
+    datos["meta"] = {
+        "generated": datetime.datetime.now().strftime("%d/%m/%Y %H:%M %Z"),
+        "source": "hardware-query.py scan (16/08/2026)",
+        "note": "Índice regenerado automáticamente con hardware-query.py",
+    }
+
+    print("  • Sistema operativo...")
+    datos["os"] = seccion_os()
+    print("  • CPU...")
+    datos["cpu"] = seccion_cpu()
+    print("  • RAM...")
+    datos["ram"] = seccion_ram()
+    print("  • Placa base...")
+    datos["motherboard"] = seccion_motherboard()
+    print("  • GPU NVIDIA...")
+    datos["gpu_nvidia"] = seccion_gpu_nvidia()
+    print("  • GPU AMD integrada...")
+    datos["gpu_amd_integrated"] = seccion_gpu_amd()
+    print("  • Monitores...")
+    datos["displays"] = seccion_displays()
+    print("  • Almacenamiento...")
+    datos["storage_devices"] = seccion_storage()
+    print("  • Red...")
+    datos["network"] = seccion_network()
+    print("  • Sensores...")
+    datos["sensors"] = seccion_sensors()
+    print("  • USB...")
+    datos["usb_devices"] = seccion_usb()
+    print("  • Audio...")
+    datos["audio"] = seccion_audio()
+    print("  • Kernel/boot...")
+    datos["kernel_boot"] = seccion_kernel_boot()
+
+    # Guardar
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(HARDWARE_PATH, "w") as f:
+        json.dump(datos, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    print("")
+    print(f"✅ Índice actualizado: {HARDWARE_PATH}")
+    print(f"   ({len(datos)} secciones, {datetime.datetime.now().strftime('%H:%M:%S')})")
+    return datos
+
+
+# ─────────────────────────────────────────────────────────────
+# Consultas
+# ─────────────────────────────────────────────────────────────
+def cargar_datos():
+    try:
+        with open(HARDWARE_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"❌ No existe {HARDWARE_PATH}", file=sys.stderr)
+        print("   Ejecuta primero: hardware-query.py scan", file=sys.stderr)
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"❌ {HARDWARE_PATH} no es JSON válido: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def mostrar_status(d):
+    def get(*keys, default="?"):
+        node = d
+        for k in keys:
+            if not isinstance(node, dict) or k not in node:
+                return default
+            node = node[k]
+        return node
+
+    cpu = d.get("cpu", {})
+    ram = d.get("ram", {})
+    gpu = d.get("gpu_nvidia", {})
+    mb = d.get("motherboard", {})
+    net = d.get("network", {}).get("wifi", {})
+    discos = d.get("storage_devices", [])
+
+    print("═══════════════════════════════════════════")
+    print("  HARDWARE STATUS")
+    print("═══════════════════════════════════════════")
+    print(f'CPU:  {cpu.get("model", "?")} ({cpu.get("cores", "?")}C/{cpu.get("threads", "?")}T)')
+    print(f'RAM:  DDR5 @ {ram.get("speed_mts", "?")} MT/s  ({ram.get("total_gb", "?")} GB)')
+    print(f'GPU:  NVIDIA {gpu.get("model", "?")}')
+    print(f'MB:   {mb.get("model", "?")}')
+    print(f'Kernel: {d.get("os", {}).get("kernel", "?")}')
+    print(f'WiFi: {net.get("connected_ssid", "?")} ({net.get("signal_dbm", "?")} dBm)')
+    print(f'Discos: {len(discos)} físicos')
+    print("───────────────────────────────────────────")
+
+
+def mostrar_campos(d):
+    print("Campos de consulta:")
+    for campo in CAMPOS_AYUDA:
+        print(f"  - {campo}")
+    print("\nSecciones del índice:")
+    for k in d.keys():
+        print(f"  - {k}")
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
+        print((__doc__ or "hardware-query.py <comando>").strip())
+        return 0
+
+    comando = sys.argv[1]
+
+    if comando == "scan":
+        escanear()
+        return 0
+
+    if comando == "--campos":
+        d = cargar_datos()
+        mostrar_campos(d)
+        return 0
+
+    d = cargar_datos()
+
+    if comando == "status":
+        mostrar_status(d)
+        return 0
+
+    if comando == "all":
+        print(json.dumps(d, indent=2, default=str))
+        return 0
+
+    # Campos derivados (compatibilidad)
+    if comando == "gpu":
+        print(json.dumps(d.get("gpu_nvidia", {}), indent=2, default=str))
+        print("--- iGPU ---")
+        print(json.dumps(d.get("gpu_amd_integrated", {}), indent=2, default=str))
+        return 0
+
+    if comando in ("wifi", "bluetooth"):
+        net = d.get("network", {})
+        if comando == "bluetooth":
+            bt = net.get("bluetooth", {})
+            if bt:
+                print(json.dumps(bt, indent=2, default=str))
+            else:
+                print("ℹ️  El índice no contiene datos de bluetooth.", file=sys.stderr)
+                return 1
+        else:
+            wifi = net.get("wifi", {})
+            if wifi:
+                print(json.dumps(wifi, indent=2, default=str))
+            else:
+                print("ℹ️  El índice no contiene datos de wifi.", file=sys.stderr)
+                return 1
+        return 0
+
+    if comando in ("storage", "discos"):
+        print(json.dumps(d.get("storage_devices", []), indent=2, default=str))
+        return 0
+
+    if comando in ("usb", "usb_devices"):
+        print(json.dumps(d.get("usb_devices", []), indent=2, default=str))
+        return 0
+
+    if comando in ("os", "sistema"):
+        print(json.dumps(d.get("os", {}), indent=2, default=str))
+        return 0
+
+    if comando == "displays" or comando == "monitores":
+        print(json.dumps(d.get("displays", []), indent=2, default=str))
+        return 0
+
+    if comando == "audio":
+        print(json.dumps(d.get("audio", {}), indent=2, default=str))
+        return 0
+
+    if comando == "sensors":
+        print(json.dumps(d.get("sensors", {}), indent=2, default=str))
+        return 0
+
+    if comando == "network":
+        print(json.dumps(d.get("network", {}), indent=2, default=str))
+        return 0
+
+    if comando == "pci":
+        print(json.dumps(d.get("pci_devices", {}), indent=2, default=str))
+        return 0
+
+    if comando == "bios":
+        print(json.dumps(d.get("motherboard", {}), indent=2, default=str))
+        return 0
+
+    # Cualquier otra clave directa del índice
+    if comando in d:
+        print(json.dumps(d[comando], indent=2, default=str))
+        return 0
+
+    print(f"❌ Campo desconocido: {comando}", file=sys.stderr)
+    print(f"   Campos: {', '.join(CAMPOS_AYUDA)}", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+HARDWARE-QUERY_PYEOF
+chmod +x "$DIR_CONFIG/hardware-query.py"
+info "hardware-query.py creado (motor Python)"
 
 cat > "$DIR_CONFIG/check-fix.sh" << 'CHECK-FIX_SHEOF'
 #!/bin/bash
@@ -2130,57 +3456,6 @@ CHECK-FIX_SHEOF
 chmod +x "$DIR_CONFIG/check-fix.sh"
 info "check-fix.sh creado"
 
-cat > "$DIR_CONFIG/web-search.sh" << 'WEB-SEARCH_SHEOF'
-#!/bin/bash
-# MCP Server de búsqueda con DuckDuckGo (sin dependencias)
-# Devuelve resultados en formato JSON para el protocolo MCP
-
-QUERY="${1:-}"
-TIMEOUT=45
-USER_AGENT="Mozilla/5.0 (compatible; MCP/Search)"
-
-if [ -z "$QUERY" ]; then
-    echo '{"error": "No query provided"}' >&2
-    exit 1
-fi
-
-# Sanitizar la consulta para evitar problemas con caracteres especiales
-SAFE_QUERY=$(printf '%s' "$QUERY" | sed 's/[^a-zA-Z0-9._ -]//g')
-
-if [ -z "$SAFE_QUERY" ]; then
-    echo '{"result": {"type": "html", "content": "<div class=\"error\">La consulta está vacía o no es válida.</div>"}}'
-    exit 1
-fi
-
-# Intento 1: DuckDuckGo JSON API
-RESULT=$(curl -s --max-time "${TIMEOUT}" \
-    -H "User-Agent: ${USER_AGENT}" \
-    "https://api.duckduckgo.com/?q=${SAFE_QUERY}&format=json&no_redirect=1" 2>/dev/null)
-
-if [ -n "$RESULT" ] && echo "$RESULT" | python3 -c "import json,sys; json.load(sys.stdin)" 2>/dev/null; then
-    echo "{\"result\": ${RESULT}}"
-    exit 0
-fi
-
-# Intento 2: DuckDuckGo HTML API (fallback)
-RESULT_HTML=$(curl -s --max-time "${TIMEOUT}" \
-    -H "User-Agent: ${USER_AGENT}" \
-    "https://html.duckduckgo.com/html/?q=${SAFE_QUERY}" 2>/dev/null)
-
-if [ -n "$RESULT_HTML" ]; then
-    CLEANED=$(printf '%s' "$RESULT_HTML" | sed -E 's/<script[^>]*>.*<\/script>//g; s/<style[^>]*>.*<\/style>//g; s/<[^>]+>//g; s/\s+/ /g' | head -c 4096)
-    echo "{\"result\": {\"type\": \"html\", \"content\": \"${CLEANED}\"}}"
-    exit 0
-fi
-
-# Error genérico
-cat << 'ERRMSG'
-{"result": {"type": "html", "content": "<div class=\"error\">Error al realizar búsqueda.\n\nPosibles causas:\n- Conexión a internet desconectada\n- Límite de API alcanzado (espera unos minutos)\n- La consulta contiene palabras prohibidas por el proveedor\n\nPrueba con una pregunta sencilla como \"tiempo Pechina\"."}}
-ERRMSG
-exit 1
-WEB-SEARCH_SHEOF
-chmod +x "$DIR_CONFIG/web-search.sh"
-info "web-search.sh creado"
 
 # ─── timeline-completo: historial completo de sesiones (lee opencode.db) ───
 mkdir -p "$LOCAL_BIN"
@@ -2572,6 +3847,26 @@ log()  { echo -e "\e[1;32m[INFO]\e[0m $*"; }
 warn() { echo -e "\e[1;33m[WARN]\e[0m $*"; }
 err()  { echo -e "\e[1;31m[ERR]\e[0m $*" >&2; }
 
+# ---- 0. Setup symlink libggml-cpu.so.0 (whisper-cli lo necesita) ----
+setup_ggml_cpu_symlink() {
+  local BIN_DIR="${SHARE_DIR}/whisper-cpp/bin"
+  local VARIANT=""
+  # Elegir la mejor variante de CPU disponible (Ryzen 9 7900 = Zen 4)
+  for cand in zen4 alderlake skylakex icelake haswell cascadelake x64 sse42; do
+    if [ -f "${BIN_DIR}/libggml-cpu-${cand}.so" ]; then
+      VARIANT="${cand}"
+      break
+    fi
+  done
+  if [ -n "${VARIANT}" ] && [ -f "${BIN_DIR}/libggml-cpu-${VARIANT}.so" ]; then
+    ln -sf "libggml-cpu-${VARIANT}.so" "${BIN_DIR}/libggml-cpu.so.0"
+    ln -sf "libggml-cpu-${VARIANT}.so" "${BIN_DIR}/libggml-cpu.so"
+    log "Symlink libggml-cpu.so.0 -> libggml-cpu-${VARIANT}.so"
+  else
+    warn "No se encontró variante libggml-cpu-*.so para crear el symlink"
+  fi
+}
+
 # ---- 1. Dependencias del sistema ----
 log "Instalando dependencias del sistema..."
 pkexec apt-get update -qq
@@ -2601,7 +3896,8 @@ if [ ! -x "${LOCAL_BIN}/whisper-cli" ]; then
     cmake --build "${WHISPER_TMP}/whisper-src/build" --config Release -j "$(nproc)" 2>/dev/null || true
     if [ -x "${WHISPER_TMP}/whisper-src/build/bin/whisper-cli" ]; then
       cp "${WHISPER_TMP}/whisper-src/build/bin/whisper-cli" "${WHISPER_BIN}"
-      cp "${WHISPER_TMP}"/whisper-src/build/bin/libggml*.so* "${SHARE_DIR}/whisper-cpp/bin/" 2>/dev/null || true
+      cp -dP "${WHISPER_TMP}"/whisper-src/build/bin/libggml*.so* "${SHARE_DIR}/whisper-cpp/bin/" 2>/dev/null || true
+      setup_ggml_cpu_symlink
       log "whisper.cpp compilado con CUDA"
     else
       warn "Falló la compilación CUDA, usando versión CPU"
@@ -2617,13 +3913,22 @@ if [ ! -x "${LOCAL_BIN}/whisper-cli" ]; then
     tar -xzf "${WHISPER_TMP}/whisper-bin.tar.gz" -C "${WHISPER_TMP}"
     cp "${WHISPER_TMP}"/whisper-bin-ubuntu-x64/whisper-cli "${WHISPER_BIN}"
     cp "${WHISPER_TMP}"/whisper-bin-ubuntu-x64/*.so* "${SHARE_DIR}/whisper-cpp/bin/" 2>/dev/null || true
+    setup_ggml_cpu_symlink
     rm -rf "${WHISPER_TMP}"
   fi
   cat > "${LOCAL_BIN}/whisper-cli" << 'WHISPEREOF'
 #!/bin/bash
+# Wrapper whisper-cli con CUDA: añade el directorio local a LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="/home/antonio/.local/share/whisper-cpp/bin:${LD_LIBRARY_PATH}"
 exec /home/antonio/.local/share/whisper-cpp/bin/whisper-cli "$@"
 WHISPEREOF
   chmod +x "${LOCAL_BIN}/whisper-cli"
+  # Verificación: lanzar whisper-cli (debe resolver libggml-cpu.so.0)
+  if "${LOCAL_BIN}/whisper-cli" --help >/dev/null 2>&1; then
+    log "whisper-cli operativo (GPU/CUDA si hay nvidia)"
+  else
+    warn "whisper-cli no arranca: comprueba libggml*.so en ${SHARE_DIR}/whisper-cpp/bin"
+  fi
 fi
 
 # ---- 2. edge-tts vía pipx ----
@@ -2910,176 +4215,133 @@ QWENEOF
 chmod +x "$DIR_CONFIG/qwen-qwen3.5-9b.json" 2>/dev/null || true
 info "qwen-qwen3.5-9b.json creado"
 
-cat > "$DIR_CONFIG/hardware-info.md" << 'HWINFOEOF'
-═══════════════════════════════════════════════════════════════
-# Hardware Complete Info - RAM Speed Obtained via pkexec dmidecode
-═══════════════════════════════════════════════════════════════
+cat > "\$DIR_CONFIG/hardware-info.md" << 'HWINFOEOF'
+# Hardware del equipo de Antonio
 
-## ✅ INFORMACIÓN HARDWARE COMPLETA (CON pkexec dmidecode)
-═══════════════════════════════════════════════════════════════
+| 🖥️ Sistema | 🐧 Kernel | 📐 Arquitectura |
+|------------|----------|-----------------|
+| CachyOS (Arch rolling) | 7.1.8-1-cachyos | x86_64 |
 
-┌─────────────────────────────────────────────────────────────┐
-│ 🖥️  CPU Model          : AMD Ryzen 9 7900                    │
-│                       (12 cores / 24 threads)                
-│ ✅ Flags: AVX-512, BF16, Spectre mitigations                │
-└─────────────────────────────────────────────────────────────┘
+| 🖥️ Escritorio | 🐚 Shell | 🌍 Locale / Zona |
+|---------------|----------|------------------|
+| GNOME 50.3 (Wayland, GDM) | zsh | es_ES.UTF-8 · Europe/Madrid |
 
-┌─────────────────────────────────────────────────────────────┐
-│ 💾 RAM Total Installed : 64 GB (63,335 MB)                   │  
-│                       Disponible: ~52 GB                     │
-├─────────────────────────────────────────────────────────────┤
-│ ✅ VELOCIDAD RAM EXACTA:                                    │
-│   • DDR5 Memory                                             │
-│   • Speed: 6000 MT/s (equivalente a 3000 MHz)               │  
-│                     ┌─────────────────────────────────┐     │
-│                     │ Module Info: CMK64GX5M2B6000Z30 │     │
-│                     │ Manufacturer: Kingston (Hex 0x9E)│     │
-│                     │ Voltage: 1.1V configured          │     │
-│                     └─────────────────────────────────┘     │
-└─────────────────────────────────────────────────────────────┘
+> 📊 **Información actualizada:** 16/08/2026 · Escaneada con `hardware-query.py scan`
 
-⚠️  LIMITACIÓN KNOWN:
-    • CL timings (CAS latency) no reportados en dmidecode ("Unknown")
-    • Valores típicos para DDR5-6000: CL30, CL32, CL36 comúnmente
-  
-┌────────────────────────═══════════════════════════════
-║          🔌 MOTHERBOARD / MAINBOARD         ║
-╚═══════════════════════════════════════════╝
-  Model exacto:        MAG X870 TOMAHAWK WIFI (MS-7E51)  
-  Socket:              AM5
-  Max Memory Capacity: 128 GB (DMIs reportado)
+---
 
+## 🖥️ CPU
 
-┌─────────────────────────────────────────────────────────────┐
-│ 🎮 GPU NVIDIA DETECTADA:                                    │
-└─────────────────────────────────────────────────────────────┘
+| Campo | Valor |
+|---|---|
+| Modelo | AMD Ryzen 9 7900 12-Core Processor |
+| Arquitectura | Zen 4 (socket AM5) |
+| Núcleos / hilos | 12 núcleos físicos / 24 hilos (2 por núcleo) |
+| Frecuencia | Máx. 5485 MHz · Mín. 430 MHz |
+| Caché | L1d 384 KiB · L1i 384 KiB · L2 12 MiB · L3 64 MiB |
+| Microcode | 0xa60120c (familia 25, modelo 97, stepping 2) |
+| Virtualización | AMD-V (SVM, avic, vgif, x2avic) |
+| ISA | AVX-512 completo, AVX2, FMA3, BMI1/2, AES-NI, SHA-NI, VAES, GFNI, F16C |
+| Vulnerabilidades | Casi todas "Not affected"; Spectre v1/v2 mitigadas (Enhanced/Automatic IBRS) |
 
-Modelo completo:      NVIDIA GeForce RTX 4070 Ti SUPER AD103  
-VRAM:                 ~16 GB (65% usado, ~10.1 GB free)
+## 💾 RAM
 
+| Campo | Valor |
+|---|---|
+| Total | 64 GB (61,9 GiB usables) · 2 DIMMs de 32 GiB |
+| Tipo | DDR5 @ 6000 MT/s (3000 MHz) · Dual-rank |
+| Módulo | Corsair Vengeance CMK64GX5M2B6000Z30 |
+| Slots | DIMMA2 y DIMMB2 ocupados (32 GiB c/u) · DIMMA1 y DIMMB1 vacíos |
+| Swap | zram0 de 61,9 GiB (algoritmo zstd) |
 
-┌─────────────────────────────────────────────────────────────┐
-│ 📶 WI-FI & BLUETOOTH CHIPSETS:                              │
-└─────────────────────────────────────────────────────────────┘
+## 🔌 Placa base
 
-WiFi PCI Controller  : Qualcomm WCN785x Wi-Fi 7 (802.11be) 
-                      FastConnect Technology, Foxconn
-Bluetooth            : Integrado plataforma AM5
+| Campo | Valor |
+|---|---|
+| Modelo | MSI MAG X870 TOMAHAWK WIFI (MS-7E51) |
+| BIOS | American Megatrends 1.A70 (12/02/2025) · UEFI |
+| Chipset | AMD X870 · Socket AM5 · Factor ATX |
 
+## 🎮 GPU
 
-┌─────────────────────────────────────────────────────────────┐
-│ 💾 STORAGE NVMe:                                            │
-└─────────────────────────────────────────────────────────────┘
+| Campo | Valor |
+|---|---|
+| GPU dedicada | NVIDIA GeForce RTX 4070 Ti SUPER (Ada Lovelace, AD103) |
+| VRAM | 16376 MiB (~16 GB GDDR6X) |
+| Driver | nvidia 610.57.04 · CUDA 13.3 · Vulkan 1.4 · PCIe Gen4 x16 |
+| iGPU integrada | AMD Radeon Raphael (RDNA2) · driver amdgpu |
+| Uso CUDA | LM Studio (Qwen 3.5-9B) y whisper-cpp (transcripción ~0,85 s) |
 
-/dev/nvme1n1          : Intel SSD ~930 GB  
-                      Mounted: /root
-                      Status: 54% usado
+## 🖥️ Monitores
 
+| Conexión | Tamaño | Resolución activa | ¿Principal? |
+|---|---|---|---|
+| DP-1 | 27,2" (600×340 mm) | 5760×3240 (4K, escala 150%) · 60 Hz | No |
+| DP-2 | 27,2" (600×340 mm) | 5760×3240 (4K, escala 150%) · 60 Hz | Sí |
 
-═══════════════════════════════════════════════════════════════
-# LM Studio Configuration (Verified via CLI)
-═══════════════════════════════════════════════════════════════
+## 💽 Almacenamiento
 
-Model loaded:         qwen/qwen3.5-9b Q4_K_M  
-Context window:       81,920 tokens (CONFIGURADO VIA CLI)  
-Size weights VRAM:    ~6.5 GB
+| Dispositivo | Modelo | Tamaño | Sistema de archivos | Montaje |
+|---|---|---|---|---|
+| nvme0n1 | Kingston SFYRS1000G | 1 TB | btrfs | `/` y `/home` |
+| nvme1n1 | Kingston SFYRD4000G | 4 TB | NTFS | (particiones Windows) |
+| sda | Crucial CT1000MX500SSD1 | 1 TB | btrfs | no montado |
+| sdb | Toshiba HDWE140 | 3,6 TB | NTFS | no montado |
+| sdc | Toshiba HDWE140 | 3,6 TB | NTFS | no montado |
+| sdd | Seagate ST4000NM0035 | 3,6 TB | NTFS | `/run/media/antonio/SEAGATE` |
+| zram0 | swap comprimido | 61,9 GiB | swap | `[SWAP]` |
 
+> Contenedor Docker activo: **open-webui** (ghcr.io/open-webui/open-webui:main)
 
-═══════════════════════════════════════════════════════════════
-# RESUMEN FINAL - TODO LO QUE SABEMOS
-═══════════════════════════════════════════════════════════════
+## 🌐 Red
 
-✅ CPU          : AMD Ryzen 9 7900 (12C/24T, ~5.4GHz)
-✅ RAM          : 64 GB DDR5 @ 6000 MT/s (~3000 MHz)  
-❓ CL timings   : No reportados (típicos: CL30-36 para 6000MT/s)
-✅ Motherboard  : MAG X870 TOMAHAWK WIFI (MS-7E51), Socket AM5
-✅ GPU          : RTX 4070 Ti SUPER AD103, ~16GB VRAM
-✅ WiFi         : Qualcomm WCN785x Wi-Fi 7 + BT integrado
-✅ Storage      : Intel NVMe ~930 GB @ /root (54% usado)
+### 📡 WiFi
 
-═══════════════════════════════════════════════════════════════
+| Campo | Valor |
+|---|---|
+| Chipset | Qualcomm WCN785x Wi-Fi 7 (802.11be), 320 MHz, 2×2 · FastConnect 7800 |
+| Driver | ath12k_wifi7_pci · kernel module ath12k_wifi7 |
+| Red conectada | ZIPE (BSSID 64:64:4a:bc:af:70) · canal 48 · 5240 MHz · ancho 160 MHz |
+| Velocidades | RX 2161–2402 Mbps · TX 1921 Mbps (modo HE / Wi-Fi 6) |
+| Señal | −32 a −35 dBm (excelente) |
+| IP | 192.168.31.112/24 · MAC d8:b3:2f:2d:ff:09 · modo managed |
 
+### 🔌 Ethernet y Bluetooth
 
+| Interfaz | Detalle |
+|---|---|
+| enp8s0 | Realtek RTL8126 5GbE (driver r8169) · caída (se usa WiFi) · MAC 34:5a:60:52:b8:58 |
+| Bluetooth | Qualcomm integrado en WCN785x · MAC D8:B3:2F:2D:FF:0A · arriba |
 
-═══════════════════════════════════════════════════════════════
-# Commando inxi - Comprobado y Funcional ✨
-═══════════════════════════════════════════════════════════════
+### 🌐 Redes virtuales
 
-✅ Comando: `inxi -Fc` (Información completa del hardware)
-   Versión instalada: 3.3.41
+| Interfaz | IP | Uso |
+|---|---|---|
+| vmnet1 | 192.168.123.1/24 | VMware host |
+| vmnet8 | 192.168.73.1/24 | VMware NAT |
+| docker0 | 172.17.0.1/16 | Docker |
 
-═══════════════════════════════════════════════════════════════
-# Resumen Ampliado desde inxi (Opcional - Detallado)
-═══════════════════════════════════════════════════════════════
+## 🌡️ Sensores (en reposo)
 
-✅ CPU: AMD Ryzen 9 7900 (12 cores / 24 threads)
-   - Cache L2: 12 MiB
-   - Velocidad: avg 5450 MHz | min/max: 430-5485 MHz
-   - Cada core funcionando ~5.45 GHz
+| Sensor | Valor |
+|---|---|
+| CPU Tctl | ~51–64 °C |
+| CPU Tccd1 / Tccd2 | ~53 °C / ~51 °C |
+| GPU NVIDIA | ~49–53 °C · consumo 13–28 W |
+| iGPU AMD | ~55 °C · consumo 39 W |
+| NVMe | Composite ~47–60 °C · Sensor 2 ~66–73 °C |
+| WiFi / Ethernet | ~66 °C / ~56 °C |
 
-✅ RAM: 64 GB DDR5 (37,2% utilizado actualmente)  
-   - Según dmidecode + pkexec: @6000 MT/s
-   - Module ID: CMK64GX5M2B6000Z30 Kingston
+---
 
-┌───────────────────────────────────────────────────────────────┐
-│ 🖥️  MOTHERBOARD (from inxi):                                  │
-│ • Vendor    : Micro-Star                                      │  
-│ • Model     : MAG X870 TOMAHAWK WIFI (MS-7E51)               │ 
-│ • Firmware  : UEFI, vendor: American Megatrends LLC           │ 
-│ • Version   : 1.A70 date: 12/02/2025                           │
-└───────────────────────────────────────────────────────────────┘
+## 🛠️ Cómo consultar el hardware
 
-┌───────────────────────────────────────────────────────────┐  
-│ 🎮 GRAPHICS (Inxi):                                      │
-├───────────────────────────────────────────────────────────┤  
-│ Device-1: NVIDIA AD103 [GeForce RTX 4070 Ti SUPER]        │  
-│              driver: nvidia v: 610.43.03                  │  
-│ Device-2: AMD/ATI Raphael                                 │
-├───────────────────────────────────────────────────────────┤  
-│ Display: wayland server: X.Org v: 24.1.13                 │
-│           compositor: gnome-shell                          │  
-│ Resolution: 5760x3240~60Hz                                 │  
-│ OpenGL API: v: 4.6.0 vendor: nvidia mesa                   │  
-│ Vulkan API: v: 1.4.350                                     │  
-└───────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐  
-│ 📶 NETWORK (Inxi):                                          │
-├─────────────────────────────────────────────────────────────┤  
-│ Device-1: Qualcomm WCN785x Wi-Fi 7 320MHz 2x2 [FastConnect│ 
-│              7800] driver: ath12k_wifi7_pci                 │  
-│              IF: wlan0 state: up                            │  
-├─────────────────────────────────────────────────────────────┤  
-│ Device-2: Realtek RTL8126 (5GbE)                          ─┘  
-│              IF: enp8s0 state: down                         │  
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐  
-│ 🔵 BLUETOOTH (Inxi):                                        │
-├─────────────────────────────────────────────────────────────┤  
-│ Device: Foxconn / Hon Hai driver: btusb                    │  
-│          type: USB, Report: btmgmt                         │  
-│          state up | address <filter>                       │  
-│          Bluetooth v: 5.4                                  │  
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐  
-│ 💾 STORAGE (inxi -Fc):                                      │
-├─────────────────────────────────────────────────────────────┤  
-│ /dev/nvme1n1  Kingston SFYRS1000G ~932 GB mounted: /root   │  
-│ /dev/nvme0n1  Kingston SFYRD4000G 3.6 TB @ /               │  
-├─────────────────────────────────────────────────────────────┤  
-│ Total storage:    16.37 TiB                                │
-│ Used total:       424.45 GiB                               │  
-│ Free total:       ~15.6 TB                                 │  
-└─────────────────────────────────────────────────────────────┘
-
-
-═══════════════════════════════════════════════════════════════
-
-INXI_INFO && \
-echo "✓ inxi-info añadido a hardware-info.md" && \
-wc -l ~/.config/opencode/hardware-info.md | awk '{print $1, "líneas totales"}'
+| Comando | Descripción |
+|---|---|
+| `source ~/.config/opencode/hardware-query.sh && hw_query status` | Resumen rápido |
+| `hw_query cpu` / `hw_query gpu` / `hw_query ram` | Detalle de una sección |
+| `python3 ~/.config/opencode/hardware-query.py scan` | Reescaneo completo (actualiza el índice) |
+| `hw_query all` | Índice completo en JSON |
 HWINFOEOF
 chmod +x "$DIR_CONFIG/hardware-info.md" 2>/dev/null || true
 info "hardware-info.md creado"
@@ -4352,9 +5614,9 @@ ZSHRC="$HOME/.zshrc"
 if ! grep -q "function ocv" "$ZSHRC" 2>/dev/null; then
     cat >> "$ZSHRC" << 'ZSHEOF'
 
-# OCV - OpenCode con voz
+# OCV - OpenCode con voz (pasa por el lanzador que verifica LM Studio)
 function ocv() {
-    script -q -f -c "opencode $*" /dev/null 2>&1
+    script -q -f -c "REAL_OPENCODE=/usr/bin/opencode /home/antonio/.local/bin/opencode $*" /dev/null 2>&1
 }
 
 # Alias para perfiles local/cloud
@@ -4362,6 +5624,8 @@ alias opencode-local="bash ~/.config/opencode/switch-mcp-profile.sh local && ope
 alias opencode-cloud="bash ~/.config/opencode/switch-mcp-profile.sh cloud && opencode"
 alias ocv-local="bash ~/.config/opencode/switch-mcp-profile.sh local && ocv"
 alias ocv-cloud="bash ~/.config/opencode/switch-mcp-profile.sh cloud && ocv"
+export OPENCODE_ENABLE_EXA=1
+export LMSTUDIO_API_KEY="lm-studio"
 ZSHEOF
     info "Alias y funcion ocv anadidos al .zshrc"
 fi

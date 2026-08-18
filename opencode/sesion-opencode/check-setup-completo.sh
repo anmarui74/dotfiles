@@ -85,14 +85,16 @@ def norm(s): return json.dumps(json.loads(s), sort_keys=True)
 
 # Mapeo archivo -> delimitador (TODOS los embebidos)
 archivos = {
-    'opencode.json': 'JSONEOF', 'opencode-local.json': 'LOCALEOF', 'tui.json': 'TUIEOF',
+    'opencode.json': 'JSONEOF', 'opencode-local.json': 'LOCALEOF', 'opencode-cloud.json': 'CLOUDEOF',
+    'tui.json': 'TUIEOF',
     'AGENTS.md': 'AGEOF', '.env': 'ENVEOF',
     'switch-mcp-profile.sh': 'SWITCHEOF', 'sync-opencode.sh': 'SYNCEOF',
     'init-opencode.sh': 'INITEOF', 'start-lmstudio-server.sh': 'SERVEREOF',
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
+    'hardware-query.py': 'HARDWARE-QUERY_PYEOF',
     'check-fix.sh': 'CHECK-FIX_SHEOF', 'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
-    'web-search.sh': 'WEB-SEARCH_SHEOF', 'lmstudio-proxy.py': 'LMPROXYEOF',
+    'lmstudio-proxy.py': 'LMPROXYEOF',
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
 }

@@ -16,6 +16,26 @@ log()  { echo -e "\e[1;32m[INFO]\e[0m $*"; }
 warn() { echo -e "\e[1;33m[WARN]\e[0m $*"; }
 err()  { echo -e "\e[1;31m[ERR]\e[0m $*" >&2; }
 
+# ---- 0. Setup symlink libggml-cpu.so.0 (whisper-cli lo necesita) ----
+setup_ggml_cpu_symlink() {
+  local BIN_DIR="${SHARE_DIR}/whisper-cpp/bin"
+  local VARIANT=""
+  # Elegir la mejor variante de CPU disponible (Ryzen 9 7900 = Zen 4)
+  for cand in zen4 alderlake skylakex icelake haswell cascadelake x64 sse42; do
+    if [ -f "${BIN_DIR}/libggml-cpu-${cand}.so" ]; then
+      VARIANT="${cand}"
+      break
+    fi
+  done
+  if [ -n "${VARIANT}" ] && [ -f "${BIN_DIR}/libggml-cpu-${VARIANT}.so" ]; then
+    ln -sf "libggml-cpu-${VARIANT}.so" "${BIN_DIR}/libggml-cpu.so.0"
+    ln -sf "libggml-cpu-${VARIANT}.so" "${BIN_DIR}/libggml-cpu.so"
+    log "Symlink libggml-cpu.so.0 -> libggml-cpu-${VARIANT}.so"
+  else
+    warn "No se encontró variante libggml-cpu-*.so para crear el symlink"
+  fi
+}
+
 # ---- 1. Dependencias del sistema ----
 log "Instalando dependencias del sistema..."
 pkexec apt-get update -qq
@@ -45,7 +65,8 @@ if [ ! -x "${LOCAL_BIN}/whisper-cli" ]; then
     cmake --build "${WHISPER_TMP}/whisper-src/build" --config Release -j "$(nproc)" 2>/dev/null || true
     if [ -x "${WHISPER_TMP}/whisper-src/build/bin/whisper-cli" ]; then
       cp "${WHISPER_TMP}/whisper-src/build/bin/whisper-cli" "${WHISPER_BIN}"
-      cp "${WHISPER_TMP}"/whisper-src/build/bin/libggml*.so* "${SHARE_DIR}/whisper-cpp/bin/" 2>/dev/null || true
+      cp -dP "${WHISPER_TMP}"/whisper-src/build/bin/libggml*.so* "${SHARE_DIR}/whisper-cpp/bin/" 2>/dev/null || true
+      setup_ggml_cpu_symlink
       log "whisper.cpp compilado con CUDA"
     else
       warn "Falló la compilación CUDA, usando versión CPU"
@@ -61,13 +82,22 @@ if [ ! -x "${LOCAL_BIN}/whisper-cli" ]; then
     tar -xzf "${WHISPER_TMP}/whisper-bin.tar.gz" -C "${WHISPER_TMP}"
     cp "${WHISPER_TMP}"/whisper-bin-ubuntu-x64/whisper-cli "${WHISPER_BIN}"
     cp "${WHISPER_TMP}"/whisper-bin-ubuntu-x64/*.so* "${SHARE_DIR}/whisper-cpp/bin/" 2>/dev/null || true
+    setup_ggml_cpu_symlink
     rm -rf "${WHISPER_TMP}"
   fi
   cat > "${LOCAL_BIN}/whisper-cli" << 'WHISPEREOF'
 #!/bin/bash
+# Wrapper whisper-cli con CUDA: añade el directorio local a LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="/home/antonio/.local/share/whisper-cpp/bin:${LD_LIBRARY_PATH}"
 exec /home/antonio/.local/share/whisper-cpp/bin/whisper-cli "$@"
 WHISPEREOF
   chmod +x "${LOCAL_BIN}/whisper-cli"
+  # Verificación: lanzar whisper-cli (debe resolver libggml-cpu.so.0)
+  if "${LOCAL_BIN}/whisper-cli" --help >/dev/null 2>&1; then
+    log "whisper-cli operativo (GPU/CUDA si hay nvidia)"
+  else
+    warn "whisper-cli no arranca: comprueba libggml*.so en ${SHARE_DIR}/whisper-cpp/bin"
+  fi
 fi
 
 # ---- 2. edge-tts vía pipx ----

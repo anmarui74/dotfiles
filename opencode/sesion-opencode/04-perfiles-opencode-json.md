@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 📁 Perfiles | 26/07/2026 · act. 10/08/2026 | Antonio |
+| 📁 Perfiles | 26/07/2026 · act. 18/08/2026 | Antonio |
 
 > Perfiles local / cloud / activo, MCPs y proveedores
 
@@ -60,7 +60,8 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
   },
   "agent": {
     "build": {
-      "prompt": "{file:./prompts/read-agents.txt}"
+      "prompt": "{file:./prompts/read-agents.txt}",
+      "model": "opencode-go/deepseek-v4-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -74,6 +75,11 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
       "mode": "primary",
       "model": "opencode-go/deepseek-v4-flash"
+    },
+    "nvidia": {
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "mode": "primary",
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
     }
   },
   "provider": {
@@ -166,7 +172,8 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
   },
   "agent": {
     "build": {
-      "prompt": "{file:./prompts/read-agents.txt}"
+      "prompt": "{file:./prompts/read-agents.txt}",
+      "model": "opencode-go/deepseek-v4-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -175,6 +182,16 @@ Actualmente es el mismo que `opencode-cloud.json` (todos los MCPs activos).
       "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
       "mode": "primary",
       "model": "lmstudio/models-qwen3.5-9b"
+    },
+    "cloud": {
+      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
+      "mode": "primary",
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "nvidia": {
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "mode": "primary",
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
     }
   },
   "provider": {
@@ -262,10 +279,11 @@ Es idéntico al activo (`opencode.json`). Ver [sección del perfil activo](#perf
 
 | Aspecto | Local | Cloud |
 |---------|-------|-------|
-| **Agentes** | `build`, `plan`, `local` | `build`, `plan`, `local`, `cloud` |
+| **Agentes** | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `local`, `cloud`, `nvidia` |
 | **Agente principal** | `local` (Qwen 3.5 local) | `cloud` (OpenCode Go: deepseek-v4-flash) |
 | **Modelo local** | ✅ Qwen 3.5 Q6_K | ✅ Qwen 3.5 Q6_K (subagente) |
-| **Modelo cloud** | ❌ No | ✅ OpenCode Go (deepseek-v4-flash) |
+| **Modelo cloud** | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) |
+| **Agente NVIDIA** | ✅ Nemotron 3 Ultra 550B | ✅ Nemotron 3 Ultra 550B |
 | **context7** | ❌ | ✅ |
 | **filesystem** | ✅ | ✅ |
 | **memory** | ✅ | ✅ |
@@ -348,21 +366,30 @@ Control de permisos granular:
 ### `agent`
 Define agentes (personas/modos del asistente):
 
-- **build:** Agente especial para tareas de construcción (lee AGENTS.md al inicio)
+- **build:** Agente especial para tareas de construcción (lee AGENTS.md al inicio). Desde el **18/08/2026** usa **DeepSeek V4 Flash** como modelo explícito
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
-- **local:** Agente local, usa el modelo Qwen 3.5 Q6_K vía LM Studio (puerto 4001). En el perfil activo es **subagente**
+- **local:** Agente local, usa el modelo Qwen 3.5 Q6_K vía LM Studio (puerto 4001). En el perfil activo es **subagente**; en el perfil local es el **principal**
 - **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`)
+- **nvidia:** Agente NVIDIA añadido el **18/08/2026**, usa **Nemotron 3 Ultra 550B** (`nvidia/nvidia/nemotron-3-ultra-550b-a55b`). Modelo frontier de NVIDIA para agentes complejos, 1M de contexto
 
 Cada agente puede tener su propio modelo y prompt de sistema.
 
 ### `provider`
-Proveedores de modelos. Actualmente solo `lmstudio`, configurado como:
+Proveedores de modelos. Dos proveedores configurados:
 
-- **SDK:** `@ai-sdk/openai-compatible` (interfaz OpenAI para LM Studio)
-- **URL:** `http://localhost:4001/v1` (proxy local)
-- **Modelo:** `models-qwen3.5-9b`
-- **Límites:** 81.920 tokens de contexto, 8.192 de salida
-- **Tools:** Habilitadas
+- **lmstudio** (local):
+  - **SDK:** `@ai-sdk/openai-compatible` (interfaz OpenAI para LM Studio)
+  - **URL:** `http://localhost:4001/v1` (proxy local)
+  - **Modelo:** `models-qwen3.5-9b`
+  - **Límites:** 81.920 tokens de contexto, 8.192 de salida
+  - **Tools:** Habilitadas
+
+- **nvidia** (cloud, desde el **18/08/2026**):
+  - **Modelo agente:** `nvidia/nvidia/nemotron-3-ultra-550b-a55b` (Nemotron 3 Ultra 550B)
+  - **Whitelist:** 22 modelos NVIDIA + terceros (Nemotron 3 family, GLM-5.2, MiniMax M3, GPT-OSS, Inkling, Llama, Muse Glimmer...)
+  - **API Key:** `nvapi-*` (en `auth.json` de OpenCode)
+  - **Endpoint:** `https://integrate.api.nvidia.com/v1`
+  - ⚠️ **Nota:** `z-ai/glm-5.2` estaba saturado (HTTP 429) a 18/08/2026 por rate limit de NVIDIA
 
 ### `lsp`
 Servidores de lenguaje (Language Server Protocol) que OpenCode lanza localmente para **ayudar a la IA** a analizar el código: localizar definiciones y referencias, detectar errores al editar y entender la estructura del proyecto. Configurados el **10/08/2026** en los tres perfiles:

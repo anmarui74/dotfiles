@@ -38,6 +38,14 @@ explícitamente o que el JSON no tenga la respuesta.
 
 Consulta rápida desde terminal: `source ~/.config/opencode/hardware-query.sh && hw_query <campo>`
 
+Para REGENERAR el índice con los datos reales actuales del hardware:
+```bash
+python3 ~/.config/opencode/hardware-query.py scan
+```
+(Escanea lscpu, lspci, lsusb, nvidia-smi, sensors, lsblk, dmidecode, iw,
+xrandr, free, /proc... y actualiza data/hardware/index.json. Usa pkexec
+para dmidecode: saldrá una ventana pidiendo contraseña la primera vez.)
+
 ## 🔧 Uso de herramientas (OBLIGATORIO)
 Cuando tengas que hacer una tarea que requiera una herramienta (leer archivos,
 listar directorios, ejecutar comandos, etc.) USA LA HERRAMIENTA directamente.
@@ -72,7 +80,7 @@ Anota siempre la solución encontrada en la memoria.
 - `~/Config/opencode/` es la copia de SEGURIDAD para instalaciones desde limpio
 - Estructura ordenada de `~/Config/opencode/`:
   - `backups/opencode/` → tarballs de backup de OpenCode (`opencode-backup-*.tar.gz`)
-  - `backups/` (raíz) → backups del grafo de memoria (`mcp-memory-backup-*.json`)
+  - `backups/` (raíz) → backups del grafo de memoria (`mcp-memory-backup-*.jsonl`)
   - `data/` → datos auxiliares (p. ej. `onlyoffice-ai/`)
   - `documentacion/` → documentación en Markdown
   - `sesion-opencode/` → setup completo desde limpio + scripts sincronizados
@@ -120,7 +128,7 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
         (opencode.json, opencode-local.json, tui.json, AGENTS.md, .env, y TODOS
         los scripts: switch-mcp-profile, sync, init, start-*, hardware-query,
-        check-fix, check-timeline-fix, web-search, lmstudio-proxy.py,
+        check-fix, check-timeline-fix, hardware-query.py, lmstudio-proxy.py,
         backup-opencode, bootstrap-ocv, timeline-completo) — no solo los JSON
   - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
   - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
@@ -163,15 +171,21 @@ Esto comprueba:
 ## Backup automático del grafo de memoria
 El grafo de conocimiento se respalda automáticamente en:
 `/home/antonio/Config/opencode/backups/`
-Con nombre `mcp-memory-backup-{fecha}.json`
+Con nombre `mcp-memory-backup-{fecha}.jsonl`
 Los backups se conservan 30 días (según LOG_RETENTION_DAYS en .env)
 ## Recuperación del grafo de memoria
 Si el grafo se pierde o corrompe:
 1. Localizar el backup más reciente:
    ```bash
-   ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.json | head -1
+   ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl | head -1
    ```
-2. El servidor MCP Memory debería restaurarlo automáticamente al iniciar desde `MEMORY_DATA_DIR`
+2. Copiarlo a la ruta de memoria activa:
+   ```bash
+   cp /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl /home/antonio/.config/opencode/data/memory/memory.jsonl
+   ```
+3. Reiniciar OpenCode: el servidor MCP Memory cargará el grafo desde `MEMORY_FILE_PATH`
+   (definido vía `environment` en el bloque `mcp.memory` de los 3 perfiles JSON).
+   ⚠️ El servidor usa `MEMORY_FILE_PATH` (NO `MEMORY_DATA_DIR`).
 
 ## ⚠️ Recordatorio MCP memory (IMPORTANTE)
 Al usar la herramienta `memory_add_observations` (o `memory_delete_observations`),
@@ -209,8 +223,8 @@ en `~/.config/opencode/data/timeline-fix.log`.
 
 ## Directorios de datos
 - `/home/antonio/.config/opencode/data/` - Datos de ejecución (logs, estado)
-- `/home/antonio/.config/opencode/data/memory/` - Grafo de memoria persistente
-- `/home/antonio/Config/opencode/backups/` - Backups del grafo de memoria (`mcp-memory-backup-*.json`)
+- `/home/antonio/.config/opencode/data/memory/` - Grafo de memoria persistente (`memory.jsonl`, vía `MEMORY_FILE_PATH`)
+- `/home/antonio/Config/opencode/backups/` - Backups del grafo de memoria (`mcp-memory-backup-*.jsonl`)
 - `/home/antonio/Config/opencode/backups/opencode/` - Tarballs de backup de OpenCode
 - `/home/antonio/.config/opencode/.env` - Variables de entorno seguras
 
