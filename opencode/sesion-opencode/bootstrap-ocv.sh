@@ -286,7 +286,7 @@ if [ ! -f package.json ]; then
   cat > package.json << 'PKGEOF'
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.18.8"
+    "@opencode-ai/plugin": "1.18.18"
   }
 }
 PKGEOF

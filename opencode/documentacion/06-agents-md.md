@@ -91,7 +91,7 @@ El archivo se organiza en **5 secciones** claramente delimitadas:
 ```
 Config/opencode/
 ├── backups/opencode/          # Tarballs de backup de OpenCode (1/día, retención 30 días)
-├── backups/                   # Backups del grafo de memoria (mcp-memory-backup-*.json)
+├── backups/                   # Backups del grafo de memoria (mcp-memory-backup-*.jsonl)
 ├── data/onlyoffice-ai/        # Integración IA de OnlyOffice
 ├── documentacion/             # Documentación en Markdown
 ├── sesion-opencode/           # Setup completo desde limpio + scripts sincronizados
@@ -280,11 +280,11 @@ Verifica:
 
 ```
 Directorio: /home/antonio/Config/opencode/backups/
-Formato:    mcp-memory-backup-{fecha}.json
+Formato:    mcp-memory-backup-{fecha}.jsonl
 Retención:  30 días
 ```
 
-El grafo de memoria es un **JSON** que contiene todas las entidades, observaciones y relaciones que el asistente ha aprendido.
+El grafo de memoria es un archivo **JSONL** (una línea JSON por entidad) que contiene todas las entidades, observaciones y relaciones que el asistente ha aprendido.
 
 ### Recuperación del grafo (líneas 177-190)
 
@@ -292,9 +292,11 @@ Si el grafo se pierde o corrompe:
 
 ```bash
 # 1. Localizar backup más reciente
-ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.json | head -1
+ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl | head -1
 
-# 2. El servidor MCP Memory restaura automáticamente desde MEMORY_DATA_DIR
+# 2. Copiar el backup a la ruta activa del grafo (MEMORY_FILE_PATH)
+cp /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl \
+   /home/antonio/.config/opencode/data/memory/memory.jsonl
 ```
 
 ### Recordatorio MCP memory (líneas 191-201) — IMPORTANTE
@@ -386,21 +388,53 @@ Lanza Chrome en modo depuración con un perfil temporal, necesario para controla
 
 ### Carga automática al abrir opencode/ocv (líneas 248-258)
 
+Al ejecutar `opencode` u `ocv`, el lanzador `start-opencode-server.sh` carga automáticamente:
+
+1. **Servidor LM Studio** (puerto 1234)
+2. **Modelo Qwen3.5-9B Q6_K** con 80K de contexto
+3. **Proxy** en puerto 4001 con métricas de tokens/s
+
+El servicio systemd `init-opencode.service` está **DESHABILITADO** (no carga el modelo al iniciar sesión). La carga ocurre solo al abrir `opencode`/`ocv`.
+
+> 📌 **Perfil cloud:** `ocv-cloud`/`opencode-cloud` exporta `SKIP_LMSTUDIO=1`, por lo que `start-opencode-server.sh` NO carga el modelo local en VRAM.
+
+### Perfiles por lanzador (líneas 259-274)
+
+Cada comando usa **SU archivo de config** vía `OPENCODE_CONFIG`. Nada se copia nunca sobre `opencode.json`:
+
+| Comando | Archivo de config | LM Studio (VRAM) |
+|---------|-------------------|------------------|
+| `ocv`, `opencode` | `opencode.json` | ✅ Carga modelo (todos los agentes y MCPs) |
+| `ocv-local`, `opencode-local` | `opencode-local.json` | ✅ Carga modelo (MCPs esenciales) |
+| `ocv-cloud`, `opencode-cloud` | `opencode-cloud.json` | ❌ NO carga modelo (`SKIP_LMSTUDIO=1`) |
+
+En cloud: agente local desactivado (`agent.local.disable`), `small_model` apunta a la nube (`opencode-go/deepseek-v4-flash`) y el provider LM Studio está bloqueado (`disabled_providers`). El antiguo `switch-mcp-profile.sh` está **ELIMINADO** desde el 18/08/2026.
+
+### Iniciar LM Studio manualmente (líneas 275-279)
+
 ```bash
-lms server start
+bash /home/antonio/.config/opencode/start-lmstudio.sh      # servidor + modelo + proxy
+bash /home/antonio/.config/opencode/start-lmstudio-server.sh  # solo servidor + proxy
 ```
 
-**Obligatorio** para que OpenCode pueda conectarse al modelo local.
+### Liberar VRAM (líneas 281-285)
 
-### Liberar VRAM (líneas 281-286)
+Si el modelo se satura, usar:
 
-```
-Si el modelo se satura:
-1. Desde LM Studio GUI: cambiar de modelo y volver
-2. Desde terminal: lms unload
+```bash
+/home/antonio/.lmstudio/bin/lms unload --all
 ```
 
-Cuando el modelo genera respuestas muy largas, puede saturarse. La VRAM se libera automáticamente con el tiempo, pero si se necesita liberar manualmente, `lms unload` descarga el modelo activo. Se recargará solo en la siguiente petición.
+### Tokens/s en respuestas locales (líneas 287-300)
+
+El proxy en puerto 4001 calcula y muestra tokens/segundo en cada respuesta (campo `stats.tokens_per_second` del JSON). En la TUI aparece al final de cada mensaje junto al nombre del modelo (ej: "Qwen 3.5 Q6_K · 13.5 tok/s"). Método rápido por terminal:
+
+```bash
+curl -s http://localhost:4001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"hola"}]}' | \
+  python3 -c "import json,sys; d=json.load(sys.stdin); u=d['usage']; s=d.get('stats',{}); print(f\"Prompt: {u['prompt_tokens']} tok\\nGenerados: {u['completion_tokens']} tok\\nVelocidad: {s.get('tokens_per_second','N/A')} tok/s\")"
+```
 
 ---
 

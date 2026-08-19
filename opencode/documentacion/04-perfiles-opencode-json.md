@@ -227,12 +227,44 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B",
+      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "temperature": 1,
+      "top_p": 0.95
     }
   },
   "provider": {
+    "nvidia": {
+      "whitelist": [
+        "minimaxai/minimax-m3",
+        "z-ai/glm-5.2",
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+        "stepfun-ai/step-3.7-flash",
+        "thinkingmachines/inkling",
+        "meta/llama-3.1-8b-instruct",
+        "meta/llama-3.1-70b-instruct",
+        "meta/llama-3.2-11b-vision-instruct",
+        "meta/llama-3.3-70b-instruct",
+        "meta/muse-glimmer-30b",
+        "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "nvidia/nemotron-3-nano-30b-a3b",
+        "nvidia/nemotron-3-super-120b-a12b",
+        "nvidia/nemotron-3-ultra-550b-a55b",
+        "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "nvidia/nemotron-mini-4b-instruct",
+        "nvidia/nemotron-nano-12b-v2-vl",
+        "nvidia/nvidia-nemotron-nano-9b-v2",
+        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+      ],
+      "options": {
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      }
+    },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.5 Q6_K",
@@ -296,7 +328,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
   "mcp": {
     "context7": {"type": "remote", "url": "https://mcp.context7.com/mcp", "enabled": false},
     "filesystem": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"], "enabled": true},
-    "memory": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-memory"], "enabled": true},
+    "memory": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-memory"], "environment": {"MEMORY_FILE_PATH": "/home/antonio/.config/opencode/data/memory/memory.jsonl"}, "enabled": true},
     "fetch": {"type": "local", "command": ["npx", "-y", "mcp-fetch-server"], "enabled": true},
     "sequential_thinking": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"], "enabled": false}
   }
@@ -492,17 +524,16 @@ Servidores MCP (Model Context Protocol). Cada uno proporciona **herramientas** q
 ```json
 {
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.11",
-    "@ai-sdk/openai-compatible": "^3.0.7",
-    "@opencode-ai/plugin": "1.17.13",
-    "@renjfk/opencode-voice": "^0.6.0"
+    "@opencode-ai/plugin": "1.18.18"
   }
 }
 ```
 
 | Paquete | Versión | Propósito |
 |---------|---------|-----------|
-| `@ai-sdk/openai` | ^4.0.11 | SDK de AI para OpenAI |
-| `@ai-sdk/openai-compatible` | ^3.0.7 | SDK para APIs compatibles con OpenAI (LM Studio) |
-| `@opencode-ai/plugin` | 1.17.13 | SDK para desarrollar plugins de OpenCode |
-| `@renjfk/opencode-voice` | ^0.6.0 | Plugin de voz (declarado pero no instalado desde npm - se usa copia local modificada) |
+| `@opencode-ai/plugin` | 1.18.18 | SDK para desarrollar plugins de OpenCode |
+
+> 📌 El `package.json` solo contiene el SDK de plugins de OpenCode. No incluye
+> `@ai-sdk/*` ni `@renjfk/opencode-voice`: esos se gestionan por otras vías
+> (el plugin de voz `opencode-voice-modified` es una copia local, no se instala
+> desde npm, y los SDK de AI los resuelve el propio binario de OpenCode).

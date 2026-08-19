@@ -1403,6 +1403,7 @@ archivos = {
     'lmstudio-proxy.py': 'LMPROXYEOF',
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
+    'package.json': 'ROOTPKGEOF',
 }
 
 # Archivos embebidos fuera de activo_dir (con su ruta real)
@@ -1410,6 +1411,14 @@ extra_archivos = [
     ('timeline-completo', 'TIMELINE_SHEOF', '/home/antonio/.local/bin/timeline-completo'),
     ('speak', 'SPEAKEOF', '/home/antonio/.local/bin/speak'),
     ('package.json (plugin voz)', 'PLUGPKG', '/home/antonio/.config/opencode/opencode-voice-modified/package.json'),
+    ('plugin voz index.js', 'PLUGINJS', '/home/antonio/.config/opencode/opencode-voice-modified/index.js'),
+    ('plugin voz lib/stt.js', 'STTJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/stt.js'),
+    ('plugin voz lib/tts.js', 'TTSJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/tts.js'),
+    ('plugin voz lib/logger.js', 'LOGGERJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/logger.js'),
+    ('plugin voz lib/session.js', 'SESSIONJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/session.js'),
+    ('plugin voz lib/llm-client.js', 'LLMCLIENTJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/llm-client.js'),
+    ('systemd check-opencode-fix.service', 'CHKFIXSERVEOF', '/home/antonio/.config/systemd/user/check-opencode-fix.service'),
+    ('systemd check-opencode-fix.timer', 'CHKFIXTIMEREOF', '/home/antonio/.config/systemd/user/check-opencode-fix.timer'),
 ]
 
 ok = 0
@@ -1523,12 +1532,39 @@ Persistent=true
 WantedBy=timers.target
 TLTIMEREOF
 
+cat > "$HOME/.config/systemd/user/check-opencode-fix.service" << 'CHKFIXSERVEOF'
+[Unit]
+Description=Check OpenCode issue #39164 status
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.config/opencode/check-fix.sh
+CHKFIXSERVEOF
+
+cat > "$HOME/.config/systemd/user/check-opencode-fix.timer" << 'CHKFIXTIMEREOF'
+[Unit]
+Description=Check OpenCode fix every 3 days
+
+[Timer]
+# Primera ejecución: mañana a las 10:00
+OnCalendar=*-*-* 10:00:00
+# Repetir cada 3 días después de la última ejecución
+OnUnitActiveSec=3d
+# Pequeño retardo aleatorio para evitar picos
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+CHKFIXTIMEREOF
+
 systemctl --user daemon-reload 2>/dev/null || true
 systemctl --user disable init-opencode.service 2>/dev/null || true
 systemctl --user enable opencode-sync.timer 2>/dev/null || true
 systemctl --user start opencode-sync.timer 2>/dev/null || true
 systemctl --user enable --now check-timeline-fix.timer 2>/dev/null || true
-info "Servicios systemd: sync activado, init deshabilitado, check-timeline-fix activado"
+systemctl --user enable --now check-opencode-fix.timer 2>/dev/null || true
+info "Servicios systemd: sync activado, init deshabilitado, check-timeline-fix y check-opencode-fix activados"
 echo ""
 
 # ═══════════════════════════════════════════════════════════
@@ -2067,7 +2103,7 @@ check_models() {
     local respuesta
     respuesta=$(curl -s http://127.0.0.1:$PUERTO_LM/v1/models)
     if [ -n "$respuesta" ]; then
-        echo "$respuesta" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 > "${DATA_DIR}/available_models.txt" 2>/dev/null || true
+        echo "$respuesta" | grep -o '"id": *"[^"]*"' | sed 's/.*"id": *"\([^"]*\)".*/\1/' > "${DATA_DIR}/available_models.txt" 2>/dev/null || true
         local count=$(wc -l < "${DATA_DIR}/available_models.txt" 2>/dev/null || echo 0)
         log "✅ $count modelo(s) disponible(s)."
     else
@@ -4147,7 +4183,7 @@ if [ ! -f package.json ]; then
   cat > package.json << 'PKGEOF'
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.18.8"
+    "@opencode-ai/plugin": "1.18.18"
   }
 }
 PKGEOF
@@ -4520,16 +4556,13 @@ info "README-hardware.md creado"
 echo "--- 15/19: Dependencias npm ---"
 cd "$DIR_CONFIG"
 if [ ! -f package.json ]; then
-    cat > package.json << 'PKGEOF'
+    cat > package.json << 'ROOTPKGEOF'
 {
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.11",
-    "@ai-sdk/openai-compatible": "^3.0.7",
-    "@opencode-ai/plugin": "1.17.13",
-    "@renjfk/opencode-voice": "^0.6.0"
+    "@opencode-ai/plugin": "1.18.18"
   }
 }
-PKGEOF
+ROOTPKGEOF
 fi
 npm install --no-audit --no-fund 2>/dev/null || npm install
 info "Dependencias npm instaladas"
@@ -5608,13 +5641,227 @@ export function registerTTS(api, kv, logger) {
   ];
 }
 TTSJS
-        # Crear módulos restantes
-        for mod in session logger llm-client; do
-            if [ ! -f "$PLUGIN_DIR/lib/${mod}.js" ]; then
-                echo "export default {};" > "$PLUGIN_DIR/lib/${mod}.js"
-            fi
-        done
-        info "Plugin creado con archivos mínimos (personaliza los .js para voz completa)"
+        # Crear módulos restantes (logger, session, llm-client) con contenido real
+        cat > "$PLUGIN_DIR/lib/logger.js" << 'LOGGERJS'
+export function createLogger(client) {
+  async function log(scope, message, level = "debug") {
+    try {
+      await client?.app?.log?.({
+        body: {
+          service: "opencode-voice",
+          level,
+          message,
+          extra: { scope },
+        },
+      });
+    } catch {
+      // Logging should never interrupt voice features.
+    }
+  }
+
+  return { log };
+}
+LOGGERJS
+        cat > "$PLUGIN_DIR/lib/session.js" << 'SESSIONJS'
+// Shared session helpers for OpenCode TUI plugin.
+
+/**
+ * Get the title of a specific session by ID. Returns "" if unknown or on error.
+ */
+export async function getSessionTitle(client, sessionID) {
+  if (!sessionID) return "";
+  try {
+    const result = await client.session.list();
+    const session = result.data?.find((s) => s.id === sessionID);
+    return session?.title || "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Get the title of the most recently updated session. Returns "" on error or
+ * when there are no sessions.
+ */
+export async function getActiveSessionTitle(client) {
+  try {
+    const result = await client.session.list();
+    if (!result.data || result.data.length === 0) return "";
+    const active = result.data.sort((a, b) => b.time.updated - a.time.updated)[0];
+    return active?.title || "";
+  } catch {
+    return "";
+  }
+}
+SESSIONJS
+        cat > "$PLUGIN_DIR/lib/llm-client.js" << 'LLMCLIENTJS'
+// OpenAI-compatible LLM client for text normalization.
+//
+// Works with any OpenAI-compatible endpoint:
+//   - Anthropic's OpenAI compatibility layer
+//   - OpenAI directly
+//   - Ollama, vLLM, LM Studio, etc.
+//
+// Configuration is passed from plugin options (tui.json):
+//   ["@renjfk/opencode-voice", {
+//     "endpoint": "https://api.anthropic.com/v1",
+//     "model": "claude-haiku-4-5",
+//     "apiKeyEnv": "ANTHROPIC_API_KEY",
+//     "maxTokens": 2048,
+//     "reasoningEffort": "low",
+//     "chatTemplateKwargs": {"enable_thinking": false},
+//     "retries": 2
+//   }]
+
+const DEFAULTS = {
+  maxTokens: 2048,
+  reasoningEffort: null,
+  chatTemplateKwargs: null,
+  retries: 2,
+};
+
+function normalizeRetries(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return DEFAULTS.retries;
+  return Math.floor(parsed);
+}
+
+function normalizeChatTemplateKwargs(value) {
+  if (!value) return null;
+  if (typeof value === "object") return value;
+  try {
+    const parsed = JSON.parse(value);
+    return typeof parsed === "object" && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function shouldRetry(status) {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Create an LLM completion function.
+ *
+ * @param {object} [pluginOptions] - Static config from tui.json plugin options
+ * @param {{ log?: (scope: string, message: string, level?: string) => void }} [logger]
+ * @returns {{ complete: (opts: { system?: string, prompt: string, config?: object }) => Promise<{ text: string | null, error?: string }> }}
+ */
+export function createClient(pluginOptions, logger) {
+  function getConfig() {
+    return {
+      endpoint: pluginOptions?.endpoint,
+      model: pluginOptions?.model,
+      apiKeyEnv: pluginOptions?.apiKeyEnv,
+      maxTokens: pluginOptions?.maxTokens ?? DEFAULTS.maxTokens,
+      reasoningEffort: pluginOptions?.reasoningEffort ?? DEFAULTS.reasoningEffort,
+      chatTemplateKwargs: normalizeChatTemplateKwargs(
+        pluginOptions?.chatTemplateKwargs ?? DEFAULTS.chatTemplateKwargs,
+      ),
+      retries: normalizeRetries(pluginOptions?.retries ?? DEFAULTS.retries),
+    };
+  }
+
+  /**
+   * Send a chat completion request to an OpenAI-compatible endpoint.
+   *
+   * @param {object} opts
+   * @param {string} [opts.system]  - System prompt
+   * @param {string} opts.prompt    - User message
+   * @param {object} [opts.config]  - Per-call overrides (e.g. { maxTokens: 4096 })
+   * @returns {Promise<{ text: string | null, error?: string }>}
+   */
+  async function complete({ system, prompt, config: overrides }) {
+    const cfg = { ...getConfig(), ...overrides };
+    if (!cfg.endpoint) {
+      logger?.log?.("LLM", "completion skipped: endpoint not configured", "warn");
+      return { text: null, error: "LLM endpoint not configured" };
+    }
+    if (!cfg.model) {
+      logger?.log?.("LLM", "completion skipped: model not configured", "warn");
+      return { text: null, error: "LLM model not configured" };
+    }
+    const apiKey = cfg.apiKeyEnv ? process.env[cfg.apiKeyEnv] : null;
+
+    const endpoint = cfg.endpoint.replace(/\/+$/, "") + "/chat/completions";
+
+    const messages = [];
+    if (system) messages.push({ role: "system", content: system });
+    messages.push({ role: "user", content: prompt });
+
+    const body = {
+      model: cfg.model,
+      max_tokens: cfg.maxTokens,
+      messages,
+    };
+    if (cfg.reasoningEffort) body.reasoning_effort = cfg.reasoningEffort;
+    if (cfg.chatTemplateKwargs) body.chat_template_kwargs = cfg.chatTemplateKwargs;
+
+    for (let attempt = 0; attempt <= cfg.retries; attempt++) {
+      try {
+        logger?.log?.(
+          "LLM",
+          `Completion request attempt=${attempt + 1} model=${cfg.model} maxTokens=${cfg.maxTokens} promptChars=${prompt.length}`,
+          "debug",
+        );
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(apiKey ? { Authorization: "Bearer " + apiKey } : {}),
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          logger?.log?.(
+            "LLM",
+            `Completion response status=${response.status}`,
+            shouldRetry(response.status) ? "warn" : "error",
+          );
+          if (attempt < cfg.retries && shouldRetry(response.status)) {
+            await wait(250 * 2 ** attempt);
+            continue;
+          }
+          return { text: null, error: `LLM request failed (${response.status})` };
+        }
+
+        const data = await response.json();
+        const text = data?.choices?.[0]?.message?.content || null;
+        if (text) {
+          logger?.log?.("LLM", `Completion succeeded chars=${text.length}`, "debug");
+          return { text };
+        }
+
+        logger?.log?.("LLM", "Completion returned empty content", "warn");
+
+        if (attempt < cfg.retries) {
+          await wait(250 * 2 ** attempt);
+          continue;
+        }
+        return { text: null, error: "Empty LLM response" };
+      } catch (err) {
+        logger?.log?.("LLM", `Completion error attempt=${attempt + 1}: ${err.message}`, "warn");
+        if (attempt < cfg.retries) {
+          await wait(250 * 2 ** attempt);
+          continue;
+        }
+        return { text: null, error: `LLM error: ${err.message}` };
+      }
+    }
+
+    return { text: null, error: "LLM request failed after retries" };
+  }
+
+  return { complete };
+}
+LLMCLIENTJS
+        info "Plugin creado con módulos de voz completos (stt, tts, logger, session, llm-client)"
     fi
     info "Plugin opencode-voice-modified creado"
 else

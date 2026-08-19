@@ -352,24 +352,36 @@ for line in sys.stdin:
     "session_rename": "f8"
   },
   "plugin": [
-    "/home/antonio/.config/opencode/opencode-voice-modified"
+    [
+      "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
+      {
+        "endpoint": "http://localhost:4001/v1",
+        "model": "models-qwen3.5-9b"
+      }
+    ]
   ]
 }
 ```
 
-El plugin se carga como **plugin TUI** de OpenCode. No tiene opciones adicionales (usa valores por defecto).
+El plugin se carga como **plugin TUI** de OpenCode apuntando directamente a `index.js` (desde el 18/08/2026). Tiene **opciones configuradas**:
 
-Si quisieras pasar opciones (por ejemplo, para normalización externa), sería:
+| Opción | Valor | Propósito |
+|--------|-------|-----------|
+| `endpoint` | `http://localhost:4001/v1` | Endpoint del proxy LM Studio usado para la **normalización STT** |
+| `model` | `models-qwen3.5-9b` | Modelo local Qwen 3.5 usado en la normalización |
+
+Estas opciones se añadieron el **18/08/2026** para que la normalización STT use explícitamente el modelo local vía el proxy (antes usaba valores por defecto).
+
+Si quisieras pasar opciones adicionales (por ejemplo, para normalización externa), sería:
 
 ```json
-["/ruta/plugin", {
-  "endpoint": "http://localhost:4001/v1",
-  "model": "models-qwen3.5-9b",
+["/home/antonio/.config/opencode/opencode-voice-modified/index.js", {
+  "endpoint": "https://api.anthropic.com/v1",
+  "model": "claude-haiku-4-5",
+  "apiKeyEnv": "ANTHROPIC_API_KEY",
   "maxTokens": 2048
 }]
 ```
-
-Actualmente el plugin **no tiene opciones** configuradas, por lo que usa los valores por defecto: la normalización se hace con el mismo LLM configurado en el provider de OpenCode.
 
 ---
 

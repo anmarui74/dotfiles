@@ -128,7 +128,7 @@ check_models() {
     local respuesta
     respuesta=$(curl -s http://127.0.0.1:$PUERTO_LM/v1/models)
     if [ -n "$respuesta" ]; then
-        echo "$respuesta" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 > "${DATA_DIR}/available_models.txt" 2>/dev/null || true
+        echo "$respuesta" | grep -o '"id": *"[^"]*"' | sed 's/.*"id": *"\([^"]*\)".*/\1/' > "${DATA_DIR}/available_models.txt" 2>/dev/null || true
         local count=$(wc -l < "${DATA_DIR}/available_models.txt" 2>/dev/null || echo 0)
         log "✅ $count modelo(s) disponible(s)."
     else

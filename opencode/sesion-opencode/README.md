@@ -42,7 +42,7 @@ Flujo de **voz → texto → IA → respuesta**:
 | 1️⃣ | 🎤 **Tú (Antonio)** | Hablas o escribes |
 | 2️⃣ | **STT** — `sox` + `whisper-cpp` | Audio capturado y transcrito en **GPU** |
 | 3️⃣ | **TUI de OpenCode** | Teclado + comandos `/stt-*` |
-| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build` **deepseek-v4-flash** + `local` Qwen 3.5 + `nvidia` Nemotron 3 Ultra · 5 MCP · 68 skills |
+| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build` **deepseek-v4-flash** + `local` Qwen 3.5 + `nvidia` Nemotron 3 Ultra · 5 MCP · 50 skills |
 | 5️⃣ | **TTS** — `edge-tts` → `paplay` + **Pantalla** | 🔊 Audio por voz · 📄 Texto en pantalla |
 
 ---
@@ -82,18 +82,18 @@ start-opencode-server.sh
 
 ## 🧩 Skills de OpenCode
 
-### ✨ 68 skills activos
+### ✨ 50 skills activos
 
 | Categoría | Skills |
 |-----------|--------|
-| **Frontend** | `angular-architect`, `nextjs-developer`, `react-expert`, `react-native-expert`, `vue-expert`, `vue-expert-js` |
-| **Backend** | `nestjs-expert`, `fastapi-expert`, `django-expert`, `java-architect`, `spring-boot-engineer`, `csharp-developer`, `dotnet-core-expert`, `golang-pro`, `rust-engineer`, `cpp-pro` |
-| **Datos** | `pandas-pro`, `postgres-pro`, `sql-pro`, `database-optimizer`, `spark-engineer` |
-| **IA / LLM** | `prompt-engineer`, `pydantic`, `rag-architect`, `ml-pipeline`, `spec-miner` |
-| **Infraestructura** | `cloud-architect`, `terraform-engineer`, `kubernetes-specialist`, `devops-engineer`, `sre-engineer`, `monitoring-expert`, `chaos-engineer` |
+| **Frontend** | `angular-architect`, `nextjs-developer`, `react-expert`, `vue-expert`, `vue-expert-js`, `fullstack-guardian` |
+| **Backend** | `nestjs-expert`, `fastapi-expert`, `django-expert`, `java-architect`, `golang-pro`, `rust-engineer`, `cpp-pro`, `php-pro`, `python-pro` |
+| **Datos** | `pandas-pro`, `postgres-pro`, `sql-pro`, `database-optimizer` |
+| **IA / LLM** | `prompt-engineer`, `pydantic`, `rag-architect`, `spec-miner` |
+| **Infraestructura** | `cloud-architect`, `terraform-engineer`, `kubernetes-specialist`, `devops-engineer`, `sre-engineer`, `monitoring-expert` |
 | **Calidad** | `code-reviewer`, `security-reviewer`, `secure-code-guardian`, `test-master`, `debugging-wizard`, `the-fool` |
 | **APIs** | `api-designer`, `graphql-architect`, `websocket-engineer`, `atlassian-mcp`, `mcp-developer`, `opencode-marketplace` |
-| **Otros** | `cli-developer`, `architecture-designer`, `code-documenter`, `feature-forge`, `legacy-modernizer`, `microservices-architect`, `php-pro`, `laravel-specialist`, `salesforce-developer`, `shopify-expert`, `wordpress-pro`, `game-developer`, `embedded-systems`, `swift-expert`, `kotlin-specialist`, `rails-expert`, `customize-opencode` |
+| **Otros** | `cli-developer`, `architecture-designer`, `code-documenter`, `feature-forge`, `legacy-modernizer`, `microservices-architect`, `playwright-expert`, `typescript-pro`, `javascript-pro` |
 
 ### 🚫 18 skills desactivados
 

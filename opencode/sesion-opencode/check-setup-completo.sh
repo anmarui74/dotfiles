@@ -97,6 +97,7 @@ archivos = {
     'lmstudio-proxy.py': 'LMPROXYEOF',
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
+    'package.json': 'ROOTPKGEOF',
 }
 
 # Archivos embebidos fuera de activo_dir (con su ruta real)
@@ -104,6 +105,14 @@ extra_archivos = [
     ('timeline-completo', 'TIMELINE_SHEOF', '/home/antonio/.local/bin/timeline-completo'),
     ('speak', 'SPEAKEOF', '/home/antonio/.local/bin/speak'),
     ('package.json (plugin voz)', 'PLUGPKG', '/home/antonio/.config/opencode/opencode-voice-modified/package.json'),
+    ('plugin voz index.js', 'PLUGINJS', '/home/antonio/.config/opencode/opencode-voice-modified/index.js'),
+    ('plugin voz lib/stt.js', 'STTJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/stt.js'),
+    ('plugin voz lib/tts.js', 'TTSJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/tts.js'),
+    ('plugin voz lib/logger.js', 'LOGGERJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/logger.js'),
+    ('plugin voz lib/session.js', 'SESSIONJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/session.js'),
+    ('plugin voz lib/llm-client.js', 'LLMCLIENTJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/llm-client.js'),
+    ('systemd check-opencode-fix.service', 'CHKFIXSERVEOF', '/home/antonio/.config/systemd/user/check-opencode-fix.service'),
+    ('systemd check-opencode-fix.timer', 'CHKFIXTIMEREOF', '/home/antonio/.config/systemd/user/check-opencode-fix.timer'),
 ]
 
 ok = 0

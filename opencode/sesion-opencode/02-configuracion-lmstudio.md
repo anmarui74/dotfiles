@@ -15,7 +15,7 @@
 2. [Proxy de LM Studio (`lmstudio-proxy.py`)](#proxy-de-lm-studio)
 3. [Script de inicialización (`init-opencode.sh`)](#script-de-inicialización)
 4. [Script de arranque rápido (`start-lmstudio.sh`)](#script-de-arranque-rápido)
-5. [Lanzador de OpenCode (`start-opencode.sh`)](#lanzador-de-opencode)
+5. [Lanzador de OpenCode (`start-opencode-server.sh`)](#lanzador-de-opencode)
 6. [Settings de LM Studio](#settings-de-lm-studio)
 7. [Variables de entorno](#variables-de-entorno)
 8. [Servicios systemd](#servicios-systemd)
@@ -180,15 +180,17 @@ nohup python3 lmstudio-proxy.py 4001 > /tmp/lmstudio-proxy.log 2>&1 &
 
 ## Lanzador de OpenCode
 
-### Archivo: `~/.config/opencode/start-opencode.sh`
+### Archivo: `~/.config/opencode/start-opencode-server.sh`
 
-Script **interactivo** para lanzar OpenCode:
+Script **lanzador real** que ejecuta `opencode`/`ocv` (el binario `~/.local/bin/opencode` es un enlace simbólico a este script):
 
-1. Verifica que LM Studio responda en el puerto `1234`
-2. Si no, lo arranca con `lms server start` (espera hasta 15 segundos)
-3. Ejecuta OpenCode con `exec "${REAL_OPENCODE}" "$@"`
+1. Verifica si `SKIP_LMSTUDIO` está definido (perfil cloud): si NO, carga LM Studio + modelo + proxy
+2. Ejecuta `start-lmstudio.sh` (servidor + modelo + proxy) o `start-lmstudio-server.sh` si no existe
+3. Ejecuta OpenCode con `exec "${REAL_OPENCODE}" "$@"` (binario real en `/usr/bin/opencode`)
 
-Útil para lanzar OpenCode desde terminal con acceso directo.
+Útil para lanzar OpenCode desde terminal con acceso directo, cargando todo el stack local automáticamente.
+
+> ⚠️ **Nota:** existe también `start-opencode.sh` (interactivo, solo verifica el servidor LM Studio sin cargar modelo ni proxy), pero el **lanzador real** que se usa es `start-opencode-server.sh` (el symlink `~/.local/bin/opencode` apunta a este).
 
 ---
 
@@ -224,7 +226,7 @@ El provider en `opencode.json`:
 ```json
 "lmstudio": {
   "npm": "@ai-sdk/openai-compatible",
-  "name": "Qwen 3.5",
+  "name": "Qwen 3.5 Q6_K",
   "model": "models-qwen3.5-9b",
   "options": {"baseURL": "http://localhost:4001/v1"},
   "models": {

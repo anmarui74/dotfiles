@@ -146,9 +146,10 @@ MAX_SEARCH_RESULTS=8
 TIMEOUT_SECONDS=120
 
 # ─── Memoria persistente ───
+MEMORY_FILE_PATH=/home/antonio/.config/opencode/data/memory/memory.jsonl
 MEMORY_DATA_DIR=/home/antonio/.config/opencode/data/memory
 MEMORY_BACKUP_ENABLED=true
-MEMORY_BACKUP_PATH=/home/antonio/Config/opencode/backups/mcp-memory-backup-$(date '+%Y-%m-%d_%H%M').json
+MEMORY_BACKUP_PATH=/home/antonio/Config/opencode/backups/mcp-memory-backup-$(date '+%Y-%m-%d_%H%M').jsonl
 
 # ─── Logging ───
 LOG_FILE=/home/antonio/.config/opencode/data/init.log
@@ -272,12 +273,50 @@ Unit=opencode-sync.service
 
 **Propósito:** Ejecuta la sincronización cada 30 minutos (cambiado de 2 min a 30 min el 10/08/2026).
 
+### `check-opencode-fix.timer`
+
+**Archivos:**
+- `~/.config/systemd/user/check-opencode-fix.service`
+- `~/.config/systemd/user/check-opencode-fix.timer`
+
+```ini
+# check-opencode-fix.service
+[Unit]
+Description=Check OpenCode issue #39164 status
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.config/opencode/check-fix.sh
+
+# check-opencode-fix.timer
+[Timer]
+OnCalendar=*-*-* 10:00:00
+OnUnitActiveSec=3d
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+**Propósito:** Ejecuta `check-fix.sh` cada 3 días para comprobar si el **issue #39164** de OpenCode (bug de tools locales) se ha cerrado. Si está cerrado, muestra una notificación de escritorio.
+
+### `check-timeline-fix.timer`
+
+**Archivos:**
+- `~/.config/systemd/user/check-timeline-fix.service`
+- `~/.config/systemd/user/check-timeline-fix.timer`
+
+Mismo patrón: cada 3 días ejecuta `check-timeline-fix.sh` para vigilar el PR #26861 (fix del timeline TUI).
+
 ### Gestión de servicios
 
 ```bash
 # Ver estado
 systemctl --user status init-opencode.service
 systemctl --user status opencode-sync.timer
+systemctl --user status check-opencode-fix.timer
+systemctl --user status check-timeline-fix.timer
 
 # Activar
 systemctl --user enable init-opencode.service
@@ -288,6 +327,7 @@ systemctl --user disable opencode-sync.timer
 
 # Ejecutar manualmente
 systemctl --user start init-opencode.service
+systemctl --user start check-opencode-fix.service
 ```
 
 ---
@@ -460,14 +500,13 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
  ├── start-opencode-server.sh    # Lanzador OpenCode/OCV (carga LM Studio salvo SKIP_LMSTUDIO)
  ├── sync-opencode.sh           # Sincronización
  ├── bootstrap-ocv.sh           # Instalador de voz
- ├── check-fix.sh               # Verificar issue #39164
+├── check-fix.sh               # Verificar issue #39164
  ├── check-timeline-fix.sh      # Vigilar PR #26861 (fix timeline)
-  ├── check-setup-completo.sh    # Verificar setup antes de cada backup
+ ├── check-setup-completo.sh    # Verificar setup antes de cada backup
   ├── hardware-query.sh          # Consulta hardware (wrapper)
   ├── hardware-query.py          # Consulta hardware (motor Python)
 │
 ├── settings.lmstudio.json     # Settings de LM Studio
-├── litellm-config.yaml        # Config LiteLLM
 │
 ├── opencode-voice-modified/   # Plugin de voz
 │   ├── index.js
@@ -490,11 +529,11 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 │   ├── execution/
 │   └── retrospectives/
 │
-├── skills/                   # Skills de OpenCode (68 activos)
+├── skills/                   # Skills de OpenCode (50 activos)
 │   ├── angular-architect/
 │   ├── python-pro/
 │   ├── react-expert/
-│   └── ... (68 skills)
+│   └── ... (50 skills)
 │
 ├── skills-disabled/          # Skills desactivados (18)
 │
