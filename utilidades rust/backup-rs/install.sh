@@ -1,14 +1,31 @@
 #!/bin/bash
 # Instalador de backup-rs para Arch Linux
 # Uso: sudo ./install.sh
+#
+# Nota: este script se ejecuta con sudo (no pkexec) porque copia binarios a
+# /usr/local/bin y escribe en /etc/fstab, /etc/polkit y /etc/systemd.
+# La NUBE MyCloud NO requiere root en uso diario (montaje con fstab `users`).
 
 set -euo pipefail
+
+# Ruta del proyecto (se detecta automáticamente si se invoca desde el repo)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
 
 readonly INSTALL_DIR="/usr/local/bin"
 readonly SERVICE_DIR="/etc/systemd/system"
 readonly CONFIG_DIR="/home/antonio/.config/backup-rs"
 readonly MOUNT_POINT="/run/media/antonio/CRUCIAL"
 readonly SSD_LABEL="CRUCIAL"
+
+# Nube MyCloud (WD): host y shares
+readonly CLOUD_HOST="mycloud-eudvfr.local"
+readonly CLOUD_SHARE_ANTONIO="antonio"
+readonly CLOUD_SHARE_PUBLIC="public"
+readonly CLOUD_MOUNT_ANTONIO="/home/antonio/MyCloud/antonio"
+readonly CLOUD_MOUNT_PUBLIC="/home/antonio/MyCloud/public"
+readonly CLOUD_CREDENTIALS="$CONFIG_DIR/smb-antonio.credentials"
+readonly CLOUD_FSTAB_TAG="MyCloud WD"
 
 # Colores
 RED='\033[0;31m'
@@ -45,21 +62,21 @@ install_rust() {
 }
 
 build_project() {
-    local bin="/home/antonio/backup-rs/target/release/backup"
+    local bin="$PROJECT_DIR/target/release/backup"
     if [[ -f "$bin" && -x "$bin" ]]; then
         log_ok "Binario ya compilado: $bin"
         return 0
     fi
 
     log_info "Compilando backup-rs en modo release (como antonio)..."
-    cd /home/antonio/backup-rs
-    su antonio -c "cargo build --release"
+    chown -R antonio:antonio "$PROJECT_DIR" 2>/dev/null || true
+    su antonio -c "cd '$PROJECT_DIR' && cargo build --release"
     log_ok "Compilación completada"
 }
 
 install_binary() {
     log_info "Instalando binario en $INSTALL_DIR..."
-    install -Dm755 /home/antonio/backup-rs/target/release/backup "$INSTALL_DIR/backup"
+    install -Dm755 "$PROJECT_DIR/target/release/backup" "$INSTALL_DIR/backup"
     log_ok "Binario instalado: $(backup --version)"
 }
 
@@ -106,12 +123,65 @@ POLKIT
     log_ok "Regla polkit creada: solo el Crucial se monta/desmonta sin contraseña en Nautilus"
 }
 
+# Configura el montaje de la NUBE MyCloud en fstab con opciones `users` +
+# `x-systemd.automount`: se monta/desmonta SIN root y se activa al acceder.
+# También crea el archivo de credenciales del share privado (si aplica).
+setup_cloud_mount() {
+    log_info "Configurando montaje de la nube MyCloud ($CLOUD_HOST)..."
+
+    # Directorios de montaje (propiedad de antonio)
+    sudo -u antonio mkdir -p "$CLOUD_MOUNT_ANTONIO" "$CLOUD_MOUNT_PUBLIC"
+    log_ok "Puntos de montaje creados: $CLOUD_MOUNT_ANTONIO, $CLOUD_MOUNT_PUBLIC"
+
+    # Archivo de credenciales del share privado (si el usuario lo desea)
+    if [[ ! -f "$CLOUD_CREDENTIALS" ]]; then
+        echo
+        echo "El share privado '${CLOUD_SHARE_ANTONIO}' de la nube requiere usuario/contraseña."
+        read -r -p "¿Quieres crear el archivo de credenciales ahora? [s/N] " -n 1 resp
+        echo
+        if [[ "$resp" =~ [sS] ]]; then
+            read -r -p "Usuario del share (por defecto ${CLOUD_SHARE_ANTONIO}): " cifs_user
+            read -r -s -p "Contraseña del share: " cifs_pass
+            echo
+            sudo -u antonio mkdir -p "$CONFIG_DIR"
+            printf 'username=%s\npassword=%s\ndomain=WORKGROUP\n' "${cifs_user:-$CLOUD_SHARE_ANTONIO}" "$cifs_pass" \
+                > "$CLOUD_CREDENTIALS"
+            chmod 600 "$CLOUD_CREDENTIALS"
+            log_ok "Credenciales guardadas en $CLOUD_CREDENTIALS (permisos 600)"
+        else
+            log_warn "Sin credenciales guardadas: el share privado deberá montarse manualmente."
+        fi
+    else
+        log_ok "Credenciales ya existen: $CLOUD_CREDENTIALS"
+    fi
+
+    # Entradas de fstab (idempotente: no duplicar si ya existen)
+    local fstab_marker="# $CLOUD_FSTAB_TAG"
+    if grep -qF "$fstab_marker" /etc/fstab; then
+        log_ok "fstab ya contiene la configuración de la nube MyCloud"
+    else
+        cat >> /etc/fstab << EOF
+
+$fstab_marker
+//$CLOUD_HOST/$CLOUD_SHARE_ANTONIO $CLOUD_MOUNT_ANTONIO cifs credentials=$CLOUD_CREDENTIALS,uid=1000,gid=1000,file_mode=0664,dir_mode=0775,iocharset=utf8,vers=3.0,noauto,x-systemd.automount,nofail,users,_netdev 0 0
+//$CLOUD_HOST/$CLOUD_SHARE_PUBLIC $CLOUD_MOUNT_PUBLIC cifs guest,uid=1000,gid=1000,file_mode=0664,dir_mode=0775,iocharset=utf8,vers=3.0,noauto,x-systemd.automount,nofail,users,_netdev 0 0
+EOF
+        log_ok "Entradas de la nube MyCloud añadidas a /etc/fstab"
+    fi
+
+    # Recargar systemd y activar los automounts
+    systemctl daemon-reload
+    systemctl start "home-antonio-MyCloud-${CLOUD_SHARE_ANTONIO}.automount" \
+                     "home-antonio-MyCloud-${CLOUD_SHARE_PUBLIC}.automount" 2>/dev/null || true
+    log_ok "Automounts de la nube activados (se montan al acceder a las rutas)"
+}
+
 create_config() {
     log_info "Creando configuración por defecto..."
     sudo -u antonio mkdir -p "$CONFIG_DIR"
 
     if [[ ! -f "$CONFIG_DIR/config.toml" ]]; then
-        sudo -u antonio cp /home/antonio/backup-rs/config.example.toml "$CONFIG_DIR/config.toml"
+        sudo -u antonio cp "$PROJECT_DIR/config.example.toml" "$CONFIG_DIR/config.toml"
         log_ok "Configuración creada en $CONFIG_DIR/config.toml"
     else
         log_ok "Configuración ya existe"
@@ -186,6 +256,10 @@ print_summary() {
     echo
     echo "💾 SSD Crucial montado en: $MOUNT_POINT"
     echo "📁 Backups en: $MOUNT_POINT/Backup"
+    echo "☁️  Nube MyCloud:"
+    echo "   ${CLOUD_SHARE_ANTONIO}: $CLOUD_MOUNT_ANTONIO/Linux"
+    echo "   ${CLOUD_SHARE_PUBLIC}: $CLOUD_MOUNT_PUBLIC/Linux"
+    echo "   (montaje sin root: fstab users + automount; credenciales en $CLOUD_CREDENTIALS)"
     echo "⚙️  Configuración: $CONFIG_DIR/config.toml"
     echo
     log_info "Para iniciar ahora: sudo systemctl start backup-rs"
@@ -198,6 +272,7 @@ main() {
     build_project
     install_binary
     setup_ssd_mount
+    setup_cloud_mount
     create_config
     install_systemd_service
     setup_bash_completion

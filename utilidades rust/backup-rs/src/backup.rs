@@ -87,6 +87,99 @@ impl BackupEngine {
         Ok(self.stats.clone())
     }
 
+    /// Sincroniza un espejo de red (nube SMB) con `rsync`, que es mucho más
+    /// rápido y fiable sobre SMB/CIFS que la copia archivo a archivo de Rust.
+    /// - Archivo nuevo → se copia
+    /// - Archivo modificado → se sobrescribe (machaca)
+    /// - Archivo eliminado en origen → se borra del destino
+    ///
+    /// Las opciones evitan chmod/mkstemp (no soportados por GVFS/SMB) y comparan
+    /// por tamaño. Sobre CIFS del kernel (fstab users/automount) funciona sin root.
+    pub fn sync_network_mirror(&mut self, mirror_dest: &std::path::Path) -> Result<BackupStats> {
+        println!("📦 Sincronizando espejo nube (rsync): {}", mirror_dest.display());
+
+        self.stats = BackupStats::default();
+
+        if !mirror_dest.exists() {
+            anyhow::bail!("El destino del espejo nube no está montado/accesible: {}", mirror_dest.display());
+        }
+
+        let sources = self.config.sources.clone();
+
+        for source in &sources {
+            if !source.path.exists() {
+                eprintln!("⚠️  Origen no existe: {}", source.path.display());
+                continue;
+            }
+
+            // Destino: mirror/<nombre fuente> (mismo esquema que el espejo plano)
+            let source_name = source.path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
+            let dest_dir = mirror_dest.join(&source_name);
+
+            let src_arg = source.path.to_string_lossy().to_string();
+            let dst_arg = dest_dir.to_string_lossy().to_string();
+
+            // El origen se pasa con "/" al final para copiar su contenido
+            // dentro de <dest> (mismo comportamiento que el espejo plano).
+            let src_with_slash = if source.path.is_dir() {
+                format!("{}/", src_arg)
+            } else {
+                src_arg.clone()
+            };
+
+            println!("🔗 rsync: {} → {}", src_with_slash, dst_arg);
+            let mut cmd = std::process::Command::new("rsync");
+            cmd.arg("-r")
+                .arg("--inplace")
+                .arg("--no-perms")
+                .arg("--no-owner")
+                .arg("--no-group")
+                .arg("--no-times")
+                .arg("--size-only")
+                .arg("--delete")
+                .arg("--stats");
+
+            // Aplicar exclusiones (pattern es regex; rsync espera globs).
+            // Los patrones simples (nombres o rutas) funcionan como globs de rsync.
+            for pattern in &source.exclude_patterns {
+                cmd.arg("--exclude").arg(pattern);
+            }
+
+            // Locale C para que las cifras de --stats sean estables (sin . miles)
+            cmd.env("LC_ALL", "C");
+
+            let output = cmd.arg(&src_with_slash).arg(&dst_arg).output();
+
+            match output {
+                Ok(o) if o.status.success() => {
+                    // rsync imprime las estadísticas en stdout con --stats
+                    let stdout = String::from_utf8_lossy(&o.stdout);
+                    parse_rsync_stats(&stdout, &mut self.stats);
+                }
+                Ok(o) => {
+                    let stderr = String::from_utf8_lossy(&o.stderr);
+                    anyhow::bail!(
+                        "rsync del espejo {} falló con código {}: {}",
+                        mirror_dest.display(),
+                        o.status.code().unwrap_or(-1),
+                        stderr.lines().last().unwrap_or_default()
+                    );
+                }
+                Err(e) => anyhow::bail!("No se pudo ejecutar rsync para {}: {}", mirror_dest.display(), e),
+            }
+        }
+
+        self.print_stats();
+
+        println!("✅ Sincronización nube completada (rsync).");
+
+        Ok(self.stats.clone())
+    }
+
     /// Sincroniza un espejo plano que MACHACA los cambios (NTFS, sin versiones).
     /// - Archivo nuevo → se copia
     /// - Archivo modificado → se sobrescribe (machaca)
@@ -158,10 +251,12 @@ impl BackupEngine {
     /// Copia un archivo al espejo machacando (por tamaño para fiabilidad en NTFS)
     fn copy_plain(&mut self, src_path: &Path, dest_path: &Path) -> Result<()> {
         if let Some(parent) = dest_path.parent() {
-            fs::create_dir_all(parent)?;
+            fs::create_dir_all(parent)
+                .with_context(|| format!("create_dir_all: {}", parent.display()))?;
         }
 
-        let src_meta = fs::metadata(src_path)?;
+        let src_meta = fs::metadata(src_path)
+            .with_context(|| format!("metadata src: {}", src_path.display()))?;
 
         // Comparar por tamaño: si coincide, consideramos que está actualizado
         let up_to_date = match fs::metadata(dest_path) {
@@ -174,9 +269,11 @@ impl BackupEngine {
             return Ok(());
         }
 
-        // Machacar: eliminar destino (por si es solo-lectura) y copiar
+        // Machacar: eliminar destino (por si es solo-lectura) y copiar solo el
+        // contenido (sin chmod: los shares SMB/GVFS no soportan permisos)
         fs::remove_file(dest_path).ok();
-        fs::copy(src_path, dest_path)?;
+        copy_contents(src_path, dest_path)
+            .with_context(|| format!("copy_contents {} → {}", src_path.display(), dest_path.display()))?;
         self.stats.files_copied += 1;
         self.stats.bytes_copied += src_meta.len();
 
@@ -193,9 +290,16 @@ impl BackupEngine {
             let src_candidate = source_root.join(rel);
 
             if !src_candidate.exists() {
-                fs::remove_file(entry.path())?;
-                println!("   🗑️  Eliminado del espejo (no existe en origen): {}", entry.path().display());
-                self.stats.files_deleted += 1;
+                // En shares SMB/GVFS una entrada puede "desaparecer" entre el
+                // listado y el borrado (caché del filesystem) → ignoramos ENOENT.
+                match fs::remove_file(entry.path()) {
+                    Ok(()) => {
+                        println!("   🗑️  Eliminado del espejo (no existe en origen): {}", entry.path().display());
+                        self.stats.files_deleted += 1;
+                    }
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(e) => return Err(e.into()),
+                }
             }
         }
         Ok(())
@@ -474,4 +578,63 @@ fn format_bytes(bytes: u64) -> String {
         unit_idx += 1;
     }
     format!("{:.2} {}", size, UNITS[unit_idx])
+}
+
+/// Copia el contenido de un archivo sin tocar permisos ni mtime.
+/// Necesario para shares SMB/GVFS (fuse) que no soportan chmod (ENOTSUP).
+fn copy_contents(src: &Path, dst: &Path) -> std::io::Result<()> {
+    let mut reader = std::fs::File::open(src)?;
+    let mut writer = std::fs::File::create(dst)?;
+    std::io::copy(&mut reader, &mut writer)?;
+    writer.sync_all()?;
+    Ok(())
+}
+
+/// Parsea la salida `--stats` de rsync (stderr) y acumula los contadores.
+/// Formato con LC_ALL=C: números con coma como separador de miles.
+fn parse_rsync_stats(stderr: &str, stats: &mut BackupStats) {
+    let mut transferred: u64 = 0;
+    let mut deleted: u64 = 0;
+    let mut transferred_bytes: u64 = 0;
+    let mut total_regular: u64 = 0;
+
+    for line in stderr.lines() {
+        let clean = line.trim();
+        let num = |pat: &str| -> Option<u64> {
+            let rest = clean.strip_prefix(pat)?;
+            let value: String = rest
+                .trim_start()
+                .chars()
+                .take_while(|c| c.is_ascii_digit() || *c == ',')
+                .collect();
+            value.replace(',', "").parse().ok()
+        };
+
+        if let Some(v) = num("Number of regular files transferred:") {
+            transferred += v;
+        } else if let Some(v) = num("Number of deleted files:") {
+            deleted += v;
+        } else if let Some(v) = num("Total transferred file size:") {
+            transferred_bytes += v;
+        } else if clean.starts_with("Number of files:") {
+            // Línea "Number of files: N (reg: R, dir: D)" → extraer el (reg: R)
+            if let Some(open) = clean.find("(reg:") {
+                let rest = &clean[open + 5..];
+                let value: String = rest
+                    .trim_start()
+                    .chars()
+                    .take_while(|c| c.is_ascii_digit() || *c == ',')
+                    .collect();
+                if let Ok(v) = value.replace(',', "").parse::<u64>() {
+                    total_regular += v;
+                }
+            }
+        }
+    }
+
+    // Copiados = transferidos (nuevos o modificados); omitidos = total - transferidos
+    stats.files_copied += transferred;
+    stats.files_deleted += deleted;
+    stats.bytes_copied += transferred_bytes;
+    stats.files_skipped += total_regular.saturating_sub(transferred);
 }

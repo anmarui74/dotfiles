@@ -16,6 +16,12 @@ pub struct Config {
 pub struct MirrorConfig {
     pub name: String,
     pub destination: PathBuf,
+    /// URI SMB del share de red (p. ej. smb://mycloud-eudvfr.local/antonio/Linux).
+    /// Si está presente, el espejo es una "nube" que se monta sin root (CIFS
+    /// del kernel vía fstab `users`/automount, o GVFS) y se sincroniza con
+    /// `rsync` (mucho más rápido y fiable sobre SMB que la copia archivo a archivo).
+    #[serde(default)]
+    pub uri: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,6 +113,7 @@ impl Default for Config {
                 MirrorConfig {
                     name: "SEAGATE".to_string(),
                     destination: PathBuf::from("/run/media/antonio/SEAGATE/Linux"),
+                    uri: None,
                 },
             ],
         }

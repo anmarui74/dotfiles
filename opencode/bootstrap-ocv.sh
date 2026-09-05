@@ -268,7 +268,8 @@ cat > "${CONFIG_DIR}/tui.json" << 'TUIEOF'
         "endpoint": "http://localhost:4001/v1",
         "model": "models-qwen3.5-9b"
       }
-    ]
+    ],
+    ["opencode-throughput", {}]
   ]
 }
 TUIEOF
@@ -286,7 +287,7 @@ if [ ! -f package.json ]; then
   cat > package.json << 'PKGEOF'
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.18.8"
+    "@opencode-ai/plugin": "1.18.18"
   }
 }
 PKGEOF

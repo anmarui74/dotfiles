@@ -380,9 +380,9 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
     }
@@ -391,27 +391,13 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
     "nvidia": {
       "whitelist": [
         "minimaxai/minimax-m3",
-        "z-ai/glm-5.2",
         "openai/gpt-oss-20b",
-        "openai/gpt-oss-120b",
-        "stepfun-ai/step-3.7-flash",
-        "thinkingmachines/inkling",
-        "meta/llama-3.1-8b-instruct",
-        "meta/llama-3.1-70b-instruct",
         "meta/llama-3.2-11b-vision-instruct",
-        "meta/llama-3.3-70b-instruct",
         "meta/muse-glimmer-30b",
-        "nvidia/llama-3.3-nemotron-super-49b-v1",
-        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-        "nvidia/nemotron-3-nano-30b-a3b",
         "nvidia/nemotron-3-super-120b-a12b",
         "nvidia/nemotron-3-ultra-550b-a55b",
         "nvidia/nemotron-3.5-lightning-30b-a3b",
-        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-        "nvidia/nemotron-mini-4b-instruct",
-        "nvidia/nemotron-nano-12b-v2-vl",
-        "nvidia/nvidia-nemotron-nano-9b-v2",
-        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
       ],
       "options": {
         "timeout": 600000,
@@ -639,9 +625,9 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
     }
@@ -650,27 +636,13 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
     "nvidia": {
       "whitelist": [
         "minimaxai/minimax-m3",
-        "z-ai/glm-5.2",
         "openai/gpt-oss-20b",
-        "openai/gpt-oss-120b",
-        "stepfun-ai/step-3.7-flash",
-        "thinkingmachines/inkling",
-        "meta/llama-3.1-8b-instruct",
-        "meta/llama-3.1-70b-instruct",
         "meta/llama-3.2-11b-vision-instruct",
-        "meta/llama-3.3-70b-instruct",
         "meta/muse-glimmer-30b",
-        "nvidia/llama-3.3-nemotron-super-49b-v1",
-        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-        "nvidia/nemotron-3-nano-30b-a3b",
         "nvidia/nemotron-3-super-120b-a12b",
         "nvidia/nemotron-3-ultra-550b-a55b",
         "nvidia/nemotron-3.5-lightning-30b-a3b",
-        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-        "nvidia/nemotron-mini-4b-instruct",
-        "nvidia/nemotron-nano-12b-v2-vl",
-        "nvidia/nvidia-nemotron-nano-9b-v2",
-        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
       ],
       "options": {
         "timeout": 600000,
@@ -876,9 +848,9 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
     }
@@ -887,27 +859,13 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
     "nvidia": {
       "whitelist": [
         "minimaxai/minimax-m3",
-        "z-ai/glm-5.2",
         "openai/gpt-oss-20b",
-        "openai/gpt-oss-120b",
-        "stepfun-ai/step-3.7-flash",
-        "thinkingmachines/inkling",
-        "meta/llama-3.1-8b-instruct",
-        "meta/llama-3.1-70b-instruct",
         "meta/llama-3.2-11b-vision-instruct",
-        "meta/llama-3.3-70b-instruct",
         "meta/muse-glimmer-30b",
-        "nvidia/llama-3.3-nemotron-super-49b-v1",
-        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-        "nvidia/nemotron-3-nano-30b-a3b",
         "nvidia/nemotron-3-super-120b-a12b",
         "nvidia/nemotron-3-ultra-550b-a55b",
         "nvidia/nemotron-3.5-lightning-30b-a3b",
-        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-        "nvidia/nemotron-mini-4b-instruct",
-        "nvidia/nemotron-nano-12b-v2-vl",
-        "nvidia/nvidia-nemotron-nano-9b-v2",
-        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
       ],
       "options": {
         "timeout": 600000,
@@ -1107,7 +1065,8 @@ cat > "$DIR_CONFIG/tui.json" << 'TUIEOF'
         "endpoint": "http://localhost:4001/v1",
         "model": "models-qwen3.5-9b"
       }
-    ]
+    ],
+    ["opencode-throughput", {}]
   ]
 }
 TUIEOF
@@ -1400,7 +1359,7 @@ archivos = {
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
     'hardware-query.py': 'HARDWARE-QUERY_PYEOF',
     'check-fix.sh': 'CHECK-FIX_SHEOF', 'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
-    'lmstudio-proxy.py': 'LMPROXYEOF',
+    'lmstudio-proxy.py': 'LMPROXYEOF', 'lmstudio-metrics-server.py': 'METRICSSRVEOF',
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
     'package.json': 'ROOTPKGEOF',
@@ -1592,14 +1551,28 @@ cat > "$DIR_CONFIG/AGENTS.md" << 'AGEOF'
 - Decimales: coma (3,14 no 3.14)
 - Moneda: euros (€)
 - Sistema métrico: km/h, °C, mm, km
+- Tablas: SIEMPRE en formato Markdown estándar (nunca en bloques de código ASCII)
 
 ## 🌤️ Consultar el tiempo (IMPORTANTE)
-Para preguntas sobre el tiempo, usa la herramienta fetch_html (o fetch_json) para consultar:
+Para preguntas sobre el tiempo, usa la herramienta bash con curl para consultar la API oficial de AEMET OpenData (predeterminada):
+
+1. **Obtener URL temporal de datos** (primera llamada):
+   ```bash
+   curl -s -X GET "https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/{ID_MUNICIPIO}?api_key=$AEMET_API_KEY" -H "accept: application/json"
+   ```
+   - `AEMET_API_KEY` está en `.env` (cargar con `set -a; source /home/antonio/.config/opencode/.env; set +a`)
+   - ID de Pechina: `04074` (solo el número, sin prefijo)
+   - La respuesta devuelve `datos` (URL temporal válida ~5 min) y `metadatos`
+2. **Descargar los datos reales** (segunda llamada, a la URL de `datos`):
+   ```bash
+   curl -s "{URL_DE_DATOS}" | iconv -f ISO-8859-15 -t UTF-8
+   ```
+   - Los datos vienen en JSON (ISO-8859-15): temperatura, estadoCielo, viento, probPrecipitacion, humedad, etc.
+3. Para predicción diaria (7 días): cambiar `horaria` por `diaria` en la URL.
+
+⚠️ Si AEMET no responde o da error, usa wttr.in como respaldo:
 https://wttr.in/{ciudad}?format=j1&m&lang=es
 Ejemplo: https://wttr.in/Pechina?format=j1&m&lang=es
-
-⚠️ Si wttr.in no responde o devuelve vacío, NO vuelvas a llamar a fetch.
-Limítate a informar al usuario: "wttr.in no está disponible ahora, inténtalo más tarde."
 
 ## 💻 Consultar hardware del sistema (IMPORTANTE)
 Cuando Antonio pregunte sobre su hardware (CPU, RAM, GPU, almacenamiento,
@@ -1630,6 +1603,29 @@ NO generes texto explicando los pasos sin ejecutarlos.
 SIMPLIFICA: si necesitas leer múltiples archivos, usa search_files con un
 patrón, o llama a read_file para cada archivo individual.
 
+## 🐚 Shell del sistema: ZSH (usuario) vs Bash (agentes) (IMPORTANTE)
+- Antonio usa **ZSH** como shell predeterminada del sistema y de OpenCode
+  (`"shell": "/usr/bin/zsh"` en los 3 perfiles JSON).
+- Los agentes ejecutan los comandos de la herramienta bash con **Bash** por defecto.
+- NO todos los comandos funcionan igual en ambas shells: expansiones, globs
+  (`**`, `=`, `~` como path), alias y plugins de ZSH pueden fallar o comportarse
+  distinto en Bash, y viceversa.
+- Si un comando falla:
+  1. Prueba primero con sintaxis portable (POSIX), sin depender de ZSH.
+  2. Si necesitas características de ZSH, ejecuta explícitamente: `zsh -c '...'`.
+  3. Si necesitas Bash puro: `bash -c '...'`.
+  4. Verifica qué shell resuelve cada comando con `type` o `which`.
+
+## 🗣️ Pronunciación de Antonio (entrada por voz) (IMPORTANTE)
+- Antonio a veces usa entrada por voz y su pronunciación puede no ser perfecta,
+  o el locucionero/TTS puede transcribir alguna palabra de forma incorrecta.
+- Interpreta SIEMPRE según el **CONTEXTO** de la conversación antes que
+  literalmente: si la palabra transcrita no encaja con lo que se está haciendo,
+  es probable que sea un error de transcripción.
+- Si una palabra resulta ambigua o no cuadra, **confirma con Antonio** antes de
+  actuar en base a ella.
+- NO fijes equivalencias rígidas de palabras mal transcritas: el contexto manda.
+
 ## 🛠️ Elevación de privilegios (sudo NO)
 - NUNCA uses `sudo` para comandos que requieran contraseña
 - Usa SIEMPRE `pkexec` en su lugar: así saldrá una ventana gráfica pidiendo la contraseña
@@ -1645,6 +1641,19 @@ funcionan, errores desconocidos, etc.):
 4. Para OpenCode: https://opencode.ai/docs (y el esquema https://opencode.ai/config.json)
 5. Para LSPs concretos: consulta la wiki del servidor (ej. github del proyecto)
 Anota siempre la solución encontrada en la memoria.
+
+## 🔍 Verificar hechos antes de afirmar (OBLIGATORIO)
+Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
+1. **COMPRUEBA con herramientas** (ls, read, test, search_files) que la ruta o
+   archivo realmente no existe. No lo des por hecho.
+2. **LEE la documentación y reglas del proyecto** (este AGENTS.md y los JSON de
+   configuración): puede que esa estructura sea INTENCIONAL y esté documentada.
+3. **NO plantees dudas sin verificar** ("¿existe este archivo?"): verifícalo y
+   afirma con seguridad, o descártalo.
+4. Si tu recomendación **contradice la configuración documentada**, es señal de
+   que tu interpretación es errónea: revisa antes de sugerir cambios.
+5. Una revisión debe contrastar cada afirmación con los hechos reales del sistema,
+   no basarse en suposiciones.
 
 ---
 
@@ -1847,6 +1856,22 @@ nunca sobre `opencode.json`**, que es solo el perfil por defecto.
 - El antiguo `switch-mcp-profile.sh` (copiaba local/cloud sobre `opencode.json`)
   está ELIMINADO desde el 18/08/2026.
 
+## 🏆 Proveedor NVIDIA: ranking y metodología de selección de modelos (IMPORTANTE)
+Cuando se trabaje con el proveedor `nvidia` (agente `nvidia` o selector `/models`),
+usar la METODOLOGÍA ya establecida el 05/09/2026 para verificar/actualizar el whitelist.
+Está documentada completa en:
+- **Markdown:** `04-perfiles-opencode-json.md` → sección «Ranking y metodología de selección de modelos NVIDIA»
+- **Grafo de memoria:** entidad «Proveedor NVIDIA en OpenCode»
+
+Resumen de la metodología (en orden, obligatorio):
+1. **Catálogo real:** `GET https://integrate.api.nvidia.com/v1/models` — el catálogo `models.dev` de OpenCode está DESACTUALIZADO para NVIDIA (lista modelos retirados).
+2. **HTTP 200 real:** `POST /chat/completions` a cada candidato. Los listados en el catálogo sin endpoint de chat desplegado devuelven **404** → descartar.
+3. **Velocidad:** generación real de ~180 tokens (NO limitar a 5), exigir **≥ ~10 tok/s**. Los modelos lentos (como DeepSeek a ~1 tok/s) son inútiles como agente.
+4. **Tool calling (OBLIGATORIO para OpenCode):** petición con `tools: [get_current_time]` + `tool_choice: auto`; exigir `tool_calls` reales en la respuesta. Sin tools = inutilizable en OpenCode.
+5. **Reintentos:** los 429/500/503/timeout se reintentan con más margen antes de decidir.
+
+Whitelist actual (05/09/2026): 8 modelos operativos en los 3 perfiles. Los retirados devuelven **410 Gone** (end of life) y se eliminan del whitelist. Detalle completo (ranking y descartados) en el markdown citado.
+
 ## Iniciar LM Studio manualmente
 ```bash
 bash /home/antonio/.config/opencode/start-lmstudio.sh      # servidor + modelo + proxy
@@ -1859,12 +1884,20 @@ Si el modelo se satura, usar:
 /home/antonio/.lmstudio/bin/lms unload --all
 ```
 
-## 📊 Tokens/s en respuestas locales
-El proxy en puerto 4001 calcula y muestra tokens/segundo automáticamente
-en cada respuesta. Se ve en el campo `stats.tokens_per_second` del JSON.
+## 📊 Tokens/s (todas las fuentes)
 
-Para ver tokens/s en OpenCode TUI: la info aparece al final de cada mensaje
-junto al nombre del modelo (ej: "Qwen 3.5 Q6_K · 13.5 tok/s").
+### En la TUI (plugin opencode-throughput)
+El plugin TUI `opencode-throughput` (registrado en `tui.json`) muestra en la barra
+lateral de OpenCode el rendimiento de CADA solicitud y de CADA modelo/provider:
+- TPS medio, TTFT, latencia, tokens ↑/↓ y coste por modelo
+- Lista "Recent" con cada petición: `TTFT | tok/s | latencia | ↑in ↓out`
+Funciona para TODOS los providers (local, NVIDIA, cloud) porque engancha los
+eventos de mensaje, no depende del proxy.
+
+### Proxy local (puerto 4001)
+El proxy `lmstudio-proxy.py` registra métricas por request en `metrics.json`
+(`METRICS_EXPORT_PATH` en `.env`, activado con `ENABLE_METRICS=true`) y además
+inyecta `stats.tokens_per_second` en respuestas no-streaming.
 
 Método rápido por terminal:
 ```bash
@@ -1873,6 +1906,12 @@ curl -s http://localhost:4001/v1/chat/completions \
   -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"hola"}]}' | \
   python3 -c "import json,sys; d=json.load(sys.stdin); u=d['usage']; s=d.get('stats',{}); print(f\"Prompt: {u['prompt_tokens']} tok\\nGenerados: {u['completion_tokens']} tok\\nVelocidad: {s.get('tokens_per_second','N/A')} tok/s\")"
 ```
+
+### Dashboard web (puerto 4200)
+El servidor `lmstudio-metrics-server.py` sirve en `http://localhost:4200` un
+dashboard con la última velocidad, la media, peticiones totales y el histórico
+de peticiones del proxy local. Datos crudos en `/api/metrics`.
+Iniciar: `python3 ~/.config/opencode/lmstudio-metrics-server.py 4200`
 
 # CHECKLIST ANTES DE RESPONDER
 - ¿Respuesta en español?
@@ -1955,7 +1994,7 @@ AUDIT_ENABLED=true
 # =============================================================================
 # --- Variables opcionales (desactivadas por defecto) ---
 # =============================================================================
-ENABLE_METRICS=false
+ENABLE_METRICS=true
 METRICS_EXPORT_PATH=/home/antonio/.config/opencode/data/metrics.json
 
 # =============================================================================
@@ -1963,6 +2002,16 @@ METRICS_EXPORT_PATH=/home/antonio/.config/opencode/data/metrics.json
 # =============================================================================  
 # Ruta centralizada a todos los datos hardware del sistema, accesible desde cualquier modelo/sesión
 HARDWARE_INDEX_PATH=/home/antonio/.config/opencode/data/hardware/index.json
+
+# =============================================================================
+# --- Preferencias de usuario ---
+# =============================================================================
+USER_PREFER_MARKDOWN_TABLES=true
+
+# --- AEMET OpenData ---
+# API Key gratuita para consultar predicciones oficiales de AEMET
+# Obtenida en: https://opendata.aemet.es/centrodedescargas/obtencionAPIKey
+AEMET_API_KEY=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbm1hcnVpNzRAZ21haWwuY29tIiwianRpIjoiZWI4ZjE0MWMtOTYyZC00OWUxLTg2NTQtMzI1NTE2NWNkMDVlIiwiZXhwIjoxNzk3MjA2MTYyLCJpc3MiOiJBRU1FVCIsImlhdCI6MTc4ODU2NjE2MiwidXNlcklkIjoiZWI4ZjE0MWMtOTYyZC00OWUxLTg2NTQtMzI1NTE2NWNkMDVlIiwicm9sZSI6IiJ9.2wX9afiHV6iM1-XWll6YxdwvSaUpdjmTKnNyKvtjD_Y
 ENVEOF
 chmod 600 "$DIR_CONFIG/.env"
 info ".env creado (permisos 600)"
@@ -3610,15 +3659,133 @@ echo "--- 14/19: lmstudio-proxy.py ---"
 
 cat > "$DIR_CONFIG/lmstudio-proxy.py" << 'LMPROXYEOF'
 #!/usr/bin/env python3
-"""Proxy OpenCode ↔ LM Studio - VERSIÓN QUE FUNCIONA"""
-import json, http.server, urllib.request, sys
+"""Proxy OpenCode ↔ LM Studio - VERSIÓN QUE FUNCIONA + MÉTRICAS
+Reenvía peticiones a LM Studio (localhost:1234). Además:
+- Registra métricas por request (tiempo, tokens, tok/s) en METRICS_EXPORT_PATH
+- Inyecta `stats.tokens_per_second` en respuestas no-streaming
+"""
+import json
+import os
+import re
+import threading
+import time
+import urllib.request
+import http.server
+import sys
 
 LM = "http://localhost:1234"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 4001
 
+CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
+METRICS_LOCK = threading.Lock()
+MAX_RECORDS = 500
+
+
+def load_env(path):
+    """Carga variables KEY=VALUE de un .env simple (para METRICS)."""
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                k = k.strip()
+                v = v.strip().strip('"').strip("'")
+                if k:
+                    os.environ.setdefault(k, v)
+    except OSError:
+        pass
+
+
+load_env(os.path.join(CONFIG_DIR, ".env"))
+
+
+def env_bool(name, default):
+    val = os.environ.get(name)
+    if val is None:
+        return default
+    return val.strip().lower() in ("1", "true", "yes", "on")
+
+
+ENABLE_METRICS = env_bool("ENABLE_METRICS", True)
+METRICS_PATH = os.environ.get("METRICS_EXPORT_PATH") or os.path.join(CONFIG_DIR, "data", "metrics.json")
+
+
+def record_metric(model, prompt_tokens, completion_tokens, elapsed_s, stream):
+    if not ENABLE_METRICS:
+        return
+    tps = (completion_tokens / elapsed_s) if elapsed_s > 0 else 0
+    entry = {
+        "ts": time.time(),
+        "time": time.strftime("%d/%m/%Y %H:%M:%S"),
+        "model": model,
+        "stream": bool(stream),
+        "elapsed_s": round(elapsed_s, 3),
+        "prompt_tokens": int(prompt_tokens or 0),
+        "completion_tokens": int(completion_tokens or 0),
+        "tokens_per_second": round(tps, 2),
+    }
+    try:
+        with METRICS_LOCK:
+            data = {"updated_at": entry["time"], "count": 0, "records": []}
+            try:
+                with open(METRICS_PATH) as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    data = loaded
+            except (OSError, ValueError):
+                pass
+            records = data.get("records", [])
+            if not isinstance(records, list):
+                records = []
+            records.append(entry)
+            data["records"] = records[-MAX_RECORDS:]
+            data["count"] = len(data["records"])
+            data["updated_at"] = entry["time"]
+            os.makedirs(os.path.dirname(METRICS_PATH), exist_ok=True)
+            with open(METRICS_PATH, "w") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+    except OSError:
+        pass
+
+
+def parse_sse_usage(buf):
+    """Extrae el usage (tokens) del último chunk data: {...} de un buffer SSE.
+    Si el servidor no reporta usage (LM Studio), estima tokens = chars / 4."""
+    if not buf:
+        return None
+    try:
+        text = buf.decode("utf-8", errors="ignore")
+    except Exception:
+        return None
+    usage = None
+    chars = 0
+    for m in re.finditer(r'data:\s*(\{.*?\})\s*\n', text, re.DOTALL):
+        try:
+            obj = json.loads(m.group(1))
+        except ValueError:
+            continue
+        if not isinstance(obj, dict):
+            continue
+        if isinstance(obj.get("usage"), dict):
+            usage = obj["usage"]
+        try:
+            delta = obj.get("choices", [{}])[0].get("delta", {})
+            chars += len(delta.get("content") or "") + len(delta.get("reasoning_content") or "")
+        except Exception:
+            pass
+    if usage is not None:
+        return usage
+    estimated = {"prompt_tokens": 0, "completion_tokens": max(1, round(chars / 4))}
+    return estimated
+
+
 class Proxy(http.server.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.0"
-    def log_message(self, *args): pass
+
+    def log_message(self, format, *args):
+        pass
 
     def do_GET(self):
         try:
@@ -3627,7 +3794,8 @@ class Proxy(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(r.read())
-        except: self.send_error(502)
+        except Exception:
+            self.send_error(502)
 
     def do_POST(self):
         raw = self.rfile.read(int(self.headers.get("Content-Length", 0)))
@@ -3640,6 +3808,7 @@ class Proxy(http.server.BaseHTTPRequestHandler):
         if not any(m.get('role') == 'user' for m in msgs):
             body['messages'].append({'role': 'user', 'content': '(cont.)'})
 
+        start = time.time()
         try:
             r = urllib.request.urlopen(urllib.request.Request(
                 f"{LM}{self.path}", data=json.dumps(body).encode(),
@@ -3651,23 +3820,179 @@ class Proxy(http.server.BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "text/event-stream")
                 self.send_header("Cache-Control", "no-cache")
                 self.end_headers()
+                buf = b""
                 while True:
                     chunk = r.read(65536)
-                    if not chunk: break
+                    if not chunk:
+                        break
+                    buf += chunk
                     self.wfile.write(chunk)
                     self.wfile.flush()
+                elapsed = time.time() - start
+                usage = parse_sse_usage(buf)
+                if usage:
+                    record_metric(model, usage.get("prompt_tokens"), usage.get("completion_tokens"), elapsed, True)
             else:
+                resp = r.read()
+                elapsed = time.time() - start
+                try:
+                    obj = json.loads(resp)
+                    usage = obj.get("usage") or {}
+                    tps = None
+                    if elapsed > 0 and usage.get("completion_tokens"):
+                        tps = round(usage["completion_tokens"] / elapsed, 2)
+                    obj["stats"] = {"tokens_per_second": tps}
+                    resp = json.dumps(obj).encode()
+                    record_metric(model, usage.get("prompt_tokens"), usage.get("completion_tokens"), elapsed, False)
+                except ValueError:
+                    pass
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(r.read())
+                self.wfile.write(resp)
         except Exception as e:
             self.send_error(502, str(e)[:200])
+
 
 http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Proxy).serve_forever()
 LMPROXYEOF
 chmod +x "$DIR_CONFIG/lmstudio-proxy.py"
 info "lmstudio-proxy.py creado"
+
+cat > "$DIR_CONFIG/lmstudio-metrics-server.py" << 'METRICSSRVEOF'
+#!/usr/bin/env python3
+"""Dashboard de métricas LM Studio (tokens/s).
+Sirve en http://localhost:4200 una página HTML que lee metrics.json
+(escrito por lmstudio-proxy.py) y muestra velocidad, tokens e histórico.
+"""
+import json
+import os
+import sys
+import time
+import http.server
+
+CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 4200
+METRICS_PATH = os.environ.get("METRICS_EXPORT_PATH") or os.path.join(CONFIG_DIR, "data", "metrics.json")
+
+PAGE = """<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LM Studio · Tokens/s</title>
+<style>
+:root{--bg:#0f1115;--card:#171a21;--border:#262b36;--text:#e6e8ee;--muted:#9aa3b2;
+--accent:#4cc2ff;--green:#3ecf8e;--yellow:#f5c542;--red:#f2645f;--mono:"JetBrains Mono","Fira Code",monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);
+font-family:-apple-system,"Segoe UI",system-ui,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}h2{font-size:13px;color:var(--muted);font-weight:600;
+text-transform:uppercase;letter-spacing:.05em;margin:0 0 12px}
+.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+.card .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.card .value{font-family:var(--mono);font-size:28px;font-weight:700}
+.big{color:var(--accent)}.ok{color:var(--green)}.warn{color:var(--yellow)}.bad{color:var(--red)}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:14px}
+th{color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);
+text-transform:uppercase;font-size:10px;letter-spacing:.05em}
+td{padding:6px 10px;border-bottom:1px solid var(--border)}
+tr:hover td{background:#1b1f28}
+.section{margin-top:28px}.refresh{color:var(--muted);font-size:12px;margin-top:8px}
+@media(max-width:600px){body{padding:14px}}
+</style>
+</head>
+<body>
+<header><h1>⚡ LM Studio · Tokens por segundo</h1><div class="muted" id="updated">cargando…</div></header>
+<section class="grid" style="margin-top:16px">
+  <div class="card"><div class="label">Última velocidad</div><div class="value big" id="last-tps">–</div></div>
+  <div class="card"><div class="label">Media (histórico)</div><div class="value ok" id="avg-tps">–</div></div>
+  <div class="card"><div class="label">Peticiones</div><div class="value" id="count">–</div></div>
+  <div class="card"><div class="label">Tokens generados</div><div class="value" id="tokens-out">–</div></div>
+</section>
+<section class="section"><h2>Últimas peticiones</h2>
+<div class="card" style="padding:4px 16px">
+  <table>
+    <thead><tr><th>Hora</th><th>Modelo</th><th>Tipo</th><th>Tok/s</th><th>Salida</th><th>Entrada</th><th>Tiempo</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="7" class="muted">Sin datos todavía</td></tr></tbody>
+  </table>
+</div>
+</section>
+<div class="refresh">Auto-refresco cada 5 s · <a href="/api/metrics" target="_blank">JSON crudo</a></div>
+<script>
+async function load(){
+  try{
+    const r=await fetch("/api/metrics");
+    if(!r.ok) throw new Error(r.status);
+    const d=await r.json();
+    const recs=d.records||[];
+    document.getElementById("updated").textContent="actualizado: "+d.updated_at;
+    document.getElementById("count").textContent=d.count??recs.length;
+    if(recs.length){
+      const last=recs[recs.length-1];
+      const tps=last.tokens_per_second;
+      const el=document.getElementById("last-tps");
+      el.textContent=(tps==null?"–":tps.toFixed(1));
+      el.className="value "+(tps>=30?"big":tps>=10?"ok":tps>0?"warn":"bad");
+      let sum=0,n=0;
+      for(const r of recs){if(r.tokens_per_second){sum+=r.tokens_per_second;n++}}
+      document.getElementById("avg-tps").textContent=n?(sum/n).toFixed(1):"–";
+      const tot=recs.reduce((a,r)=>a+(r.completion_tokens||0),0);
+      document.getElementById("tokens-out").textContent=tot>=1000?(tot/1000).toFixed(1)+"k":tot;
+      const rows=document.getElementById("rows");
+      rows.innerHTML="";
+      for(const r of recs.slice(-15).reverse()){
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${r.time||""}</td><td>${escapeHtml(r.model||"")}</td>
+          <td>${r.stream?"stream":"normal"}</td>
+          <td class="${r.tokens_per_second>=30?"ok":r.tokens_per_second>=10?"":"warn"}">${(r.tokens_per_second??"–")}</td>
+          <td>${r.completion_tokens||0}</td><td>${r.prompt_tokens||0}</td>
+          <td>${r.elapsed_s!=null?r.elapsed_s.toFixed(1)+"s":""}</td>`;
+        rows.appendChild(tr);
+      }
+    }
+  }catch(e){document.getElementById("updated").textContent="sin datos de métricas";}
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+load();setInterval(load,5000);
+</script>
+</body>
+</html>"""
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass
+
+    def do_GET(self):
+        if self.path in ("/", "/index.html"):
+            body = PAGE.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        elif self.path == "/api/metrics":
+            try:
+                with open(METRICS_PATH) as f:
+                    data = json.load(f)
+            except (OSError, ValueError):
+                data = {"updated_at": time.strftime("%d/%m/%Y %H:%M:%S"), "count": 0, "records": []}
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        else:
+            self.send_error(404)
+
+
+http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+METRICSSRVEOF
+chmod +x "$DIR_CONFIG/lmstudio-metrics-server.py"
+info "lmstudio-metrics-server.py creado (dashboard tok/s en :4200)"
 
 # ═══════════════════════════════════════════════════════════
 # ═══════════════════════════════════════════════════════════
@@ -4165,7 +4490,8 @@ cat > "${CONFIG_DIR}/tui.json" << 'TUIEOF'
         "endpoint": "http://localhost:4001/v1",
         "model": "models-qwen3.5-9b"
       }
-    ]
+    ],
+    ["opencode-throughput", {}]
   ]
 }
 TUIEOF

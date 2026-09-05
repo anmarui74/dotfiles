@@ -268,7 +268,8 @@ cat > "${CONFIG_DIR}/tui.json" << 'TUIEOF'
         "endpoint": "http://localhost:4001/v1",
         "model": "models-qwen3.5-9b"
       }
-    ]
+    ],
+    ["opencode-throughput", {}]
   ]
 }
 TUIEOF

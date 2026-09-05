@@ -92,7 +92,11 @@ impl FileWatcher {
             // Si acaba de montarse → sincronizar
             if now_mounted && !was_mounted {
                 println!("🔌 Disco montado, sincronizando espejo: {} ({})", m.name, m.destination.display());
-                if let Err(e) = engine.sync_mirror_plain(&m.destination) {
+                if m.uri.is_some() {
+                    if let Err(e) = engine.sync_network_mirror(&m.destination) {
+                        eprintln!("❌ Error sincronizando espejo nube {}: {}", m.name, e);
+                    }
+                } else if let Err(e) = engine.sync_mirror_plain(&m.destination) {
                     eprintln!("❌ Error sincronizando espejo {}: {}", m.name, e);
                 }
             }
@@ -200,7 +204,7 @@ impl FileWatcher {
                         std::fs::create_dir_all(parent)?;
                     }
                     std::fs::remove_file(&dest_path).ok();
-                    std::fs::copy(src_path, &dest_path)?;
+                    copy_contents_plain(src_path, &dest_path)?;
                     println!("   ✅ Guardado en {}: {}", mirror.name, dest_path.display());
                 } else if dest_path.exists() {
                     std::fs::remove_file(&dest_path)?;
@@ -238,7 +242,7 @@ impl FileWatcher {
                         std::fs::create_dir_all(parent)?;
                     }
                     std::fs::remove_file(&dest_path).ok();
-                    std::fs::copy(src_path, &dest_path)?;
+                    copy_contents_plain(src_path, &dest_path)?;
                     println!("   ✅ Guardado: {}", dest_path.display());
                 } else if dest_path.exists() {
                     std::fs::remove_file(&dest_path)?;
@@ -261,4 +265,14 @@ fn is_writable_path(path: &Path) -> bool {
         }
         Err(_) => false,
     }
+}
+
+/// Copia el contenido de un archivo sin tocar permisos ni mtime.
+/// Necesario para shares SMB/GVFS (fuse) que no soportan chmod (ENOTSUP).
+fn copy_contents_plain(src: &Path, dst: &Path) -> std::io::Result<()> {
+    let mut reader = std::fs::File::open(src)?;
+    let mut writer = std::fs::File::create(dst)?;
+    std::io::copy(&mut reader, &mut writer)?;
+    writer.sync_all()?;
+    Ok(())
 }

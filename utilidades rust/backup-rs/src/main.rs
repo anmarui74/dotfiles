@@ -5,7 +5,7 @@ use tokio::signal;
 use tokio::sync::mpsc;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use crate::config::Config;
+use crate::config::{Config, MirrorConfig};
 use crate::backup::BackupEngine;
 use crate::watcher::FileWatcher;
 
@@ -169,12 +169,24 @@ async fn run_backup_once(config: &Config) -> Result<()> {
     let mut engine = BackupEngine::new(config.clone());
     engine.run()?;
 
-    // 2) Espejos planos (machacar, p. ej. SEAGATE/Linux que es de root).
-    //    Si el destino no es escribible por antonio (es de root), elevamos con
-    //    `sudo backup _mirror-only` UNA sola vez: dentro, como root, se monta el
-    //    disco y se copia todo. Así SOLO se pide sudo una vez, nunca pkexec.
+    // 2) Espejos planos (machacar, p. ej. SEAGATE/Linux que es de root, o NUBE vía SMB).
     for mirror in &config.mirrors {
         let dest = &mirror.destination;
+
+        // Espejo de red (SMB): se monta sin root (CIFS automount o GVFS) y se
+        // sincroniza con rsync. Nunca requiere sudo.
+        if mirror.uri.is_some() {
+            match ensure_network_mount(mirror) {
+                Some(mounted) => {
+                    println!("🔗 Sincronizando espejo nube: {} ({})", mirror.name, mounted.display());
+                    engine.sync_network_mirror(&mounted)?;
+                }
+                None => {
+                    println!("⏭️  Espejo nube {} no accesible (share no montado), se omite: {}", mirror.name, mirror.uri.as_ref().unwrap());
+                }
+            }
+            continue;
+        }
 
         // Determinar si este mirror requiere root. El SEAGATE/Linux es de root,
         // así que antonio no puede escribir en él (ni montarlo con udisks sin
@@ -250,6 +262,81 @@ fn is_writable(path: &Path) -> bool {
             true
         }
         Err(_) => false,
+    }
+}
+
+/// UID del usuario real (funciona incluso si el proceso corre como root vía sudo).
+fn get_real_uid() -> String {
+    if let Ok(uid) = std::env::var("SUDO_UID") {
+        return uid;
+    }
+    std::process::Command::new("id")
+        .arg("-u")
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .unwrap_or_else(|_| "1000".to_string())
+}
+
+/// Monta/sincroniza un share SMB sin root. Devuelve la ruta local del punto de
+/// montaje si está disponible:
+/// 1. Si el destino configurado ya existe (CIFS kernel via fstab automount) → usarlo.
+/// 2. Si no, montar con GVFS (`gio mount`) y resolver la ruta bajo /run/user/<uid>/gvfs/.
+fn ensure_network_mount(mirror: &MirrorConfig) -> Option<PathBuf> {
+    let uri = mirror.uri.as_ref()?;
+    if !uri.starts_with("smb://") {
+        eprintln!("⚠️  URI no soportado: {}", uri);
+        return None;
+    }
+
+    // CASO 1: el punto de montaje CIFS del kernel ya está montado/accesible
+    if mirror.destination.exists() {
+        return Some(mirror.destination.clone());
+    }
+
+    // CASO 2: montar con GVFS (fallback, más lento) y resolver la ruta real.
+    // smb://host/share/subdir... → host, share, subdir
+    let rest = uri.trim_start_matches("smb://");
+    let mut parts = rest.split('/').filter(|s| !s.is_empty());
+    let host = parts.next()?;
+    let share = parts.next()?;
+    let subpath: Vec<String> = parts.map(|s| s.to_string()).collect();
+
+    let share_uri = format!("smb://{}/{}", host, share);
+    println!("🔌 Montando share SMB (GVFS, sin root): {}", share_uri);
+    let ok = std::process::Command::new("gio")
+        .arg("mount")
+        .arg(&share_uri)
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+
+    if !ok {
+        eprintln!("⚠️  No se pudo montar el share {}", share_uri);
+        return None;
+    }
+
+    let runtime_dir = std::env::var("XDG_RUNTIME_DIR")
+        .unwrap_or_else(|_| format!("/run/user/{}", get_real_uid()));
+    let mut path = PathBuf::from(runtime_dir)
+        .join("gvfs")
+        .join(format!("smb-share:server={},share={}", host, share));
+    for part in &subpath {
+        path = path.join(part);
+    }
+
+    // Esperar a que GVFS materialice el punto de montaje
+    for _ in 0..20 {
+        if path.exists() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(300));
+    }
+
+    if path.exists() {
+        Some(path)
+    } else {
+        eprintln!("⚠️  Share montado pero no se encontró el punto de montaje: {}", path.display());
+        None
     }
 }
 
@@ -436,19 +523,40 @@ async fn run_daemon(config: &Config) -> Result<()> {
 
 /// Sincroniza los espejos planos definidos en la config (solo si están montados)
 fn sync_plain_mirrors(engine: &mut BackupEngine, config: &Config, can_use_sudo: bool) -> Result<()> {
-    // En el daemon (can_use_sudo=false, corre como antonio) los espejos planos
-    // (SEAGATE/Linux, propiedad de root) NO se sincronizan en segundo plano:
-    // requieren elevación a root y el daemon no tiene terminal para sudo.
-    // Se sincronizan manualmente con "backup once"/"backup mirror".
-    // (Si corremos como root, p. ej. vía `_mirror-only`, sí se sincronizan.)
-    if !can_use_sudo && !is_root() {
-        if !config.mirrors.is_empty() {
-            println!("⏭️  Espejos planos omitidos en el daemon (requieren root). Sincronízalos con 'backup mirror'.");
-        }
-        return Ok(());
-    }
-
     for mirror in &config.mirrors {
+        // Espejo de red (SMB): se sincroniza siempre como antonio (sin root),
+        // incluso en el daemon, porque CIFS automount/GVFS montan la sesión.
+        // En `_mirror-only` (proceso root lanzado por `backup once` para los
+        // discos) se omite: los nube ya se sincronizan como antonio en el
+        // proceso padre antes de elevar, y así no se sincronizan dos veces.
+        if mirror.uri.is_some() {
+            if is_root() {
+                continue;
+            }
+            match ensure_network_mount(mirror) {
+                Some(mounted) => {
+                    println!("🔗 Sincronizando espejo nube: {} ({})", mirror.name, mounted.display());
+                    engine.sync_network_mirror(&mounted)?;
+                }
+                None => {
+                    println!("⏭️  Espejo nube {} no accesible (share no montado), se omite: {}", mirror.name, mirror.destination.display());
+                }
+            }
+            continue;
+        }
+
+        // Espejo de disco (SEAGATE): en el daemon (can_use_sudo=false, corre como
+        // antonio) NO se sincronizan en segundo plano: requieren elevación a root y
+        // el daemon no tiene terminal para sudo. Se sincronizan manualmente con
+        // "backup once"/"backup mirror". (Si corremos como root, vía `_mirror-only`,
+        // sí se sincronizan.)
+        if !can_use_sudo && !is_root() {
+            if !config.mirrors.is_empty() {
+                println!("⏭️  Espejos de disco omitidos en el daemon (requieren root). Sincronízalos con 'backup mirror'.");
+            }
+            continue;
+        }
+
         let dest = &mirror.destination;
 
         // ensure_mount garantiza que el disco esté montado

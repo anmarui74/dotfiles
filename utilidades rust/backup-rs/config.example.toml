@@ -58,6 +58,12 @@ path = "/home/antonio/system-info.sh"
 include_hidden = true
 exclude_patterns = []
 
+# Modelos de IA locales (GGUF): Qwen3.5-9B Q6_K (predeterminado)
+[[sources]]
+path = "/home/antonio/modelos_ia"
+include_hidden = true
+exclude_patterns = []
+
 [watch]
 enabled = true
 debounce_ms = 1000
@@ -67,3 +73,16 @@ recursive = true
 [[mirrors]]
 name = "SEAGATE"
 destination = "/run/media/antonio/SEAGATE/Linux"
+
+# Espejo de red (nube): se monta sin root (CIFS kernel vía fstab `users`/automount,
+# o GVFS como fallback) y se sincroniza con rsync (rápido y fiable sobre SMB).
+# `uri` es el share SMB; `destination` es el punto de montaje CIFS local.
+[[mirrors]]
+name = "NUBE-antonio"
+destination = "/home/antonio/MyCloud/antonio/Linux"
+uri = "smb://mycloud-eudvfr.local/antonio/Linux"
+
+[[mirrors]]
+name = "NUBE-public"
+destination = "/home/antonio/MyCloud/public/Linux"
+uri = "smb://mycloud-eudvfr.local/public/Linux"

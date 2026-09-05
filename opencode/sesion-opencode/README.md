@@ -19,6 +19,7 @@
 | 04 | [Los tres perfiles de `opencode.json`](04-perfiles-opencode-json.md) | 📋 Perfiles local/cloud/activo · MCPs · proveedores · agentes |
 | 05 | [Configuración adicional](05-configuracion-adicional.md) | ⚙️ `.env` · sync · systemd · scripts · estructura |
 | 06 | [AGENTS.md al detalle](06-agents-md.md) | 📜 Reglas de comportamiento de OpenCode |
+| 07 | [Playbook de recuperación](07-playbook-recuperacion.md) | 🛟 Restauración de grafo, reinstalación desde limpio y re-sync |
 
 ### Notas, seguimientos y hardware
 
@@ -42,7 +43,7 @@ Flujo de **voz → texto → IA → respuesta**:
 | 1️⃣ | 🎤 **Tú (Antonio)** | Hablas o escribes |
 | 2️⃣ | **STT** — `sox` + `whisper-cpp` | Audio capturado y transcrito en **GPU** |
 | 3️⃣ | **TUI de OpenCode** | Teclado + comandos `/stt-*` |
-| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build` **deepseek-v4-flash** + `local` Qwen 3.5 + `nvidia` Nemotron 3 Ultra · 5 MCP · 50 skills |
+| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build` **deepseek-v4-flash** + `local` Qwen 3.5 + `nvidia` Muse Glimmer 30B · 5 MCP · 50 skills · plugins TUI (voz + throughput) |
 | 5️⃣ | **TTS** — `edge-tts` → `paplay` + **Pantalla** | 🔊 Audio por voz · 📄 Texto en pantalla |
 
 ---
@@ -52,7 +53,8 @@ Flujo de **voz → texto → IA → respuesta**:
 | Servicio | Endpoint | Uso |
 |----------|----------|-----|
 | **LM Studio** | `http://localhost:1234` | Modelo local `models-qwen3.5-9b` (80K contexto) |
-| **Proxy OpenCode ↔ LM Studio** | `http://localhost:4001` | Intermediario con métricas (tokens/s) |
+| **Proxy OpenCode ↔ LM Studio** | `http://localhost:4001` | Intermediario con métricas (tokens/s) → `metrics.json` |
+| **Dashboard LM Studio** | `http://localhost:4200` | Histórico de tok/s, tokens y peticiones |
 | **OpenCode Go (cloud)** | `https://opencode.ai` | Agentes `cloud` + `build`: `deepseek-v4-flash` |
 | **NVIDIA NIM (cloud)** | `https://integrate.api.nvidia.com/v1` | Agente `nvidia`: Nemotron 3 Ultra 550B (1M contexto) |
 | **Ollama** _(en desuso)_ | `http://localhost:11434` | Modelos `llama3.1`, `gemma4`, `deepseek-r1`, `qwen3.5` (LiteLLM) |

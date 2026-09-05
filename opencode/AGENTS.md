@@ -17,14 +17,28 @@
 - Decimales: coma (3,14 no 3.14)
 - Moneda: euros (€)
 - Sistema métrico: km/h, °C, mm, km
+- Tablas: SIEMPRE en formato Markdown estándar (nunca en bloques de código ASCII)
 
 ## 🌤️ Consultar el tiempo (IMPORTANTE)
-Para preguntas sobre el tiempo, usa la herramienta fetch_html (o fetch_json) para consultar:
+Para preguntas sobre el tiempo, usa la herramienta bash con curl para consultar la API oficial de AEMET OpenData (predeterminada):
+
+1. **Obtener URL temporal de datos** (primera llamada):
+   ```bash
+   curl -s -X GET "https://opendata.aemet.es/opendata/api/prediccion/especifica/municipio/horaria/{ID_MUNICIPIO}?api_key=$AEMET_API_KEY" -H "accept: application/json"
+   ```
+   - `AEMET_API_KEY` está en `.env` (cargar con `set -a; source /home/antonio/.config/opencode/.env; set +a`)
+   - ID de Pechina: `04074` (solo el número, sin prefijo)
+   - La respuesta devuelve `datos` (URL temporal válida ~5 min) y `metadatos`
+2. **Descargar los datos reales** (segunda llamada, a la URL de `datos`):
+   ```bash
+   curl -s "{URL_DE_DATOS}" | iconv -f ISO-8859-15 -t UTF-8
+   ```
+   - Los datos vienen en JSON (ISO-8859-15): temperatura, estadoCielo, viento, probPrecipitacion, humedad, etc.
+3. Para predicción diaria (7 días): cambiar `horaria` por `diaria` en la URL.
+
+⚠️ Si AEMET no responde o da error, usa wttr.in como respaldo:
 https://wttr.in/{ciudad}?format=j1&m&lang=es
 Ejemplo: https://wttr.in/Pechina?format=j1&m&lang=es
-
-⚠️ Si wttr.in no responde o devuelve vacío, NO vuelvas a llamar a fetch.
-Limítate a informar al usuario: "wttr.in no está disponible ahora, inténtalo más tarde."
 
 ## 💻 Consultar hardware del sistema (IMPORTANTE)
 Cuando Antonio pregunte sobre su hardware (CPU, RAM, GPU, almacenamiento,
@@ -55,6 +69,29 @@ NO generes texto explicando los pasos sin ejecutarlos.
 SIMPLIFICA: si necesitas leer múltiples archivos, usa search_files con un
 patrón, o llama a read_file para cada archivo individual.
 
+## 🐚 Shell del sistema: ZSH (usuario) vs Bash (agentes) (IMPORTANTE)
+- Antonio usa **ZSH** como shell predeterminada del sistema y de OpenCode
+  (`"shell": "/usr/bin/zsh"` en los 3 perfiles JSON).
+- Los agentes ejecutan los comandos de la herramienta bash con **Bash** por defecto.
+- NO todos los comandos funcionan igual en ambas shells: expansiones, globs
+  (`**`, `=`, `~` como path), alias y plugins de ZSH pueden fallar o comportarse
+  distinto en Bash, y viceversa.
+- Si un comando falla:
+  1. Prueba primero con sintaxis portable (POSIX), sin depender de ZSH.
+  2. Si necesitas características de ZSH, ejecuta explícitamente: `zsh -c '...'`.
+  3. Si necesitas Bash puro: `bash -c '...'`.
+  4. Verifica qué shell resuelve cada comando con `type` o `which`.
+
+## 🗣️ Pronunciación de Antonio (entrada por voz) (IMPORTANTE)
+- Antonio a veces usa entrada por voz y su pronunciación puede no ser perfecta,
+  o el locucionero/TTS puede transcribir alguna palabra de forma incorrecta.
+- Interpreta SIEMPRE según el **CONTEXTO** de la conversación antes que
+  literalmente: si la palabra transcrita no encaja con lo que se está haciendo,
+  es probable que sea un error de transcripción.
+- Si una palabra resulta ambigua o no cuadra, **confirma con Antonio** antes de
+  actuar en base a ella.
+- NO fijes equivalencias rígidas de palabras mal transcritas: el contexto manda.
+
 ## 🛠️ Elevación de privilegios (sudo NO)
 - NUNCA uses `sudo` para comandos que requieran contraseña
 - Usa SIEMPRE `pkexec` en su lugar: así saldrá una ventana gráfica pidiendo la contraseña
@@ -70,6 +107,19 @@ funcionan, errores desconocidos, etc.):
 4. Para OpenCode: https://opencode.ai/docs (y el esquema https://opencode.ai/config.json)
 5. Para LSPs concretos: consulta la wiki del servidor (ej. github del proyecto)
 Anota siempre la solución encontrada en la memoria.
+
+## 🔍 Verificar hechos antes de afirmar (OBLIGATORIO)
+Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
+1. **COMPRUEBA con herramientas** (ls, read, test, search_files) que la ruta o
+   archivo realmente no existe. No lo des por hecho.
+2. **LEE la documentación y reglas del proyecto** (este AGENTS.md y los JSON de
+   configuración): puede que esa estructura sea INTENCIONAL y esté documentada.
+3. **NO plantees dudas sin verificar** ("¿existe este archivo?"): verifícalo y
+   afirma con seguridad, o descártalo.
+4. Si tu recomendación **contradice la configuración documentada**, es señal de
+   que tu interpretación es errónea: revisa antes de sugerir cambios.
+5. Una revisión debe contrastar cada afirmación con los hechos reales del sistema,
+   no basarse en suposiciones.
 
 ---
 
@@ -272,6 +322,22 @@ nunca sobre `opencode.json`**, que es solo el perfil por defecto.
 - El antiguo `switch-mcp-profile.sh` (copiaba local/cloud sobre `opencode.json`)
   está ELIMINADO desde el 18/08/2026.
 
+## 🏆 Proveedor NVIDIA: ranking y metodología de selección de modelos (IMPORTANTE)
+Cuando se trabaje con el proveedor `nvidia` (agente `nvidia` o selector `/models`),
+usar la METODOLOGÍA ya establecida el 05/09/2026 para verificar/actualizar el whitelist.
+Está documentada completa en:
+- **Markdown:** `04-perfiles-opencode-json.md` → sección «Ranking y metodología de selección de modelos NVIDIA»
+- **Grafo de memoria:** entidad «Proveedor NVIDIA en OpenCode»
+
+Resumen de la metodología (en orden, obligatorio):
+1. **Catálogo real:** `GET https://integrate.api.nvidia.com/v1/models` — el catálogo `models.dev` de OpenCode está DESACTUALIZADO para NVIDIA (lista modelos retirados).
+2. **HTTP 200 real:** `POST /chat/completions` a cada candidato. Los listados en el catálogo sin endpoint de chat desplegado devuelven **404** → descartar.
+3. **Velocidad:** generación real de ~180 tokens (NO limitar a 5), exigir **≥ ~10 tok/s**. Los modelos lentos (como DeepSeek a ~1 tok/s) son inútiles como agente.
+4. **Tool calling (OBLIGATORIO para OpenCode):** petición con `tools: [get_current_time]` + `tool_choice: auto`; exigir `tool_calls` reales en la respuesta. Sin tools = inutilizable en OpenCode.
+5. **Reintentos:** los 429/500/503/timeout se reintentan con más margen antes de decidir.
+
+Whitelist actual (05/09/2026): 8 modelos operativos en los 3 perfiles. Los retirados devuelven **410 Gone** (end of life) y se eliminan del whitelist. Detalle completo (ranking y descartados) en el markdown citado.
+
 ## Iniciar LM Studio manualmente
 ```bash
 bash /home/antonio/.config/opencode/start-lmstudio.sh      # servidor + modelo + proxy
@@ -284,12 +350,20 @@ Si el modelo se satura, usar:
 /home/antonio/.lmstudio/bin/lms unload --all
 ```
 
-## 📊 Tokens/s en respuestas locales
-El proxy en puerto 4001 calcula y muestra tokens/segundo automáticamente
-en cada respuesta. Se ve en el campo `stats.tokens_per_second` del JSON.
+## 📊 Tokens/s (todas las fuentes)
 
-Para ver tokens/s en OpenCode TUI: la info aparece al final de cada mensaje
-junto al nombre del modelo (ej: "Qwen 3.5 Q6_K · 13.5 tok/s").
+### En la TUI (plugin opencode-throughput)
+El plugin TUI `opencode-throughput` (registrado en `tui.json`) muestra en la barra
+lateral de OpenCode el rendimiento de CADA solicitud y de CADA modelo/provider:
+- TPS medio, TTFT, latencia, tokens ↑/↓ y coste por modelo
+- Lista "Recent" con cada petición: `TTFT | tok/s | latencia | ↑in ↓out`
+Funciona para TODOS los providers (local, NVIDIA, cloud) porque engancha los
+eventos de mensaje, no depende del proxy.
+
+### Proxy local (puerto 4001)
+El proxy `lmstudio-proxy.py` registra métricas por request en `metrics.json`
+(`METRICS_EXPORT_PATH` en `.env`, activado con `ENABLE_METRICS=true`) y además
+inyecta `stats.tokens_per_second` en respuestas no-streaming.
 
 Método rápido por terminal:
 ```bash
@@ -298,6 +372,12 @@ curl -s http://localhost:4001/v1/chat/completions \
   -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"hola"}]}' | \
   python3 -c "import json,sys; d=json.load(sys.stdin); u=d['usage']; s=d.get('stats',{}); print(f\"Prompt: {u['prompt_tokens']} tok\\nGenerados: {u['completion_tokens']} tok\\nVelocidad: {s.get('tokens_per_second','N/A')} tok/s\")"
 ```
+
+### Dashboard web (puerto 4200)
+El servidor `lmstudio-metrics-server.py` sirve en `http://localhost:4200` un
+dashboard con la última velocidad, la media, peticiones totales y el histórico
+de peticiones del proxy local. Datos crudos en `/api/metrics`.
+Iniciar: `python3 ~/.config/opencode/lmstudio-metrics-server.py 4200`
 
 # CHECKLIST ANTES DE RESPONDER
 - ¿Respuesta en español?

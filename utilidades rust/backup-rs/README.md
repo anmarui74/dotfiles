@@ -37,19 +37,20 @@ directorios personales de Antonio hacia **dos discos**:
 | Disco | Uso | Comportamiento |
 |-------|-----|----------------|
 | **Crucial** (SSD 1 TB, btrfs) | Backup versionado incremental | Snapshots con hardlinks + espejo `actual/` |
-| **SEAGATE** (HDD 4 TB, NTFS) | Espejo plano "machacar" | Copia, sobrescribe y borra según el home |
+| **SEAGATE** (HDD 4 TB, NTFS) | Espejo plano "machacar" | Copia, sobrescribe y borra según el home (requiere root) |
+| **MyCloud** (WD, SMB) | Espejo nube "machacar" | Copia, sobrescribe y borra según el home (**sin root**, vía CIFS + rsync) |
 
 Las **fuentes** son: `Config`, `Documentos`, `Descargas`, `Imágenes`, `Vídeos`,
-`Cursos informatica`, `Varios Linux`, `start-lmstudio.sh` y `system-info.sh`
-(todos con archivos ocultos incluidos).
+`Cursos informatica`, `Varios Linux`, `modelos_ia`, `start-lmstudio.sh` y
+`system-info.sh` (todos con archivos ocultos incluidos).
 
 Tiene **dos modos complementarios**:
 
 | Modo | Comando | Qué hace |
 |------|---------|----------|
-| **Backup manual (principal)** | `backup once` | Snapshot incremental del Crucial (sin contraseña) + sincroniza el SEAGATE (pide sudo una vez) |
-| **Actualizar SEAGATE** | `backup mirror` | Solo sincroniza el espejo machacado del SEAGATE (pide sudo) |
-| **Daemon (opcional)** | `backup run` | Sincroniza el espejo `actual/` del Crucial y vigila cambios en tiempo real (queda corriendo) |
+| **Backup manual (principal)** | `backup once` | Snapshot incremental del Crucial (sin contraseña) + SEAGATE (pide sudo una vez) + NUBE (sin root) |
+| **Actualizar espejos** | `backup mirror` | Sincroniza los espejos machacados: SEAGATE (pide sudo) y NUBE antonio/public (sin root) |
+| **Daemon (opcional)** | `backup run` | Sincroniza el espejo `actual/` del Crucial, la NUBE, y vigila cambios en tiempo real (queda corriendo) |
 
 > 🏠 **Uso recomendado (sin daemon):** el servicio systemd está **deshabilitado**.
 > No hay vigilancia automática en segundo plano. Los backups se hacen **manualmente**
@@ -108,7 +109,7 @@ Además del backup versionado en el Crucial, se pueden definir **espejos planos*
   lo elevan con `sudo` una sola vez.
 - El **daemon lo omite** (si se ejecuta, corre como antonio y no puede escribir en root);
   por eso el SEAGATE se sincroniza **manualmente** con `backup once` o `backup mirror`.
-- Ejemplo: `SEAGATE/Linux` mantiene una copia machacada de las 9 fuentes
+- Ejemplo: `SEAGATE/Linux` mantiene una copia machacada de las 10 fuentes
 
 ```toml
 [[mirrors]]
@@ -118,6 +119,65 @@ destination = "/run/media/antonio/SEAGATE/Linux"
 
 > ⚠️ **Aviso:** el espejo plano **machaca y borra** — lo que se elimine del origen
 > desaparece del espejo. No guarda historial de versiones.
+
+### Espejos de red (nube SMB) — opcional, sin root
+
+Además de los espejos locales (SEAGATE), se pueden definir **espejos de red**
+apuntando a shares **SMB/CIFS** (p. ej. el WD My Cloud `mycloud-eudvfr.local`).
+Usan la **misma dinámica machacar** que el SEAGATE pero **sin root**:
+
+| Característica | Valor |
+|----------------|-------|
+| Montaje | CIFS del kernel vía fstab `users` + `x-systemd.automount` (sin root) |
+| Motor de copia | **`rsync`** (rápido y fiable sobre SMB; evita chmod/mkstemp de GVFS) |
+| Comportamiento | Copia, sobrescribe y borra según el origen (machaca) |
+| Daemon | Se sincroniza también en el daemon (no requiere root) |
+
+La clave del rendimiento está en el **montaje CIFS del kernel**: GVFS/SMB (el que
+usa Nautilus) va 2-5x más lento y `rsync` falla sobre él con errores de
+`Operation not supported` (chmod). Con `mount.cifs` en fstab (opción `users`) se
+monta/desmonta **sin root** y `rsync` funciona perfecto.
+
+**Configuración previa (una sola vez, con `pkexec`):**
+
+1. Añadir los puntos de montaje al **fstab**:
+   ```
+   //mycloud-eudvfr.local/antonio /home/antonio/MyCloud/antonio cifs credentials=/home/antonio/.config/backup-rs/smb-antonio.credentials,uid=1000,gid=1000,file_mode=0664,dir_mode=0775,iocharset=utf8,vers=3.0,noauto,x-systemd.automount,nofail,users,_netdev 0 0
+   //mycloud-eudvfr.local/public /home/antonio/MyCloud/public cifs guest,uid=1000,gid=1000,file_mode=0664,dir_mode=0775,iocharset=utf8,vers=3.0,noauto,x-systemd.automount,nofail,users,_netdev 0 0
+   ```
+2. Crear el archivo de credenciales (solo si el share pide usuario/contraseña):
+   ```
+   # ~/.config/backup-rs/smb-antonio.credentials  (permisos 600)
+   username=antonio
+   password=XXXXXXXX
+   domain=WORKGROUP
+   ```
+3. Recargar systemd y activar los automounts:
+   ```
+   systemctl daemon-reload
+   systemctl start home-antonio-MyCloud-antonio.automount home-antonio-MyCloud-public.automount
+   ```
+
+**Configuración del espejo nube:**
+
+```toml
+[[mirrors]]
+name = "NUBE-antonio"
+destination = "/home/antonio/MyCloud/antonio/Linux"
+uri = "smb://mycloud-eudvfr.local/antonio/Linux"
+
+[[mirrors]]
+name = "NUBE-public"
+destination = "/home/antonio/MyCloud/public/Linux"
+uri = "smb://mycloud-eudvfr.local/public/Linux"
+```
+
+- `destination`: punto de montaje CIFS local (con automount se monta al acceder)
+- `uri`: share SMB que se monta con GVFS como **fallback** si el punto CIFS no existe
+
+Los mirrors nube se sincronizan con `backup once`/`backup mirror`/`backup run` y
+**nunca requieren sudo**. Si el punto CIFS está montado, `backup-rs` usa `rsync`
+directamente; si no, intenta GVFS (`gio mount`) como respaldo.
 
 ---
 
@@ -1135,11 +1195,22 @@ path = "/home/antonio/Vídeos"
 include_hidden = true
 exclude_patterns = []
 
+# Modelos de IA locales (GGUF) — p. ej. Qwen3.5-9B Q6_K
+[[sources]]
+path = "/home/antonio/modelos_ia"
+include_hidden = true
+exclude_patterns = []
+
 [watch]
 enabled = true
 debounce_ms = 1000
 recursive = true
 ```
+
+> Nota: la config real de Antonio incluye además las fuentes `Cursos informatica`,
+> `Varios Linux`, `modelos_ia`, `start-lmstudio.sh` y `system-info.sh`, y los
+> espejos planos `SEAGATE` (local, requiere root) y `NUBE-antonio`/`NUBE-public`
+> (nube SMB, sin root).
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1174,9 +1245,10 @@ recursive = true
 9. print_summary
 ```
 
-> ⚠️ **No usa `/etc/fstab`:** el Crucial se monta/desmonta con `udisksctl` +
+> ⚠️ **fstab:** el Crucial NO usa `/etc/fstab`: se monta/desmonta con `udisksctl` +
 > regla polkit (para Nautilus). El SEAGATE se monta con sudo solo en `backup once/mirror`.
-> El daemon corre como `antonio` y omite el SEAGATE (requiere root).
+> La **nube MyCloud SÍ usa `/etc/fstab`** con opciones `users` + `x-systemd.automount`
+> (montaje sin root). El daemon corre como `antonio` y omite el SEAGATE (requiere root).
 
 ---
 
@@ -1270,16 +1342,18 @@ polkit.addRule(function(action, subject) {
    ├── 3.2. snapshot versionado del Crucial como antonio (sin root)
    ├── 3.3. SEAGATE: detecta que requiere root → "sudo backup _mirror-only"
    │        (pide sudo UNA vez) → como root monta y machaca en SEAGATE/Linux
-   └── 3.4. termina (el Crucial NO se reprocesa como root)
+   ├── 3.4. NUBE (antonio + public): monta los shares CIFS (fstab users/automount,
+   │        sin root) y machaca con rsync en MyCloud/<share>/Linux
+   └── 3.5. termina (el Crucial NO se reprocesa como root)
    ↓
 4. Actualizar solo el SEAGATE (opcional, si el Crucial ya está al día)
-   └── backup mirror   (pide sudo una vez)
+   └── backup mirror   (pide sudo una vez; los espejos nube se hacen sin root)
    ↓
 5. Restauración (manual)
    └── backup list
        backup restore <YYYY-MM-DD_HH-MM-SS> --target <destino>
    ↓
-6. (Opcional) Vigilancia automática del Crucial
+6. (Opcional) Vigilancia automática del Crucial y la nube
    └── sudo systemctl enable --now backup-rs   # habilita el daemon
        # o en primer plano: backup run
 ```
@@ -1304,13 +1378,14 @@ backup --version
 backup init
 backup init --force
 
-# Backup completo: snapshot del Crucial (sin contraseña) + SEAGATE (pide sudo una vez)
+# Backup completo: snapshot del Crucial (sin contraseña) + SEAGATE (pide sudo una vez) + NUBE (sin root)
 backup once
 
-# Daemon de vigilancia (Crucial en tiempo real; omite el SEAGATE que requiere root)
+# Daemon de vigilancia (Crucial + nube en tiempo real; omite el SEAGATE que requiere root)
 backup run
 
-# Sincronizar manualmente los espejos planos (machacar, p.ej. SEAGATE) — pide sudo
+# Sincronizar manualmente los espejos planos (machacar, p. ej. SEAGATE) — pide sudo
+# (los espejos nube se sincronizan también aquí, sin root)
 backup mirror
 
 # Estado y versiones

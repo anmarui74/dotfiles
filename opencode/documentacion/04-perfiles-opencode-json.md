@@ -83,9 +83,9 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
     }
@@ -94,27 +94,13 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     "nvidia": {
       "whitelist": [
         "minimaxai/minimax-m3",
-        "z-ai/glm-5.2",
         "openai/gpt-oss-20b",
-        "openai/gpt-oss-120b",
-        "stepfun-ai/step-3.7-flash",
-        "thinkingmachines/inkling",
-        "meta/llama-3.1-8b-instruct",
-        "meta/llama-3.1-70b-instruct",
         "meta/llama-3.2-11b-vision-instruct",
-        "meta/llama-3.3-70b-instruct",
         "meta/muse-glimmer-30b",
-        "nvidia/llama-3.3-nemotron-super-49b-v1",
-        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-        "nvidia/nemotron-3-nano-30b-a3b",
         "nvidia/nemotron-3-super-120b-a12b",
         "nvidia/nemotron-3-ultra-550b-a55b",
         "nvidia/nemotron-3.5-lightning-30b-a3b",
-        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-        "nvidia/nemotron-mini-4b-instruct",
-        "nvidia/nemotron-nano-12b-v2-vl",
-        "nvidia/nvidia-nemotron-nano-9b-v2",
-        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
       ],
       "options": {
         "timeout": 600000,
@@ -227,9 +213,9 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
       "model": "opencode-go/deepseek-v4-flash"
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Nemotron 3 Ultra 550B A55B (1M contexto, temperatura 1 / top_p 0.95 oficial)",
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
     }
@@ -238,27 +224,13 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     "nvidia": {
       "whitelist": [
         "minimaxai/minimax-m3",
-        "z-ai/glm-5.2",
         "openai/gpt-oss-20b",
-        "openai/gpt-oss-120b",
-        "stepfun-ai/step-3.7-flash",
-        "thinkingmachines/inkling",
-        "meta/llama-3.1-8b-instruct",
-        "meta/llama-3.1-70b-instruct",
         "meta/llama-3.2-11b-vision-instruct",
-        "meta/llama-3.3-70b-instruct",
         "meta/muse-glimmer-30b",
-        "nvidia/llama-3.3-nemotron-super-49b-v1",
-        "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-        "nvidia/nemotron-3-nano-30b-a3b",
         "nvidia/nemotron-3-super-120b-a12b",
         "nvidia/nemotron-3-ultra-550b-a55b",
         "nvidia/nemotron-3.5-lightning-30b-a3b",
-        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-        "nvidia/nemotron-mini-4b-instruct",
-        "nvidia/nemotron-nano-12b-v2-vl",
-        "nvidia/nvidia-nemotron-nano-9b-v2",
-        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
       ],
       "options": {
         "timeout": 600000,
@@ -360,7 +332,7 @@ La diferencia con `opencode.json` (por defecto) es:
 | **Agente principal** | `cloud` (OpenCode Go) | `local` (Qwen 3.5 local) | `cloud` (OpenCode Go) |
 | **Agente local** | ✅ activo (primario) | ✅ activo (primario) | ❌ desactivado |
 | **Modelo cloud** | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) |
-| **Agente NVIDIA** | ✅ Nemotron 3 Ultra 550B | ✅ Nemotron 3 Ultra 550B | ✅ Nemotron 3 Ultra 550B |
+| **Agente NVIDIA** | ✅ Muse Glimmer 30B | ✅ Muse Glimmer 30B | ✅ Muse Glimmer 30B |
 | **context7** | ✅ | ❌ | ✅ |
 | **filesystem** | ✅ | ✅ | ✅ |
 | **memory** | ✅ | ✅ | ✅ |
@@ -464,7 +436,7 @@ Define agentes (personas/modos del asistente):
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
 - **local:** Agente local, usa el modelo Qwen 3.5 Q6_K vía LM Studio (puerto 4001). Es **primario** en el perfil activo y en el perfil local; **desactivado** (`disable: true`) en el perfil cloud
 - **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`)
-- **nvidia:** Agente NVIDIA añadido el **18/08/2026**, usa **Nemotron 3 Ultra 550B** (`nvidia/nvidia/nemotron-3-ultra-550b-a55b`). Modelo frontier de NVIDIA para agentes complejos, 1M de contexto
+- **nvidia:** Agente NVIDIA añadido el **18/08/2026**, usa **Muse Glimmer 30B** (`nvidia/meta/muse-glimmer-30b`). Mejor modelo del ranking para agentes de código (SWE-Bench 76, Terminal-Bench 51,7, 144,9 tok/s, tool calling nativo)
 
 Cada agente puede tener su propio modelo y prompt de sistema.
 
@@ -479,11 +451,54 @@ Proveedores de modelos. Dos proveedores configurados:
   - **Tools:** Habilitadas
 
 - **nvidia** (cloud, desde el **18/08/2026**):
-  - **Modelo agente:** `nvidia/nvidia/nemotron-3-ultra-550b-a55b` (Nemotron 3 Ultra 550B)
-  - **Whitelist:** 22 modelos NVIDIA + terceros (Nemotron 3 family, GLM-5.2, MiniMax M3, GPT-OSS, Inkling, Llama, Muse Glimmer...)
+  - **Modelo agente:** `nvidia/meta/muse-glimmer-30b` (Muse Glimmer 30B de Meta)
+  - **Whitelist:** 8 modelos operativos (verificado el **05/09/2026** con HTTP 200 real + tool calling)
   - **API Key:** `nvapi-*` (en `auth.json` de OpenCode)
   - **Endpoint:** `https://integrate.api.nvidia.com/v1`
-  - ⚠️ **Nota:** `z-ai/glm-5.2` estaba saturado (HTTP 429) a 18/08/2026 por rate limit de NVIDIA
+  - ⚠️ **Nota 18/08/2026:** `z-ai/glm-5.2` estaba saturado (HTTP 429) por rate limit de NVIDIA. **Retirado el 05/09/2026** (HTTP 410 Gone, fin de vida el 21/08/2026)
+  - **Verificación 05/09/2026:** de los 22 modelos del whitelist original, 14 fueron retirados (HTTP 410 Gone, end of life entre el 21/08 y el 03/09/2026) y se eliminaron. Se probaron los modelos nuevos del catálogo NVIDIA (81 totales) midiendo velocidad real y tool calling: todos descartados (lentos <6 tok/s, sin tool calling o sin endpoint de chat HTTP 404). La lista final de 8 es la única utilizable en OpenCode.
+
+#### 🏆 Ranking y metodología de selección de modelos NVIDIA (05/09/2026)
+
+> **Criterio principal:** un modelo solo es útil en OpenCode si soporta **tool calling** (llamada a herramientas: bash, edición, búsqueda...). Un modelo sin tools o que genere a menos de ~10 tok/s es inutilizable como agente. Se priorizó la velocidad sobre otras características: no sirve un modelo que tarda minutos en responder.
+
+**Metodología (verificación en vivo contra `https://integrate.api.nvidia.com/v1`):**
+
+1. **Catálogo:** se consultó `GET /v1/models` (81 modelos disponibles, sin paginación; `limit=1000` confirma el mismo total).
+2. **HTTP 200 real:** se envió una petición `POST /chat/completions` real a cada candidato. Los modelos listados en el catálogo pero sin endpoint de chat desplegado devuelven **HTTP 404** (unos 30) → descartados.
+3. **Velocidad:** generación real de ~180 tokens con `max_tokens` amplio (no limitado a 5) midiendo `tokens/segundo` reales. Los que no llegan a ~10 tok/s se descartan (inutilizables como agente).
+4. **Tool calling:** petición con `tools: [get_current_time]` y `tool_choice: auto`. Se exige que la respuesta contenga `tool_calls` reales.
+5. **Reintento de sobrecarga:** los que fallaron con timeout / 429 / 503 / 500 se reintentaron con más margen antes de decidir.
+
+**Resultado del ranking (los 8 del whitelist, ordenados de mejor a peor):**
+
+| # | Modelo | Velocidad | Tool calling | Veredicto |
+|---|--------|-----------|--------------|-----------|
+| 1 | `meta/muse-glimmer-30b` | 144,9 tok/s | ✅ | ⭐⭐⭐⭐⭐ *(agente nvidia desde 05/09/2026)* |
+| 2 | `nvidia/nemotron-3.5-lightning-30b-a3b` | 119,6 tok/s | ✅ | ⭐⭐⭐⭐⭐ |
+| 3 | `nvidia/nemotron-3-super-120b-a12b` | 93,4 tok/s | ✅ | ⭐⭐⭐⭐ |
+| 4 | `nvidia/nemotron-3-ultra-550b-a55b` | 74,5 tok/s | ✅ | ⭐⭐⭐⭐ |
+| 5 | `meta/llama-3.2-11b-vision-instruct` | 50,7 tok/s | ✅ | ⭐⭐⭐⭐ |
+| 6 | `minimaxai/minimax-m3` | 45,2 tok/s | ✅ | ⭐⭐⭐⭐ |
+| 7 | `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | 40,3 tok/s | ✅ | ⭐⭐⭐⭐ |
+| 8 | `openai/gpt-oss-20b` | 34,2 tok/s | ✅ | ⭐⭐⭐⭐ |
+
+**Modelos nuevos del catálogo probados y descartados (05/09/2026):**
+
+| Modelo | Motivo del descarte |
+|--------|---------------------|
+| `mistralai/mistral-nemotron` | 6 tok/s + sin tool calling |
+| `moonshotai/kimi-k3` | 0,9–2,4 tok/s + sin tools |
+| `google/gemma-4-31b-it` | 2,2 tok/s + timeout |
+| `deepseek-ai/deepseek-v4-flash-0731` | 1 tok/s (inútil como agente) |
+| `deepseek-ai/deepseek-v4-pro-0813` | timeout |
+| `meta/llama-3.2-90b-vision-instruct` | timeout |
+| `poolside/laguna-xs-2.1` | 0,1 tok/s |
+| ~30 modelos más (01-ai, mistralai, ibm, google, etc.) | HTTP 404 (sin endpoint de chat) |
+
+**Retirados del whitelist original (410 Gone, end of life):** `z-ai/glm-5.2`, `openai/gpt-oss-120b`, `stepfun-ai/step-3.7-flash`, `thinkingmachines/inkling`, `meta/llama-3.1-8b-instruct`, `meta/llama-3.1-70b-instruct`, `meta/llama-3.3-70b-instruct`, `nvidia/llama-3.3-nemotron-super-49b-v1` y `v1.5`, `nvidia/nemotron-3-nano-30b-a3b`, `nvidia/nemotron-mini-4b-instruct`, `nvidia/nemotron-nano-12b-v2-vl`, `nvidia/nvidia-nemotron-nano-9b-v2`, `nvidia/llama-3.1-nemotron-nano-vl-8b-v1`.
+
+> 💡 **Conclusión:** el catálogo `models.dev` que integra OpenCode está desactualizado para NVIDIA (listaba modelos ya retirados). Por eso el `whitelist` manual es necesario: evita que aparezcan modelos muertos (410) en el selector `/models`.
 
 ### `lsp`
 Servidores de lenguaje (Language Server Protocol) que OpenCode lanza localmente para **ayudar a la IA** a analizar el código: localizar definiciones y referencias, detectar errores al editar y entender la estructura del proyecto. Configurados el **10/08/2026** en los tres perfiles:

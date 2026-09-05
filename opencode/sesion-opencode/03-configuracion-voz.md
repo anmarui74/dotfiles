@@ -228,7 +228,15 @@ await client.tui.submitPrompt();
 | `base` | `ggml-base.bin` | Básica |
 | `tiny` | `ggml-tiny.bin` | Rápida |
 
-El **modelo por defecto** es `large-v3-turbo-q5_0` (~4 GB). El wrapper `whisper-cli` fuerza idioma español con `-l es`.
+El **modelo por defecto** es `large-v3-turbo-q5_0` (**548 MB** en disco). El español se fuerza con `-l es` en la llamada del plugin (`stt.js`).
+
+### ⚡ Whisper con GPU (CUDA) — verificado
+
+El build local de whisper.cpp (`~/.local/share/whisper-cpp/bin/`) está **compilado con CUDA** y usa la GPU **por defecto** (en v1.9.1 no existe `-ngl`; el flag es `-ng`/`--no-gpu`, desactivado por defecto). Verificado con audio real:
+
+- Transcripción en GPU: **~1,1 GB de VRAM** extra durante la transcripción.
+- Rendimiento: **15x real-time** (11 s de voz → 0,76 s).
+- No requiere ninguna flag especial: el build CUDA detecta la GPU automáticamente.
 
 ---
 
@@ -439,11 +447,15 @@ Script de instalación **desde cero** del sistema de voz. Realiza:
 ### Wrapper whisper-cli
 
 ```bash
-#!/usr/bin/env bash
-exec /usr/bin/whisper-cli -l es "$@"
+#!/bin/bash
+# Wrapper whisper-cli con CUDA: añade el directorio local a LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="/home/antonio/.local/share/whisper-cpp/bin:${LD_LIBRARY_PATH}"
+exec /home/antonio/.local/share/whisper-cpp/bin/whisper-cli "$@"
 ```
 
-Esto es **fundamental** porque fuerza la transcripción en español. Sin el flag `-l es`, whisper intentaría detectar el idioma automáticamente, lo que puede fallar con acentos o vocabulario técnico.
+El wrapper apunta al **build local con CUDA** (`~/.local/share/whisper-cpp/bin/whisper-cli`) y añade su directorio a `LD_LIBRARY_PATH` para que se resuelvan `libggml-cuda.so.0` y las librerías del toolkit CUDA (`/opt/cuda`). El idioma español se fuerza con `-l es` **en la llamada del plugin** (`stt.js`), no en el wrapper.
+
+⚠️ Si el build local no existiera, el wrapper fallaría. Se instala/compila con CUDA desde `bootstrap-ocv.sh` (requiere `nvcc` + `cmake`; si no hay `nvcc`, cae al binario CPU oficial).
 
 ---
 

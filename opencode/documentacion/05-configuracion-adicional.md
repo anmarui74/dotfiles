@@ -179,8 +179,8 @@ HARDWARE_INDEX_PATH=/home/antonio/.config/opencode/data/hardware/index.json
 | `LOG_FILE` | `data/init.log` | Archivo de log de inicialización |
 | `LOG_RETENTION_DAYS` | `30` | Días de retención de logs y tarballs de backup |
 | `AUDIT_ENABLED` | `true` | Auditoría de actividad |
-| `ENABLE_METRICS` | — | Métricas de tokens/s (proxy LM Studio) |
-| `METRICS_EXPORT_PATH` | — | Ruta de exportación de métricas |
+| `ENABLE_METRICS` | `true` | Métricas de tokens/s (proxy LM Studio, activado 05/09/2026) |
+| `METRICS_EXPORT_PATH` | `data/metrics.json` | Ruta de exportación de métricas del proxy |
 | `HARDWARE_INDEX_PATH` | `data/hardware/index.json` | Ruta al índice de hardware |
 
 ### Cargar el .env
@@ -383,6 +383,34 @@ Está **integrado en `backup-opencode.sh`** (sección 0): se ejecuta SIEMPRE al 
 
 Verifica qué modelos están disponibles en LM Studio.
 
+### `lmstudio-proxy.py` (con métricas, 05/09/2026)
+
+**Archivo:** `~/.config/opencode/lmstudio-proxy.py`
+
+Proxy OpenCode ↔ LM Studio (puerto 4001). Además de reenviar las peticiones:
+- **Registra métricas por request** en `data/metrics.json` (definido en `METRICS_EXPORT_PATH` del `.env`, activado con `ENABLE_METRICS=true`): timestamp, modelo, tokens in/out, tiempo y **tokens/s**.
+- **Inyecta `stats.tokens_per_second`** en respuestas no-streaming (las streaming estiman tokens con chars/4 porque LM Studio no reporta usage en SSE).
+
+### `lmstudio-metrics-server.py` (dashboard, 05/09/2026)
+
+**Archivo:** `~/.config/opencode/lmstudio-metrics-server.py`
+
+Servidor web local (puerto 4200) con dashboard de métricas:
+- `http://localhost:4200/` → página HTML (última velocidad, media, peticiones, histórico).
+- `http://localhost:4200/api/metrics` → JSON crudo de `metrics.json`.
+
+Iniciar:
+```bash
+python3 ~/.config/opencode/lmstudio-metrics-server.py 4200
+```
+
+### Plugin TUI `opencode-throughput` (05/09/2026)
+
+Plugin npm registrado en `tui.json` (junto al plugin de voz). Muestra en la barra
+lateral de OpenCode el rendimiento de **cada solicitud y de cada modelo/provider**
+(local, NVIDIA y cloud): TPS medio, TTFT, latencia, tokens ↑/↓ y coste, más una
+lista "Recent" con cada petición. Se instala vía npm en `~/.cache/opencode/node_modules/`.
+
 ---
 
 ## Timeline completo (`timeline-completo`, 10/08/2026)
@@ -505,6 +533,10 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
  ├── check-setup-completo.sh    # Verificar setup antes de cada backup
   ├── hardware-query.sh          # Consulta hardware (wrapper)
   ├── hardware-query.py          # Consulta hardware (motor Python)
+  ├── lmstudio-proxy.py          # Proxy LM Studio + métricas (metrics.json)
+  ├── lmstudio-metrics-server.py # Dashboard web de métricas (puerto 4200)
+│
+├── tui.json                    # Config TUI (plugins: voz + opencode-throughput)
 │
 ├── settings.lmstudio.json     # Settings de LM Studio
 │
@@ -542,6 +574,7 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
     │   ├── index.json        # Información completa del sistema
     │   └── README.txt
     ├── memory/               # Grafo de memoria persistente
+    ├── metrics.json          # Métricas de tokens/s del proxy LM Studio
     ├── init.log              # Log de inicialización
     ├── sync.log              # Log de sincronización
     ├── available_models.txt  # Modelos disponibles

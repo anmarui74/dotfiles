@@ -425,9 +425,28 @@ Si el modelo se satura, usar:
 /home/antonio/.lmstudio/bin/lms unload --all
 ```
 
-### Tokens/s en respuestas locales (líneas 287-300)
+### Tokens/s (todas las fuentes, sección 4)
 
-El proxy en puerto 4001 calcula y muestra tokens/segundo en cada respuesta (campo `stats.tokens_per_second` del JSON). En la TUI aparece al final de cada mensaje junto al nombre del modelo (ej: "Qwen 3.5 Q6_K · 13.5 tok/s"). Método rápido por terminal:
+#### En la TUI — plugin `opencode-throughput` (05/09/2026)
+
+Registrado en `tui.json` junto al plugin de voz. En la barra lateral muestra el
+rendimiento de cada solicitud y de cada modelo/provider (local, NVIDIA y cloud):
+TPS medio, TTFT, latencia, tokens ↑/↓ y coste, más la lista "Recent". Funciona
+para TODOS los providers porque engancha los eventos de mensaje de OpenCode.
+
+#### Proxy local (puerto 4001)
+
+El proxy `lmstudio-proxy.py` (versión con métricas, 05/09/2026) reenvía a LM
+Studio y además:
+- Registra métricas por request en `data/metrics.json` (`METRICS_EXPORT_PATH`).
+- Inyecta `stats.tokens_per_second` en respuestas no-streaming.
+
+#### Dashboard web (puerto 4200)
+
+`lmstudio-metrics-server.py` sirve en `http://localhost:4200` el histórico de
+velocidad, tokens y peticiones del proxy local. Datos crudos en `/api/metrics`.
+
+Método rápido por terminal:
 
 ```bash
 curl -s http://localhost:4001/v1/chat/completions \
