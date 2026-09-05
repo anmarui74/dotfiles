@@ -147,6 +147,10 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
   3. Si el cambio afecta al proceso de instalación/restauración, modifica los scripts para reflejarlo
 - Ejecuta `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball con restore.sh actualizado
 - El tarball se genera en `~/Config/opencode/backups/opencode/`
+- **Credenciales de proveedores**: el backup incluye automáticamente
+  `~/.local/share/opencode/auth.json` (claves de NVIDIA `nvapi-*` y OpenCode GO `sk-*`)
+  en `credenciales/auth.json` dentro del tarball. El `restore.sh` lo restaura a su
+  ubicación original. Sin él, los agentes en la nube no funcionan tras reinstalar.
 
 ## Atención al script setup-opencode-completo.sh (IMPORTANTE)
 El script `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh` es el
@@ -178,8 +182,9 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
         (opencode.json, opencode-local.json, opencode-cloud.json, tui.json,
         AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
-        hardware-query, check-fix, check-timeline-fix, hardware-query.py,
-        lmstudio-proxy.py, backup-opencode, bootstrap-ocv, timeline-completo)
+        hardware-query, check-fix, check-timeline-fix, check-nvidia-whitelist,
+        hardware-query.py, lmstudio-proxy.py, backup-opencode, bootstrap-ocv,
+        timeline-completo)
         — no solo los JSON
   - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
   - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
@@ -337,6 +342,22 @@ Resumen de la metodología (en orden, obligatorio):
 5. **Reintentos:** los 429/500/503/timeout se reintentan con más margen antes de decidir.
 
 Whitelist actual (05/09/2026): 8 modelos operativos en los 3 perfiles. Los retirados devuelven **410 Gone** (end of life) y se eliminan del whitelist. Detalle completo (ranking y descartados) en el markdown citado.
+
+### 🤖 Verificación automática del whitelist (cada 15 días)
+Desde el **05/09/2026** existe un check automático que aplica la metodología anterior:
+- **Script:** `~/.config/opencode/check-nvidia-whitelist.sh`
+- **Timer systemd:** `check-nvidia-whitelist.timer` (días 1 y 16 de cada mes a las 10:00, retardo aleatorio 30 min)
+- **Qué hace:**
+  1. Verifica que los modelos del whitelist actual dan HTTP 200 real. Los **410 Gone** se ELIMINAN automáticamente de los 3 perfiles JSON.
+  2. Escanea el catálogo real buscando modelos NUEVOS (no vistos antes) y les aplica la metodología completa (velocidad ≥ 10 tok/s + tool calling).
+  3. Los que pasan TODO quedan como **CANDIDATOS** (log + notificación) para revisión manual de Antonio — NO se añaden solos.
+  4. Reintenta 429/500/503/timeout con margen antes de decidir.
+- **Log:** `~/.config/opencode/data/nvidia-whitelist.log`
+- **Estado:** `~/.config/opencode/data/nvidia-whitelist-state.json` (modelos vistos, retirados, última ejecución)
+- **API key:** se lee de `~/.local/share/opencode/auth.json` (clave `nvidia.key`, formato `nvapi-*`) — no está hardcodeada en el script.
+- Si el timer avisa de candidatos nuevos, revisar y, si procede, añadirlos al whitelist de los 3 perfiles siguiendo la metodología.
+- Ejecutar manualmente: `bash ~/.config/opencode/check-nvidia-whitelist.sh`
+- El script se documenta también en `04-perfiles-opencode-json.md`.
 
 ## Iniciar LM Studio manualmente
 ```bash

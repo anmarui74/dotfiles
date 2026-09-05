@@ -1,14 +1,14 @@
 # 🦀 arcman-gui — Gestor de paquetes de Arch Linux (Interfaz Gráfica)
 
-> **Usuario:** Antonio 🧑‍💻
-> **Ubicación:** Pechina, Almería, España 📍
-> **Fecha creación:** 05/07/2026 (última actualización: 10/08/2026)
-> **Versión:** 0.2.0 (GUI)
-> **Binario instalado:** `/home/antonio/.local/bin/arcman-gui`
+| ⚙️ Estado | 📅 Fecha | 👤 Usuario |
+|-----------|----------|------------|
+| ✅ Operativo | 10/08/2026 | Antonio |
+
+> Versión con interfaz gráfica del gestor arcman, desarrollada en Rust con Iced. Ofrece las mismas funciones que la CLI con una ventana a colores y diálogos de confirmación.
 
 ---
 
-## Índice
+## 📑 Índice
 
 1. [¿Qué es arcman-gui?](#qué-es-arcman-gui)
 2. [Diferencia con arcman (CLI)](#diferencia-con-arcman-cli)

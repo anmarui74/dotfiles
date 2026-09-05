@@ -70,6 +70,16 @@ if [ -d "${CONFIG_BACKUP}/data/onlyoffice-ai" ]; then
     echo "   ✅ Respaldo OnlyOffice-IA incluido en el backup"
 fi
 
+# ─── 1c. Incluir auth.json (claves de proveedores NVIDIA/OpenCode GO) ───
+AUTH_JSON="/home/antonio/.local/share/opencode/auth.json"
+if [ -f "$AUTH_JSON" ]; then
+    mkdir -p "${BACKUP_ROOT}/credenciales"
+    cp "$AUTH_JSON" "${BACKUP_ROOT}/credenciales/auth.json"
+    echo "   ✅ auth.json incluido en el backup (credenciales de proveedores)"
+else
+    echo "   ⚠️ auth.json no encontrado en $AUTH_JSON"
+fi
+
 # ─── 2. Generar restore.sh dentro del backup
 echo "🔧 Creando restore.sh..."
 cat > "${BACKUP_ROOT}/${BACKUP_NAME}-restore.sh" << 'RESTORE_EOF'
@@ -112,6 +122,14 @@ if [ -f "$SOURCE_DIR/setup-opencode-completo.sh" ]; then
     cp "$SOURCE_DIR/setup-opencode-completo.sh" \
        "/home/antonio/Config/opencode/sesion-opencode/setup-opencode-completo.sh"
     echo "✅ setup-opencode-completo.sh restaurado en Config/opencode/sesion-opencode/"
+fi
+
+# Restaurar auth.json (credenciales de proveedores) a su ubicación original
+if [ -f "${SOURCE_DIR}/credenciales/auth.json" ]; then
+    mkdir -p "/home/antonio/.local/share/opencode"
+    cp "${SOURCE_DIR}/credenciales/auth.json" \
+       "/home/antonio/.local/share/opencode/auth.json"
+    echo "✅ auth.json restaurado en .local/share/opencode/"
 fi
 
 if [ $? -eq 0 ]; then

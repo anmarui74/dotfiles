@@ -1,13 +1,14 @@
 # 🦀 arcman — Gestor de paquetes de Arch Linux en Rust
 
-> **Usuario:** Antonio 🧑‍💻
-> **Ubicación:** Pechina, Almería, España 📍
-> **Fecha creación:** 04/07/2026 (última actualización: 10/08/2026)
-> **Binario instalado:** `/usr/local/bin/arcman`
+| ⚙️ Estado | 📅 Fecha | 👤 Usuario |
+|-----------|----------|------------|
+| ✅ Operativo | 10/08/2026 | Antonio |
+
+> Gestor de paquetes interactivo para Arch Linux y derivados escrito en Rust puro. Integra pacman, yay/paru y paccache con interfaz de terminal a colores.
 
 ---
 
-## Índice
+## 📑 Índice
 
 1. [¿Qué es arcman?](#qué-es-arcman)
 2. [Requisitos y dependencias](#requisitos-y-dependencias)

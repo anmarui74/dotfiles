@@ -204,6 +204,8 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 
 > 📌 El backup completo se genera en `~/Config/opencode/backups/opencode/` con retención de 30 días y poda de 1 tarball por día.
 >
+> 🔑 Desde el **05/09/2026** el backup incluye además `auth.json` (credenciales de proveedores NVIDIA `nvapi-*` y OpenCode GO `sk-*`) en `credenciales/auth.json` dentro del tarball, y el `restore.sh` lo restaura a `~/.local/share/opencode/auth.json`. Sin él, los agentes en la nube no funcionan tras reinstalar.
+>
 > 💡 **Nota (10/08/2026):** el backup automático hace **exactamente lo mismo** que el manual: al final ejecuta el mismo `backup-opencode.sh`, que incluye la **verificación automática del setup** (`check-setup-completo.sh`). Si el setup estuviera incorrecto, el backup se aborta (y se registra en `data/sync.log`).
 
 ### ¿Cuándo se ejecuta?

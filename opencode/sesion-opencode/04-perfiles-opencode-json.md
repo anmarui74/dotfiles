@@ -500,6 +500,32 @@ Proveedores de modelos. Dos proveedores configurados:
 
 > 💡 **Conclusión:** el catálogo `models.dev` que integra OpenCode está desactualizado para NVIDIA (listaba modelos ya retirados). Por eso el `whitelist` manual es necesario: evita que aparezcan modelos muertos (410) en el selector `/models`.
 
+### 🤖 Verificación automática del whitelist (desde 05/09/2026)
+
+La metodología anterior se aplica automáticamente **cada 15 días**:
+
+| Elemento | Detalle |
+|----------|---------|
+| **Script** | `~/.config/opencode/check-nvidia-whitelist.sh` |
+| **Timer systemd** | `check-nvidia-whitelist.timer` (días 1 y 16 de cada mes a las 10:00, retardo aleatorio 30 min, `Persistent=true`) |
+| **Log** | `~/.config/opencode/data/nvidia-whitelist.log` |
+| **Estado** | `~/.config/opencode/data/nvidia-whitelist-state.json` (modelos vistos, retirados, última ejecución) |
+| **API key** | Se lee de `~/.local/share/opencode/auth.json` → `nvidia.key` (`nvapi-*`) — no hardcodeada |
+
+**Comportamiento:**
+
+1. **Verifica los modelos del whitelist actual** en los 3 perfiles con `POST /chat/completions` real (HTTP 200).
+2. **Reintenta** 429/500/503/timeout con margen antes de decidir (como manda la metodología).
+3. Los que devuelven **410 Gone** (end of life) se **ELIMINAN automáticamente** del whitelist de los 3 JSON (con backup `.bak` previo de cada archivo).
+4. **Escanea el catálogo real** (`GET /v1/models`) buscando modelos no vistos en la última ejecución.
+5. A los nuevos les aplica la metodología completa (HTTP 200 → velocidad ≥ 10 tok/s → tool calling real).
+6. Los que pasan TODO quedan como **CANDIDATOS** (log + notificación de escritorio) para **revisión manual** — no se añaden solos al whitelist.
+7. Guarda el estado para no re-probar modelos ya vistos en ejecuciones siguientes.
+
+**Primera ejecución (05/09/2026):** sembró el estado con los 73 modelos del catálogo no pertenecientes al whitelist (los 10 probados, todos descartados: 8 con HTTP 404 sin endpoint de chat, 2 DeepSeek con timeout). Los 8 del whitelist confirmados HTTP 200.
+
+> ⚠️ **Nota:** si la notificación del timer avisa de candidatos nuevos, revisarlos con la metodología y, si procede, añadirlos manualmente al whitelist de los 3 perfiles (y actualizar este markdown).
+
 ### `lsp`
 Servidores de lenguaje (Language Server Protocol) que OpenCode lanza localmente para **ayudar a la IA** a analizar el código: localizar definiciones y referencias, detectar errores al editar y entender la estructura del proyecto. Configurados el **10/08/2026** en los tres perfiles:
 

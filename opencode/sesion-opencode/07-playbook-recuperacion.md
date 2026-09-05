@@ -34,6 +34,7 @@
 | Grafo de memoria (activo) | `~/.config/opencode/data/memory/memory.jsonl` |
 | Grafo de memoria (backup) | `~/Config/opencode/backups/mcp-memory-backup-*.jsonl` |
 | Variables de entorno | `~/.config/opencode/.env` |
+| Credenciales de proveedores LLM (NVIDIA, OpenCode GO) | `~/.local/share/opencode/auth.json` (backup en `credenciales/auth.json` del tarball) |
 | Base de datos de sesiones | `~/.local/share/opencode/opencode.db` |
 | Cache de plugins npm | `~/.cache/opencode/node_modules/` |
 
@@ -124,6 +125,11 @@ ls /tmp/opencode-restore   # debe contener setup-opencode-completo.sh + restore.
 > 📌 El instalador `setup-opencode-completo.sh` (con todos los heredocs
 > embebidos) reinstala configuración, scripts, perfiles, skills, voz y MCPs.
 > El `restore.sh` coloca el setup en `~/Config/opencode/sesion-opencode/`.
+
+> 🔑 El `restore.sh` restaura también `auth.json` (credenciales de NVIDIA
+> `nvapi-*` y OpenCode GO `sk-*`) a `~/.local/share/opencode/auth.json`
+> desde `credenciales/auth.json` del tarball. Sin este paso, los agentes
+> en la nube no funcionan tras reinstalar.
 
 Ejecuta el instalador:
 

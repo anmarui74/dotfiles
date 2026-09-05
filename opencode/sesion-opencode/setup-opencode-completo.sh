@@ -1261,6 +1261,386 @@ esac
 TIMELINE-FIX_SHEOF
 chmod +x "$DIR_CONFIG/check-timeline-fix.sh"
 
+# ─── Verificación automática del whitelist NVIDIA (cada 15 días) ───
+cat > "$DIR_CONFIG/check-nvidia-whitelist.sh" << 'NVIDIA-WL_SHEOF'
+#!/usr/bin/env bash
+# ============================================================
+# check-nvidia-whitelist.sh — Verificación automática del
+# whitelist de modelos NVIDIA (metodología 05/09/2026)
+#
+# Se ejecuta automáticamente CADA 15 DÍAS vía el timer
+# systemd check-nvidia-whitelist.timer (días 1 y 16 de mes).
+#
+# Qué hace:
+#   1. Verifica que los modelos del whitelist actual (3 perfiles
+#      JSON) siguen operativos con HTTP 200 real.
+#   2. Los que devuelven HTTP 410 Gone (end of life) se ELIMINAN
+#      del whitelist de los 3 perfiles.
+#   3. Escanea el catálogo real (GET /v1/models) buscando modelos
+#      NUEVOS (no vistos en la última ejecución).
+#   4. A los nuevos les aplica la metodología completa:
+#      HTTP 200 real → velocidad ≥ 10 tok/s → tool calling real.
+#   5. Los que pasan TODO quedan como CANDIDATOS (log + notificación)
+#      para revisión de Antonio — NO se añaden automáticamente.
+#   6. Registra todo en data/nvidia-whitelist.log y guarda el
+#      estado en data/nvidia-whitelist-state.json.
+#   7. Notificación de escritorio si hay retirados o candidatos.
+#
+# No toca nada si no hay conexión o falta la API key.
+# ============================================================
+
+set -u
+
+CONFIG_DIR="$HOME/.config/opencode"
+AUTH_FILE="$HOME/.local/share/opencode/auth.json"
+LOG_FILE="$CONFIG_DIR/data/nvidia-whitelist.log"
+STATE_FILE="$CONFIG_DIR/data/nvidia-whitelist-state.json"
+API_URL="https://integrate.api.nvidia.com/v1"
+JSONS=("$CONFIG_DIR/opencode.json" "$CONFIG_DIR/opencode-local.json" "$CONFIG_DIR/opencode-cloud.json")
+MIN_TOKENS_PER_SEC=10
+GENERATION_TOKENS=200
+MAX_NEW_MODELS_PER_RUN=10   # límite de modelos nuevos probados por ejecución
+CURL_TIMEOUT=60
+
+log() {
+    echo "[$(date '+%d/%m/%Y %H:%M:%S')] $*" >> "$LOG_FILE"
+}
+
+# ------------------------------------------------------------
+# 1. Obtener API key de NVIDIA desde auth.json de OpenCode
+# ------------------------------------------------------------
+get_api_key() {
+    if [ ! -f "$AUTH_FILE" ]; then
+        echo ""
+        return 1
+    fi
+    python3 -c "
+import json, sys
+try:
+    with open('$AUTH_FILE') as f:
+        d = json.load(f)
+    nv = d.get('nvidia', {})
+    key = nv.get('key', '') if isinstance(nv, dict) else ''
+    print(key)
+except Exception:
+    print('')
+"
+}
+
+# ------------------------------------------------------------
+# 2. Leer el whitelist actual del primer perfil (todos iguales)
+# ------------------------------------------------------------
+get_current_whitelist() {
+    python3 -c "
+import json, sys
+with open('$CONFIG_DIR/opencode.json') as f:
+    d = json.load(f)
+wl = d.get('provider', {}).get('nvidia', {}).get('whitelist', [])
+print('\n'.join(wl))
+"
+}
+
+# ------------------------------------------------------------
+# 3. Leer el estado guardado de la última ejecución
+# ------------------------------------------------------------
+load_state() {
+    if [ -f "$STATE_FILE" ]; then
+        cat "$STATE_FILE"
+    else
+        echo '{"modelos_vistos": [], "descartados": {}, "retirados": {}}'
+    fi
+}
+
+# ------------------------------------------------------------
+# 4. Petición POST /chat/completions a un modelo
+#    Devuelve: HTTP_CODE|completion_tokens|segundos|tool_calls
+# ------------------------------------------------------------
+chat_test() {
+    local model="$1"
+    local payload="$2"
+    local start end seconds
+    local resp code
+
+    start=$(date +%s.%N)
+    resp=$(curl -s --max-time "$CURL_TIMEOUT" -w '\n%{http_code}' -X POST \
+        "$API_URL/chat/completions" \
+        -H "Authorization: Bearer $API_KEY" \
+        -H "Content-Type: application/json" \
+        -d "$payload" 2>/dev/null)
+    code="${resp##*$'\n'}"
+    resp="${resp%$'\n'*}"
+
+    if [ "$code" = "200" ]; then
+        end=$(date +%s.%N)
+        seconds=$(python3 -c "print(f'{$end - $start:.2f}')")
+        # Extraer completion_tokens y tool_calls del JSON
+        echo "$resp" | python3 -c "
+import json, sys
+try:
+    d = json.load(sys.stdin)
+    ct = d.get('usage', {}).get('completion_tokens', 0)
+    msg = d.get('choices', [{}])[0].get('message', {})
+    tc = 1 if msg.get('tool_calls') else 0
+    print(f'200|{ct}|$seconds|{tc}')
+except Exception:
+    print('200|0|$seconds|0')
+"
+    else
+        echo "$code|0|0|0"
+    fi
+}
+
+# ------------------------------------------------------------
+# 5. Prueba completa de un modelo nuevo (metodología 05/09/2026)
+#    HTTP 200 → velocidad ≥ 10 tok/s → tool calling real
+#    Salida: OK|tok/s|motivo  o  KO|0|motivo
+# ------------------------------------------------------------
+full_test_new_model() {
+    local model="$1"
+    local payload result code ct seconds tc toks
+
+    # Paso A: petición con tools para medir velocidad Y tool calling
+    payload='{
+        "model": "'"$model"'",
+        "messages": [{"role": "user", "content": "Escribe un texto de unas 180 palabras sobre la historia de la informática."}],
+        "max_tokens": '"$GENERATION_TOKENS"',
+        "tools": [{
+            "type": "function",
+            "function": {
+                "name": "get_current_time",
+                "description": "Devuelve la hora actual",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        }],
+        "tool_choice": "auto"
+    }'
+
+    result=$(chat_test "$model" "$payload")
+    code="${result%%|*}"
+    rest="${result#*|}"
+    ct="${rest%%|*}"
+    rest="${rest#*|}"
+    seconds="${rest%%|*}"
+    tc="${rest##*|}"
+
+    if [ "$code" != "200" ]; then
+        case "$code" in
+            410) echo "KO|0|HTTP 410 Gone (end of life)" ;;
+            404) echo "KO|0|HTTP 404 sin endpoint de chat" ;;
+            429) echo "KO|0|HTTP 429 rate limit" ;;
+            *)   echo "KO|0|HTTP $code" ;;
+        esac
+        return
+    fi
+
+    # Calcular tok/s (evitar división por cero)
+    toks=$(python3 -c "
+ct = float('$ct'); sec = float('$seconds')
+if sec <= 0 or ct <= 0: print('0')
+else: print(f'{ct/sec:.1f}')
+")
+
+    # Paso B: exigir velocidad mínima
+    if python3 -c "exit(0 if float('$toks') >= $MIN_TOKENS_PER_SEC else 1)"; then
+        # Paso C: exigir tool calling real
+        if [ "$tc" = "1" ]; then
+            echo "OK|$toks|tool calling OK"
+        else
+            echo "KO|$toks|sin tool calling (inutilizable en OpenCode)"
+        fi
+    else
+        echo "KO|$toks|solo $toks tok/s (mínimo $MIN_TOKENS_PER_SEC)"
+    fi
+}
+
+# ------------------------------------------------------------
+# 6. Actualizar el whitelist en los 3 perfiles JSON
+# ------------------------------------------------------------
+update_whitelist() {
+    local new_wl="$1"
+    local wl_json
+    wl_json=$(python3 -c "
+import json
+wl = '''$new_wl'''.strip().split('\n')
+wl = [m for m in wl if m.strip()]
+print(json.dumps(wl))
+")
+    local ok=1
+    for jf in "${JSONS[@]}"; do
+        if [ -f "$jf" ]; then
+            cp "$jf" "$jf.bak" 2>/dev/null
+            if python3 -c "
+import json
+with open('$jf') as f:
+    d = json.load(f)
+d.setdefault('provider', {}).setdefault('nvidia', {})['whitelist'] = json.loads('''$wl_json''')
+with open('$jf', 'w') as f:
+    json.dump(d, f, indent=2, ensure_ascii=False)
+    f.write('\n')
+" 2>>"$LOG_FILE"; then
+                log "✅ Whitelist actualizado en $jf"
+            else
+                log "❌ ERROR actualizando $jf (restaurando backup)"
+                cp "$jf.bak" "$jf" 2>/dev/null
+                ok=0
+            fi
+        fi
+    done
+    return $ok
+}
+
+# ============================================================
+# MAIN
+# ============================================================
+mkdir -p "$CONFIG_DIR/data"
+
+API_KEY=$(get_api_key)
+if [ -z "$API_KEY" ]; then
+    log "❌ No se encontró la API key de NVIDIA en $AUTH_FILE. Abortando."
+    exit 1
+fi
+
+# Comprobar conexión con el catálogo
+CATALOG=$(curl -s --max-time 30 "$API_URL/models" -H "Authorization: Bearer $API_KEY" 2>/dev/null)
+if [ -z "$CATALOG" ] || ! echo "$CATALOG" | python3 -c "import json,sys; json.load(sys.stdin)" 2>/dev/null; then
+    log "⚠️ Sin conexión con la API de NVIDIA o respuesta inválida. No se toca nada."
+    exit 0
+fi
+
+# Lista de modelos del catálogo real
+CATALOG_MODELS=$(echo "$CATALOG" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+print('\n'.join(m.get('id', '') for m in d.get('data', []) if m.get('id')))
+")
+
+# Whitelist actual
+CURRENT_WL=$(get_current_whitelist)
+log "🔍 Verificación quincenal del whitelist NVIDIA (${CURRENT_WL:-vacío})"
+
+# Estado previo
+STATE=$(load_state)
+SEEN=$(echo "$STATE" | python3 -c "import json,sys; print('\n'.join(json.load(sys.stdin).get('modelos_vistos', [])))")
+
+CHANGES=""
+NEW_WL="$CURRENT_WL"
+RETIRED=""
+ADDED=""
+
+# --- Fase 1: verificar los modelos del whitelist actual ---
+if [ -n "$CURRENT_WL" ]; then
+    while IFS= read -r model; do
+        [ -z "$model" ] && continue
+        payload='{"model": "'"$model"'", "messages": [{"role": "user", "content": "hola"}], "max_tokens": 5}'
+        result=$(chat_test "$model" "$payload")
+        code="${result%%|*}"
+        # Reintentar sobrecarga/errores transitorios (metodología 05/09/2026):
+        # 429/500/503/timeout(000) se reintentan con más margen antes de decidir
+        if [ "$code" = "429" ] || [ "$code" = "500" ] || [ "$code" = "503" ] || [ "$code" = "000" ]; then
+            log "🔄 $model → HTTP $code, reintentando (sobrecarga/transitorio)..."
+            sleep 5
+            result=$(chat_test "$model" "$payload")
+            code="${result%%|*}"
+        fi
+        case "$code" in
+            200)
+                log "✅ $model operativo (HTTP 200)"
+                ;;
+            410)
+                log "🔴 $model RETIRADO (HTTP 410 Gone) → se elimina del whitelist"
+                RETIRED="$RETIRED
+$model"
+                NEW_WL=$(echo "$NEW_WL" | grep -v "^$model$")
+                CHANGES="yes"
+                ;;
+            *)
+                log "⚠️ $model respuesta inesperada (HTTP $code). Se mantiene."
+                ;;
+        esac
+    done <<< "$CURRENT_WL"
+fi
+
+# --- Fase 2: buscar modelos NUEVOS en el catálogo ---
+NEW_CANDIDATES=$(echo "$CATALOG_MODELS" | grep -vxF -f <(printf '%s\n' "$SEEN" "$CURRENT_WL" | grep -v '^$') || true)
+NEW_CANDIDATES=$(echo "$NEW_CANDIDATES" | grep -v '^$' || true)
+
+if [ -n "$NEW_CANDIDATES" ]; then
+    log "🔎 Modelos nuevos detectados en el catálogo: $(echo "$NEW_CANDIDATES" | wc -l)"
+    COUNT=0
+    while IFS= read -r model; do
+        [ -z "$model" ] && continue
+        COUNT=$((COUNT + 1))
+        [ "$COUNT" -gt "$MAX_NEW_MODELS_PER_RUN" ] && { log "⏸️  Límite de $MAX_NEW_MODELS_PER_RUN modelos nuevos por ejecución alcanzado."; break; }
+        log "🧪 Probando modelo nuevo: $model"
+        verdict=$(full_test_new_model "$model")
+        status="${verdict%%|*}"
+        detail="${verdict#*|}"
+        if [ "$status" = "OK" ]; then
+            toks="${detail%%|*}"
+            log "🎉 $model PASA la metodología ($toks tok/s, tool calling OK) → CANDIDATO para el whitelist (revisión manual)"
+            ADDED="$ADDED
+$model"
+        else
+            motivo="${detail#*|}"
+            log "❌ $model descartado: $motivo"
+        fi
+    done <<< "$NEW_CANDIDATES"
+else
+    log "✅ Sin modelos nuevos en el catálogo."
+fi
+
+# --- Fase 3: aplicar cambios al whitelist si hay retirados ---
+if [ "$CHANGES" = "yes" ]; then
+    NEW_WL=$(echo "$NEW_WL" | grep -v '^$' | sort -u)
+    if update_whitelist "$NEW_WL"; then
+        log "📝 Whitelist actualizado ($(echo "$NEW_WL" | wc -l) modelos):"
+        echo "$NEW_WL" | while IFS= read -r m; do log "   - $m"; done
+    else
+        log "❌ Error al actualizar los perfiles. Revisar backups .bak."
+    fi
+else
+    log "ℹ️ Sin retirados: el whitelist no se modifica."
+fi
+
+# --- Fase 3b: notificar si hubo cambios o candidatos ---
+if [ "$CHANGES" = "yes" ] || [ -n "$ADDED" ]; then
+    if command -v notify-send >/dev/null 2>&1; then
+        MSG=""
+        [ -n "$RETIRED" ] && MSG="${MSG}Retirados (eliminados del whitelist):\n$(echo "$RETIRED" | grep -v '^$' | sed 's/^/  • /')\n"
+        [ -n "$ADDED" ] && MSG="${MSG}Candidatos nuevos (revisar para añadir):\n$(echo "$ADDED" | grep -v '^$' | sed 's/^/  • /')\n"
+        notify-send -u normal "OpenCode: verificación NVIDIA quincenal" \
+            "$(printf "$MSG")" 2>/dev/null || true
+    fi
+fi
+
+# --- Fase 4: guardar estado de la ejecución ---
+python3 -c "
+import json
+state = json.loads('''$STATE''')
+state['ultima_ejecucion'] = '$(date '+%Y-%m-%dT%H:%M:%S')'
+# modelos_vistos = todo el catálogo actual
+state['modelos_vistos'] = '''$CATALOG_MODELS'''.strip().split('\n')
+state['modelos_vistos'] = [m for m in state['modelos_vistos'] if m]
+# guardar retirados
+import datetime
+hoy = '$(date '+%Y-%m-%d')'
+ret = '''$RETIRED'''.strip().split('\n')
+for m in ret:
+    if m:
+        state.setdefault('retirados', {})[m] = {'fecha': hoy, 'http': 410}
+with open('$STATE_FILE', 'w') as f:
+    json.dump(state, f, indent=2, ensure_ascii=False)
+    f.write('\n')
+" 2>>"$LOG_FILE" || log "⚠️ No se pudo guardar el estado en $STATE_FILE"
+
+log "🏁 Verificación completada."
+exit 0
+NVIDIA-WL_SHEOF
+
+chmod +x "$DIR_CONFIG/check-nvidia-whitelist.sh"
+info "check-nvidia-whitelist.sh creado (verifica whitelist NVIDIA cada 15 días)"
+
+
 # ─── check-setup-completo: verificación OBLIGATORIA del setup antes de backup ───
 cat > "$DIR_CONFIG/check-setup-completo.sh" << 'CHECK-SETUP_SHEOF'
 #!/usr/bin/env bash
@@ -1359,6 +1739,7 @@ archivos = {
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
     'hardware-query.py': 'HARDWARE-QUERY_PYEOF',
     'check-fix.sh': 'CHECK-FIX_SHEOF', 'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
+    'check-nvidia-whitelist.sh': 'NVIDIA-WL_SHEOF',
     'lmstudio-proxy.py': 'LMPROXYEOF', 'lmstudio-metrics-server.py': 'METRICSSRVEOF',
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
@@ -1378,6 +1759,8 @@ extra_archivos = [
     ('plugin voz lib/llm-client.js', 'LLMCLIENTJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/llm-client.js'),
     ('systemd check-opencode-fix.service', 'CHKFIXSERVEOF', '/home/antonio/.config/systemd/user/check-opencode-fix.service'),
     ('systemd check-opencode-fix.timer', 'CHKFIXTIMEREOF', '/home/antonio/.config/systemd/user/check-opencode-fix.timer'),
+    ('systemd check-nvidia-whitelist.service', 'NVIDIAWL-SERVEOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.service'),
+    ('systemd check-nvidia-whitelist.timer', 'NVIDIAWL-TIMEREOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.timer'),
 ]
 
 ok = 0
@@ -1463,6 +1846,7 @@ else
     log "✅✅✅ VERIFICACIÓN COMPLETA: SETUP CORRECTO — SE PUEDE HACER EL BACKUP ✅✅✅"
     exit 0
 fi
+
 CHECK-SETUP_SHEOF
 chmod +x "$DIR_CONFIG/check-setup-completo.sh"
 info "check-setup-completo.sh creado (verifica el setup antes de cada backup)"
@@ -1517,13 +1901,41 @@ Persistent=true
 WantedBy=timers.target
 CHKFIXTIMEREOF
 
+cat > "$HOME/.config/systemd/user/check-nvidia-whitelist.service" << 'NVIDIAWL-SERVEOF'
+[Unit]
+Description=Check NVIDIA whitelist status (models 410 Gone / new candidates)
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.config/opencode/check-nvidia-whitelist.sh
+NVIDIAWL-SERVEOF
+
+cat > "$HOME/.config/systemd/user/check-nvidia-whitelist.timer" << 'NVIDIAWL-TIMEREOF'
+[Unit]
+Description=Check NVIDIA whitelist every 15 days (días 1 y 16 de cada mes)
+
+[Timer]
+# Quincenal: días 1 y 16 de cada mes a las 10:00
+OnCalendar=*-*-1,16 10:00:00
+# Margen por si el equipo está apagado
+Persistent=true
+# Pequeño retardo aleatorio para evitar picos
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target
+NVIDIAWL-TIMEREOF
+
+
+
 systemctl --user daemon-reload 2>/dev/null || true
 systemctl --user disable init-opencode.service 2>/dev/null || true
 systemctl --user enable opencode-sync.timer 2>/dev/null || true
 systemctl --user start opencode-sync.timer 2>/dev/null || true
 systemctl --user enable --now check-timeline-fix.timer 2>/dev/null || true
 systemctl --user enable --now check-opencode-fix.timer 2>/dev/null || true
-info "Servicios systemd: sync activado, init deshabilitado, check-timeline-fix y check-opencode-fix activados"
+systemctl --user enable --now check-nvidia-whitelist.timer 2>/dev/null || true
+info "Servicios systemd: sync activado, init deshabilitado, check-timeline-fix, check-opencode-fix y check-nvidia-whitelist activados"
 echo ""
 
 # ═══════════════════════════════════════════════════════════
@@ -1681,6 +2093,10 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
   3. Si el cambio afecta al proceso de instalación/restauración, modifica los scripts para reflejarlo
 - Ejecuta `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball con restore.sh actualizado
 - El tarball se genera en `~/Config/opencode/backups/opencode/`
+- **Credenciales de proveedores**: el backup incluye automáticamente
+  `~/.local/share/opencode/auth.json` (claves de NVIDIA `nvapi-*` y OpenCode GO `sk-*`)
+  en `credenciales/auth.json` dentro del tarball. El `restore.sh` lo restaura a su
+  ubicación original. Sin él, los agentes en la nube no funcionan tras reinstalar.
 
 ## Atención al script setup-opencode-completo.sh (IMPORTANTE)
 El script `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh` es el
@@ -1712,8 +2128,9 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
         (opencode.json, opencode-local.json, opencode-cloud.json, tui.json,
         AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
-        hardware-query, check-fix, check-timeline-fix, hardware-query.py,
-        lmstudio-proxy.py, backup-opencode, bootstrap-ocv, timeline-completo)
+        hardware-query, check-fix, check-timeline-fix, check-nvidia-whitelist,
+        hardware-query.py, lmstudio-proxy.py, backup-opencode, bootstrap-ocv,
+        timeline-completo)
         — no solo los JSON
   - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
   - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
@@ -1871,6 +2288,22 @@ Resumen de la metodología (en orden, obligatorio):
 5. **Reintentos:** los 429/500/503/timeout se reintentan con más margen antes de decidir.
 
 Whitelist actual (05/09/2026): 8 modelos operativos en los 3 perfiles. Los retirados devuelven **410 Gone** (end of life) y se eliminan del whitelist. Detalle completo (ranking y descartados) en el markdown citado.
+
+### 🤖 Verificación automática del whitelist (cada 15 días)
+Desde el **05/09/2026** existe un check automático que aplica la metodología anterior:
+- **Script:** `~/.config/opencode/check-nvidia-whitelist.sh`
+- **Timer systemd:** `check-nvidia-whitelist.timer` (días 1 y 16 de cada mes a las 10:00, retardo aleatorio 30 min)
+- **Qué hace:**
+  1. Verifica que los modelos del whitelist actual dan HTTP 200 real. Los **410 Gone** se ELIMINAN automáticamente de los 3 perfiles JSON.
+  2. Escanea el catálogo real buscando modelos NUEVOS (no vistos antes) y les aplica la metodología completa (velocidad ≥ 10 tok/s + tool calling).
+  3. Los que pasan TODO quedan como **CANDIDATOS** (log + notificación) para revisión manual de Antonio — NO se añaden solos.
+  4. Reintenta 429/500/503/timeout con margen antes de decidir.
+- **Log:** `~/.config/opencode/data/nvidia-whitelist.log`
+- **Estado:** `~/.config/opencode/data/nvidia-whitelist-state.json` (modelos vistos, retirados, última ejecución)
+- **API key:** se lee de `~/.local/share/opencode/auth.json` (clave `nvidia.key`, formato `nvapi-*`) — no está hardcodeada en el script.
+- Si el timer avisa de candidatos nuevos, revisar y, si procede, añadirlos al whitelist de los 3 perfiles siguiendo la metodología.
+- Ejecutar manualmente: `bash ~/.config/opencode/check-nvidia-whitelist.sh`
+- El script se documenta también en `04-perfiles-opencode-json.md`.
 
 ## Iniciar LM Studio manualmente
 ```bash
@@ -4071,6 +4504,16 @@ if [ -d "${CONFIG_BACKUP}/data/onlyoffice-ai" ]; then
     echo "   ✅ Respaldo OnlyOffice-IA incluido en el backup"
 fi
 
+# ─── 1c. Incluir auth.json (claves de proveedores NVIDIA/OpenCode GO) ───
+AUTH_JSON="/home/antonio/.local/share/opencode/auth.json"
+if [ -f "$AUTH_JSON" ]; then
+    mkdir -p "${BACKUP_ROOT}/credenciales"
+    cp "$AUTH_JSON" "${BACKUP_ROOT}/credenciales/auth.json"
+    echo "   ✅ auth.json incluido en el backup (credenciales de proveedores)"
+else
+    echo "   ⚠️ auth.json no encontrado en $AUTH_JSON"
+fi
+
 # ─── 2. Generar restore.sh dentro del backup
 echo "🔧 Creando restore.sh..."
 cat > "${BACKUP_ROOT}/${BACKUP_NAME}-restore.sh" << 'RESTORE_EOF'
@@ -4113,6 +4556,14 @@ if [ -f "$SOURCE_DIR/setup-opencode-completo.sh" ]; then
     cp "$SOURCE_DIR/setup-opencode-completo.sh" \
        "/home/antonio/Config/opencode/sesion-opencode/setup-opencode-completo.sh"
     echo "✅ setup-opencode-completo.sh restaurado en Config/opencode/sesion-opencode/"
+fi
+
+# Restaurar auth.json (credenciales de proveedores) a su ubicación original
+if [ -f "${SOURCE_DIR}/credenciales/auth.json" ]; then
+    mkdir -p "/home/antonio/.local/share/opencode"
+    cp "${SOURCE_DIR}/credenciales/auth.json" \
+       "/home/antonio/.local/share/opencode/auth.json"
+    echo "✅ auth.json restaurado en .local/share/opencode/"
 fi
 
 if [ $? -eq 0 ]; then

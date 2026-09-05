@@ -94,6 +94,7 @@ archivos = {
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
     'hardware-query.py': 'HARDWARE-QUERY_PYEOF',
     'check-fix.sh': 'CHECK-FIX_SHEOF', 'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
+    'check-nvidia-whitelist.sh': 'NVIDIA-WL_SHEOF',
     'lmstudio-proxy.py': 'LMPROXYEOF', 'lmstudio-metrics-server.py': 'METRICSSRVEOF',
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
@@ -113,6 +114,8 @@ extra_archivos = [
     ('plugin voz lib/llm-client.js', 'LLMCLIENTJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/llm-client.js'),
     ('systemd check-opencode-fix.service', 'CHKFIXSERVEOF', '/home/antonio/.config/systemd/user/check-opencode-fix.service'),
     ('systemd check-opencode-fix.timer', 'CHKFIXTIMEREOF', '/home/antonio/.config/systemd/user/check-opencode-fix.timer'),
+    ('systemd check-nvidia-whitelist.service', 'NVIDIAWL-SERVEOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.service'),
+    ('systemd check-nvidia-whitelist.timer', 'NVIDIAWL-TIMEREOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.timer'),
 ]
 
 ok = 0
