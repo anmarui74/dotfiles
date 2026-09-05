@@ -11,10 +11,10 @@ struct DisplayCycleApp {
 impl DisplayCycleApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let icon_paths = vec![
-            "/home/antonio/Documentos/dotfiles/utilidades rust/display-cycle/icons/extended.png".to_string(),
-            "/home/antonio/Documentos/dotfiles/utilidades rust/display-cycle/icons/mirror.png".to_string(),
-            "/home/antonio/Documentos/dotfiles/utilidades rust/display-cycle/icons/solo1.png".to_string(),
-            "/home/antonio/Documentos/dotfiles/utilidades rust/display-cycle/icons/solo2.png".to_string(),
+            "/home/antonio/Config/utilidades rust/display-cycle/icons/extended.png".to_string(),
+            "/home/antonio/Config/utilidades rust/display-cycle/icons/mirror.png".to_string(),
+            "/home/antonio/Config/utilidades rust/display-cycle/icons/solo1.png".to_string(),
+            "/home/antonio/Config/utilidades rust/display-cycle/icons/solo2.png".to_string(),
         ];
         let mut textures = Vec::new();
         let mut last_mtimes = Vec::new();
