@@ -53,7 +53,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.5-9b",
+  "small_model": "lmstudio/models-qwen3.8-9b",
   "instructions": ["AGENTS.md"],
   "default_agent": "cloud",
   "permission": {
@@ -73,9 +73,9 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
       "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
-      "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
+      "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.5-9b"
+      "model": "lmstudio/models-qwen3.8-9b"
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
@@ -109,12 +109,12 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Qwen 3.5 Q6_K",
-      "model": "models-qwen3.5-9b",
+      "name": "Qwen 3.8 Q6_K",
+      "model": "models-qwen3.8-9b",
       "options": {"baseURL": "http://localhost:4001/v1"},
       "models": {
-        "models-qwen3.5-9b": {
-          "name": "Qwen 3.5 - Tool Calling Excellence",
+        "models-qwen3.8-9b": {
+          "name": "Qwen 3.8 - Tool Calling Excellence",
           "tools": true,
           "limit": {"context": 81920, "output": 8192}
         }
@@ -187,7 +187,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.5-9b",
+  "small_model": "lmstudio/models-qwen3.8-9b",
   "instructions": ["AGENTS.md"],
   "default_agent": "local",
   "permission": {
@@ -203,9 +203,9 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
       "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
-      "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
+      "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.5-9b"
+      "model": "lmstudio/models-qwen3.8-9b"
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
@@ -239,12 +239,12 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Qwen 3.5 Q6_K",
-      "model": "models-qwen3.5-9b",
+      "name": "Qwen 3.8 Q6_K",
+      "model": "models-qwen3.8-9b",
       "options": {"baseURL": "http://localhost:4001/v1"},
       "models": {
-        "models-qwen3.5-9b": {
-          "name": "Qwen 3.5 - Tool Calling Excellence",
+        "models-qwen3.8-9b": {
+          "name": "Qwen 3.8 - Tool Calling Excellence",
           "tools": true,
           "limit": {"context": 81920, "output": 8192}
         }
@@ -329,7 +329,7 @@ La diferencia con `opencode.json` (por defecto) es:
 | Aspecto | `opencode.json` (defecto) | Local | Cloud |
 |---------|---------------------------|-------|-------|
 | **Agentes** | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `cloud`, `nvidia` |
-| **Agente principal** | `cloud` (OpenCode Go) | `local` (Qwen 3.5 local) | `cloud` (OpenCode Go) |
+| **Agente principal** | `cloud` (OpenCode Go) | `local` (Qwen 3.8 local) | `cloud` (OpenCode Go) |
 | **Agente local** | ✅ activo (primario) | ✅ activo (primario) | ❌ desactivado |
 | **Modelo cloud** | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) |
 | **Agente NVIDIA** | ✅ Muse Glimmer 30B | ✅ Muse Glimmer 30B | ✅ Muse Glimmer 30B |
@@ -434,7 +434,7 @@ Define agentes (personas/modos del asistente):
 
 - **build:** Agente especial para tareas de construcción (lee AGENTS.md al inicio). Desde el **18/08/2026** usa **DeepSeek V4 Flash** como modelo explícito
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
-- **local:** Agente local, usa el modelo Qwen 3.5 Q6_K vía LM Studio (puerto 4001). Es **primario** en el perfil activo y en el perfil local; **desactivado** (`disable: true`) en el perfil cloud
+- **local:** Agente local, usa el modelo Qwen 3.8 Q6_K vía LM Studio (puerto 4001). Es **primario** en el perfil activo y en el perfil local; **desactivado** (`disable: true`) en el perfil cloud
 - **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`)
 - **nvidia:** Agente NVIDIA añadido el **18/08/2026**, usa **Muse Glimmer 30B** (`nvidia/meta/muse-glimmer-30b`). Mejor modelo del ranking para agentes de código (SWE-Bench 76, Terminal-Bench 51,7, 144,9 tok/s, tool calling nativo)
 
@@ -446,7 +446,7 @@ Proveedores de modelos. Dos proveedores configurados:
 - **lmstudio** (local):
   - **SDK:** `@ai-sdk/openai-compatible` (interfaz OpenAI para LM Studio)
   - **URL:** `http://localhost:4001/v1` (proxy local)
-  - **Modelo:** `models-qwen3.5-9b`
+  - **Modelo:** `models-qwen3.8-9b`
   - **Límites:** 81.920 tokens de contexto, 8.192 de salida
   - **Tools:** Habilitadas
 

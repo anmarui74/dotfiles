@@ -307,6 +307,11 @@ Al ejecutar `opencode` u `ocv`, el lanzador
 - Modelo Qwen3.5-9B Q6_K con 80k de contexto
 - Proxy en puerto 4001 con métricas de tokens/s
 
+`start-lmstudio.sh` verifica primero si el modelo ya está cargado en VRAM con
+`lms ps`. Si está cargado, se omite el `unload/load` para evitar abrir la GUI de
+LM Studio y recargas innecesarias. Solo se inicia el servidor si no responde y se
+asegura el proxy.
+
 El servicio systemd `init-opencode.service` está DESHABILITADO
 (no carga el modelo al iniciar sesión). La carga ocurre solo
 al abrir opencode/ocv.

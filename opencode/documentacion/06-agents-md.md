@@ -451,7 +451,7 @@ Método rápido por terminal:
 ```bash
 curl -s http://localhost:4001/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"hola"}]}' | \
+  -d '{"model":"models-qwen3.8-9b","messages":[{"role":"user","content":"hola"}]}' | \
   python3 -c "import json,sys; d=json.load(sys.stdin); u=d['usage']; s=d.get('stats',{}); print(f\"Prompt: {u['prompt_tokens']} tok\\nGenerados: {u['completion_tokens']} tok\\nVelocidad: {s.get('tokens_per_second','N/A')} tok/s\")"
 ```
 

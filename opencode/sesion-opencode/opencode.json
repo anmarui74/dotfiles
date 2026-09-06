@@ -1,11 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.5-9b",
+  "small_model": "lmstudio/models-qwen3.8-9b",
   "instructions": [
     "AGENTS.md"
   ],
-  "default_agent": "cloud",
+  "default_agent": "nvidia",
   "permission": {
     "edit": "ask",
     "bash": {
@@ -23,9 +23,9 @@
       "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
-      "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
+      "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.5-9b"
+      "model": "lmstudio/models-qwen3.8-9b"
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
@@ -59,14 +59,14 @@
     },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Qwen 3.5 Q6_K",
-      "model": "models-qwen3.5-9b",
+      "name": "Qwen 3.8 Q6_K",
+      "model": "models-qwen3.8-9b",
       "options": {
         "baseURL": "http://localhost:4001/v1"
       },
       "models": {
-        "models-qwen3.5-9b": {
-          "name": "Qwen 3.5 - Tool Calling Excellence",
+        "models-qwen3.8-9b": {
+          "name": "Qwen 3.8 - Tool Calling Excellence",
           "tools": true,
           "limit": {
             "context": 81920,

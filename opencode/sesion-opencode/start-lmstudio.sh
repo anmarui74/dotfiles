@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# start-lmstudio.sh - Qwen3.5-9B Q6_K + RTX 4070 Ti SUPER (80k contexto)
+# start-lmstudio.sh - Qwen3.8-9B Q6_K + RTX 4070 Ti SUPER (80k contexto)
 set -euo pipefail
 
 LMSTUDIO="/home/antonio/.lmstudio/bin/lms"
-MODEL_ID="models-qwen3.5-9b"
+MODEL_ID="qwen3.8-9b"
 CONTEXTO=81920
 PORT_LM=1234
 PORT_PROXY=4001
 
 echo "╔════════════════════════════════════════════════════╗"
-echo "║  Qwen3.5-9B Q6_K - 80k contexto                  ║"
+echo "║  Qwen3.8-9B Q6_K - 80k contexto                  ║"
 echo "║  RTX 4070 Ti SUPER 16GB + Ryzen 9 7900 Zen4      ║"
 echo "╚════════════════════════════════════════════════════╝"
 
@@ -27,18 +27,22 @@ if ! curl -s http://localhost:$PORT_LM/v1/models >/dev/null 2>&1; then
 fi
 echo "✅ LM Studio activo puerto ${PORT_LM}"
 
-# Descargar modelos previos para liberar VRAM
-echo "▶️  Liberando VRAM..."
-"$LMSTUDIO" unload --all >/dev/null 2>&1 || true
-sleep 2
+# Comprobar si el modelo ya está cargado
+if "$LMSTUDIO" ps 2>/dev/null | grep -q "$MODEL_ID"; then
+    echo "✅ Modelo $MODEL_ID ya está cargado en VRAM, se omite recarga"
+else
+    echo "▶️  Liberando VRAM..."
+    "$LMSTUDIO" unload --all >/dev/null 2>&1 || true
+    sleep 2
 
-# Cargar Q6_K con 80k contexto
-echo "▶️  Cargando Qwen3.5-9B Q6_K con ${CONTEXTO} tokens de contexto..."
-if ! "$LMSTUDIO" load "$MODEL_ID" -c "$CONTEXTO" -y >/dev/null 2>&1; then
-    echo "⚠️  Carga directa falló, intentando sin contexto específico..."
-    "$LMSTUDIO" load "$MODEL_ID" -y >/dev/null 2>&1
+    # Cargar Q6_K con 80k contexto
+    echo "▶️  Cargando Qwen3.8-9B Q6_K con ${CONTEXTO} tokens de contexto..."
+    if ! "$LMSTUDIO" load "$MODEL_ID" -c "$CONTEXTO" -y >/dev/null 2>&1; then
+        echo "⚠️  Carga directa falló, intentando sin contexto específico..."
+        "$LMSTUDIO" load "$MODEL_ID" -y >/dev/null 2>&1
+    fi
+    sleep 2
 fi
-sleep 2
 
 CONTEXTO_REAL=$("$LMSTUDIO" ps 2>/dev/null | grep -m1 "$MODEL_ID" | awk '{print $6}')
 echo "✅ Modelo cargado: ${CONTEXTO_REAL:-desconocido} tokens de contexto"

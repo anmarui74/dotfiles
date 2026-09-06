@@ -26,7 +26,7 @@
 
 ## Descripción general
 
-**LM Studio** es el servidor de inferencia **principal** y **activo** en la configuración de OpenCode. Proporciona el modelo `models-qwen3.5-9b` con 80K de contexto. Se ejecuta como servidor local en el puerto `1234` y se accede a través de un proxy en el puerto `4001`.
+**LM Studio** es el servidor de inferencia **principal** y **activo** en la configuración de OpenCode. Proporciona el modelo `models-qwen3.8-9b` con 80K de contexto. Se ejecuta como servidor local en el puerto `1234` y se accede a través de un proxy en el puerto `4001`.
 
 ### Arquitectura
 
@@ -36,7 +36,7 @@ OpenCode → http://localhost:4001/v1 (proxy) → http://localhost:1234/v1 (LM S
 
 - **Puerto LM Studio (1234):** API directa del servidor
 - **Puerto Proxy (4001):** Proxy Python que gestiona carga/descarga automática de modelos
-- **Provider en OpenCode:** `lmstudio/models-qwen3.5-9b` con baseURL `http://localhost:4001/v1`
+- **Provider en OpenCode:** `lmstudio/models-qwen3.8-9b` con baseURL `http://localhost:4001/v1`
 
 ---
 
@@ -51,7 +51,7 @@ Proxy HTTP entre OpenCode y LM Studio con **cambio automático de modelo**:
 1. Recibe peticiones de OpenCode en el puerto `4001`
 2. Si el modelo solicitado **no está cargado**, lo descarga automáticamente y carga el nuevo
 3. Si el modelo **ya está cargado**, reenvía la petición directamente
-4. Aplica un **workaround para Qwen 3.5**: si no hay mensaje con `role: 'user'`, añade uno de continuación
+4. Aplica un **workaround para Qwen 3.8**: si no hay mensaje con `role: 'user'`, añade uno de continuación
 5. Maneja timeouts largos (600 segundos) para generaciones extensas
 
 ### Código completo comentado
@@ -77,10 +77,10 @@ for m in _get_loaded():
 r = subprocess.run([LMS, "load", target, "-y"], capture_output=True, timeout=180)
 ```
 
-### Workaround para Qwen 3.5
+### Workaround para Qwen 3.8
 
 ```python
-# Qwen 3.5 rechaza peticiones sin mensaje con role='user'
+# Qwen 3.8 rechaza peticiones sin mensaje con role='user'
 msgs = body.get('messages', [])
 if not any(m.get('role') == 'user' for m in msgs):
     body['messages'].append({
@@ -93,7 +93,7 @@ if not any(m.get('role') == 'user' for m in msgs):
 
 Si el modelo no está cargado, el proxy responde con `503` y un mensaje como:
 ```json
-{"error": "Cargando models-qwen3.5-9b... (intento 1)"}
+{"error": "Cargando models-qwen3.8-9b... (intento 1)"}
 ```
 OpenCode reintenta automáticamente.
 
@@ -123,7 +123,7 @@ fi
 ### Paso 2: Cargar modelo con 80K contexto
 
 ```bash
-$LMSTUDIO_BIN load "models-qwen3.5-9b" -c 81920 -y
+$LMSTUDIO_BIN load "models-qwen3.8-9b" -c 81920 -y
 ```
 
 Verifica que el contexto aplicado sea `81920`. Si no, reintenta.
@@ -169,8 +169,8 @@ Versión simplificada para ejecución manual:
 $LMSTUDIO_BIN server start
 
 # 2. Descargar modelo actual y cargar con 80K
-$LMSTUDIO_BIN unload "models-qwen3.5-9b"
-$LMSTUDIO_BIN load "models-qwen3.5-9b" -c 81920 -y
+$LMSTUDIO_BIN unload "models-qwen3.8-9b"
+$LMSTUDIO_BIN load "models-qwen3.8-9b" -c 81920 -y
 
 # 3. Iniciar proxy si no está corriendo
 nohup python3 lmstudio-proxy.py 4001 > /tmp/lmstudio-proxy.log 2>&1 &
@@ -226,12 +226,12 @@ El provider en `opencode.json`:
 ```json
 "lmstudio": {
   "npm": "@ai-sdk/openai-compatible",
-  "name": "Qwen 3.5 Q6_K",
-  "model": "models-qwen3.5-9b",
+  "name": "Qwen 3.8 Q6_K",
+  "model": "models-qwen3.8-9b",
   "options": {"baseURL": "http://localhost:4001/v1"},
   "models": {
-    "models-qwen3.5-9b": {
-      "name": "Qwen 3.5 - Tool Calling Excellence",
+    "models-qwen3.8-9b": {
+      "name": "Qwen 3.8 - Tool Calling Excellence",
       "tools": true,
       "limit": {"context": 81920, "output": 8192}
     }
@@ -283,7 +283,7 @@ systemctl --user start init-opencode.service
    ↓
 3. start-lmstudio.sh (salvo SKIP_LMSTUDIO=1 en perfil cloud):
    ├── 3.1. lms server start (puerto 1234)
-   ├── 3.2. lms unload + lms load models-qwen3.5-9b -c 81920
+   ├── 3.2. lms unload + lms load models-qwen3.8-9b -c 81920
    └── 3.3. lmstudio-proxy.py (puerto 4001)
    ↓
 4. exec /usr/bin/opencode (con la config del perfil elegido)
@@ -300,7 +300,7 @@ systemctl --user start init-opencode.service
 
 | Propiedad | Valor |
 |-----------|-------|
-| **Modelo** | `models-qwen3.5-9b` (Qwen 3.5 - 9B parámetros) |
+| **Modelo** | `models-qwen3.8-9b` (Qwen 3.8 - 9B parámetros) |
 | **Contexto** | 81.920 tokens |
 | **Output máximo** | 8.192 tokens |
 | **Tool calling** | ✅ Sí |
@@ -320,10 +320,10 @@ lms status
 lms ps
 
 # Cargar modelo manualmente
-lms load models-qwen3.5-9b -c 81920 -y
+lms load models-qwen3.8-9b -c 81920 -y
 
 # Descargar modelo
-lms unload models-qwen3.5-9b
+lms unload models-qwen3.8-9b
 
 # Iniciar/parar servidor
 lms server start

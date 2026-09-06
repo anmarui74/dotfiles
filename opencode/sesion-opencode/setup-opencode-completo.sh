@@ -119,12 +119,12 @@ else
 fi
 
 if [ -n "${LMS_CMD:-}" ]; then
-    echo "  Verificando modelo qwen3.5-9b..."
-    if $LMS_CMD library list 2>/dev/null | grep -qi "qwen3.5-9b"; then
-        info "Modelo qwen3.5-9b ya descargado"
+    echo "  Verificando modelo qwen3.8-9b..."
+    if $LMS_CMD library list 2>/dev/null | grep -qi "qwen3.8-9b"; then
+        info "Modelo qwen3.8-9b ya descargado"
     else
-        echo "  Descargando qwen/qwen3.5-9b..."
-        $LMS_CMD download qwen/qwen3.5-9b 2>&1 | tail -5 || warn "Fallo al descargar qwen3.5-9b"
+        echo "  Descargando qwen/qwen3.8-9b..."
+        $LMS_CMD download qwen/qwen3.8-9b 2>&1 | tail -5 || warn "Fallo al descargar qwen3.8-9b"
     fi
     echo "  Verificando gemma-4-e4b..."
     if $LMS_CMD library list 2>/dev/null | grep -qi "gemma-4"; then
@@ -348,11 +348,11 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.5-9b",
+  "small_model": "lmstudio/models-qwen3.8-9b",
   "instructions": [
     "AGENTS.md"
   ],
-  "default_agent": "cloud",
+  "default_agent": "nvidia",
   "permission": {
     "edit": "ask",
     "bash": {
@@ -370,9 +370,9 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
       "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
-      "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
+      "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.5-9b"
+      "model": "lmstudio/models-qwen3.8-9b"
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
@@ -406,14 +406,14 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
     },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Qwen 3.5 Q6_K",
-      "model": "models-qwen3.5-9b",
+      "name": "Qwen 3.8 Q6_K",
+      "model": "models-qwen3.8-9b",
       "options": {
         "baseURL": "http://localhost:4001/v1"
       },
       "models": {
-        "models-qwen3.5-9b": {
-          "name": "Qwen 3.5 - Tool Calling Excellence",
+        "models-qwen3.8-9b": {
+          "name": "Qwen 3.8 - Tool Calling Excellence",
           "tools": true,
           "limit": {
             "context": 81920,
@@ -582,6 +582,7 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
     }
   }
 }
+
 JSONEOF
 info "opencode.json creado (perfil completo)"
 
@@ -809,6 +810,7 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
     }
   }
 }
+
 CLOUDEOF
 info "opencode-cloud.json creado (perfil cloud)"
 
@@ -816,7 +818,7 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.5-9b",
+  "small_model": "lmstudio/models-qwen3.8-9b",
   "instructions": [
     "AGENTS.md"
   ],
@@ -838,9 +840,9 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
       "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
-      "description": "Agente local - Qwen 3.5 Q6_K optimizado (80k contexto)",
+      "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.5-9b"
+      "model": "lmstudio/models-qwen3.8-9b"
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
@@ -874,14 +876,14 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
     },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Qwen 3.5 Q6_K",
-      "model": "models-qwen3.5-9b",
+      "name": "Qwen 3.8 Q6_K",
+      "model": "models-qwen3.8-9b",
       "options": {
         "baseURL": "http://localhost:4001/v1"
       },
       "models": {
-        "models-qwen3.5-9b": {
-          "name": "Qwen 3.5 - Tool Calling Excellence",
+        "models-qwen3.8-9b": {
+          "name": "Qwen 3.8 - Tool Calling Excellence",
           "tools": true,
           "limit": {
             "context": 81920,
@@ -1050,6 +1052,7 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
     }
   }
 }
+
 LOCALEOF
 
 cat > "$DIR_CONFIG/tui.json" << 'TUIEOF'
@@ -1069,6 +1072,7 @@ cat > "$DIR_CONFIG/tui.json" << 'TUIEOF'
     ["opencode-throughput", {}]
   ]
 }
+
 TUIEOF
 info "tui.json creado"
 
@@ -2253,6 +2257,11 @@ Al ejecutar `opencode` u `ocv`, el lanzador
 - Modelo Qwen3.5-9B Q6_K con 80k de contexto
 - Proxy en puerto 4001 con métricas de tokens/s
 
+`start-lmstudio.sh` verifica primero si el modelo ya está cargado en VRAM con
+`lms ps`. Si está cargado, se omite el `unload/load` para evitar abrir la GUI de
+LM Studio y recargas innecesarias. Solo se inicia el servidor si no responde y se
+asegura el proxy.
+
 El servicio systemd `init-opencode.service` está DESHABILITADO
 (no carga el modelo al iniciar sesión). La carga ocurre solo
 al abrir opencode/ocv.
@@ -2735,17 +2744,17 @@ SERVEREOF
 
 cat > "$DIR_CONFIG/start-lmstudio.sh" << 'LMSEOF'
 #!/usr/bin/env bash
-# start-lmstudio.sh - Qwen3.5-9B Q6_K + RTX 4070 Ti SUPER (80k contexto)
+# start-lmstudio.sh - Qwen3.8-9B Q6_K + RTX 4070 Ti SUPER (80k contexto)
 set -euo pipefail
 
 LMSTUDIO="/home/antonio/.lmstudio/bin/lms"
-MODEL_ID="models-qwen3.5-9b"
+MODEL_ID="qwen3.8-9b"
 CONTEXTO=81920
 PORT_LM=1234
 PORT_PROXY=4001
 
 echo "╔════════════════════════════════════════════════════╗"
-echo "║  Qwen3.5-9B Q6_K - 80k contexto                  ║"
+echo "║  Qwen3.8-9B Q6_K - 80k contexto                  ║"
 echo "║  RTX 4070 Ti SUPER 16GB + Ryzen 9 7900 Zen4      ║"
 echo "╚════════════════════════════════════════════════════╝"
 
@@ -2763,18 +2772,22 @@ if ! curl -s http://localhost:$PORT_LM/v1/models >/dev/null 2>&1; then
 fi
 echo "✅ LM Studio activo puerto ${PORT_LM}"
 
-# Descargar modelos previos para liberar VRAM
-echo "▶️  Liberando VRAM..."
-"$LMSTUDIO" unload --all >/dev/null 2>&1 || true
-sleep 2
+# Comprobar si el modelo ya está cargado
+if "$LMSTUDIO" ps 2>/dev/null | grep -q "$MODEL_ID"; then
+    echo "✅ Modelo $MODEL_ID ya está cargado en VRAM, se omite recarga"
+else
+    echo "▶️  Liberando VRAM..."
+    "$LMSTUDIO" unload --all >/dev/null 2>&1 || true
+    sleep 2
 
-# Cargar Q6_K con 80k contexto
-echo "▶️  Cargando Qwen3.5-9B Q6_K con ${CONTEXTO} tokens de contexto..."
-if ! "$LMSTUDIO" load "$MODEL_ID" -c "$CONTEXTO" -y >/dev/null 2>&1; then
-    echo "⚠️  Carga directa falló, intentando sin contexto específico..."
-    "$LMSTUDIO" load "$MODEL_ID" -y >/dev/null 2>&1
+    # Cargar Q6_K con 80k contexto
+    echo "▶️  Cargando Qwen3.8-9B Q6_K con ${CONTEXTO} tokens de contexto..."
+    if ! "$LMSTUDIO" load "$MODEL_ID" -c "$CONTEXTO" -y >/dev/null 2>&1; then
+        echo "⚠️  Carga directa falló, intentando sin contexto específico..."
+        "$LMSTUDIO" load "$MODEL_ID" -y >/dev/null 2>&1
+    fi
+    sleep 2
 fi
-sleep 2
 
 CONTEXTO_REAL=$("$LMSTUDIO" ps 2>/dev/null | grep -m1 "$MODEL_ID" | awk '{print $6}')
 echo "✅ Modelo cargado: ${CONTEXTO_REAL:-desconocido} tokens de contexto"
@@ -2973,7 +2986,7 @@ echo "--- 12/19: start-opencode-server.sh ---"
 
 cat > "$DIR_CONFIG/start-opencode-server.sh" << 'STARTEOF'
 #!/usr/bin/env bash
-# start-opencode-server.sh - Carga LM Studio + modelo Qwen3.5-9B + proxy, luego abre OpenCode/OCV
+# start-opencode-server.sh - Carga LM Studio + modelo Qwen3.8-9B + proxy, luego abre OpenCode/OCV
 # Si SKIP_LMSTUDIO=1 (perfil cloud), NO carga el modelo local en VRAM.
 set -e
 
@@ -2990,11 +3003,11 @@ error() { echo -e "${ROJO}[X]${NC} $1"; }
 LMS_SCRIPT="/home/antonio/.config/opencode/start-lmstudio.sh"
 REAL_OPENCODE="${REAL_OPENCODE:-/usr/bin/opencode}"
 
-# 1. Cargar LM Studio + modelo Qwen3.5-9B + proxy (solo si no es perfil cloud)
+# 1. Cargar LM Studio + modelo Qwen3.8-9B + proxy (solo si no es perfil cloud)
 if [ -n "$SKIP_LMSTUDIO" ]; then
     aviso "Perfil cloud: NO se carga el modelo local en VRAM."
 elif [ -x "$LMS_SCRIPT" ]; then
-    info "Cargando LM Studio (modelo Qwen3.5-9B + proxy)..."
+    info "Cargando LM Studio (modelo Qwen3.8-9B + proxy)..."
     bash "$LMS_SCRIPT" || {
         error "Falló al cargar LM Studio + modelo."
         exit 1
@@ -5001,7 +5014,7 @@ cat > "$DIR_CONFIG/setup-lmstudio-models.sh" << 'LMMODEOF'
 # Uso: bash setup-models.sh
 # Los modelos se descargan desde la interfaz gráfica de LM Studio o con:
 #   lms get <modelo>
-# Ejemplo: lms get qwen/qwen3.5-9b
+# Ejemplo: lms get qwen/qwen3.8-9b
 
 set -euo pipefail
 
@@ -5050,7 +5063,7 @@ else:
 
 echo ""
 echo "Modelo principal recomendado para OpenCode:"
-echo "  qwen/qwen3.5-9b"
+echo "  qwen/qwen3.8-9b"
 echo ""
 echo "Para descargar un modelo:"
 echo "  1. Abre LM Studio"
@@ -5064,7 +5077,7 @@ LMMODEOF
 chmod +x "$DIR_CONFIG/setup-lmstudio-models.sh" 2>/dev/null || true
 info "setup-lmstudio-models.sh creado"
 
-cat > "$DIR_CONFIG/qwen-qwen3.5-9b.json" << 'QWENEOF'
+cat > "$DIR_CONFIG/qwen-qwen3.8-9b.json" << 'QWENEOF'
 {
   "model": {
     "name": "Qwen/Qwen3.5-9B-Instruct-GGUF (Q6_K)",
@@ -5110,8 +5123,8 @@ cat > "$DIR_CONFIG/qwen-qwen3.5-9b.json" << 'QWENEOF'
   }
 }
 QWENEOF
-chmod +x "$DIR_CONFIG/qwen-qwen3.5-9b.json" 2>/dev/null || true
-info "qwen-qwen3.5-9b.json creado"
+chmod +x "$DIR_CONFIG/qwen-qwen3.8-9b.json" 2>/dev/null || true
+info "qwen-qwen3.8-9b.json creado"
 
 cat > "\$DIR_CONFIG/hardware-info.md" << 'HWINFOEOF'
 # Hardware del equipo de Antonio
@@ -5168,7 +5181,7 @@ cat > "\$DIR_CONFIG/hardware-info.md" << 'HWINFOEOF'
 | VRAM | 16376 MiB (~16 GB GDDR6X) |
 | Driver | nvidia 610.57.04 · CUDA 13.3 · Vulkan 1.4 · PCIe Gen4 x16 |
 | iGPU integrada | AMD Radeon Raphael (RDNA2) · driver amdgpu |
-| Uso CUDA | LM Studio (Qwen 3.5-9B) y whisper-cpp (transcripción ~0,85 s) |
+| Uso CUDA | LM Studio (Qwen 3.8-9B) y whisper-cpp (transcripción ~0,85 s) |
 
 ## 🖥️ Monitores
 
@@ -6678,8 +6691,8 @@ if command -v lms &>/dev/null; then
     fi
     # Cargar modelo con 80K
     echo "  Cargando modelo con 80K contexto..."
-    lms unload models-qwen3.5-9b 2>/dev/null || true
-    lms load models-qwen3.5-9b -c 81920 -y 2>/dev/null || warn "No se pudo cargar modelo"
+    lms unload models-qwen3.8-9b 2>/dev/null || true
+    lms load models-qwen3.8-9b -c 81920 -y 2>/dev/null || warn "No se pudo cargar modelo"
 fi
 
 # Arrancar proxy LM Studio (puerto 4001)
@@ -6785,7 +6798,7 @@ LVL = os.path.expanduser('~/.local/share/onlyoffice/desktopeditors/data/cache/Lo
 LOG = os.path.join(LVL, '000003.log')
 KEY = b'_onlyoffice://plugin\x00\x01onlyoffice_ai_plugin_storage_key'
 PROVIDER_NAME = "OpenCode Local"
-MODEL_ID = "models-qwen3.5-9b"
+MODEL_ID = "models-qwen3.8-9b"
 BASE_URL = "http://localhost:4001/v1"
 API_KEY = "lm-studio"
 
@@ -6953,7 +6966,7 @@ cat > "$DIR_CONFIG/data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md" << 'MDEOF'
 ## 📌 Resumen
 
 Integración del **plugin IA de ONLYOFFICE Desktop Editors** con **opencode local**
-(modelo Qwen 3.5 Q6_K) usando el endpoint OpenAI-compatible que opencode expone
+(modelo Qwen 3.8 Q6_K) usando el endpoint OpenAI-compatible que opencode expone
 a través de su proxy en el puerto **4001**.
 
 De esta forma, el asistente de IA de OnlyOffice (chat, resumen, traducción,
@@ -6968,7 +6981,7 @@ servicios en la nube ni enviar datos fuera del equipo**.
 |---|---|
 | **Proveedor (nombre)** | `OpenCode Local` |
 | **URL base** | `http://localhost:4001/v1` |
-| **Modelo** | `models-qwen3.5-9b` |
+| **Modelo** | `models-qwen3.8-9b` |
 | **API key** | `lm-studio` (cualquiera; el proxy no la valida) |
 | **Capacidades** | 511 (todas: chat, resumen, traducción, análisis, código, etc.) |
 | **Aplicación** | ONLYOFFICE Desktop Editors |
@@ -6983,7 +6996,7 @@ OnlyOffice (plugin IA)
 http://localhost:4001/v1  ← lmstudio-proxy.py (proxy opencode)
         │  reenvía
         ▼
-http://localhost:1234     ← LM Studio server (modelo Qwen 3.5 Q6_K)
+http://localhost:1234     ← LM Studio server (modelo Qwen 3.8 Q6_K)
 ```
 
 ---
@@ -6998,7 +7011,7 @@ Comprobado que el proxy responde y el modelo está cargado:
 curl -s http://localhost:4001/v1/models          # → lista modelos (OK)
 curl -s http://localhost:4001/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"di hola"}]}'
+  -d '{"model":"models-qwen3.8-9b","messages":[{"role":"user","content":"di hola"}]}'
 # → {"choices":[{"message":{"content":"¡Hola!"}}]}  (OK)
 ```
 
@@ -7041,7 +7054,7 @@ que las existentes (el último `Put` de una clave es el que gana al abrir):
   "name": "OpenCode Local",
   "url": "http://localhost:4001/v1",
   "key": "lm-studio",
-  "models": [{ "id": "models-qwen3.5-9b", "endpoints": [1], ... }]
+  "models": [{ "id": "models-qwen3.8-9b", "endpoints": [1], ... }]
 }
 ```
 
@@ -7051,8 +7064,8 @@ Y el modelo registrado para todas las tareas:
 {
   "capabilities": 511,
   "provider": "OpenCode Local",
-  "name": "OpenCode Local [models-qwen3.5-9b]",
-  "id": "models-qwen3.5-9b"
+  "name": "OpenCode Local [models-qwen3.8-9b]",
+  "id": "models-qwen3.8-9b"
 }
 ```
 
@@ -7070,7 +7083,7 @@ Si en el futuro se quiere añadir otro proveedor por la interfaz:
 
 1. Abrir un documento en OnlyOffice
 2. Pestaña **IA** → **Ajustes** → **Editar modelos de IA**
-3. **+** → rellenar URL `http://localhost:4001/v1`, modelo `models-qwen3.5-9b`,
+3. **+** → rellenar URL `http://localhost:4001/v1`, modelo `models-qwen3.8-9b`,
    API key `lm-studio`
 4. Marcar las tareas deseadas → **OK**
 
