@@ -156,7 +156,50 @@ Es un concepto importante. Cuando el TTS (edge-tts) lee el texto en voz alta, lo
 | Velocidad | km/h | 120 km/h |
 | Distancia | km / m | 5 km |
 
-### ☁️ Consultar el tiempo (líneas 21-27) — IMPORTANTE
+#### Formato de manuales y README (líneas 22-71) — añadido 07/09/2026
+
+El AGENTS.md incluye una sección **`📄 Formato de manuales y README (OBLIGATORIO)`** que
+estandariza cómo se escriben TODOS los documentos Markdown de configuración
+(manuales en `~/Config/opencode/documentacion/`, README, notas).
+
+Plantilla de estructura:
+
+```markdown
+# <emoji> <Título del documento>
+<descripción breve en una línea>
+
+| ⚙️ Estado | 📅 Fecha | 👤 Usuario |
+|-----------|----------|------------|
+| <✅/⚠️/🔴 + estado> | <dd/mm/aaaa> · rev. <dd/mm/aaaa> | Antonio |
+
+> <cita de contexto (opcional)>
+
+---
+
+## 📑 Índice
+1. [Sección 1](#sección-1)
+...
+
+---
+
+## <Sección 1>
+<contenido con TABLAS Markdown nativas>
+```
+
+Reglas clave:
+1. Título `# <emoji> <Nombre>` + una línea de descripción
+2. Cabecera de estado SIEMPRE con la tabla `| ⚙️ Estado | 📅 Fecha | 👤 Usuario |` y badges (✅ activo / ⚠️ en desuso / 🔴 roto)
+3. Índice `## 📑 Índice` con enlaces ancla
+4. Separadores `---` entre secciones
+5. Tablas Markdown nativas (NUNCA cajas Unicode `┌──┐ ═══ ║` ni bloques ASCII)
+6. Emojis en títulos y contenido
+7. Bloques de código con ` ``` ` para comandos
+8. Pie con rutas clave (`> 📁 ...`)
+9. Árboles de directorio solo dentro de bloques de código
+
+> 🔎 Ejemplos reales: `README.md` y `01-configuracion-ollama.md` en `~/Config/opencode/documentacion/`
+
+### ☁️ Consultar el tiempo (líneas 72-90) — IMPORTANTE
 
 ```
 Para preguntas sobre el tiempo, usa la herramienta fetch_html (o fetch_json):
@@ -173,7 +216,7 @@ Razón: wttr.in es un servicio gratuito y fiable. La URL usa:
 
 La advertencia de **no reintentar** evita bucles infinitos de peticiones cuando el servicio está caído.
 
-### 💻 Consultar hardware (líneas 29-39) — IMPORTANTE
+### 💻 Consultar hardware (líneas 93-111) — IMPORTANTE
 
 ```
 Cuando Antonio pregunte sobre su hardware, LEE el archivo:
@@ -189,7 +232,7 @@ Consulta rápida desde terminal:
 source ~/.config/opencode/hardware-query.sh && hw_query <campo>
 ```
 
-### 🔧 Uso de herramientas (líneas 49-57) — OBLIGATORIO
+### 🔧 Uso de herramientas (líneas 113-121) — OBLIGATORIO
 
 ```
 Cuando tengas que hacer una tarea que requiera una herramienta, USA LA HERRAMIENTA directamente.
@@ -205,7 +248,7 @@ Ejemplo de lo que NO debe hacer:
 Ejemplo de lo que SÍ debe hacer:
 > *(llama directamente a la herramienta Read)*
 
-### 🛠️ Elevación de privilegios (líneas 58-62)
+### 🛠️ Elevación de privilegios (líneas 145-151)
 
 ```
 - NUNCA uses `sudo` para comandos que requieran contraseña
@@ -219,7 +262,7 @@ Razón: `sudo` pide la contraseña por terminal, pero OpenCode se ejecuta en un 
 
 ## Sección 2: PROCEDIMIENTOS TÉCNICOS
 
-### Sincronización con Config/opencode (líneas 78-100) — OBLIGATORIO
+### Sincronización con Config/opencode (líneas 181-207) — OBLIGATORIO
 
 Explica el **sistema de dos directorios**:
 
@@ -240,7 +283,7 @@ Explica el **sistema de dos directorios**:
 4. Ejecuta: bash ~/Config/opencode/backup-opencode.sh
 ```
 
-### Atención a setup-opencode-completo.sh (líneas 101-149) — IMPORTANTE
+### Atención a setup-opencode-completo.sh (líneas 208-259) — IMPORTANTE
 
 Este script es el **instalador completo embebido**. Contiene toda la configuración dentro de sí mismo (es un script autocontenido).
 
@@ -254,7 +297,7 @@ Este script es el **instalador completo embebido**. Contiene toda la configuraci
 
 ## Sección 3: PERSISTENCIA DE DATOS Y RECUPERACIÓN
 
-### Variables de entorno (líneas 152-157)
+### Variables de entorno (líneas 260-265)
 
 ```bash
 set -a; source /home/antonio/.config/opencode/.env; set +a
@@ -263,7 +306,7 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 - Usa `set -a` para exportar automáticamente todas las variables
 - El `.env` contiene credenciales y rutas sensibles
 
-### Inicialización tras reinicio (líneas 158-171)
+### Inicialización tras reinicio (líneas 266-279)
 
 ```bash
 bash /home/antonio/.config/opencode/init-opencode.sh
@@ -276,7 +319,7 @@ Verifica:
 4. **PWAs** en el Escritorio
 5. **Variables de entorno** (.env)
 
-### Backup del grafo de memoria (líneas 172-176)
+### Backup del grafo de memoria (líneas 280-296)
 
 ```
 Directorio: /home/antonio/Config/opencode/backups/
@@ -286,7 +329,14 @@ Retención:  30 días
 
 El grafo de memoria es un archivo **JSONL** (una línea JSON por entidad) que contiene todas las entidades, observaciones y relaciones que el asistente ha aprendido.
 
-### Recuperación del grafo (líneas 177-190)
+Desde el **07/09/2026** el grafo se respalda automáticamente en **cada ejecución de `backup-opencode.sh`** (manual o automática vía `opencode-sync.timer`, cada 30 min):
+1. **Copia con fecha** en `~/Config/opencode/backups/mcp-memory-backup-{fecha}.jsonl`
+2. **Copia en el tarball** en `data/memory/memory.jsonl` (el `restore.sh` lo restaura a la ruta activa)
+3. **Retención** de 30 días (igual que los tarballs)
+
+El grafo activo vive en `~/.config/opencode/data/memory/memory.jsonl`.
+
+### Recuperación del grafo (líneas 298-314)
 
 Si el grafo se pierde o corrompe:
 
@@ -299,7 +349,9 @@ cp /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl \
    /home/antonio/.config/opencode/data/memory/memory.jsonl
 ```
 
-### Recordatorio MCP memory (líneas 191-201) — IMPORTANTE
+Alternativa: restaurar desde un tarball de OpenCode con el `restore.sh` (restaura `data/memory/memory.jsonl` a la ruta activa automáticamente).
+
+### Recordatorio MCP memory (líneas 310-320) — IMPORTANTE
 
 Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observación**
 del array DEBE incluir el campo `entityName` junto a `contents`. Si falta `entityName`,
@@ -315,7 +367,7 @@ el MCP devuelve error `-32602` (Input validation error). Formato correcto:
 > de omitir `entityName` al usar las herramientas de memoria. Mismo formato para
 > `memory_create_relations` (cada relación necesita `from`, `to`, `relationType`).
 
-### Timeline completo (líneas 202-216)
+### Timeline completo (líneas 321-335)
 
 La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado;
 el PR #26861 que lo arregla sigue abierto, sin mergear). Para ver el historial completo:
@@ -330,13 +382,13 @@ el PR #26861 que lo arregla sigue abierto, sin mergear). Para ver el historial c
 Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3). Todas las peticiones
 de Antonio están guardadas ahí aunque la TUI no las muestre.
 
-### Vigilancia del fix del timeline (líneas 217-224)
+### Vigilancia del fix del timeline (líneas 336-343)
 
 El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861 se ha mergeado.
 Se ejecuta cada 3 días vía el timer systemd `check-timeline-fix.timer` y registra en
 `~/.config/opencode/data/timeline-fix.log`. Si se mergea, avisa para retirar `timeline-completo`.
 
-### Directorios de datos (líneas 225-233)
+### Directorios de datos (líneas 344-354)
 
 | Directorio | Contenido |
 |------------|-----------|
@@ -351,7 +403,7 @@ Se ejecuta cada 3 días vía el timer systemd `check-timeline-fix.timer` y regis
 
 Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otros modelos que puedan necesitar instrucciones más detalladas para tareas específicas.
 
-### PWAs - Abrir (líneas 236-240)
+### PWAs - Abrir (líneas 355-359)
 
 ```
 1. Leer /home/antonio/Escritorio
@@ -361,7 +413,7 @@ Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otr
 
 Las PWAs (Progressive Web Apps) se instalan como accesos directos en el Escritorio con nombres como `chrome-<app-id>-Profile_2.desktop`. La línea `Exec=` contiene el comando completo para lanzarlas.
 
-### PWAs - Cerrar (líneas 241-244)
+### PWAs - Cerrar (líneas 360-363)
 
 ```bash
 # Cerrar una PWA específica
@@ -373,7 +425,7 @@ pkill -f "chrome.*remote-debugging-port"
 
 Usa el puerto de depuración remota (9222) para comunicarse con Chrome.
 
-### Chrome debug (líneas 245-247)
+### Chrome debug (líneas 364-366)
 
 ```bash
 nohup /opt/google/chrome/google-chrome \
@@ -386,7 +438,7 @@ nohup /opt/google/chrome/google-chrome \
 
 Lanza Chrome en modo depuración con un perfil temporal, necesario para controlar PWAs remotamente.
 
-### Carga automática al abrir opencode/ocv (líneas 248-258)
+### Carga automática al abrir opencode/ocv (líneas 367-382)
 
 Al ejecutar `opencode` u `ocv`, el lanzador `start-opencode-server.sh` carga automáticamente:
 
@@ -398,7 +450,7 @@ El servicio systemd `init-opencode.service` está **DESHABILITADO** (no carga el
 
 > 📌 **Perfil cloud:** `ocv-cloud`/`opencode-cloud` exporta `SKIP_LMSTUDIO=1`, por lo que `start-opencode-server.sh` NO carga el modelo local en VRAM.
 
-### Perfiles por lanzador (líneas 259-274)
+### Perfiles por lanzador (líneas 383-398)
 
 Cada comando usa **SU archivo de config** vía `OPENCODE_CONFIG`. Nada se copia nunca sobre `opencode.json`:
 
@@ -410,14 +462,14 @@ Cada comando usa **SU archivo de config** vía `OPENCODE_CONFIG`. Nada se copia 
 
 En cloud: agente local desactivado (`agent.local.disable`), `small_model` apunta a la nube (`opencode-go/deepseek-v4-flash`) y el provider LM Studio está bloqueado (`disabled_providers`). El antiguo `switch-mcp-profile.sh` está **ELIMINADO** desde el 18/08/2026.
 
-### Iniciar LM Studio manualmente (líneas 275-279)
+### Iniciar LM Studio manualmente (líneas 431-436)
 
 ```bash
 bash /home/antonio/.config/opencode/start-lmstudio.sh      # servidor + modelo + proxy
 bash /home/antonio/.config/opencode/start-lmstudio-server.sh  # solo servidor + proxy
 ```
 
-### Liberar VRAM (líneas 281-285)
+### Liberar VRAM (líneas 437-442)
 
 Si el modelo se satura, usar:
 

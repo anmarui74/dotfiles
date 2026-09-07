@@ -1969,6 +1969,56 @@ cat > "$DIR_CONFIG/AGENTS.md" << 'AGEOF'
 - Sistema métrico: km/h, °C, mm, km
 - Tablas: SIEMPRE en formato Markdown estándar (nunca en bloques de código ASCII)
 
+## 📄 Formato de manuales y README (OBLIGATORIO)
+Toda documentación Markdown (manuales en `~/Config/opencode/documentacion/`,
+README, notas) DEBE seguir el mismo esquema que los manuales ya existentes
+(ver `01-configuracion-ollama.md`, `04-perfiles-opencode-json.md`, `README.md`).
+Usa EXACTAMENTE esta plantilla:
+
+### Plantilla de estructura
+```markdown
+# <emoji> <Título del documento>
+<descripción breve en una línea>
+
+| ⚙️ Estado | 📅 Fecha | 👤 Usuario |
+|-----------|----------|------------|
+| <✅/⚠️/🔴 + estado> | <dd/mm/aaaa> · rev. <dd/mm/aaaa> | Antonio |
+
+> <cita de contexto o nota de resumen (opcional)>
+
+---
+
+## 📑 Índice
+1. [Sección 1](#sección-1)
+2. [Sección 2](#sección-2)
+...
+
+---
+
+## <Sección 1>
+<contenido con TABLAS Markdown nativas, listas y bloques de código>
+
+---
+
+## <Sección 2>
+...
+```
+
+### Reglas del formato
+1. **Título**: `# <emoji> <Nombre>` en la primera línea, seguido de UNA línea de descripción breve.
+2. **Cabecera de estado**: SIEMPRE la tabla `| ⚙️ Estado | 📅 Fecha | 👤 Usuario |` con badges de estado (✅ activo / ⚠️ en desuso / 🔴 roto), fecha y revisión en formato `dd/mm/aaaa · rev. dd/mm/aaaa`, y `Antonio`.
+3. **Índice**: sección `## 📑 Índice` con enlaces ancla a cada sección principal (después del primer `---`).
+4. **Separadores**: `---` entre secciones principales y tras el índice.
+5. **Tablas**: SIEMPRE Markdown nativo (columnas con `|` y fila separadora `|---|`), NUNCA bloques de código ASCII ni cajas Unicode decorativas (`┌──┐`, `═══`, `║`).
+6. **Emojis**: en títulos de sección y para hacer legible el contenido (✅, ⚠️, 📦, 🛠️, etc.).
+7. **Bloques de código**: para comandos, rutas y salidas, con ` ``` ` y, si aplica, el lenguaje.
+8. **Pie de documento**: al final, una línea de cita con las rutas clave (`> 📁 ...`).
+9. **Arboles de directorio**: SOLO dentro de bloques de código (` ``` `) con caracteres `├── └── │`, nunca fuera.
+10. **Longitud de línea**: URLs y párrafos normales pueden ser largos (se renderizan bien); no forzar saltos de línea artificiales salvo en tablas.
+
+> 🔎 Ejemplo real: `~/Config/opencode/documentacion/README.md` (índice de documentación)
+> y `~/Config/opencode/documentacion/01-configuracion-ollama.md` (plantilla de manual).
+
 ## 🌤️ Consultar el tiempo (IMPORTANTE)
 Para preguntas sobre el tiempo, usa la herramienta bash con curl para consultar la API oficial de AEMET OpenData (predeterminada):
 
@@ -2043,9 +2093,12 @@ patrón, o llama a read_file para cada archivo individual.
 - NO fijes equivalencias rígidas de palabras mal transcritas: el contexto manda.
 
 ## 🛠️ Elevación de privilegios (sudo NO)
-- NUNCA uses `sudo` para comandos que requieran contraseña
+- NUNCA uses `sudo` para comandos que requieran contraseña **cuando los ejecutes tú como agente**
 - Usa SIEMPRE `pkexec` en su lugar: así saldrá una ventana gráfica pidiendo la contraseña
 - Ejemplo: `pkexec apt update` en vez de `sudo apt update`
+- **Diferencia clave:** `pkexec` es para las ejecuciones que realiza el agente, que no tiene terminal interactiva. Los scripts que Antonio ejecuta manualmente desde su terminal pueden y deben usar `sudo` para escalar privilegios de forma cómoda en consola. Es decir:
+  - Agente → `pkexec`
+  - Scripts/terminal de Antonio → `sudo` permitido
 
 ## 📖 Consultar documentación oficial ante problemas (OBLIGATORIO)
 Cuando algo te esté dando problemas (herramientas que fallan, configuraciones que no
@@ -2175,10 +2228,19 @@ Esto comprueba:
 - Variables de entorno (.env)
 
 ## Backup automático del grafo de memoria
-El grafo de conocimiento se respalda automáticamente en:
-`/home/antonio/Config/opencode/backups/`
-Con nombre `mcp-memory-backup-{fecha}.jsonl`
-Los backups se conservan 30 días (según LOG_RETENTION_DAYS en .env)
+El grafo de conocimiento (MCP memory) se respalda automáticamente **en cada
+ejecución de `backup-opencode.sh`** (tanto el backup manual como el automático
+vía `opencode-sync.timer`, cada 30 min):
+
+1. **Copia con fecha** en `~/Config/opencode/backups/mcp-memory-backup-{fecha}.jsonl`
+   (se conserva la estructura existente)
+2. **Copia en el tarball** de OpenCode: `data/memory/memory.jsonl` dentro del
+   `opencode-backup-*.tar.gz` (se restaura con el `restore.sh` a la ruta activa)
+3. **Retención**: los backups del grafo se conservan 30 días (según
+   `LOG_RETENTION_DAYS` en `.env`), igual que los tarballs
+
+El grafo activo vive en `~/.config/opencode/data/memory/memory.jsonl`.
+
 ## Recuperación del grafo de memoria
 Si el grafo se pierde o corrompe:
 1. Localizar el backup más reciente:
@@ -2192,6 +2254,8 @@ Si el grafo se pierde o corrompe:
 3. Reiniciar OpenCode: el servidor MCP Memory cargará el grafo desde `MEMORY_FILE_PATH`
    (definido vía `environment` en el bloque `mcp.memory` de los 3 perfiles JSON).
    ⚠️ El servidor usa `MEMORY_FILE_PATH` (NO `MEMORY_DATA_DIR`).
+4. Alternativa: restaurar desde un tarball de OpenCode con el `restore.sh`
+   (restaura `data/memory/memory.jsonl` a la ruta activa automáticamente).
 
 ## ⚠️ Recordatorio MCP memory (IMPORTANTE)
 Al usar la herramienta `memory_add_observations` (o `memory_delete_observations`),
@@ -4517,6 +4581,26 @@ if [ -d "${CONFIG_BACKUP}/data/onlyoffice-ai" ]; then
     echo "   ✅ Respaldo OnlyOffice-IA incluido en el backup"
 fi
 
+# ─── 1b2. Incluir respaldo Dropbox (config oficial + CLI) en el tarball ───
+if [ -d "${CONFIG_BACKUP}/data/dropbox" ]; then
+    mkdir -p "${BACKUP_ROOT}/data"
+    cp -r "${CONFIG_BACKUP}/data/dropbox" "${BACKUP_ROOT}/data/dropbox"
+    echo "   ✅ Respaldo Dropbox incluido en el backup"
+fi
+
+# ─── 1b3. Incluir grafo de memoria (MCP memory) en el tarball ───
+MEMORY_ACTIVO="${CONFIG_ACTIVO}/data/memory/memory.jsonl"
+if [ -f "$MEMORY_ACTIVO" ]; then
+    mkdir -p "${BACKUP_ROOT}/data/memory"
+    cp "$MEMORY_ACTIVO" "${BACKUP_ROOT}/data/memory/memory.jsonl"
+    echo "   ✅ Grafo de memoria (MCP memory) incluido en el backup"
+    # Backup con fecha en ~/Config/opencode/backups/ (estructura existente mcp-memory-backup-*.jsonl)
+    mkdir -p "${CONFIG_BACKUP}/backups"
+    MEMORY_BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
+    cp "$MEMORY_ACTIVO" "${CONFIG_BACKUP}/backups/mcp-memory-backup-${MEMORY_BACKUP_DATE}.jsonl"
+    echo "   ✅ Copia del grafo de memoria guardada en Config/opencode/backups/"
+fi
+
 # ─── 1c. Incluir auth.json (claves de proveedores NVIDIA/OpenCode GO) ───
 AUTH_JSON="/home/antonio/.local/share/opencode/auth.json"
 if [ -f "$AUTH_JSON" ]; then
@@ -4561,6 +4645,21 @@ if [ -d "${SOURCE_DIR}/data/onlyoffice-ai" ]; then
     mkdir -p "/home/antonio/Config/opencode/data"
     cp -r "${SOURCE_DIR}/data/onlyoffice-ai" "/home/antonio/Config/opencode/data/onlyoffice-ai"
     echo "✅ Respaldo OnlyOffice-IA restaurado en Config/opencode/data/"
+fi
+
+# Restaurar respaldo Dropbox en Config/opencode/data/
+if [ -d "${SOURCE_DIR}/data/dropbox" ]; then
+    mkdir -p "/home/antonio/Config/opencode/data"
+    cp -r "${SOURCE_DIR}/data/dropbox" "/home/antonio/Config/opencode/data/dropbox"
+    echo "✅ Respaldo Dropbox restaurado en Config/opencode/data/"
+fi
+
+# Restaurar grafo de memoria (MCP memory) a su ubicación activa
+if [ -f "${SOURCE_DIR}/data/memory/memory.jsonl" ]; then
+    mkdir -p "/home/antonio/.config/opencode/data/memory"
+    cp "${SOURCE_DIR}/data/memory/memory.jsonl" \
+       "/home/antonio/.config/opencode/data/memory/memory.jsonl"
+    echo "✅ Grafo de memoria (MCP memory) restaurado en .config/opencode/data/memory/"
 fi
 
 # El setup-opencode-completo.sh vive solo en la copia de seguridad
@@ -4654,6 +4753,13 @@ if [ "${OLD_TARBALLS}" -gt 0 ]; then
     echo "   🗑️  ${OLD_TARBALLS} tarballs antiguos eliminados (más de ${RETENTION_DAYS} días)"
 else
     echo "   ✅ No hay tarballs antiguos que eliminar"
+fi
+
+# Retención del grafo de memoria: borrar copias mcp-memory-backup-*.jsonl con más de 30 días
+OLD_MEMORY=$(find "${CONFIG_BACKUP}/backups" -maxdepth 1 -name 'mcp-memory-backup-*.jsonl' -mtime +"${RETENTION_DAYS}" 2>/dev/null | wc -l)
+if [ "${OLD_MEMORY}" -gt 0 ]; then
+    find "${CONFIG_BACKUP}/backups" -maxdepth 1 -name 'mcp-memory-backup-*.jsonl' -mtime +"${RETENTION_DAYS}" -delete 2>/dev/null || true
+    echo "   🗑️  ${OLD_MEMORY} copias del grafo de memoria antiguas eliminadas (más de ${RETENTION_DAYS} días)"
 fi
 
 # ─── 6. Poda diaria: conservar solo el ÚLTIMO tarball de cada día ───

@@ -93,9 +93,12 @@ patrón, o llama a read_file para cada archivo individual.
 - NO fijes equivalencias rígidas de palabras mal transcritas: el contexto manda.
 
 ## 🛠️ Elevación de privilegios (sudo NO)
-- NUNCA uses `sudo` para comandos que requieran contraseña
+- NUNCA uses `sudo` para comandos que requieran contraseña **cuando los ejecutes tú como agente**
 - Usa SIEMPRE `pkexec` en su lugar: así saldrá una ventana gráfica pidiendo la contraseña
 - Ejemplo: `pkexec apt update` en vez de `sudo apt update`
+- **Diferencia clave:** `pkexec` es para las ejecuciones que realiza el agente, que no tiene terminal interactiva. Los scripts que Antonio ejecuta manualmente desde su terminal pueden y deben usar `sudo` para escalar privilegios de forma cómoda en consola. Es decir:
+  - Agente → `pkexec`
+  - Scripts/terminal de Antonio → `sudo` permitido
 
 ## 📖 Consultar documentación oficial ante problemas (OBLIGATORIO)
 Cuando algo te esté dando problemas (herramientas que fallan, configuraciones que no

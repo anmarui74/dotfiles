@@ -206,6 +206,12 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 >
 > 🔑 Desde el **05/09/2026** el backup incluye además `auth.json` (credenciales de proveedores NVIDIA `nvapi-*` y OpenCode GO `sk-*`) en `credenciales/auth.json` dentro del tarball, y el `restore.sh` lo restaura a `~/.local/share/opencode/auth.json`. Sin él, los agentes en la nube no funcionan tras reinstalar.
 >
+> 🧠 Desde el **07/09/2026** el backup incluye además el **grafo de memoria (MCP memory)**:
+> - Copia con fecha en `~/Config/opencode/backups/mcp-memory-backup-{fecha}.jsonl` (estructura existente)
+> - Copia dentro del tarball en `data/memory/memory.jsonl` (el `restore.sh` lo restaura a la ruta activa `~/.config/opencode/data/memory/memory.jsonl`)
+> - Retención de 30 días (igual que los tarballs, según `LOG_RETENTION_DAYS`)
+> - Se genera en CADA ejecución de `backup-opencode.sh` (manual o automática vía timer de 30 min)
+>
 > 💡 **Nota (10/08/2026):** el backup automático hace **exactamente lo mismo** que el manual: al final ejecuta el mismo `backup-opencode.sh`, que incluye la **verificación automática del setup** (`check-setup-completo.sh`). Si el setup estuviera incorrecto, el backup se aborta (y se registra en `data/sync.log`).
 
 ### ¿Cuándo se ejecuta?
@@ -598,10 +604,11 @@ Config/opencode/
 │
 ├── backups/                   # 🎯 CARPETA DE BACKUPS
 │   ├── opencode/              # Tarballs opencode-backup-*.tar.gz (1/día, 30 días)
-│   └── mcp-memory-backup-*.json  # Backups del grafo de memoria
+│   └── mcp-memory-backup-*.jsonl  # Backups del grafo de memoria (30 días)
 │
 ├── data/
 │   ├── onlyoffice-ai/         # Integración IA de OnlyOffice (script + snapshot + doc)
+│   ├── dropbox/               # Config del cliente oficial de Dropbox (desde 07/09/2026)
 │   ├── hardware/              # Índice de hardware
 │   └── ...                    # Logs y estado
 │
@@ -619,7 +626,9 @@ Config/opencode/
 
 | Regla | Detalle |
 |-------|---------|
-| **Retención** | Tarballs con más de 30 días (`LOG_RETENTION_DAYS`) se borran automáticamente |
+| **Retención tarballs** | Tarballs con más de 30 días (`LOG_RETENTION_DAYS`) se borran automáticamente |
 | **Poda diaria** | Solo se conserva el **primer** tarball de cada día |
+| **Retención grafo** | Copias `mcp-memory-backup-*.jsonl` con más de 30 días se borran automáticamente (desde 07/09/2026) |
 | **Total esperado** | ~30 tarballs (~50 MB) en estado estable |
-| **Carpeta** | `~/Config/opencode/backups/opencode/` |
+| **Carpeta tarballs** | `~/Config/opencode/backups/opencode/` |
+| **Carpeta grafo** | `~/Config/opencode/backups/` (mcp-memory-backup-*.jsonl) |

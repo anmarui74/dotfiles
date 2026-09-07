@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Dropbox
+Comment=Cliente oficial de Dropbox (binario standalone)
+Exec=/home/antonio/.local/bin/dropbox-cli start
+Icon=dropbox
+Terminal=false
+StartupNotify=false
+Categories=Network;
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=10
