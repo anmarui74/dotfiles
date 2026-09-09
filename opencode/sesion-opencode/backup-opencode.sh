@@ -70,6 +70,26 @@ if [ -d "${CONFIG_BACKUP}/data/onlyoffice-ai" ]; then
     echo "   ✅ Respaldo OnlyOffice-IA incluido en el backup"
 fi
 
+# ─── 1b2. Incluir respaldo Dropbox (config oficial + CLI) en el tarball ───
+if [ -d "${CONFIG_BACKUP}/data/dropbox" ]; then
+    mkdir -p "${BACKUP_ROOT}/data"
+    cp -r "${CONFIG_BACKUP}/data/dropbox" "${BACKUP_ROOT}/data/dropbox"
+    echo "   ✅ Respaldo Dropbox incluido en el backup"
+fi
+
+# ─── 1b3. Incluir grafo de memoria (MCP memory) en el tarball ───
+MEMORY_ACTIVO="${CONFIG_ACTIVO}/data/memory/memory.jsonl"
+if [ -f "$MEMORY_ACTIVO" ]; then
+    mkdir -p "${BACKUP_ROOT}/data/memory"
+    cp "$MEMORY_ACTIVO" "${BACKUP_ROOT}/data/memory/memory.jsonl"
+    echo "   ✅ Grafo de memoria (MCP memory) incluido en el backup"
+    # Backup con fecha en ~/Config/opencode/backups/ (estructura existente mcp-memory-backup-*.jsonl)
+    mkdir -p "${CONFIG_BACKUP}/backups"
+    MEMORY_BACKUP_DATE=$(date +%Y%m%d-%H%M%S)
+    cp "$MEMORY_ACTIVO" "${CONFIG_BACKUP}/backups/mcp-memory-backup-${MEMORY_BACKUP_DATE}.jsonl"
+    echo "   ✅ Copia del grafo de memoria guardada en Config/opencode/backups/"
+fi
+
 # ─── 1c. Incluir auth.json (claves de proveedores NVIDIA/OpenCode GO) ───
 AUTH_JSON="/home/antonio/.local/share/opencode/auth.json"
 if [ -f "$AUTH_JSON" ]; then
@@ -114,6 +134,21 @@ if [ -d "${SOURCE_DIR}/data/onlyoffice-ai" ]; then
     mkdir -p "/home/antonio/Config/opencode/data"
     cp -r "${SOURCE_DIR}/data/onlyoffice-ai" "/home/antonio/Config/opencode/data/onlyoffice-ai"
     echo "✅ Respaldo OnlyOffice-IA restaurado en Config/opencode/data/"
+fi
+
+# Restaurar respaldo Dropbox en Config/opencode/data/
+if [ -d "${SOURCE_DIR}/data/dropbox" ]; then
+    mkdir -p "/home/antonio/Config/opencode/data"
+    cp -r "${SOURCE_DIR}/data/dropbox" "/home/antonio/Config/opencode/data/dropbox"
+    echo "✅ Respaldo Dropbox restaurado en Config/opencode/data/"
+fi
+
+# Restaurar grafo de memoria (MCP memory) a su ubicación activa
+if [ -f "${SOURCE_DIR}/data/memory/memory.jsonl" ]; then
+    mkdir -p "/home/antonio/.config/opencode/data/memory"
+    cp "${SOURCE_DIR}/data/memory/memory.jsonl" \
+       "/home/antonio/.config/opencode/data/memory/memory.jsonl"
+    echo "✅ Grafo de memoria (MCP memory) restaurado en .config/opencode/data/memory/"
 fi
 
 # El setup-opencode-completo.sh vive solo en la copia de seguridad
@@ -207,6 +242,13 @@ if [ "${OLD_TARBALLS}" -gt 0 ]; then
     echo "   🗑️  ${OLD_TARBALLS} tarballs antiguos eliminados (más de ${RETENTION_DAYS} días)"
 else
     echo "   ✅ No hay tarballs antiguos que eliminar"
+fi
+
+# Retención del grafo de memoria: borrar copias mcp-memory-backup-*.jsonl con más de 30 días
+OLD_MEMORY=$(find "${CONFIG_BACKUP}/backups" -maxdepth 1 -name 'mcp-memory-backup-*.jsonl' -mtime +"${RETENTION_DAYS}" 2>/dev/null | wc -l)
+if [ "${OLD_MEMORY}" -gt 0 ]; then
+    find "${CONFIG_BACKUP}/backups" -maxdepth 1 -name 'mcp-memory-backup-*.jsonl' -mtime +"${RETENTION_DAYS}" -delete 2>/dev/null || true
+    echo "   🗑️  ${OLD_MEMORY} copias del grafo de memoria antiguas eliminadas (más de ${RETENTION_DAYS} días)"
 fi
 
 # ─── 6. Poda diaria: conservar solo el ÚLTIMO tarball de cada día ───

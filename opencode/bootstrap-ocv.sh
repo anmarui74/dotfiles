@@ -262,13 +262,7 @@ cat > "${CONFIG_DIR}/tui.json" << 'TUIEOF'
     "session_rename": "f8"
   },
   "plugin": [
-    [
-      "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
-      {
-        "endpoint": "http://localhost:4001/v1",
-        "model": "models-qwen3.5-9b"
-      }
-    ],
+    "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
     ["opencode-throughput", {}]
   ]
 }

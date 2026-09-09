@@ -15,7 +15,7 @@
 |---|-----------|-------------|
 | 01 | [Configuración de Ollama + Proxy](01-configuracion-ollama.md) | 🦙 Proxy de Ollama _(EN DESUSO)_ · LiteLLM · bug #34892 |
 | 02 | [Configuración de LM Studio + Proxy](02-configuracion-lmstudio.md) | 🖥️ Proxy de LM Studio · init-opencode · systemd · carga de modelo |
-| 03 | [Configuración completa de Voz](03-configuracion-voz.md) | 🎤 STT (sox→whisper→LLM) · TTS (edge-tts→paplay) · plugin · speak |
+| 03 | [Configuración completa de Voz](03-configuracion-voz.md) | 🎤 STT (sox→whisper→LLM) · TTS (Kokoro GPU→paplay) · plugin · scripts |
 | 04 | [Los tres perfiles de `opencode.json`](04-perfiles-opencode-json.md) | 📋 Perfiles local/cloud/activo · MCPs · proveedores · agentes |
 | 05 | [Configuración adicional](05-configuracion-adicional.md) | ⚙️ `.env` · sync · systemd · scripts · estructura |
 | 06 | [AGENTS.md al detalle](06-agents-md.md) | 📜 Reglas de comportamiento de OpenCode |
@@ -43,7 +43,7 @@ Flujo de **voz → texto → IA → respuesta**:
 | 2️⃣ | **STT** — `sox` + `whisper-cpp` | Audio capturado y transcrito en **GPU** |
 | 3️⃣ | **TUI de OpenCode** | Teclado + comandos `/stt-*` |
 | 4️⃣ | **OpenCode** | Agentes: `cloud`/`build` **deepseek-v4-flash** + `local` Qwen 3.8 + `nvidia` Nemotron 3 Ultra · 5 MCP · 50 skills |
-| 5️⃣ | **TTS** — `edge-tts` → `paplay` + **Pantalla** | 🔊 Audio por voz · 📄 Texto en pantalla |
+| 5️⃣ | **TTS** — `Kokoro GPU` → `paplay` + **Pantalla** | 🔊 Audio por voz · 📄 Texto en pantalla |
 
 ---
 

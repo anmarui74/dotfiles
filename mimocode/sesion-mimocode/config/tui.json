@@ -1,0 +1,15 @@
+{
+  "$schema": "https://mimo.xiaomi.com/mimocode/tui.json",
+  "keybinds": {
+    "session_rename": "none"
+  },
+  "plugin": [
+    [
+      "/home/antonio/.config/mimocode/mimocode-voice-modified/index.js",
+      {
+        "endpoint": "http://localhost:4001/v1",
+        "model": "models-qwen3.8-9b"
+      }
+    ]
+  ]
+}

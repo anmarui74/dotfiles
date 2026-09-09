@@ -2,9 +2,9 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🗣️ Sistema de voz | 26/07/2026 | Antonio |
+| 🗣️ Sistema de voz | 08/09/2026 · rev. 08/09/2026 | Antonio |
 
-> Flujo completo: sox + whisper (STT) → OpenCode → edge-tts (TTS)
+> Flujo completo: sox + whisper (STT) → OpenCode → Kokoro v1.0 GPU (TTS local)
 
 ---
 
@@ -31,8 +31,10 @@ El sistema de voz permite **hablarle a OpenCode** (STT) y que OpenCode **te resp
 
 - **Plugin TUI:** `opencode-voice-modified` (carpeta local)
 - **STT:** `sox` (grabar) + `whisper-cpp` (transcribir) + LLM (normalizar)
-- **TTS:** `edge-tts` vía pipx + script `speak` + `paplay` (reproducir)
-- **Normalización:** LLM local (Qwen 3.5) para limpiar transcripciones
+- **TTS:** `Kokoro v1.0` (ONNX, GPU CUDA) vía `speak-kokoro-gpu` + `paplay` (reproducir)
+- **Normalización:** LLM local (Qwen 3.8) para limpiar transcripciones
+
+> **Cambio de motor TTS (08/09/2026):** el plugin pasó de `edge-tts` (nube Microsoft) a **Kokoro v1.0 en local con GPU** (voz `ef_dora`). Kokoro da voz mucho más natural y no depende de internet; el arranque de la voz es ~1-2 s en vez de 4-6 s. Detalle del benchmark en [la sección TTS](#tts-text-to-speech).
 
 ---
 
@@ -49,7 +51,7 @@ Ctrl+R (detiene grabación)
     ↓
 whisper-cli transcribe el audio → texto crudo
     ↓
-LLM (Qwen 3.5) normaliza el texto
+LLM (Qwen 3.8) normaliza el texto
     ↓
 OpenCode añade el texto al prompt (appendPrompt)
     ↓
@@ -67,7 +69,7 @@ Al terminar (session.idle), se activa TTS automático
     ↓
 cleanMarkdown() elimina markdown (```, **, etc.)
     ↓
-edge-tts genera audio WAV
+speak-kokoro-gpu (Kokoro v1.0 + CUDA) genera audio WAV
     ↓
 paplay reproduce el audio por los altavoces
     ↓
@@ -90,7 +92,7 @@ opencode-voice-modified/
 ├── LICENSE           # MIT
 └── lib/
     ├── stt.js        # Speech-to-Text (sox + whisper)
-    ├── tts.js        # Text-to-Speech (edge-tts)
+    ├── tts.js        # Text-to-Speech (Kokoro vía speak-kokoro-gpu)
     ├── llm-client.js  # Cliente LLM para normalización
     ├── session.js    # Gestión de sesiones
     └── logger.js     # Logger
@@ -144,7 +146,7 @@ export default {
 |------------|-------------|-----------|
 | Grabación | `sox` | Captura audio del micrófono |
 | Transcripción | `whisper-cli` (whisper-cpp) | Convierte audio a texto |
-| Normalización | LLM (Qwen 3.5) | Limpia y corrige el texto transcrito |
+| Normalización | LLM (Qwen 3.8) | Limpia y corrige el texto transcrito |
 
 ### Flujo detallado STT
 
@@ -244,7 +246,20 @@ El build local de whisper.cpp (`~/.local/share/whisper-cpp/bin/`) está **compil
 
 ### Archivo: `opencode-voice-modified/lib/tts.js`
 
-### Funcionamiento
+El TTS usa el script local `~/.local/bin/speak-kokoro-gpu` (Kokoro v1.0 con GPU). El plugin spawnea ese script, le envía el texto por stdin y reproduce el audio generado.
+
+### Motor: Kokoro v1.0 (ONNX + CUDA)
+
+| Dato | Valor |
+|------|-------|
+| Modelo | `kokoro-v1.0.onnx` (310 MB) + `voices-v1.0.bin` (27 MB) |
+| Ubicación | `~/.local/share/kokoro/` |
+| Voz en español | `ef_dora` (femenina), `em_alex` / `em_santa` (masculinas) |
+| Runtime | `onnxruntime-gpu` en venv `~/.local/share/tts-local/venv313` |
+| Provider | `CUDAExecutionProvider` (RTX 4070 Ti SUPER) |
+| Python | `python3.13` (instalado junto a `python3.14`, sin conflicto) |
+
+#### Funcionamiento
 
 #### Eventos que disparan TTS automático
 
@@ -276,7 +291,7 @@ api.event.on("question.asked", async () => {
 
 #### Limpieza de markdown (`cleanMarkdown`)
 
-Antes de enviar el texto a edge-tts, se elimina:
+Antes de enviar el texto a Kokoro, se elimina:
 
 | Elemento | Reemplazo |
 |----------|-----------|
@@ -295,56 +310,78 @@ Antes de enviar el texto a edge-tts, se elimina:
 function speak(text) {
   const cleaned = cleanMarkdown(text);
   
-  // Llama al script speak (edge-tts)
+  // Llama al script speak-kokoro-gpu (Kokoro local + GPU)
+  const speakScript = "/home/antonio/.local/bin/speak-kokoro-gpu";
   const proc = spawn(speakScript, [], { stdio: ["pipe", "ignore", "ignore"] });
   proc.stdin.write(cleaned);
   proc.stdin.end();
 }
 ```
 
-El script `speak` (Python) recibe el texto por stdin, genera audio con edge-tts y lo reproduce con paplay.
+El script `speak-kokoro-gpu` (Python) recibe el texto por stdin, genera audio con Kokoro v1.0 (CUDA) y lo reproduce con paplay.
+
+### Benchmark (RTX 4070 Ti SUPER, 08/09/2026)
+
+| Motor | TTFB 1ª frase | Total 1500c | RTF | Naturalidad |
+|-------|---------------|-------------|-----|-------------|
+| `edge-tts` (cloud) | 4-6 s | ~4,2 s | - | ⭐⭐⭐ Azure |
+| `speak-piper` (CPU) | 0,24 s | 1,16 s | 0,03 | ⭐⭐ sintética |
+| `speak-kokoro` (CPU) | 1,15 s | 5,97 s | 0,14 | ⭐⭐⭐ StyleTTS-2 |
+| `speak-kokoro-gpu` (CUDA) | ~1 s | 1,49 s | **0,038** | ⭐⭐⭐ StyleTTS-2 |
+
+> Kokoro va ~26x tiempo real con GPU (un texto de 39 s de voz se sintetiza en ~1,5 s) y su voz es la más natural de los motores locales.
 
 ---
 
-## Script `speak` (edge-tts)
+## Scripts de locución (`~/.local/bin/`)
 
-### Archivo: `~/.local/bin/speak`
+### `speak` (edge-tts, reserva/fallback)
 
 Script Python que:
 1. Lee texto línea por línea desde stdin
 2. Limpia caracteres ANSI y Unicode (recuadros)
-3. Acumula texto hasta encontrar un delimitador (`.`, `?`, `!`, `:`, `...`)
-4. Genera audio WAV con `edge-tts`
-5. Reproduce con `paplay` (PulseAudio)
+3. Genera audio WAV con `edge-tts` (nube Microsoft)
+4. Reproduce con `paplay` (PulseAudio)
+
+> Actualmente el plugin NO usa este script (usa `speak-kokoro-gpu`), pero se mantiene como fallback y para instalaciones desde limpio.
+
+### `speak-kokoro-gpu` (motor actual)
+
+Script Python que usa **Kokoro v1.0 en GPU** (venv `python3.13` + onnxruntime-gpu):
+1. Lee texto línea por línea desde stdin
+2. Limpia caracteres ANSI, Unicode y emojis (locucionero)
+3. Carga el modelo una sola vez (Kokoro + CUDA)
+4. Divide en bloques y locuta cada uno en cuanto está sintetizado
+5. Reproduce con `paplay` (arranque ~1 s)
+
+### `speak-piper` (alternativa CPU, muy rápida)
+
+Script Python que usa **Piper** (RTF 0,03, arranque ~0,24 s) pero con voz menos natural. Disponible como alternativa ligera en CPU.
 
 ### Variables de entorno
 
 | Variable | Valor por defecto | Descripción |
 |----------|-------------------|-------------|
-| `SPEAK_VOICE` | `es-ES-AlvaroNeural` | Voz de edge-tts |
-| `SPEAK_RATE` | `+5%` | Velocidad de habla |
-| `SPEAK_PITCH` | `+0Hz` | Tono de voz |
+| `SPEAK_VOICE_KOKORO` | `ef_dora` | Voz de Kokoro (ef_dora / em_alex / em_santa) |
+| `SPEAK_SPEED` | `1.0` | Velocidad de habla de Kokoro |
+| `ONNX_PROVIDER` | `CUDAExecutionProvider` | Provider de onnxruntime (GPU) |
+| `CUDA_MODULE_LOADING` | `LAZY` | Carga perezosa de módulos CUDA |
+| `SPEAK_VOICE` | `es-ES-AlvaroNeural` | Voz de edge-tts (solo para `speak`) |
 
-### Código simplificado
+> El script `speak-kokoro-gpu` fuerza por defecto `ONNX_PROVIDER=CUDAExecutionProvider` y `CUDA_MODULE_LOADING=LAZY` internamente, para usar la RTX 4070 Ti SUPER sin que el paquete intente TensorRT.
+
+### Código simplificado de `speak-kokoro-gpu`
 
 ```python
-VOICE = os.environ.get("SPEAK_VOICE", "es-ES-AlvaroNeural")
-RATE = os.environ.get("SPEAK_RATE", "+5%")
-PITCH = os.environ.get("SPEAK_PITCH", "+0Hz")
+from kokoro_onnx import Kokoro, EspeakConfig
+cfg = EspeakConfig(lib_path="/usr/lib/libespeak-ng.so", data_path="/usr/share/espeak-ng-data")
+engine = Kokoro("~/.local/share/kokoro/kokoro-v1.0.onnx",
+                "~/.local/share/kokoro/voices-v1.0.bin", espeak_config=cfg)
 
-def speak(text):
-    with tempfile.NamedTemporaryFile(suffix=".wav") as f:
-        cmd = ["edge-tts", "--voice", VOICE, "--rate", RATE, 
-               "--pitch", PITCH, "--text", text, "--write-media", f.name]
-        subprocess.run(cmd, timeout=30)
-        subprocess.run(["paplay", f.name])
-
-# Acumula texto y locuta al encontrar . ? ! :
-for line in sys.stdin:
-    buffer += clean_line(line) + " "
-    if clean.endswith((".", "?", "!", ":", "...")):
-        speak(buffer)
-        buffer = ""
+def speak_block(text):
+    audio, sr = engine.create(text, voice="ef_dora", lang="es", speed=1.0)
+    sf.write(tmp.wav, audio, sr)
+    subprocess.run(["paplay", tmp.wav])
 ```
 
 ---
@@ -364,9 +401,10 @@ for line in sys.stdin:
       "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
       {
         "endpoint": "http://localhost:4001/v1",
-        "model": "models-qwen3.5-9b"
+        "model": "models-qwen3.8-9b"
       }
-    ]
+    ],
+    ["opencode-throughput", {}]
   ]
 }
 ```
@@ -376,7 +414,7 @@ El plugin se carga como **plugin TUI** de OpenCode apuntando directamente a `ind
 | Opción | Valor | Propósito |
 |--------|-------|-----------|
 | `endpoint` | `http://localhost:4001/v1` | Endpoint del proxy LM Studio usado para la **normalización STT** |
-| `model` | `models-qwen3.5-9b` | Modelo local Qwen 3.5 usado en la normalización |
+| `model` | `models-qwen3.8-9b` | Modelo local Qwen 3.8 usado en la normalización |
 
 Estas opciones se añadieron el **18/08/2026** para que la normalización STT use explícitamente el modelo local vía el proxy (antes usaba valores por defecto).
 
@@ -406,7 +444,7 @@ Se pasa desde `tui.json` en `options` del plugin:
 ```javascript
 const cfg = {
   endpoint: pluginOptions?.endpoint,      // Ej: http://localhost:4001/v1
-  model: pluginOptions?.model,            // Ej: models-qwen3.5-9b
+  model: pluginOptions?.model,            // Ej: models-qwen3.8-9b
   apiKeyEnv: pluginOptions?.apiKeyEnv,    // Variable de entorno con API key
   maxTokens: 2048,
   reasoningEffort: null,
@@ -491,19 +529,29 @@ El wrapper apunta al **build local con CUDA** (`~/.local/share/whisper-cpp/bin/w
 
 ## Personalización
 
-### Cambiar la voz de edge-tts
+### Cambiar la voz de Kokoro
+
+Las voces en español v1.0 de Kokoro son `ef_dora` (femenina), `em_alex` y `em_santa` (masculinas).
+
+```bash
+export SPEAK_VOICE_KOKORO="ef_dora"   # Voz femenina (actual)
+export SPEAK_VOICE_KOKORO="em_alex"   # Voz masculina
+export SPEAK_VOICE_KOKORO="em_santa"  # Voz masculina más grave
+```
+
+### Cambiar velocidad de Kokoro
+
+```bash
+export SPEAK_SPEED="0.95"  # Un poco más lento
+export SPEAK_SPEED="1.1"   # Un poco más rápido
+```
+
+### Cambiar la voz de edge-tts (solo `speak`, fallback)
 
 ```bash
 export SPEAK_VOICE="es-ES-AlvaroNeural"  # Voz española masculina
 export SPEAK_VOICE="es-MX-JorgeNeural"   # Voz mexicana masculina
 export SPEAK_VOICE="es-ES-ElviraNeural"  # Voz española femenina
-```
-
-### Cambiar velocidad
-
-```bash
-export SPEAK_RATE="+10%"  # Más rápido
-export SPEAK_RATE="-10%"  # Más lento
 ```
 
 ### Añadir opciones de normalización externa
@@ -544,11 +592,21 @@ Actualmente no se usan prompts externos.
 ## Comandos útiles
 
 ```bash
-# Probar edge-tts directamente
+# Probar la locución con Kokoro-GPU (voz Dora)
+echo "Hola, soy OpenCode" | speak-kokoro-gpu
+
+# Cambiar de voz puntualmente
+echo "Hola" | SPEAK_VOICE_KOKORO=em_alex speak-kokoro-gpu
+
+# Comparar con los otros motores
+echo "Hola" | speak-piper      # Piper (CPU, rapidísimo)
+echo "Hola" | speak            # edge-tts (nube, fallback)
+
+# Probar edge-tts directamente (fallback)
 edge-tts --voice es-ES-AlvaroNeural --text "Hola, soy OpenCode" --write-media /tmp/test.wav && paplay /tmp/test.wav
 
-# Ver voces disponibles
-edge-tts --list-voices | grep es-
+# Ver voces disponibles de Kokoro
+speak-kokoro-gpu 2>/dev/null   # (usa ef_dora por defecto)
 
 # Probar transcripción local
 whisper-cli -m ~/.local/share/whisper-cpp/ggml-large-v3-turbo-q5_0.bin -f /tmp/prueba.wav -np -nt -l es

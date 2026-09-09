@@ -1,17 +1,17 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.8-9b",
+  "small_model": "lmstudio/qwen3.8-9b",
   "instructions": [
     "AGENTS.md"
   ],
-  "default_agent": "nvidia",
+  "default_agent": "cloud",
   "permission": {
     "edit": "ask",
     "bash": {
+      "*": "ask",
       "sudo *": "deny",
-      "pkexec *": "allow",
-      "*": "ask"
+      "pkexec *": "allow"
     }
   },
   "agent": {
@@ -25,19 +25,32 @@
     "local": {
       "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.8-9b"
+      "model": "lmstudio/qwen3.8-9b"
     },
     "cloud": {
-      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
+      "description": "Agente cloud - DeepSeek V4 Flash Off-Peak: pipeline diario de código, 22T tokens uso real, coste 0,63€/mes",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4-flash",
+      "permission": {
+        "task": {
+          "*": "allow"
+        }
+      }
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
-      "mode": "primary",
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta: mejor agente de código del ranking (SWE-Bench 76), 144,9 tok/s, tool calling nativo, gratis vía NIM. Usable como primario (Tab) y como subagente delegado por DeepSeek",
+      "mode": "all",
       "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
+    },
+    "multimodal": {
+      "description": "Agente multimodal - Muse Glimmer 30B con prompt optimizado para imagen + texto y recuperación de contexto largo, coste 0€ vía NIM. Usable como primario (Tab) y como subagente delegado por DeepSeek",
+      "mode": "all",
+      "model": "nvidia/meta/muse-glimmer-30b",
+      "temperature": 0.8,
+      "top_p": 0.9,
+      "prompt": "Eres un asistente multimodal experto. Analiza imágenes, screenshots y documentos junto con el texto. Para contextos largos, resume, extrae key points y responde con referencias precisas."
     }
   },
   "provider": {
@@ -60,14 +73,13 @@
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.8 Q6_K",
-      "model": "models-qwen3.8-9b",
       "options": {
         "baseURL": "http://localhost:4001/v1"
       },
       "models": {
-        "models-qwen3.8-9b": {
+        "qwen3.8-9b": {
           "name": "Qwen 3.8 - Tool Calling Excellence",
-          "tools": true,
+          "tool_call": true,
           "limit": {
             "context": 81920,
             "output": 8192

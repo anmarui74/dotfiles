@@ -158,7 +158,7 @@ export function registerTTS(api, kv, logger) {
 
     killProcs();
 
-    const speakScript = "/home/antonio/.local/bin/speak";
+    const speakScript = "/home/antonio/.local/bin/speak-kokoro-gpu";
     if (!fs.existsSync(speakScript)) {
       logger?.log?.("TTS", `speak script not found: ${speakScript}`, "warn");
       toast(`speak script not found`, "warning");
@@ -316,7 +316,7 @@ export function registerTTS(api, kv, logger) {
       title: "TTS: stop playback",
       value: "tts.stop",
       description: "Stop current TTS playback",
-      keybind: "escape",
+      keybind: "ctrl+q",
       slash: { name: "tts-stop" },
       onSelect() {
         if (stopSpeech()) toast("TTS stopped");

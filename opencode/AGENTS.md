@@ -368,7 +368,7 @@ nohup /opt/google/chrome/google-chrome --user-data-dir="/tmp/chrome-debug-profil
 Al ejecutar `opencode` u `ocv`, el lanzador
 `start-opencode-server.sh` carga automáticamente:
 - Servidor LM Studio (puerto 1234)
-- Modelo Qwen3.5-9B Q6_K con 80k de contexto
+- Modelo Qwen3.8-9B Q6_K con 80k de contexto
 - Proxy en puerto 4001 con métricas de tokens/s
 
 `start-lmstudio.sh` verifica primero si el modelo ya está cargado en VRAM con
@@ -459,7 +459,7 @@ Método rápido por terminal:
 ```bash
 curl -s http://localhost:4001/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"hola"}]}' | \
+  -d '{"model":"qwen3.8-9b","messages":[{"role":"user","content":"hola"}]}' | \
   python3 -c "import json,sys; d=json.load(sys.stdin); u=d['usage']; s=d.get('stats',{}); print(f\"Prompt: {u['prompt_tokens']} tok\\nGenerados: {u['completion_tokens']} tok\\nVelocidad: {s.get('tokens_per_second','N/A')} tok/s\")"
 ```
 

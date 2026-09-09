@@ -328,11 +328,12 @@ La diferencia con `opencode.json` (por defecto) es:
 
 | Aspecto | `opencode.json` (defecto) | Local | Cloud |
 |---------|---------------------------|-------|-------|
-| **Agentes** | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `cloud`, `nvidia` |
+| **Agentes** | `build`, `plan`, `local`, `cloud`, `nvidia` (sub), `multimodal` (sub) | `build`, `plan`, `local`, `cloud`, `nvidia` (sub), `multimodal` (sub) | `build`, `plan`, `cloud`, `nvidia` (sub), `multimodal` (sub) |
 | **Agente principal** | `cloud` (OpenCode Go) | `local` (Qwen 3.8 local) | `cloud` (OpenCode Go) |
 | **Agente local** | ✅ activo (primario) | ✅ activo (primario) | ❌ desactivado |
 | **Modelo cloud** | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) |
-| **Agente NVIDIA** | ✅ Muse Glimmer 30B | ✅ Muse Glimmer 30B | ✅ Muse Glimmer 30B |
+| **Agente NVIDIA** | ✅ subagente Muse Glimmer 30B | ✅ subagente Muse Glimmer 30B | ✅ subagente Muse Glimmer 30B |
+| **Agente multimodal** | ✅ subagente Muse Glimmer 30B | ✅ subagente (heredado de global) | ✅ subagente (heredado de global) |
 | **context7** | ✅ | ❌ | ✅ |
 | **filesystem** | ✅ | ✅ | ✅ |
 | **memory** | ✅ | ✅ | ✅ |
@@ -435,8 +436,9 @@ Define agentes (personas/modos del asistente):
 - **build:** Agente especial para tareas de construcción (lee AGENTS.md al inicio). Desde el **18/08/2026** usa **DeepSeek V4 Flash** como modelo explícito
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
 - **local:** Agente local, usa el modelo Qwen 3.8 Q6_K vía LM Studio (puerto 4001). Es **primario** en el perfil activo y en el perfil local; **desactivado** (`disable: true`) en el perfil cloud
-- **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`)
-- **nvidia:** Agente NVIDIA añadido el **18/08/2026**, usa **Muse Glimmer 30B** (`nvidia/meta/muse-glimmer-30b`). Mejor modelo del ranking para agentes de código (SWE-Bench 76, Terminal-Bench 51,7, 144,9 tok/s, tool calling nativo)
+- **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`). Desde el **09/09/2026** tiene `permission.task: {"*": "allow"}`, lo que le permite **delegar automáticamente** a los subagentes (nvidia, multimodal, general, explore, scout)
+- **nvidia:** **Subagente** desde el **09/09/2026** (antes primario), usa **Muse Glimmer 30B** (`nvidia/meta/muse-glimmer-30b`). Mejor modelo del ranking para agentes de código (SWE-Bench 76, Terminal-Bench 51,7, 144,9 tok/s, tool calling nativo). DeepSeek lo invoca automáticamente para código pesado
+- **multimodal:** **Subagente** (solo en `opencode.json`; heredado por fusión en local y cloud), usa Muse Glimmer 30B con prompt optimizado para imagen + texto y recuperación de contexto largo. Desde el **09/09/2026** ya no es primario
 
 Cada agente puede tener su propio modelo y prompt de sistema.
 
@@ -499,32 +501,6 @@ Proveedores de modelos. Dos proveedores configurados:
 **Retirados del whitelist original (410 Gone, end of life):** `z-ai/glm-5.2`, `openai/gpt-oss-120b`, `stepfun-ai/step-3.7-flash`, `thinkingmachines/inkling`, `meta/llama-3.1-8b-instruct`, `meta/llama-3.1-70b-instruct`, `meta/llama-3.3-70b-instruct`, `nvidia/llama-3.3-nemotron-super-49b-v1` y `v1.5`, `nvidia/nemotron-3-nano-30b-a3b`, `nvidia/nemotron-mini-4b-instruct`, `nvidia/nemotron-nano-12b-v2-vl`, `nvidia/nvidia-nemotron-nano-9b-v2`, `nvidia/llama-3.1-nemotron-nano-vl-8b-v1`.
 
 > 💡 **Conclusión:** el catálogo `models.dev` que integra OpenCode está desactualizado para NVIDIA (listaba modelos ya retirados). Por eso el `whitelist` manual es necesario: evita que aparezcan modelos muertos (410) en el selector `/models`.
-
-### 🤖 Verificación automática del whitelist (desde 05/09/2026)
-
-La metodología anterior se aplica automáticamente **cada 15 días**:
-
-| Elemento | Detalle |
-|----------|---------|
-| **Script** | `~/.config/opencode/check-nvidia-whitelist.sh` |
-| **Timer systemd** | `check-nvidia-whitelist.timer` (días 1 y 16 de cada mes a las 10:00, retardo aleatorio 30 min, `Persistent=true`) |
-| **Log** | `~/.config/opencode/data/nvidia-whitelist.log` |
-| **Estado** | `~/.config/opencode/data/nvidia-whitelist-state.json` (modelos vistos, retirados, última ejecución) |
-| **API key** | Se lee de `~/.local/share/opencode/auth.json` → `nvidia.key` (`nvapi-*`) — no hardcodeada |
-
-**Comportamiento:**
-
-1. **Verifica los modelos del whitelist actual** en los 3 perfiles con `POST /chat/completions` real (HTTP 200).
-2. **Reintenta** 429/500/503/timeout con margen antes de decidir (como manda la metodología).
-3. Los que devuelven **410 Gone** (end of life) se **ELIMINAN automáticamente** del whitelist de los 3 JSON (con backup `.bak` previo de cada archivo).
-4. **Escanea el catálogo real** (`GET /v1/models`) buscando modelos no vistos en la última ejecución.
-5. A los nuevos les aplica la metodología completa (HTTP 200 → velocidad ≥ 10 tok/s → tool calling real).
-6. Los que pasan TODO quedan como **CANDIDATOS** (log + notificación de escritorio) para **revisión manual** — no se añaden solos al whitelist.
-7. Guarda el estado para no re-probar modelos ya vistos en ejecuciones siguientes.
-
-**Primera ejecución (05/09/2026):** sembró el estado con los 73 modelos del catálogo no pertenecientes al whitelist (los 10 probados, todos descartados: 8 con HTTP 404 sin endpoint de chat, 2 DeepSeek con timeout). Los 8 del whitelist confirmados HTTP 200.
-
-> ⚠️ **Nota:** si la notificación del timer avisa de candidatos nuevos, revisarlos con la metodología y, si procede, añadirlos manualmente al whitelist de los 3 perfiles (y actualizar este markdown).
 
 ### `lsp`
 Servidores de lenguaje (Language Server Protocol) que OpenCode lanza localmente para **ayudar a la IA** a analizar el código: localizar definiciones y referencias, detectar errores al editar y entender la estructura del proyecto. Configurados el **10/08/2026** en los tres perfiles:

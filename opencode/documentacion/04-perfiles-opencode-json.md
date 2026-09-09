@@ -328,11 +328,12 @@ La diferencia con `opencode.json` (por defecto) es:
 
 | Aspecto | `opencode.json` (defecto) | Local | Cloud |
 |---------|---------------------------|-------|-------|
-| **Agentes** | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `local`, `cloud`, `nvidia` | `build`, `plan`, `cloud`, `nvidia` |
+| **Agentes** | `build`, `plan`, `local`, `cloud`, `nvidia` (sub), `multimodal` (sub) | `build`, `plan`, `local`, `cloud`, `nvidia` (sub), `multimodal` (sub) | `build`, `plan`, `cloud`, `nvidia` (sub), `multimodal` (sub) |
 | **Agente principal** | `cloud` (OpenCode Go) | `local` (Qwen 3.8 local) | `cloud` (OpenCode Go) |
 | **Agente local** | ✅ activo (primario) | ✅ activo (primario) | ❌ desactivado |
 | **Modelo cloud** | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) |
-| **Agente NVIDIA** | ✅ Muse Glimmer 30B | ✅ Muse Glimmer 30B | ✅ Muse Glimmer 30B |
+| **Agente NVIDIA** | ✅ Muse Glimmer 30B (mode `all`) | ✅ Muse Glimmer 30B (mode `all`) | ✅ Muse Glimmer 30B (mode `all`) |
+| **Agente multimodal** | ✅ Muse Glimmer 30B (mode `all`) | ✅ heredado de global (mode `all`) | ✅ heredado de global (mode `all`) |
 | **context7** | ✅ | ❌ | ✅ |
 | **filesystem** | ✅ | ✅ | ✅ |
 | **memory** | ✅ | ✅ | ✅ |
@@ -435,8 +436,9 @@ Define agentes (personas/modos del asistente):
 - **build:** Agente especial para tareas de construcción (lee AGENTS.md al inicio). Desde el **18/08/2026** usa **DeepSeek V4 Flash** como modelo explícito
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
 - **local:** Agente local, usa el modelo Qwen 3.8 Q6_K vía LM Studio (puerto 4001). Es **primario** en el perfil activo y en el perfil local; **desactivado** (`disable: true`) en el perfil cloud
-- **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`)
-- **nvidia:** Agente NVIDIA añadido el **18/08/2026**, usa **Muse Glimmer 30B** (`nvidia/meta/muse-glimmer-30b`). Mejor modelo del ranking para agentes de código (SWE-Bench 76, Terminal-Bench 51,7, 144,9 tok/s, tool calling nativo)
+- **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`). Desde el **09/09/2026** tiene `permission.task: {"*": "allow"}`, lo que le permite **delegar automáticamente** a los subagentes (nvidia, multimodal, general, explore, scout)
+- **nvidia:** Agente con `mode: "all"` desde el **09/09/2026** (antes primario, luego subagente), usa **Muse Glimmer 30B** (`nvidia/meta/muse-glimmer-30b`). Mejor modelo del ranking para agentes de código (SWE-Bench 76, Terminal-Bench 51,7, 144,9 tok/s, tool calling nativo). Se puede usar con Tab como primario **y** DeepSeek puede delegarle código pesado como subagente
+- **multimodal:** Agente con `mode: "all"` desde el **09/09/2026** (solo en `opencode.json`; heredado por fusión en local y cloud), usa Muse Glimmer 30B con prompt optimizado para imagen + texto y recuperación de contexto largo. Disponible como primario y como subagente delegado
 
 Cada agente puede tener su propio modelo y prompt de sistema.
 

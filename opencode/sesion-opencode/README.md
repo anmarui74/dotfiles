@@ -2,7 +2,7 @@
 
 **Guía completa del sistema de voz, modelos y herramientas**
 
-| 🧑‍💻 Antonio | 📍 Pechina, Almería | ☁️ OpenCode Go + 🤖 Qwen 3.5 local |
+| 🧑‍💻 Antonio | 📍 Pechina, Almería | ☁️ OpenCode Go + 🤖 Qwen 3.8 local |
 |---|---|---|
 
 ---
@@ -15,11 +15,10 @@
 |---|-----------|-------------|
 | 01 | [Configuración de Ollama + Proxy](01-configuracion-ollama.md) | 🦙 Proxy de Ollama _(EN DESUSO)_ · LiteLLM · bug #34892 |
 | 02 | [Configuración de LM Studio + Proxy](02-configuracion-lmstudio.md) | 🖥️ Proxy de LM Studio · init-opencode · systemd · carga de modelo |
-| 03 | [Configuración completa de Voz](03-configuracion-voz.md) | 🎤 STT (sox→whisper→LLM) · TTS (edge-tts→paplay) · plugin · speak |
+| 03 | [Configuración completa de Voz](03-configuracion-voz.md) | 🎤 STT (sox→whisper→LLM) · TTS (Kokoro GPU→paplay) · plugin · scripts |
 | 04 | [Los tres perfiles de `opencode.json`](04-perfiles-opencode-json.md) | 📋 Perfiles local/cloud/activo · MCPs · proveedores · agentes |
 | 05 | [Configuración adicional](05-configuracion-adicional.md) | ⚙️ `.env` · sync · systemd · scripts · estructura |
 | 06 | [AGENTS.md al detalle](06-agents-md.md) | 📜 Reglas de comportamiento de OpenCode |
-| 07 | [Playbook de recuperación](07-playbook-recuperacion.md) | 🛟 Restauración de grafo, reinstalación desde limpio y re-sync |
 
 ### Notas, seguimientos y hardware
 
@@ -43,8 +42,8 @@ Flujo de **voz → texto → IA → respuesta**:
 | 1️⃣ | 🎤 **Tú (Antonio)** | Hablas o escribes |
 | 2️⃣ | **STT** — `sox` + `whisper-cpp` | Audio capturado y transcrito en **GPU** |
 | 3️⃣ | **TUI de OpenCode** | Teclado + comandos `/stt-*` |
-| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build` **deepseek-v4-flash** + `local` Qwen 3.5 + `nvidia` Muse Glimmer 30B · 5 MCP · 50 skills · plugins TUI (voz + throughput) |
-| 5️⃣ | **TTS** — `edge-tts` → `paplay` + **Pantalla** | 🔊 Audio por voz · 📄 Texto en pantalla |
+| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build` **deepseek-v4-flash** + `local` Qwen 3.8 + `nvidia` Nemotron 3 Ultra · 5 MCP · 50 skills |
+| 5️⃣ | **TTS** — `Kokoro GPU` → `paplay` + **Pantalla** | 🔊 Audio por voz · 📄 Texto en pantalla |
 
 ---
 
@@ -52,9 +51,8 @@ Flujo de **voz → texto → IA → respuesta**:
 
 | Servicio | Endpoint | Uso |
 |----------|----------|-----|
-| **LM Studio** | `http://localhost:1234` | Modelo local `models-qwen3.5-9b` (80K contexto) |
-| **Proxy OpenCode ↔ LM Studio** | `http://localhost:4001` | Intermediario con métricas (tokens/s) → `metrics.json` |
-| **Dashboard LM Studio** | `http://localhost:4200` | Histórico de tok/s, tokens y peticiones |
+| **LM Studio** | `http://localhost:1234` | Modelo local `models-qwen3.8-9b` (80K contexto) |
+| **Proxy OpenCode ↔ LM Studio** | `http://localhost:4001` | Intermediario con métricas (tokens/s) |
 | **OpenCode Go (cloud)** | `https://opencode.ai` | Agentes `cloud` + `build`: `deepseek-v4-flash` |
 | **NVIDIA NIM (cloud)** | `https://integrate.api.nvidia.com/v1` | Agente `nvidia`: Nemotron 3 Ultra 550B (1M contexto) |
 | **Ollama** _(en desuso)_ | `http://localhost:11434` | Modelos `llama3.1`, `gemma4`, `deepseek-r1`, `qwen3.5` (LiteLLM) |

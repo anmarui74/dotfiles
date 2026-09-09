@@ -8,7 +8,7 @@ CONFIG_FILE="${SCRIPT_DIR}/opencode.json"
 LOG_FILE="${SCRIPT_DIR}/data/init.log"
 DATA_DIR="${SCRIPT_DIR}/data"
 LMSTUDIO_BIN="/home/antonio/.lmstudio/bin/lms"
-MODELO="models-qwen3.5-9b"
+MODELO="qwen3.8-9b"
 CONTEXTO=81920
 PUERTO_LM=1234
 PUERTO_PROXY=4001
@@ -20,6 +20,14 @@ echo "" >> "$LOG_FILE"
 
 log() {
     echo "[$(date '+%H:%M')] $1" | tee -a "$LOG_FILE"
+}
+
+# Lee el contexto real cargado localizando la columna CONTEXT de `lms ps`
+# (no depende de la posición fija de la columna)
+ctx_actual_de_lms() {
+    "$LMSTUDIO_BIN" ps 2>/dev/null | awk -v m="$MODELO" '
+        NR==1 { for (i=1; i<=NF; i++) if ($i == "CONTEXT") c=i }
+        $0 ~ m && c { print $c; exit }'
 }
 
 # ─── 1. Arrancar servidor LM Studio ───
@@ -45,7 +53,7 @@ iniciar_lmstudio() {
 cargar_modelo() {
     log "--- 2. Modelo ($MODELO) ---"
     local ctx_actual
-    ctx_actual=$($LMSTUDIO_BIN ps 2>/dev/null | grep "$MODELO" | awk '{print $6}')
+    ctx_actual=$(ctx_actual_de_lms)
 
     if [ "$ctx_actual" = "$CONTEXTO" ]; then
         log "✅ Modelo $MODELO ya cargado con contexto $CONTEXTO."
@@ -53,18 +61,18 @@ cargar_modelo() {
     fi
 
     log "🔄 Cargando $MODELO con contexto $CONTEXTO..."
-    $LMSTUDIO_BIN unload "$MODELO" 2>/dev/null
-    $LMSTUDIO_BIN load "$MODELO" -c $CONTEXTO -y 2>/dev/null
+    "$LMSTUDIO_BIN" unload "$MODELO" 2>/dev/null || true
+    "$LMSTUDIO_BIN" load "$MODELO" -c "$CONTEXTO" -y 2>/dev/null
 
-    ctx_actual=$($LMSTUDIO_BIN ps 2>/dev/null | grep "$MODELO" | awk '{print $6}')
+    ctx_actual=$(ctx_actual_de_lms)
     if [ "$ctx_actual" = "$CONTEXTO" ]; then
         log "✅ Modelo cargado con contexto $CONTEXTO."
     else
         log "⚠️  Contexto cargado: $ctx_actual (se esperaba $CONTEXTO). Reintentando..."
         sleep 2
-        $LMSTUDIO_BIN unload "$MODELO" 2>/dev/null
-        $LMSTUDIO_BIN load "$MODELO" -c $CONTEXTO -y 2>/dev/null
-        ctx_actual=$($LMSTUDIO_BIN ps 2>/dev/null | grep "$MODELO" | awk '{print $6}')
+        "$LMSTUDIO_BIN" unload "$MODELO" 2>/dev/null || true
+        "$LMSTUDIO_BIN" load "$MODELO" -c "$CONTEXTO" -y 2>/dev/null
+        ctx_actual=$(ctx_actual_de_lms)
         if [ "$ctx_actual" = "$CONTEXTO" ]; then
             log "✅ Contexto correcto tras reintento."
         else

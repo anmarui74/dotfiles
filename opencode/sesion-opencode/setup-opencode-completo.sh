@@ -348,17 +348,17 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.8-9b",
+  "small_model": "lmstudio/qwen3.8-9b",
   "instructions": [
     "AGENTS.md"
   ],
-  "default_agent": "nvidia",
+  "default_agent": "cloud",
   "permission": {
     "edit": "ask",
     "bash": {
+      "*": "ask",
       "sudo *": "deny",
-      "pkexec *": "allow",
-      "*": "ask"
+      "pkexec *": "allow"
     }
   },
   "agent": {
@@ -372,19 +372,32 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
     "local": {
       "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.8-9b"
+      "model": "lmstudio/qwen3.8-9b"
     },
     "cloud": {
-      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
+      "description": "Agente cloud - DeepSeek V4 Flash Off-Peak: pipeline diario de código, 22T tokens uso real, coste 0,63€/mes",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4-flash",
+      "permission": {
+        "task": {
+          "*": "allow"
+        }
+      }
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
-      "mode": "primary",
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta: mejor agente de código del ranking (SWE-Bench 76), 144,9 tok/s, tool calling nativo, gratis vía NIM. Usable como primario (Tab) y como subagente delegado por DeepSeek",
+      "mode": "all",
       "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
+    },
+    "multimodal": {
+      "description": "Agente multimodal - Muse Glimmer 30B con prompt optimizado para imagen + texto y recuperación de contexto largo, coste 0€ vía NIM. Usable como primario (Tab) y como subagente delegado por DeepSeek",
+      "mode": "all",
+      "model": "nvidia/meta/muse-glimmer-30b",
+      "temperature": 0.8,
+      "top_p": 0.9,
+      "prompt": "Eres un asistente multimodal experto. Analiza imágenes, screenshots y documentos junto con el texto. Para contextos largos, resume, extrae key points y responde con referencias precisas."
     }
   },
   "provider": {
@@ -407,14 +420,13 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.8 Q6_K",
-      "model": "models-qwen3.8-9b",
       "options": {
         "baseURL": "http://localhost:4001/v1"
       },
       "models": {
-        "models-qwen3.8-9b": {
+        "qwen3.8-9b": {
           "name": "Qwen 3.8 - Tool Calling Excellence",
-          "tools": true,
+          "tool_call": true,
           "limit": {
             "context": 81920,
             "output": 8192
@@ -582,7 +594,6 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
     }
   }
 }
-
 JSONEOF
 info "opencode.json creado (perfil completo)"
 
@@ -601,9 +612,9 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
   "permission": {
     "edit": "ask",
     "bash": {
+      "*": "ask",
       "sudo *": "deny",
-      "pkexec *": "allow",
-      "*": "ask"
+      "pkexec *": "allow"
     }
   },
   "agent": {
@@ -617,17 +628,22 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
     "local": {
       "description": "Agente local desactivado en perfil cloud",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.5-9b",
+      "model": "lmstudio/qwen3.8-9b",
       "disable": true
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4-flash",
+      "permission": {
+        "task": {
+          "*": "allow"
+        }
+      }
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
-      "mode": "primary",
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo). Primario y subagente delegado por DeepSeek",
+      "mode": "all",
       "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
@@ -810,7 +826,6 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
     }
   }
 }
-
 CLOUDEOF
 info "opencode-cloud.json creado (perfil cloud)"
 
@@ -818,7 +833,7 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.8-9b",
+  "small_model": "lmstudio/qwen3.8-9b",
   "instructions": [
     "AGENTS.md"
   ],
@@ -826,9 +841,9 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
   "permission": {
     "edit": "ask",
     "bash": {
+      "*": "ask",
       "sudo *": "deny",
-      "pkexec *": "allow",
-      "*": "ask"
+      "pkexec *": "allow"
     }
   },
   "agent": {
@@ -842,16 +857,21 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
     "local": {
       "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.8-9b"
+      "model": "lmstudio/qwen3.8-9b"
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4-flash",
+      "permission": {
+        "task": {
+          "*": "allow"
+        }
+      }
     },
     "nvidia": {
-      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
-      "mode": "primary",
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo). Primario y subagente delegado por DeepSeek",
+      "mode": "all",
       "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
@@ -877,14 +897,13 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.8 Q6_K",
-      "model": "models-qwen3.8-9b",
       "options": {
         "baseURL": "http://localhost:4001/v1"
       },
       "models": {
-        "models-qwen3.8-9b": {
+        "qwen3.8-9b": {
           "name": "Qwen 3.8 - Tool Calling Excellence",
-          "tools": true,
+          "tool_call": true,
           "limit": {
             "context": 81920,
             "output": 8192
@@ -1052,7 +1071,6 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
     }
   }
 }
-
 LOCALEOF
 
 cat > "$DIR_CONFIG/tui.json" << 'TUIEOF'
@@ -1062,17 +1080,10 @@ cat > "$DIR_CONFIG/tui.json" << 'TUIEOF'
     "session_rename": "f8"
   },
   "plugin": [
-    [
-      "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
-      {
-        "endpoint": "http://localhost:4001/v1",
-        "model": "models-qwen3.5-9b"
-      }
-    ],
+    "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
     ["opencode-throughput", {}]
   ]
 }
-
 TUIEOF
 info "tui.json creado"
 
@@ -2318,7 +2329,7 @@ nohup /opt/google/chrome/google-chrome --user-data-dir="/tmp/chrome-debug-profil
 Al ejecutar `opencode` u `ocv`, el lanzador
 `start-opencode-server.sh` carga automáticamente:
 - Servidor LM Studio (puerto 1234)
-- Modelo Qwen3.5-9B Q6_K con 80k de contexto
+- Modelo Qwen3.8-9B Q6_K con 80k de contexto
 - Proxy en puerto 4001 con métricas de tokens/s
 
 `start-lmstudio.sh` verifica primero si el modelo ya está cargado en VRAM con
@@ -2409,7 +2420,7 @@ Método rápido por terminal:
 ```bash
 curl -s http://localhost:4001/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"hola"}]}' | \
+  -d '{"model":"qwen3.8-9b","messages":[{"role":"user","content":"hola"}]}' | \
   python3 -c "import json,sys; d=json.load(sys.stdin); u=d['usage']; s=d.get('stats',{}); print(f\"Prompt: {u['prompt_tokens']} tok\\nGenerados: {u['completion_tokens']} tok\\nVelocidad: {s.get('tokens_per_second','N/A')} tok/s\")"
 ```
 
@@ -2538,7 +2549,7 @@ CONFIG_FILE="${SCRIPT_DIR}/opencode.json"
 LOG_FILE="${SCRIPT_DIR}/data/init.log"
 DATA_DIR="${SCRIPT_DIR}/data"
 LMSTUDIO_BIN="/home/antonio/.lmstudio/bin/lms"
-MODELO="models-qwen3.5-9b"
+MODELO="qwen3.8-9b"
 CONTEXTO=81920
 PUERTO_LM=1234
 PUERTO_PROXY=4001
@@ -2550,6 +2561,14 @@ echo "" >> "$LOG_FILE"
 
 log() {
     echo "[$(date '+%H:%M')] $1" | tee -a "$LOG_FILE"
+}
+
+# Lee el contexto real cargado localizando la columna CONTEXT de `lms ps`
+# (no depende de la posición fija de la columna)
+ctx_actual_de_lms() {
+    "$LMSTUDIO_BIN" ps 2>/dev/null | awk -v m="$MODELO" '
+        NR==1 { for (i=1; i<=NF; i++) if ($i == "CONTEXT") c=i }
+        $0 ~ m && c { print $c; exit }'
 }
 
 # ─── 1. Arrancar servidor LM Studio ───
@@ -2575,7 +2594,7 @@ iniciar_lmstudio() {
 cargar_modelo() {
     log "--- 2. Modelo ($MODELO) ---"
     local ctx_actual
-    ctx_actual=$($LMSTUDIO_BIN ps 2>/dev/null | grep "$MODELO" | awk '{print $6}')
+    ctx_actual=$(ctx_actual_de_lms)
 
     if [ "$ctx_actual" = "$CONTEXTO" ]; then
         log "✅ Modelo $MODELO ya cargado con contexto $CONTEXTO."
@@ -2583,18 +2602,18 @@ cargar_modelo() {
     fi
 
     log "🔄 Cargando $MODELO con contexto $CONTEXTO..."
-    $LMSTUDIO_BIN unload "$MODELO" 2>/dev/null
-    $LMSTUDIO_BIN load "$MODELO" -c $CONTEXTO -y 2>/dev/null
+    "$LMSTUDIO_BIN" unload "$MODELO" 2>/dev/null || true
+    "$LMSTUDIO_BIN" load "$MODELO" -c "$CONTEXTO" -y 2>/dev/null
 
-    ctx_actual=$($LMSTUDIO_BIN ps 2>/dev/null | grep "$MODELO" | awk '{print $6}')
+    ctx_actual=$(ctx_actual_de_lms)
     if [ "$ctx_actual" = "$CONTEXTO" ]; then
         log "✅ Modelo cargado con contexto $CONTEXTO."
     else
         log "⚠️  Contexto cargado: $ctx_actual (se esperaba $CONTEXTO). Reintentando..."
         sleep 2
-        $LMSTUDIO_BIN unload "$MODELO" 2>/dev/null
-        $LMSTUDIO_BIN load "$MODELO" -c $CONTEXTO -y 2>/dev/null
-        ctx_actual=$($LMSTUDIO_BIN ps 2>/dev/null | grep "$MODELO" | awk '{print $6}')
+        "$LMSTUDIO_BIN" unload "$MODELO" 2>/dev/null || true
+        "$LMSTUDIO_BIN" load "$MODELO" -c "$CONTEXTO" -y 2>/dev/null
+        ctx_actual=$(ctx_actual_de_lms)
         if [ "$ctx_actual" = "$CONTEXTO" ]; then
             log "✅ Contexto correcto tras reintento."
         else
@@ -2853,7 +2872,9 @@ else
     sleep 2
 fi
 
-CONTEXTO_REAL=$("$LMSTUDIO" ps 2>/dev/null | grep -m1 "$MODEL_ID" | awk '{print $6}')
+CONTEXTO_REAL=$("$LMSTUDIO" ps 2>/dev/null | awk -v m="$MODEL_ID" '
+  NR==1 { for (i=1; i<=NF; i++) if ($i == "CONTEXT") c=i }
+  $0 ~ m && c { print $c; exit }')
 echo "✅ Modelo cargado: ${CONTEXTO_REAL:-desconocido} tokens de contexto"
 
 VRAM_USO=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null || echo "N/A")
@@ -5054,13 +5075,7 @@ cat > "${CONFIG_DIR}/tui.json" << 'TUIEOF'
     "session_rename": "f8"
   },
   "plugin": [
-    [
-      "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
-      {
-        "endpoint": "http://localhost:4001/v1",
-        "model": "models-qwen3.5-9b"
-      }
-    ],
+    "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
     ["opencode-throughput", {}]
   ]
 }
@@ -6369,7 +6384,7 @@ export function registerTTS(api, kv, logger) {
 
     killProcs();
 
-    const speakScript = "/home/antonio/.local/bin/speak";
+    const speakScript = "/home/antonio/.local/bin/speak-kokoro-gpu";
     if (!fs.existsSync(speakScript)) {
       logger?.log?.("TTS", `speak script not found: ${speakScript}`, "warn");
       toast(`speak script not found`, "warning");
@@ -6527,7 +6542,7 @@ export function registerTTS(api, kv, logger) {
       title: "TTS: stop playback",
       value: "tts.stop",
       description: "Stop current TTS playback",
-      keybind: "escape",
+      keybind: "ctrl+q",
       slash: { name: "tts-stop" },
       onSelect() {
         if (stopSpeech()) toast("TTS stopped");

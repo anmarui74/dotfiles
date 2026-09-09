@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "keybinds": {
+    "session_rename": "f8"
+  },
+  "plugin": [
+    [
+      "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
+      {
+        "endpoint": "http://localhost:4001/v1",
+        "model": "qwen3.8-9b"
+      }
+    ],
+    ["opencode-throughput", {}]
+  ]
+}

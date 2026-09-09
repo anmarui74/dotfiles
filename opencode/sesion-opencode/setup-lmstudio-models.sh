@@ -3,7 +3,7 @@
 # Uso: bash setup-models.sh
 # Los modelos se descargan desde la interfaz gráfica de LM Studio o con:
 #   lms get <modelo>
-# Ejemplo: lms get qwen/qwen3.5-9b
+# Ejemplo: lms get qwen/qwen3.8-9b
 
 set -euo pipefail
 
@@ -52,7 +52,7 @@ else:
 
 echo ""
 echo "Modelo principal recomendado para OpenCode:"
-echo "  qwen/qwen3.5-9b"
+echo "  qwen/qwen3.8-9b"
 echo ""
 echo "Para descargar un modelo:"
 echo "  1. Abre LM Studio"

@@ -19,6 +19,56 @@
 - Sistema métrico: km/h, °C, mm, km
 - Tablas: SIEMPRE en formato Markdown estándar (nunca en bloques de código ASCII)
 
+## 📄 Formato de manuales y README (OBLIGATORIO)
+Toda documentación Markdown (manuales en `~/Config/opencode/documentacion/`,
+README, notas) DEBE seguir el mismo esquema que los manuales ya existentes
+(ver `01-configuracion-ollama.md`, `04-perfiles-opencode-json.md`, `README.md`).
+Usa EXACTAMENTE esta plantilla:
+
+### Plantilla de estructura
+```markdown
+# <emoji> <Título del documento>
+<descripción breve en una línea>
+
+| ⚙️ Estado | 📅 Fecha | 👤 Usuario |
+|-----------|----------|------------|
+| <✅/⚠️/🔴 + estado> | <dd/mm/aaaa> · rev. <dd/mm/aaaa> | Antonio |
+
+> <cita de contexto o nota de resumen (opcional)>
+
+---
+
+## 📑 Índice
+1. [Sección 1](#sección-1)
+2. [Sección 2](#sección-2)
+...
+
+---
+
+## <Sección 1>
+<contenido con TABLAS Markdown nativas, listas y bloques de código>
+
+---
+
+## <Sección 2>
+...
+```
+
+### Reglas del formato
+1. **Título**: `# <emoji> <Nombre>` en la primera línea, seguido de UNA línea de descripción breve.
+2. **Cabecera de estado**: SIEMPRE la tabla `| ⚙️ Estado | 📅 Fecha | 👤 Usuario |` con badges de estado (✅ activo / ⚠️ en desuso / 🔴 roto), fecha y revisión en formato `dd/mm/aaaa · rev. dd/mm/aaaa`, y `Antonio`.
+3. **Índice**: sección `## 📑 Índice` con enlaces ancla a cada sección principal (después del primer `---`).
+4. **Separadores**: `---` entre secciones principales y tras el índice.
+5. **Tablas**: SIEMPRE Markdown nativo (columnas con `|` y fila separadora `|---|`), NUNCA bloques de código ASCII ni cajas Unicode decorativas (`┌──┐`, `═══`, `║`).
+6. **Emojis**: en títulos de sección y para hacer legible el contenido (✅, ⚠️, 📦, 🛠️, etc.).
+7. **Bloques de código**: para comandos, rutas y salidas, con ` ``` ` y, si aplica, el lenguaje.
+8. **Pie de documento**: al final, una línea de cita con las rutas clave (`> 📁 ...`).
+9. **Arboles de directorio**: SOLO dentro de bloques de código (` ``` `) con caracteres `├── └── │`, nunca fuera.
+10. **Longitud de línea**: URLs y párrafos normales pueden ser largos (se renderizan bien); no forzar saltos de línea artificiales salvo en tablas.
+
+> 🔎 Ejemplo real: `~/Config/opencode/documentacion/README.md` (índice de documentación)
+> y `~/Config/opencode/documentacion/01-configuracion-ollama.md` (plantilla de manual).
+
 ## 🌤️ Consultar el tiempo (IMPORTANTE)
 Para preguntas sobre el tiempo, usa la herramienta bash con curl para consultar la API oficial de AEMET OpenData (predeterminada):
 
@@ -228,10 +278,19 @@ Esto comprueba:
 - Variables de entorno (.env)
 
 ## Backup automático del grafo de memoria
-El grafo de conocimiento se respalda automáticamente en:
-`/home/antonio/Config/opencode/backups/`
-Con nombre `mcp-memory-backup-{fecha}.jsonl`
-Los backups se conservan 30 días (según LOG_RETENTION_DAYS en .env)
+El grafo de conocimiento (MCP memory) se respalda automáticamente **en cada
+ejecución de `backup-opencode.sh`** (tanto el backup manual como el automático
+vía `opencode-sync.timer`, cada 30 min):
+
+1. **Copia con fecha** en `~/Config/opencode/backups/mcp-memory-backup-{fecha}.jsonl`
+   (se conserva la estructura existente)
+2. **Copia en el tarball** de OpenCode: `data/memory/memory.jsonl` dentro del
+   `opencode-backup-*.tar.gz` (se restaura con el `restore.sh` a la ruta activa)
+3. **Retención**: los backups del grafo se conservan 30 días (según
+   `LOG_RETENTION_DAYS` en `.env`), igual que los tarballs
+
+El grafo activo vive en `~/.config/opencode/data/memory/memory.jsonl`.
+
 ## Recuperación del grafo de memoria
 Si el grafo se pierde o corrompe:
 1. Localizar el backup más reciente:
@@ -245,6 +304,8 @@ Si el grafo se pierde o corrompe:
 3. Reiniciar OpenCode: el servidor MCP Memory cargará el grafo desde `MEMORY_FILE_PATH`
    (definido vía `environment` en el bloque `mcp.memory` de los 3 perfiles JSON).
    ⚠️ El servidor usa `MEMORY_FILE_PATH` (NO `MEMORY_DATA_DIR`).
+4. Alternativa: restaurar desde un tarball de OpenCode con el `restore.sh`
+   (restaura `data/memory/memory.jsonl` a la ruta activa automáticamente).
 
 ## ⚠️ Recordatorio MCP memory (IMPORTANTE)
 Al usar la herramienta `memory_add_observations` (o `memory_delete_observations`),
@@ -307,7 +368,7 @@ nohup /opt/google/chrome/google-chrome --user-data-dir="/tmp/chrome-debug-profil
 Al ejecutar `opencode` u `ocv`, el lanzador
 `start-opencode-server.sh` carga automáticamente:
 - Servidor LM Studio (puerto 1234)
-- Modelo Qwen3.5-9B Q6_K con 80k de contexto
+- Modelo Qwen3.8-9B Q6_K con 80k de contexto
 - Proxy en puerto 4001 con métricas de tokens/s
 
 `start-lmstudio.sh` verifica primero si el modelo ya está cargado en VRAM con
@@ -398,7 +459,7 @@ Método rápido por terminal:
 ```bash
 curl -s http://localhost:4001/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"hola"}]}' | \
+  -d '{"model":"qwen3.8-9b","messages":[{"role":"user","content":"hola"}]}' | \
   python3 -c "import json,sys; d=json.load(sys.stdin); u=d['usage']; s=d.get('stats',{}); print(f\"Prompt: {u['prompt_tokens']} tok\\nGenerados: {u['completion_tokens']} tok\\nVelocidad: {s.get('tokens_per_second','N/A')} tok/s\")"
 ```
 

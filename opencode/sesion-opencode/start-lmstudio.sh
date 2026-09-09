@@ -44,7 +44,9 @@ else
     sleep 2
 fi
 
-CONTEXTO_REAL=$("$LMSTUDIO" ps 2>/dev/null | grep -m1 "$MODEL_ID" | awk '{print $6}')
+CONTEXTO_REAL=$("$LMSTUDIO" ps 2>/dev/null | awk -v m="$MODEL_ID" '
+  NR==1 { for (i=1; i<=NF; i++) if ($i == "CONTEXT") c=i }
+  $0 ~ m && c { print $c; exit }')
 echo "✅ Modelo cargado: ${CONTEXTO_REAL:-desconocido} tokens de contexto"
 
 VRAM_USO=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null || echo "N/A")
