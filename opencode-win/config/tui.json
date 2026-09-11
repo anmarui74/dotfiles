@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "keybinds": {
+    "session_rename": "f8"
+  },
+  "plugin": [
+    "C:/Users/evo01/.config/opencode/opencode-voice-modified/index.js",
+    [
+      "opencode-throughput",
+      {}
+    ]
+  ]
+}

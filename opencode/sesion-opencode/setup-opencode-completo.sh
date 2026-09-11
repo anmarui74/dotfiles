@@ -364,7 +364,7 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
   "agent": {
     "build": {
       "prompt": "{file:./prompts/read-agents.txt}",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4.1-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -375,9 +375,9 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
       "model": "lmstudio/qwen3.8-9b"
     },
     "cloud": {
-      "description": "Agente cloud - DeepSeek V4 Flash Off-Peak: pipeline diario de código, 22T tokens uso real, coste 0,63€/mes",
+      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash vía OpenCode Go: pipeline diario de código y agentic coding",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash",
+      "model": "opencode-go/deepseek-v4.1-flash",
       "permission": {
         "task": {
           "*": "allow"
@@ -577,9 +577,8 @@ cat > "$DIR_CONFIG/opencode.json" << 'JSONEOF'
     "fetch": {
       "type": "local",
       "command": [
-        "npx",
-        "-y",
-        "mcp-fetch-server"
+        "node",
+        "/home/antonio/.config/opencode/mcp-fetch-fix.js"
       ],
       "enabled": true
     },
@@ -601,7 +600,7 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "opencode-go/deepseek-v4-flash",
+  "small_model": "opencode-go/deepseek-v4.1-flash",
   "instructions": [
     "AGENTS.md"
   ],
@@ -620,7 +619,7 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
   "agent": {
     "build": {
       "prompt": "{file:./prompts/read-agents.txt}",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4.1-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -632,9 +631,9 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
       "disable": true
     },
     "cloud": {
-      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
+      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash vía OpenCode Go (modelos en la nube: Claude, Gemini, OpenCode Go)",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash",
+      "model": "opencode-go/deepseek-v4.1-flash",
       "permission": {
         "task": {
           "*": "allow"
@@ -809,9 +808,8 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
     "fetch": {
       "type": "local",
       "command": [
-        "npx",
-        "-y",
-        "mcp-fetch-server"
+        "node",
+        "/home/antonio/.config/opencode/mcp-fetch-fix.js"
       ],
       "enabled": true
     },
@@ -849,7 +847,7 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
   "agent": {
     "build": {
       "prompt": "{file:./prompts/read-agents.txt}",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4.1-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -860,9 +858,9 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
       "model": "lmstudio/qwen3.8-9b"
     },
     "cloud": {
-      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
+      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash vía OpenCode Go (modelos en la nube: Claude, Gemini, OpenCode Go)",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash",
+      "model": "opencode-go/deepseek-v4.1-flash",
       "permission": {
         "task": {
           "*": "allow"
@@ -1054,9 +1052,8 @@ cat > "$DIR_CONFIG/opencode-local.json" << 'LOCALEOF'
     "fetch": {
       "type": "local",
       "command": [
-        "npx",
-        "-y",
-        "mcp-fetch-server"
+        "node",
+        "/home/antonio/.config/opencode/mcp-fetch-fix.js"
       ],
       "enabled": true
     },
@@ -1101,6 +1098,7 @@ HOME_DIR="$HOME"
 CONFIG_ACTIVO="$HOME_DIR/.config/opencode"
 CONFIG_BACKUP="$HOME_DIR/Config/opencode"
 SESION_DIR="${CONFIG_BACKUP}/sesion-opencode"
+DOC_DIR="${CONFIG_BACKUP}/documentacion"
 LOG_FILE="$CONFIG_ACTIVO/data/sync.log"
 LOCK_FILE="/tmp/opencode-sync.lock"
 QUIET="${1:-}"
@@ -1116,7 +1114,7 @@ fi
 echo $$ > "$LOCK_FILE"
 trap 'rm -f "$LOCK_FILE"' EXIT
 
-mkdir -p "$CONFIG_ACTIVO/data" "$SESION_DIR"
+mkdir -p "$CONFIG_ACTIVO/data" "$CONFIG_ACTIVO/documentacion" "$SESION_DIR" "$DOC_DIR"
 
 log() {
     echo "[$(date '+%d/%m/%Y %H:%M:%S')] $*" >> "$LOG_FILE"
@@ -1126,7 +1124,7 @@ log() {
 # ─── 1. Copiar archivos críticos de config a sesion-opencode ───
 log "🔄 Sincronizando .config/opencode/ → Config/opencode/sesion-opencode/..."
 
-for f in "$CONFIG_ACTIVO"/*.json "$CONFIG_ACTIVO"/*.sh "$CONFIG_ACTIVO"/*.md "$CONFIG_ACTIVO"/*.py "$CONFIG_ACTIVO"/*.yaml "$CONFIG_ACTIVO"/.env "$CONFIG_ACTIVO"/.gitignore; do
+for f in "$CONFIG_ACTIVO"/*.json "$CONFIG_ACTIVO"/*.sh "$CONFIG_ACTIVO"/*.js "$CONFIG_ACTIVO"/*.py "$CONFIG_ACTIVO"/*.yaml "$CONFIG_ACTIVO"/.env "$CONFIG_ACTIVO"/.gitignore; do
     [ -f "$f" ] || continue
     base=$(basename "$f")
     case "$base" in
@@ -1134,6 +1132,19 @@ for f in "$CONFIG_ACTIVO"/*.json "$CONFIG_ACTIVO"/*.sh "$CONFIG_ACTIVO"/*.md "$C
     esac
     cp "$f" "$SESION_DIR/" 2>/dev/null || true
 done
+
+# AGENTS.md es configuración (no manual): se respalda en la raíz de Config/opencode/
+if [ -f "$CONFIG_ACTIVO/AGENTS.md" ]; then
+    cp "$CONFIG_ACTIVO/AGENTS.md" "$CONFIG_BACKUP/AGENTS.md" 2>/dev/null || true
+fi
+
+# Manuales de configuración: ~/.config/opencode/documentacion/ → ~/Config/opencode/documentacion/
+if [ -d "$CONFIG_ACTIVO/documentacion" ]; then
+    cp "$CONFIG_ACTIVO/documentacion/"*.md "$DOC_DIR/" 2>/dev/null || true
+fi
+
+# Eliminar manuales obsoletos que pudieran quedar en sesion-opencode
+rm -f "$SESION_DIR"/*.md 2>/dev/null || true
 
 # Directorios (sin data/, models/, node_modules/) — sincronizar: borrar destino antes
 # para que la copia refleje exactamente el origen (elimina obsoletos)
@@ -1749,6 +1760,7 @@ archivos = {
     'tui.json': 'TUIEOF',
     'AGENTS.md': 'AGEOF', '.env': 'ENVEOF',
     'sync-opencode.sh': 'SYNCEOF',
+    'mcp-fetch-fix.js': 'MCPFIXEOF',
     'init-opencode.sh': 'INITEOF', 'start-lmstudio-server.sh': 'SERVEREOF',
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
@@ -1861,11 +1873,72 @@ else
     log "✅✅✅ VERIFICACIÓN COMPLETA: SETUP CORRECTO — SE PUEDE HACER EL BACKUP ✅✅✅"
     exit 0
 fi
-
 CHECK-SETUP_SHEOF
 chmod +x "$DIR_CONFIG/check-setup-completo.sh"
 info "check-setup-completo.sh creado (verifica el setup antes de cada backup)"
 info "check-timeline-fix.sh creado (vigila PR #26861)"
+
+# ─── Proxy MCP fetch: elimina la capability "resources" no implementada ───
+cat > "$DIR_CONFIG/mcp-fetch-fix.js" << 'MCPFIXEOF'
+#!/usr/bin/env node
+// mcp-fetch-fix.js — Proxy stdio para el MCP `mcp-fetch-server`.
+//
+// Problema: el servidor upstream (zcaceres/fetch v1.1.2) declara la capability
+// "resources" en el handshake de initialize pero NO implementa resources/list
+// ni resources/templates/list: responde -32601 (Method not found). OpenCode lo
+// registra como "failed to get resources" en cada arranque.
+//
+// Solución: este proxy arranca `npx -y mcp-fetch-server`, reenvía todo el
+// protocolo tal cual y elimina únicamente la clave "resources" del mensaje
+// initialize. Así OpenCode no consulta resources y desaparece el warning,
+// conservando las 6 tools (fetch_html, fetch_markdown, fetch_txt, fetch_json,
+// fetch_readable, fetch_youtube_transcript).
+//
+// Se usa desde la config MCP: command = ["node", ".../mcp-fetch-fix.js"]
+
+const { spawn } = require("node:child_process");
+
+const child = spawn("npx", ["-y", "mcp-fetch-server"], {
+  stdio: ["pipe", "pipe", "inherit"],
+});
+
+process.stdin.pipe(child.stdin);
+
+let buffer = "";
+child.stdout.setEncoding("utf8");
+child.stdout.on("data", (chunk) => {
+  buffer += chunk;
+  let nl;
+  while ((nl = buffer.indexOf("\n")) !== -1) {
+    const line = buffer.slice(0, nl);
+    buffer = buffer.slice(nl + 1);
+    let out = line;
+    if (line.trim()) {
+      try {
+        const msg = JSON.parse(line);
+        if (msg && msg.result && msg.result.capabilities && "resources" in msg.result.capabilities) {
+          delete msg.result.capabilities.resources;
+          out = JSON.stringify(msg);
+        }
+      } catch {
+        // Si no es JSON válido, se reenvía sin tocar.
+      }
+    }
+    process.stdout.write(out + "\n");
+  }
+});
+
+for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) {
+  process.on(sig, () => child.kill(sig));
+}
+child.on("exit", (code) => process.exit(code ?? 0));
+child.on("error", (err) => {
+  process.stderr.write(String(err) + "\n");
+  process.exit(1);
+});
+MCPFIXEOF
+chmod +x "$DIR_CONFIG/mcp-fetch-fix.js"
+info "mcp-fetch-fix.js creado (proxy del MCP fetch)"
 
 cat > "$HOME/.config/systemd/user/check-timeline-fix.service" << 'TLSERVEOF'
 [Unit]
@@ -1981,8 +2054,9 @@ cat > "$DIR_CONFIG/AGENTS.md" << 'AGEOF'
 - Tablas: SIEMPRE en formato Markdown estándar (nunca en bloques de código ASCII)
 
 ## 📄 Formato de manuales y README (OBLIGATORIO)
-Toda documentación Markdown (manuales en `~/Config/opencode/documentacion/`,
-README, notas) DEBE seguir el mismo esquema que los manuales ya existentes
+Toda documentación Markdown (manuales en `~/.config/opencode/documentacion/` y su
+respaldo en `~/Config/opencode/documentacion/`, README, notas) DEBE seguir el mismo
+esquema que los manuales ya existentes
 (ver `01-configuracion-ollama.md`, `04-perfiles-opencode-json.md`, `README.md`).
 Usa EXACTAMENTE esta plantilla:
 
@@ -2146,12 +2220,17 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
   - `backups/opencode/` → tarballs de backup de OpenCode (`opencode-backup-*.tar.gz`)
   - `backups/` (raíz) → backups del grafo de memoria (`mcp-memory-backup-*.jsonl`)
   - `data/` → datos auxiliares (p. ej. `onlyoffice-ai/`)
-  - `documentacion/` → documentación en Markdown
+  - `documentacion/` → manuales de configuración en Markdown (respaldo)
   - `sesion-opencode/` → setup completo desde limpio + scripts sincronizados
   - `respaldo-config/` → snapshot antiguo de la configuración
   - `legacy/` → scripts y carpetas obsoletos
   - En la raíz solo viven: `AGENTS.md`, `backup-opencode.sh`, `bootstrap-ocv.sh`, `sync-opencode.sh`
     y el enlace simbólico `setup-opencode-completo.sh` → `sesion-opencode/setup-opencode-completo.sh`
+  - ⚠️ **Manuales (`*.md`)**: viven SOLO en `~/.config/opencode/documentacion/` (activos)
+    y en `~/Config/opencode/documentacion/` (respaldo). NUNCA en la raíz de `.config/opencode/`
+    (salvo `AGENTS.md`) ni en `sesion-opencode/`. `AGENTS.md` es configuración (no manual) →
+    vive en la raíz de `~/.config/opencode/` y de `~/Config/opencode/`.
+    El `sync-opencode.sh` aplica esta regla automáticamente.
 - Cada vez que modifiques, crees o elimines algo en `~/.config/opencode/`:
   1. **Copia el archivo** a `~/Config/opencode/` (manteniendo la misma estructura)
   2. **Actualiza los scripts** de instalación si es necesario:
@@ -2352,7 +2431,7 @@ nunca sobre `opencode.json`**, que es solo el perfil por defecto.
 | `ocv-cloud`, `opencode-cloud` | `opencode-cloud.json` | ❌ NO carga modelo (`SKIP_LMSTUDIO=1`) |
 
 - En cloud, el agente local está **desactivado** (`agent.local.disable`) y `small_model`
-  apunta a la nube (`opencode-go/deepseek-v4-flash`); el provider LM Studio está
+  apunta a la nube (`opencode-go/deepseek-v4.1-flash`); el provider LM Studio está
   bloqueado (`disabled_providers`).
 - El antiguo `switch-mcp-profile.sh` (copiaba local/cloud sobre `opencode.json`)
   está ELIMINADO desde el 18/08/2026.
@@ -5247,7 +5326,8 @@ QWENEOF
 chmod +x "$DIR_CONFIG/qwen-qwen3.8-9b.json" 2>/dev/null || true
 info "qwen-qwen3.8-9b.json creado"
 
-cat > "\$DIR_CONFIG/hardware-info.md" << 'HWINFOEOF'
+mkdir -p "$DIR_CONFIG/documentacion"
+cat > "$DIR_CONFIG/documentacion/hardware-info.md" << 'HWINFOEOF'
 # Hardware del equipo de Antonio
 
 | 🖥️ Sistema | 🐧 Kernel | 📐 Arquitectura |
@@ -5375,10 +5455,10 @@ cat > "\$DIR_CONFIG/hardware-info.md" << 'HWINFOEOF'
 | `python3 ~/.config/opencode/hardware-query.py scan` | Reescaneo completo (actualiza el índice) |
 | `hw_query all` | Índice completo en JSON |
 HWINFOEOF
-chmod +x "$DIR_CONFIG/hardware-info.md" 2>/dev/null || true
+chmod +x "$DIR_CONFIG/documentacion/hardware-info.md" 2>/dev/null || true
 info "hardware-info.md creado"
 
-cat > "$DIR_CONFIG/README-hardware.md" << 'READMEHWEOF'
+cat > "$DIR_CONFIG/documentacion/README-hardware.md" << 'READMEHWEOF'
 # 🖥️ Comandos rápidos de hardware
 
 > Guía de comandos para consultar la información del equipo.
@@ -5459,7 +5539,7 @@ grep 'cpu MHz' /proc/cpuinfo | head -1 | cut -d: -f2 | sed 's/^ //'
 - El índice JSON vive en `~/.config/opencode/data/hardware/index.json`.
 - Detalle completo del equipo: ver [hardware-info.md](hardware-info.md).
 READMEHWEOF
-chmod +x "$DIR_CONFIG/README-hardware.md" 2>/dev/null || true
+chmod +x "$DIR_CONFIG/documentacion/README-hardware.md" 2>/dev/null || true
 info "README-hardware.md creado"
 
 # PASO 15: Dependencias npm

@@ -80,6 +80,21 @@ function getModelsDir() {
 }
 
 function listInputDevices() {
+  if (process.platform === "linux") {
+    try {
+      const out = execSync("pactl list short sources 2>/dev/null", {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      return out
+        .split("\n")
+        .map((l) => l.trim().split(/\s+/))
+        .filter((cols) => cols.length >= 2 && cols[1] && !cols[1].endsWith(".monitor"))
+        .map((cols) => cols[1]);
+    } catch {
+      return [];
+    }
+  }
   try {
     const json = execSync("system_profiler SPAudioDataType -json 2>/dev/null", {
       encoding: "utf-8",

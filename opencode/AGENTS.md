@@ -20,8 +20,9 @@
 - Tablas: SIEMPRE en formato Markdown estándar (nunca en bloques de código ASCII)
 
 ## 📄 Formato de manuales y README (OBLIGATORIO)
-Toda documentación Markdown (manuales en `~/Config/opencode/documentacion/`,
-README, notas) DEBE seguir el mismo esquema que los manuales ya existentes
+Toda documentación Markdown (manuales en `~/.config/opencode/documentacion/` y su
+respaldo en `~/Config/opencode/documentacion/`, README, notas) DEBE seguir el mismo
+esquema que los manuales ya existentes
 (ver `01-configuracion-ollama.md`, `04-perfiles-opencode-json.md`, `README.md`).
 Usa EXACTAMENTE esta plantilla:
 
@@ -185,12 +186,17 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
   - `backups/opencode/` → tarballs de backup de OpenCode (`opencode-backup-*.tar.gz`)
   - `backups/` (raíz) → backups del grafo de memoria (`mcp-memory-backup-*.jsonl`)
   - `data/` → datos auxiliares (p. ej. `onlyoffice-ai/`)
-  - `documentacion/` → documentación en Markdown
+  - `documentacion/` → manuales de configuración en Markdown (respaldo)
   - `sesion-opencode/` → setup completo desde limpio + scripts sincronizados
   - `respaldo-config/` → snapshot antiguo de la configuración
   - `legacy/` → scripts y carpetas obsoletos
   - En la raíz solo viven: `AGENTS.md`, `backup-opencode.sh`, `bootstrap-ocv.sh`, `sync-opencode.sh`
     y el enlace simbólico `setup-opencode-completo.sh` → `sesion-opencode/setup-opencode-completo.sh`
+  - ⚠️ **Manuales (`*.md`)**: viven SOLO en `~/.config/opencode/documentacion/` (activos)
+    y en `~/Config/opencode/documentacion/` (respaldo). NUNCA en la raíz de `.config/opencode/`
+    (salvo `AGENTS.md`) ni en `sesion-opencode/`. `AGENTS.md` es configuración (no manual) →
+    vive en la raíz de `~/.config/opencode/` y de `~/Config/opencode/`.
+    El `sync-opencode.sh` aplica esta regla automáticamente.
 - Cada vez que modifiques, crees o elimines algo en `~/.config/opencode/`:
   1. **Copia el archivo** a `~/Config/opencode/` (manteniendo la misma estructura)
   2. **Actualiza los scripts** de instalación si es necesario:
@@ -391,7 +397,7 @@ nunca sobre `opencode.json`**, que es solo el perfil por defecto.
 | `ocv-cloud`, `opencode-cloud` | `opencode-cloud.json` | ❌ NO carga modelo (`SKIP_LMSTUDIO=1`) |
 
 - En cloud, el agente local está **desactivado** (`agent.local.disable`) y `small_model`
-  apunta a la nube (`opencode-go/deepseek-v4-flash`); el provider LM Studio está
+  apunta a la nube (`opencode-go/deepseek-v4.1-flash`); el provider LM Studio está
   bloqueado (`disabled_providers`).
 - El antiguo `switch-mcp-profile.sh` (copiaba local/cloud sobre `opencode.json`)
   está ELIMINADO desde el 18/08/2026.

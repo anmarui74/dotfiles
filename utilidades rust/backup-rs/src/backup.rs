@@ -9,6 +9,23 @@ use walkdir::{DirEntry, WalkDir};
 
 use crate::config::{Config, SourceConfig};
 
+/// Nombres vetados por el firmware de los NAS WD MyCloud (Samba `veto files`).
+/// El servidor SMB los reserva para el sistema y devuelve
+/// `NT_STATUS_OBJECT_NAME_NOT_FOUND` al intentar crearlos, lo que hace fallar
+/// rsync con código 23. Se excluyen automáticamente en los espejos SMB.
+const SMB_VETOED_NAMES: &[&str] = &[
+    ".bin",
+    ".DS_Store",
+    "Network Trash Folder",
+    ".systemfile",
+    "lost+found",
+    "Nas_Prog",
+    "mirrored",
+    "uploaded",
+    ".wdmc",
+    ".AppleDouble",
+];
+
 pub struct BackupEngine {
     config: Config,
     timestamp: String,
@@ -133,8 +150,12 @@ impl BackupEngine {
 
             println!("🔗 rsync: {} → {}", src_with_slash, dst_arg);
             let mut cmd = std::process::Command::new("rsync");
+            // NO se usa --inplace sobre SMB: escribe directamente sobre el archivo
+            // destino existente y hace ftruncate() al final, que en CIFS (WD MyCloud)
+            // puede devolver EBADF/EIO y dejar el archivo TRUNCADO y corrupto en la nube.
+            // Sin --inplace, rsync escribe a un temporal y hace rename: si falla,
+            // el destino conserva intacto su contenido anterior.
             cmd.arg("-r")
-                .arg("--inplace")
                 .arg("--no-perms")
                 .arg("--no-owner")
                 .arg("--no-group")
@@ -147,6 +168,16 @@ impl BackupEngine {
             // Los patrones simples (nombres o rutas) funcionan como globs de rsync.
             for pattern in &source.exclude_patterns {
                 cmd.arg("--exclude").arg(pattern);
+            }
+
+            // Los NAS WD MyCloud tienen `veto files` en su Samba: nombres como
+            // `.bin`, `uploaded`, `Nas_Prog`... están reservados y el servidor
+            // rechaza crearlos (NT_STATUS_OBJECT_NAME_NOT_FOUND), haciendo que
+            // rsync aborte con código 23. Se excluyen siempre para que la
+            // sincronización a la nube no falle.
+            for name in SMB_VETOED_NAMES {
+                cmd.arg("--exclude").arg(format!("{name}/"));
+                cmd.arg("--exclude").arg(format!("{name}"));
             }
 
             // Locale C para que las cifras de --stats sean estables (sin . miles)
@@ -162,12 +193,28 @@ impl BackupEngine {
                 }
                 Ok(o) => {
                     let stderr = String::from_utf8_lossy(&o.stderr);
-                    anyhow::bail!(
-                        "rsync del espejo {} falló con código {}: {}",
-                        mirror_dest.display(),
-                        o.status.code().unwrap_or(-1),
-                        stderr.lines().last().unwrap_or_default()
-                    );
+                    // Mostrar las líneas de error reales de rsync (las que
+                    // empiezan por "rsync:"), no solo el resumen final.
+                    let errores: Vec<&str> = stderr
+                        .lines()
+                        .filter(|l| l.starts_with("rsync:"))
+                        .collect();
+                    if errores.is_empty() {
+                        anyhow::bail!(
+                            "rsync del espejo {} falló con código {}: {}",
+                            mirror_dest.display(),
+                            o.status.code().unwrap_or(-1),
+                            stderr.lines().last().unwrap_or_default()
+                        );
+                    } else {
+                        let detalle = errores.join("\n");
+                        anyhow::bail!(
+                            "rsync del espejo {} falló con código {}:\n{}",
+                            mirror_dest.display(),
+                            o.status.code().unwrap_or(-1),
+                            detalle
+                        );
+                    }
                 }
                 Err(e) => anyhow::bail!("No se pudo ejecutar rsync para {}: {}", mirror_dest.display(), e),
             }

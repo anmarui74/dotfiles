@@ -179,6 +179,49 @@ Los mirrors nube se sincronizan con `backup once`/`backup mirror`/`backup run` y
 **nunca requieren sudo**. Si el punto CIFS está montado, `backup-rs` usa `rsync`
 directamente; si no, intenta GVFS (`gio mount`) como respaldo.
 
+### ⚠️ Nombres vetados por el firmware WD MyCloud (fix automático)
+
+El firmware de los NAS WD My Cloud reserva en su Samba una serie de nombres de
+sistema (directiva `veto files`) y **rechaza crearlos**: devuelve
+`NT_STATUS_OBJECT_NAME_NOT_FOUND`, lo que hacía que `rsync` abortara con
+**código 23** y el backup del espejo nube fallara.
+
+| Vetados por el NAS | Ejemplo de impacto |
+|--------------------|--------------------|
+| `.bin` | `node_modules/.bin` de npm (el más común) |
+| `uploaded` | directorios de subida |
+| `Nas_Prog`, `mirrored`, `lost+found` | carpetas del sistema |
+| `.wdmc`, `.systemfile`, `.AppleDouble`, `.DS_Store` | internos / macOS |
+| `Network Trash Folder` | papelera de red |
+
+**Solución implementada en `backup-rs`:** al sincronizar un espejo **SMB** (los que
+tienen `uri`), se añaden automáticamente las exclusiones `--exclude` de esos
+nombres al comando `rsync`, para que la sincronización **no falle**. Esto no afecta
+a los espejos locales (CRUCIAL, SEAGATE), donde esos nombres **sí** se respaldan
+normalmente.
+
+> 📁 Detalle técnico: la lista vive en la constante `SMB_VETOED_NAMES` de
+> `src/backup.rs`. Verificado el 10/09/2026 contra un WD My Cloud OS 3/5.
+
+### ⚠️ Corrupción por `ftruncate` sobre SMB (fix: sin `--inplace`)
+
+El 10/09/2026 rsync falló en el espejo NUBE-public con `ftruncate failed:
+Bad file descriptor` / `Input/output error`, dejando un archivo de
+`node_modules` **truncado y corrupto** en la nube (1.441.792 B frente a
+1.984.871 B del origen).
+
+- **Causa:** rsync se lanzaba con `--inplace`. Al escribir directamente
+  sobre el archivo destino existente y hacer `ftruncate()` al final, el
+  driver CIFS del WD MyCloud devolvía `EBADF`/`EIO` y el archivo quedaba
+  cortado a la mitad.
+- **Fix (implementado):** se ha **quitado `--inplace`** de la sincronización
+  SMB. Ahora rsync escribe a un temporal y hace `rename`: si la transferencia
+  falla, el destino conserva intacto su contenido anterior.
+- **Prevención:** los `node_modules` (regenerables con `npm install`) se
+  excluyen de las fuentes `Config` y `Documentos` con
+  `exclude_patterns = ["**/node_modules/**"]` (también en `config.example.toml`),
+  evitando ~342 MB de ficheros pequeños y frágiles en cada sincronización.
+
 ---
 
 ## Por qué Rust y no Python

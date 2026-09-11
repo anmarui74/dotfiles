@@ -16,12 +16,12 @@ compression = false
 [[sources]]
 path = "/home/antonio/Config"
 include_hidden = true
-exclude_patterns = []
+exclude_patterns = ["**/node_modules/**"]
 
 [[sources]]
 path = "/home/antonio/Documentos"
 include_hidden = true
-exclude_patterns = []
+exclude_patterns = ["**/node_modules/**"]
 
 [[sources]]
 path = "/home/antonio/Descargas"

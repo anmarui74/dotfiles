@@ -19,6 +19,19 @@ error() { echo -e "\033[0;31m[X]\033[0m $1"; }
 [ -d "$SRC_CONFIG" ] || { error "No existe $SRC_CONFIG"; exit 1; }
 mkdir -p "$DEST" "$STAGE/credenciales" "$STAGE/scripts"
 
+# 0. Sincronizar la copia canónica y verificar el setup (aborta si falla)
+if [ -x "$SRC_CONFIG/sync-mimocode.sh" ]; then
+  info "Sincronizando copia canónica..."
+  bash "$SRC_CONFIG/sync-mimocode.sh" --quiet
+fi
+if [ -f "$HOME/Config/mimocode/check-setup-completo.sh" ]; then
+  info "Verificando setup..."
+  if ! bash "$HOME/Config/mimocode/check-setup-completo.sh"; then
+    error "La verificación del setup ha fallado. Backup ABORTADO."
+    exit 1
+  fi
+fi
+
 # 1. Config activa (sin node_modules ni backups .bak)
 info "Empaquetando config activa..."
 tar -czf "$STAGE/config.tar.gz" -C "$HOME/.config" \
@@ -45,8 +58,9 @@ else
   aviso "No existe $AUTH_SRC; el backup NO incluye credenciales."
 fi
 
-# 4. Copia del propio script de backup
+# 4. Copia de los scripts auxiliares
 cp "$0" "$STAGE/scripts/backup-mimocode.sh"
+cp "$HOME/Config/mimocode/check-setup-completo.sh" "$STAGE/scripts/check-setup-completo.sh" 2>/dev/null || true
 
 # 5. restore.sh autogenerado
 cat > "$STAGE/restore.sh" <<'EOF'
@@ -74,6 +88,12 @@ if [ -f "$HERE/scripts/backup-mimocode.sh" ]; then
   echo "[+] Restaurando backup-mimocode.sh ..."
   cp "$HERE/scripts/backup-mimocode.sh" "$HOME/Config/mimocode/backup-mimocode.sh"
   chmod +x "$HOME/Config/mimocode/backup-mimocode.sh"
+fi
+
+if [ -f "$HERE/scripts/check-setup-completo.sh" ]; then
+  echo "[+] Restaurando check-setup-completo.sh ..."
+  cp "$HERE/scripts/check-setup-completo.sh" "$HOME/Config/mimocode/check-setup-completo.sh"
+  chmod +x "$HOME/Config/mimocode/check-setup-completo.sh"
 fi
 
 echo "[+] Restauracion completada."

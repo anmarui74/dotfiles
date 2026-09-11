@@ -1,27 +1,30 @@
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
+  "model": "nvidia/meta/muse-glimmer-30b",
   "model_groups": {
     "lite": "lmstudio/models-qwen3.8-9b"
   },
+  "small_model": "lmstudio/models-qwen3.8-9b",
   "instructions": [
     "AGENTS.md"
   ],
   "default_agent": "nvidia",
+  "share": "manual",
+  "autoupdate": false,
   "permission": {
     "edit": "ask",
     "bash": {
+      "*": "ask",
       "sudo *": "deny",
-      "pkexec *": "allow",
-      "*": "ask"
+      "pkexec *": "allow"
+    },
+    "external_directory": {
+      "/tmp/**": "ask"
     }
   },
   "agent": {
     "build": {
-      "prompt": "{file:./prompts/read-agents.txt}",
       "model": "opencode-go/deepseek-v4-flash"
-    },
-    "plan": {
-      "prompt": "{file:./prompts/read-agents.txt}"
     },
     "local": {
       "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
@@ -219,7 +222,7 @@
         "@modelcontextprotocol/server-filesystem",
         "/home/antonio"
       ],
-      "enabled": false
+      "enabled": true
     },
     "memory": {
       "type": "local",

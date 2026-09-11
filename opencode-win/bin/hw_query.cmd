@@ -1,0 +1,2 @@
+@echo off
+if "%~1"=="" (powershell -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.config\opencode\scripts\hardware-query.ps1") else (powershell -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.config\opencode\scripts\hardware-query.ps1" -Campo %*)

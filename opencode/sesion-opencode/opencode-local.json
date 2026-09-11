@@ -17,7 +17,7 @@
   "agent": {
     "build": {
       "prompt": "{file:./prompts/read-agents.txt}",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4.1-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -28,9 +28,9 @@
       "model": "lmstudio/qwen3.8-9b"
     },
     "cloud": {
-      "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
+      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash vía OpenCode Go (modelos en la nube: Claude, Gemini, OpenCode Go)",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash",
+      "model": "opencode-go/deepseek-v4.1-flash",
       "permission": {
         "task": {
           "*": "allow"
@@ -222,9 +222,8 @@
     "fetch": {
       "type": "local",
       "command": [
-        "npx",
-        "-y",
-        "mcp-fetch-server"
+        "node",
+        "/home/antonio/.config/opencode/mcp-fetch-fix.js"
       ],
       "enabled": true
     },

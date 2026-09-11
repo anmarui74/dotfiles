@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 📁 Perfiles | 26/07/2026 · act. 18/08/2026 | Antonio |
+| 📁 Perfiles | 26/07/2026 · act. 09/09/2026 | Antonio |
 
 > Perfiles local / cloud / activo, MCPs y proveedores
 
@@ -53,7 +53,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.8-9b",
+  "small_model": "lmstudio/qwen3.8-9b",
   "instructions": ["AGENTS.md"],
   "default_agent": "cloud",
   "permission": {
@@ -67,7 +67,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
   "agent": {
     "build": {
       "prompt": "{file:./prompts/read-agents.txt}",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4.1-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -75,16 +75,16 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     "local": {
       "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.8-9b"
+      "model": "lmstudio/qwen3.8-9b"
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4.1-flash"
     },
     "nvidia": {
       "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
-      "mode": "primary",
+      "mode": "all",
       "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
@@ -110,12 +110,11 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.8 Q6_K",
-      "model": "models-qwen3.8-9b",
       "options": {"baseURL": "http://localhost:4001/v1"},
       "models": {
-        "models-qwen3.8-9b": {
+        "qwen3.8-9b": {
           "name": "Qwen 3.8 - Tool Calling Excellence",
-          "tools": true,
+          "tool_call": true,
           "limit": {"context": 81920, "output": 8192}
         }
       }
@@ -171,7 +170,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     "context7": {"type": "remote", "url": "https://mcp.context7.com/mcp", "enabled": true},
     "filesystem": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"], "enabled": true},
     "memory": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-memory"], "environment": {"MEMORY_FILE_PATH": "/home/antonio/.config/opencode/data/memory/memory.jsonl"}, "enabled": true},
-    "fetch": {"type": "local", "command": ["npx", "-y", "mcp-fetch-server"], "enabled": true},
+    "fetch": {"type": "local", "command": ["node", "/home/antonio/.config/opencode/mcp-fetch-fix.js"], "enabled": true},
     "sequential_thinking": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"], "enabled": true}
   }
 }
@@ -187,7 +186,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
-  "small_model": "lmstudio/models-qwen3.8-9b",
+  "small_model": "lmstudio/qwen3.8-9b",
   "instructions": ["AGENTS.md"],
   "default_agent": "local",
   "permission": {
@@ -197,7 +196,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
   "agent": {
     "build": {
       "prompt": "{file:./prompts/read-agents.txt}",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4.1-flash"
     },
     "plan": {
       "prompt": "{file:./prompts/read-agents.txt}"
@@ -205,16 +204,16 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     "local": {
       "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)",
       "mode": "primary",
-      "model": "lmstudio/models-qwen3.8-9b"
+      "model": "lmstudio/qwen3.8-9b"
     },
     "cloud": {
       "description": "Agente cloud para modelos en la nube (Claude, Gemini, OpenCode Go)",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash"
+      "model": "opencode-go/deepseek-v4.1-flash"
     },
     "nvidia": {
       "description": "Agente NVIDIA - Muse Glimmer 30B de Meta (mejor agente de código del ranking, 144,9 tok/s, tool calling nativo)",
-      "mode": "primary",
+      "mode": "all",
       "model": "nvidia/meta/muse-glimmer-30b",
       "temperature": 1,
       "top_p": 0.95
@@ -240,12 +239,11 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qwen 3.8 Q6_K",
-      "model": "models-qwen3.8-9b",
       "options": {"baseURL": "http://localhost:4001/v1"},
       "models": {
-        "models-qwen3.8-9b": {
+        "qwen3.8-9b": {
           "name": "Qwen 3.8 - Tool Calling Excellence",
-          "tools": true,
+          "tool_call": true,
           "limit": {"context": 81920, "output": 8192}
         }
       }
@@ -301,7 +299,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
     "context7": {"type": "remote", "url": "https://mcp.context7.com/mcp", "enabled": false},
     "filesystem": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/antonio"], "enabled": true},
     "memory": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-memory"], "environment": {"MEMORY_FILE_PATH": "/home/antonio/.config/opencode/data/memory/memory.jsonl"}, "enabled": true},
-    "fetch": {"type": "local", "command": ["npx", "-y", "mcp-fetch-server"], "enabled": true},
+    "fetch": {"type": "local", "command": ["node", "/home/antonio/.config/opencode/mcp-fetch-fix.js"], "enabled": true},
     "sequential_thinking": {"type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"], "enabled": false}
   }
 }
@@ -315,7 +313,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
 
 Perfil para `ocv-cloud` / `opencode-cloud`. Tiene **todos los MCPs activos** y el agente
 local **desactivado** (`agent.local.disable: true`). Como el modelo local no se va a
-usar, `small_model` apunta a la nube (`opencode-go/deepseek-v4-flash`) y el lanzador
+usar, `small_model` apunta a la nube (`opencode-go/deepseek-v4.1-flash`) y el lanzador
 no carga el modelo en VRAM (`SKIP_LMSTUDIO=1`).
 
 La diferencia con `opencode.json` (por defecto) es:
@@ -331,9 +329,9 @@ La diferencia con `opencode.json` (por defecto) es:
 | **Agentes** | `build`, `plan`, `local`, `cloud`, `nvidia` (sub), `multimodal` (sub) | `build`, `plan`, `local`, `cloud`, `nvidia` (sub), `multimodal` (sub) | `build`, `plan`, `cloud`, `nvidia` (sub), `multimodal` (sub) |
 | **Agente principal** | `cloud` (OpenCode Go) | `local` (Qwen 3.8 local) | `cloud` (OpenCode Go) |
 | **Agente local** | ✅ activo (primario) | ✅ activo (primario) | ❌ desactivado |
-| **Modelo cloud** | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) | ✅ OpenCode Go (deepseek-v4-flash) |
-| **Agente NVIDIA** | ✅ Muse Glimmer 30B (mode `all`) | ✅ Muse Glimmer 30B (mode `all`) | ✅ Muse Glimmer 30B (mode `all`) |
-| **Agente multimodal** | ✅ Muse Glimmer 30B (mode `all`) | ✅ heredado de global (mode `all`) | ✅ heredado de global (mode `all`) |
+| **Modelo cloud** | ✅ OpenCode Go (deepseek-v4.1-flash) | ✅ OpenCode Go (deepseek-v4.1-flash) | ✅ OpenCode Go (deepseek-v4.1-flash) |
+| **Agente NVIDIA** | ✅ subagente Muse Glimmer 30B | ✅ subagente Muse Glimmer 30B | ✅ subagente Muse Glimmer 30B |
+| **Agente multimodal** | ✅ subagente Muse Glimmer 30B | ✅ subagente (heredado de global) | ✅ subagente (heredado de global) |
 | **context7** | ✅ | ❌ | ✅ |
 | **filesystem** | ✅ | ✅ | ✅ |
 | **memory** | ✅ | ✅ | ✅ |
@@ -436,9 +434,9 @@ Define agentes (personas/modos del asistente):
 - **build:** Agente especial para tareas de construcción (lee AGENTS.md al inicio). Desde el **18/08/2026** usa **DeepSeek V4 Flash** como modelo explícito
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
 - **local:** Agente local, usa el modelo Qwen 3.8 Q6_K vía LM Studio (puerto 4001). Es **primario** en el perfil activo y en el perfil local; **desactivado** (`disable: true`) en el perfil cloud
-- **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4-flash`). Desde el **09/09/2026** tiene `permission.task: {"*": "allow"}`, lo que le permite **delegar automáticamente** a los subagentes (nvidia, multimodal, general, explore, scout)
-- **nvidia:** Agente con `mode: "all"` desde el **09/09/2026** (antes primario, luego subagente), usa **Muse Glimmer 30B** (`nvidia/meta/muse-glimmer-30b`). Mejor modelo del ranking para agentes de código (SWE-Bench 76, Terminal-Bench 51,7, 144,9 tok/s, tool calling nativo). Se puede usar con Tab como primario **y** DeepSeek puede delegarle código pesado como subagente
-- **multimodal:** Agente con `mode: "all"` desde el **09/09/2026** (solo en `opencode.json`; heredado por fusión en local y cloud), usa Muse Glimmer 30B con prompt optimizado para imagen + texto y recuperación de contexto largo. Disponible como primario y como subagente delegado
+- **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4.1-flash`). Desde el **09/09/2026** tiene `permission.task: {"*": "allow"}`, lo que le permite **delegar automáticamente** a los subagentes (nvidia, multimodal, general, explore, scout)
+- **nvidia:** **Subagente** desde el **09/09/2026** (antes primario), usa **Muse Glimmer 30B** (`nvidia/meta/muse-glimmer-30b`). Mejor modelo del ranking para agentes de código (SWE-Bench 76, Terminal-Bench 51,7, 144,9 tok/s, tool calling nativo). DeepSeek lo invoca automáticamente para código pesado
+- **multimodal:** **Subagente** (solo en `opencode.json`; heredado por fusión en local y cloud), usa Muse Glimmer 30B con prompt optimizado para imagen + texto y recuperación de contexto largo. Desde el **09/09/2026** ya no es primario
 
 Cada agente puede tener su propio modelo y prompt de sistema.
 
@@ -448,7 +446,7 @@ Proveedores de modelos. Dos proveedores configurados:
 - **lmstudio** (local):
   - **SDK:** `@ai-sdk/openai-compatible` (interfaz OpenAI para LM Studio)
   - **URL:** `http://localhost:4001/v1` (proxy local)
-  - **Modelo:** `models-qwen3.8-9b`
+  - **Modelo:** `qwen3.8-9b`
   - **Límites:** 81.920 tokens de contexto, 8.192 de salida
   - **Tools:** Habilitadas
 
@@ -531,8 +529,10 @@ Servidores MCP (Model Context Protocol). Cada uno proporciona **herramientas** q
 | **context7** | Remote | `https://mcp.context7.com/mcp` | Documentación técnica actualizada |
 | **filesystem** | Local | `@modelcontextprotocol/server-filesystem` | Leer/escribir archivos |
 | **memory** | Local | `@modelcontextprotocol/server-memory` | Grafo de conocimiento persistente |
-| **fetch** | Local | `mcp-fetch-server` | Obtener contenido web |
+| **fetch** | Local | `mcp-fetch-fix.js` (proxy de `mcp-fetch-server`) | Obtener contenido web (HTML, Markdown, texto, JSON, YouTube) |
 | **sequential_thinking** | Local | `@modelcontextprotocol/server-sequential-thinking` | Razonamiento estructurado paso a paso |
+
+> 🩹 **Fix MCP fetch (11/09/2026):** el servidor `mcp-fetch-server` (zcaceres/fetch v1.1.2) declara la capability `resources` sin implementarla y responde `-32601` (Method not found), lo que OpenCode registra como *"failed to get resources"*. Para conservar las 6 tools y eliminar el warning se usa el proxy `~/.config/opencode/mcp-fetch-fix.js`, que arranca `npx -y mcp-fetch-server` y quita la clave `resources` del mensaje `initialize`. El maintainer del servidor lo considera "expected behavior" (issue #26), así que no se corrige upstream.
 
 ### Dependencias npm
 

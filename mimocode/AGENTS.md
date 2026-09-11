@@ -20,10 +20,10 @@
 - Tablas: SIEMPRE en formato Markdown estándar (nunca en bloques de código ASCII)
 
 ## 📄 Formato de manuales y README (OBLIGATORIO)
-Toda documentación Markdown (manuales en `~/Config/opencode/documentacion/`,
-README, notas) DEBE seguir el mismo esquema que los manuales ya existentes
-(ver `01-configuracion-ollama.md`, `04-perfiles-opencode-json.md`, `README.md`).
-Usa EXACTAMENTE esta plantilla:
+Toda documentación Markdown (manuales en `~/Config/opencode/documentacion/` y
+`~/Config/mimocode/documentacion/`, README, notas) DEBE seguir el mismo esquema
+que los manuales ya existentes (ver `01-configuracion-ollama.md`,
+`04-perfiles-opencode-json.md`, `README.md`). Usa EXACTAMENTE esta plantilla:
 
 ### Plantilla de estructura
 ```markdown
@@ -116,12 +116,11 @@ listar directorios, ejecutar comandos, etc.) USA LA HERRAMIENTA directamente.
 NO describas lo que harías — hazlo.
 NO digas "voy a leer" sin llamar a la herramienta.
 NO generes texto explicando los pasos sin ejecutarlos.
-SIMPLIFICA: si necesitas leer múltiples archivos, usa search_files con un
-patrón, o llama a read_file para cada archivo individual.
+SIMPLIFICA: si necesitas leer múltiples archivos, usa la búsqueda con patrón,
+o lee cada archivo individual.
 
 ## 🐚 Shell del sistema: ZSH (usuario) vs Bash (agentes) (IMPORTANTE)
-- Antonio usa **ZSH** como shell predeterminada del sistema y de OpenCode
-  (`"shell": "/usr/bin/zsh"` en los 3 perfiles JSON).
+- Antonio usa **ZSH** como shell del sistema.
 - Los agentes ejecutan los comandos de la herramienta bash con **Bash** por defecto.
 - NO todos los comandos funcionan igual en ambas shells: expansiones, globs
   (`**`, `=`, `~` como path), alias y plugins de ZSH pueden fallar o comportarse
@@ -157,13 +156,14 @@ funcionan, errores desconocidos, etc.):
 2. Busca información en la web (issues, foros, stackoverflow)
 3. NO te quedes dando vueltas probando a ciegas: si tras 2-3 intentos propios no
    lo resuelves, consulta fuentes externas
-4. Para OpenCode: https://opencode.ai/docs (y el esquema https://opencode.ai/config.json)
-5. Para LSPs concretos: consulta la wiki del servidor (ej. github del proyecto)
+4. Para MiMoCode: https://mimo.xiaomi.com/mimocode (esquema https://mimo.xiaomi.com/mimocode/config.json)
+5. Para OpenCode (infra compartida: LM Studio, proxy): https://opencode.ai/docs
+6. Para LSPs concretos: consulta la wiki del servidor (ej. github del proyecto)
 Anota siempre la solución encontrada en la memoria.
 
 ## 🔍 Verificar hechos antes de afirmar (OBLIGATORIO)
 Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
-1. **COMPRUEBA con herramientas** (ls, read, test, search_files) que la ruta o
+1. **COMPRUEBA con herramientas** (ls, read, test, búsqueda) que la ruta o
    archivo realmente no existe. No lo des por hecho.
 2. **LEE la documentación y reglas del proyecto** (este AGENTS.md y los JSON de
    configuración): puede que esa estructura sea INTENCIONAL y esté documentada.
@@ -178,83 +178,6 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
 
 # PROCEDIMIENTOS TÉCNICOS
 
-## Sincronización con Config/opencode (OBLIGATORIO)
-- `~/.config/opencode/` es la configuración ACTIVA (la que usa OpenCode)
-- `~/Config/opencode/` es la copia de SEGURIDAD para instalaciones desde limpio
-- Estructura ordenada de `~/Config/opencode/`:
-  - `backups/opencode/` → tarballs de backup de OpenCode (`opencode-backup-*.tar.gz`)
-  - `backups/` (raíz) → backups del grafo de memoria (`mcp-memory-backup-*.jsonl`)
-  - `data/` → datos auxiliares (p. ej. `onlyoffice-ai/`)
-  - `documentacion/` → documentación en Markdown
-  - `sesion-opencode/` → setup completo desde limpio + scripts sincronizados
-  - `respaldo-config/` → snapshot antiguo de la configuración
-  - `legacy/` → scripts y carpetas obsoletos
-  - En la raíz solo viven: `AGENTS.md`, `backup-opencode.sh`, `bootstrap-ocv.sh`, `sync-opencode.sh`
-    y el enlace simbólico `setup-opencode-completo.sh` → `sesion-opencode/setup-opencode-completo.sh`
-- Cada vez que modifiques, crees o elimines algo en `~/.config/opencode/`:
-  1. **Copia el archivo** a `~/Config/opencode/` (manteniendo la misma estructura)
-  2. **Actualiza los scripts** de instalación si es necesario:
-     - `~/Config/opencode/backup-opencode.sh` → script que empaqueta el backup
-     - `~/Config/opencode/bootstrap-ocv.sh` → script de instalación desde limpio
-     - `restore.sh` (va dentro del tarball, lo genera backup-opencode.sh)
-  3. Si el cambio afecta al proceso de instalación/restauración, modifica los scripts para reflejarlo
-- Ejecuta `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball con restore.sh actualizado
-- El tarball se genera en `~/Config/opencode/backups/opencode/`
-- **Credenciales de proveedores**: el backup incluye automáticamente
-  `~/.local/share/opencode/auth.json` (claves de NVIDIA `nvapi-*` y OpenCode GO `sk-*`)
-  en `credenciales/auth.json` dentro del tarball. El `restore.sh` lo restaura a su
-  ubicación original. Sin él, los agentes en la nube no funcionan tras reinstalar.
-
-## Atención al script setup-opencode-completo.sh (IMPORTANTE)
-El script `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh` es el
-INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por tanto:
-- **ÚNICA copia en disco**: vive SOLO en `~/Config/opencode/sesion-opencode/`
-  (carpeta de respaldo) y dentro del tarball del backup. NO debe existir en la raíz
-  de `~/.config/opencode/` ni en ningún `scripts/`.
-- **Acceso directo**: en la raíz de `~/Config/opencode/` hay un ENLACE SIMBÓLICO
-  `setup-opencode-completo.sh` → `sesion-opencode/` para tenerlo a mano SIN duplicarlo.
-- El `sync-opencode.sh` (timer systemd `opencode-sync.timer`, cada 30 minutos)
-  sincroniza el resto de archivos desde `~/.config/opencode/`, pero NO crea copias
-  del setup: ese se edita directamente en `~/Config/opencode/sesion-opencode/`.
-- El `backup-opencode.sh` lo incluye automáticamente en el tarball desde
-  `~/Config/opencode/sesion-opencode/`.
-- Cuando Antonio pida un backup, DEBES:
-  1. Revisar `setup-opencode-completo.sh` por completo
-  2. Comprobar que incluye TODOS los archivos actuales de `~/.config/opencode/`
-     (JSON, scripts, AGENTS.md, .env, etc.) con su contenido real
-  3. Si falta algo o está desactualizado, actualizarlo ANTES del backup en
-     `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh`
-     (única copia en disco)
-  4. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
-  5. Verificar que el tarball contiene el setup actualizado y que no hay copias
-     del setup en `~/.config/opencode/` (ni en la raíz ni en `sesion-opencode/scripts/`)
-
-  ### ✅ CHECKLIST OBLIGATORIO del punto 1 (revisar el setup POR COMPLETO):
-  - [ ] `bash -n` del setup (sintaxis)
-  - [ ] `shellcheck` del setup (sin warnings/errors reales; SC2016 en heredocs = OK)
-  - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
-        (opencode.json, opencode-local.json, opencode-cloud.json, tui.json,
-        AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
-        hardware-query, check-fix, check-timeline-fix, check-nvidia-whitelist,
-        hardware-query.py, lmstudio-proxy.py, backup-opencode, bootstrap-ocv,
-        timeline-completo)
-        — no solo los JSON
-  - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
-  - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
-
-  ### ⚡ VERIFICACIÓN AUTOMÁTICA (NO DEPENDE DE MI MEMORIA):
-  El script `~/.config/opencode/check-setup-completo.sh` hace TODO el checklist
-  automáticamente (sintaxis, shellcheck, heredocs uno a uno, estructura, comandos).
-  Está INTEGRADO en `backup-opencode.sh`: se ejecuta SIEMPRE al hacer un backup y
-  si el setup no está correcto, el backup se ABORTA. NO es opcional ni manual.
-  Si Antonio pide un backup, simplemente ejecuta `bash ~/Config/opencode/backup-opencode.sh`
-  — la verificación ocurre sola. Si algo falla, el script dirá exactamente qué corregir.
-- El `backup-opencode.sh` ya lo incluye automáticamente desde `~/Config/opencode/sesion-opencode/`
-- Al RESTAURAR desde un tarball, el `restore.sh` coloca el setup en
-  `~/Config/opencode/sesion-opencode/`, no en la raíz de `~/.config/opencode/`
-
----
-
 ## Sincronización con Config/mimocode (OBLIGATORIO)
 - `~/.config/mimocode/` es la configuración ACTIVA que usa MiMoCode
 - `~/Config/mimocode/` es la copia de SEGURIDAD para instalaciones desde limpio
@@ -264,31 +187,40 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - `sesion-mimocode/` → INSTALADOR desde cero (`setup-mimocode-completo.sh`) + `config/` (copia canónica de la config activa que restaura el instalador)
   - En la raíz solo viven: `AGENTS.md`, `backup-mimocode.sh`, `check-setup-completo.sh`
     y el enlace simbólico `setup-mimocode-completo.sh` → `sesion-mimocode/setup-mimocode-completo.sh`
+- **Sincronización automática**: el timer systemd `mimocode-sync.timer` ejecuta
+  `~/.config/mimocode/sync-mimocode.sh --quiet` cada 30 min y mantiene
+  `sesion-mimocode/config/` idéntico a la config activa (rsync, sin node_modules ni `.bak`).
 - Cada vez que modifiques, crees o elimines algo en `~/.config/mimocode/`:
-  1. **Actualiza la copia canónica del instalador** (NO editar `sesion-mimocode/config/` directamente):
-     `rsync -a --exclude node_modules --exclude '*.bak*' ~/.config/mimocode/ ~/Config/mimocode/sesion-mimocode/config/`
+  1. **Sincroniza la copia canónica**: `bash ~/.config/mimocode/sync-mimocode.sh`
   2. Si el cambio afecta a la instalación, actualiza `setup-mimocode-completo.sh`
   3. Regenera el tarball: `bash ~/Config/mimocode/backup-mimocode.sh`
+     (el backup sincroniza y verifica automáticamente antes de empaquetar)
 - El tarball se genera en `~/Config/mimocode/backups/mimocode/` e incluye:
   `config.tar.gz` (config activa), `setup.tar.gz` (instalador), `credenciales/auth.json`
-  (claves de `~/.local/share/mimocode/auth.json`), `backup-mimocode.sh` y `restore.sh`
+  (claves de `~/.local/share/mimocode/auth.json`), `scripts/` (backup + check) y `restore.sh`
 - Retención: 30 días (los tarballs antiguos se eliminan solos)
 
 ## Atención al script setup-mimocode-completo.sh (IMPORTANTE)
 El script `~/Config/mimocode/sesion-mimocode/setup-mimocode-completo.sh` es el INSTALADOR desde cero:
 - Copia `sesion-mimocode/config/` → `~/.config/mimocode/`, crea los lanzadores `start-mimo*.sh`
-  en `~/.local/bin` y añade las funciones ZSH (`mimo`, `mimo-local`, ...) si no existen
+  en `~/.local/bin`, añade las funciones ZSH (`mimo`, `mimo-local`, ...) si no existen
+  y activa el timer `mimocode-sync.timer`
 - ÚNICA copia en disco en `~/Config/mimocode/sesion-mimocode/` y dentro del tarball
   (NO debe existir en `~/.config/mimocode/`)
 - Acceso directo vía enlace simbólico `~/Config/mimocode/setup-mimocode-completo.sh`
-- Verificación automática: `bash ~/Config/mimocode/check-setup-completo.sh`
-- Cuando Antonio pida un backup de MiMoCode, DEBES:
-  1. Sincronizar `sesion-mimocode/config/` con la config activa (comando rsync de la sección anterior)
-  2. Comprobar que la copia incluye TODOS los archivos activos con su contenido real
-  3. Ejecutar `bash ~/Config/mimocode/backup-mimocode.sh`
-  4. Verificar el tarball (`tar -tzf`) y la ausencia de copias del setup en `~/.config/mimocode/`
+- Cuando Antonio pida un backup de MiMoCode, simplemente ejecuta
+  `bash ~/Config/mimocode/backup-mimocode.sh`: sincroniza la copia canónica, verifica
+  el setup y empaqueta. Si la verificación falla, el backup se ABORTA.
 - Para RESTAURAR: descomprimir el tarball y ejecutar `bash restore.sh`; para instalar
   desde cero: `bash ~/Config/mimocode/setup-mimocode-completo.sh`
+
+## ⚡ Verificación del setup
+El script `~/Config/mimocode/check-setup-completo.sh` comprueba:
+- Que existe la copia canónica y el instalador (sintaxis `bash -n`)
+- Que la copia canónica == config activa
+- Que existen los lanzadores `start-mimo*.sh` y las funciones ZSH
+Se ejecuta automáticamente desde `backup-mimocode.sh` (aborta el backup si falla).
+Ejecución manual: `bash ~/Config/mimocode/check-setup-completo.sh`
 
 ---
 
@@ -300,49 +232,21 @@ El archivo `.env` contiene la configuración sensible. Para cargarlo:
 set -a; source /home/antonio/.config/opencode/.env; set +a
 ```
 
-## Inicialización (tras reinicio del sistema)
-El servicio systemd `init-opencode.service` está DESHABILITADO.
-Al abrir `opencode` u `ocv` se carga LM Studio + modelo + proxy automáticamente.
-Para verificar componentes manualmente:
-```bash
-bash /home/antonio/.config/opencode/init-opencode.sh
-```
-Esto comprueba:
-- Servidor LM Studio (puerto 1234)
-- Modelos disponibles en LM Studio
-- Persistencia del grafo de memoria
-- PWAs en el Escritorio
-- Variables de entorno (.env)
+## Lanzadores y perfiles (MiMoCode)
+- `mimo` / `mimo-voz` → perfil global (`~/.config/mimocode/mimocode.jsonc`), agente `nvidia`, carga LM Studio
+- `mimo-local` / `mimo-voz-local` → `profiles/local`, agente `local`, carga LM Studio
+- `mimo-cloud` / `mimo-voz-cloud` → `profiles/cloud`, agente `cloud`, NO carga LM Studio
+- Los perfiles se activan con `MIMOCODE_CONFIG_DIR` (merge sobre el global). **Nada se copia** sobre el config global.
+- **Telemetría**: los lanzadores exportan `MIMOCODE_ENABLE_ANALYSIS=false` por privacidad
+  (sobreescribible con `MIMOCODE_ENABLE_ANALYSIS=true`).
+- Al abrir `mimo` o `mimo-local` se carga LM Studio + modelo Qwen3.8-9B + proxy
+  reutilizando `~/.config/opencode/start-lmstudio.sh`. No hay servicio systemd de arranque.
 
-## Backup automático del grafo de memoria
-El grafo de conocimiento (MCP memory) se respalda automáticamente **en cada
-ejecución de `backup-opencode.sh`** (tanto el backup manual como el automático
-vía `opencode-sync.timer`, cada 30 min):
-
-1. **Copia con fecha** en `~/Config/opencode/backups/mcp-memory-backup-{fecha}.jsonl`
-   (se conserva la estructura existente)
-2. **Copia en el tarball** de OpenCode: `data/memory/memory.jsonl` dentro del
-   `opencode-backup-*.tar.gz` (se restaura con el `restore.sh` a la ruta activa)
-3. **Retención**: los backups del grafo se conservan 30 días (según
-   `LOG_RETENTION_DAYS` en `.env`), igual que los tarballs
-
-El grafo activo vive en `~/.config/opencode/data/memory/memory.jsonl`.
-
-## Recuperación del grafo de memoria
-Si el grafo se pierde o corrompe:
-1. Localizar el backup más reciente:
-   ```bash
-   ls -t /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl | head -1
-   ```
-2. Copiarlo a la ruta de memoria activa:
-   ```bash
-   cp /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl /home/antonio/.config/opencode/data/memory/memory.jsonl
-   ```
-3. Reiniciar OpenCode: el servidor MCP Memory cargará el grafo desde `MEMORY_FILE_PATH`
-   (definido vía `environment` en el bloque `mcp.memory` de los 3 perfiles JSON).
-   ⚠️ El servidor usa `MEMORY_FILE_PATH` (NO `MEMORY_DATA_DIR`).
-4. Alternativa: restaurar desde un tarball de OpenCode con el `restore.sh`
-   (restaura `data/memory/memory.jsonl` a la ruta activa automáticamente).
+## Grafo de memoria
+- El grafo MCP vive en `~/.config/mimocode/data/memory/memory.jsonl` (ruta vía `MEMORY_FILE_PATH`).
+- Se incluye en `config.tar.gz` dentro de cada `mimocode-backup-*.tar.gz`.
+- Recuperación: restaurar con `restore.sh` o copiar `data/memory/memory.jsonl` desde un backup.
+  ⚠️ El servidor usa `MEMORY_FILE_PATH` (NO `MEMORY_DATA_DIR`).
 
 ## ⚠️ Recordatorio MCP memory (IMPORTANTE)
 Al usar la herramienta `memory_add_observations` (o `memory_delete_observations`),
@@ -355,39 +259,17 @@ CADA observación del array DEBE incluir el campo `entityName` junto a `contents
 Si falta `entityName` el MCP devuelve error `-32602` (Input validation error).
 Mismo formato para `memory_create_relations`: cada relación necesita `from`, `to`, `relationType`.
 
-## 🕐 Timeline completo de sesiones (script timeline-completo)
-El timeline de la TUI de OpenCode (Ctrl+X G) SOLO muestra las últimas ~6 peticiones
-(límite hardcodeado; el PR #26861 que lo arregla sigue abierto, sin mergear).
-Para ver el historial COMPLETO de cualquier sesión, usar el script:
-```
-~/.local/bin/timeline-completo
-```
-- `timeline-completo` → historial completo de la sesión actual (todas las peticiones con fecha/hora)
-- `timeline-completo <id_sesión>` → historial de una sesión concreta
-- `timeline-completo --sesiones` → lista las sesiones recientes con su título
-- `timeline-completo --buscar "<texto>"` → busca peticiones en TODAS las sesiones
-Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3).
-TODAS las peticiones de Antonio están guardadas ahí aunque la TUI no las muestre.
-Cuando Antonio pregunte por su historial/timeline de peticiones, usa este script.
-
-## 👁️ Vigilancia del fix del timeline (timer systemd)
-El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861
-de OpenCode (fix del timeline) se ha mergeado. Se ejecuta automáticamente cada
-3 días vía el timer systemd `check-timeline-fix.timer` y registra el resultado
-en `~/.config/opencode/data/timeline-fix.log`.
-- Si el PR se mergea: se avisa (log + notificación) para retirar timeline-completo.
-- Consultar el log si Antonio pregunta por el estado del fix.
-
 ## Directorios de datos
-- `/home/antonio/.config/opencode/data/` - Datos de ejecución (logs, estado)
-- `/home/antonio/.config/opencode/data/memory/` - Grafo de memoria persistente (`memory.jsonl`, vía `MEMORY_FILE_PATH`)
-- `/home/antonio/Config/opencode/backups/` - Backups del grafo de memoria (`mcp-memory-backup-*.jsonl`)
-- `/home/antonio/Config/opencode/backups/opencode/` - Tarballs de backup de OpenCode
-- `/home/antonio/.config/opencode/.env` - Variables de entorno seguras
+- `/home/antonio/.config/mimocode/data/` - Datos de ejecución (logs, estado)
+- `/home/antonio/.config/mimocode/data/memory/` - Grafo de memoria (`memory.jsonl`)
+- `/home/antonio/.config/mimocode/data/sync.log` - Log del timer de sincronización
+- `/home/antonio/Config/mimocode/backups/mimocode/` - Tarballs de backup de MiMoCode
+- `/home/antonio/.local/share/mimocode/auth.json` - Credenciales de proveedores
+- `/home/antonio/.config/opencode/` - Recursos compartidos (LM Studio, proxy, `.env`, hardware)
 
 ---
 
-# AVANZADO (uso principalmente con DeepSeek)
+# AVANZADO
 
 ## PWAs - Cómo abrir
 1. Leer /home/antonio/Escritorio
@@ -401,69 +283,22 @@ en `~/.config/opencode/data/timeline-fix.log`.
 ## Chrome debug (si no está corriendo)
 nohup /opt/google/chrome/google-chrome --user-data-dir="/tmp/chrome-debug-profile" "--profile-directory=DebugProfile" --remote-debugging-port=9222 "--remote-allow-origins=*" about:blank > /dev/null 2>&1 &
 
-## Carga automática al abrir opencode/ocv
-Al ejecutar `opencode` u `ocv`, el lanzador
-`start-opencode-server.sh` carga automáticamente:
-- Servidor LM Studio (puerto 1234)
-- Modelo Qwen3.5-9B Q6_K con 80k de contexto
-- Proxy en puerto 4001 con métricas de tokens/s
-
-`start-lmstudio.sh` verifica primero si el modelo ya está cargado en VRAM con
-`lms ps`. Si está cargado, se omite el `unload/load` para evitar abrir la GUI de
-LM Studio y recargas innecesarias. Solo se inicia el servidor si no responde y se
-asegura el proxy.
-
-El servicio systemd `init-opencode.service` está DESHABILITADO
-(no carga el modelo al iniciar sesión). La carga ocurre solo
-al abrir opencode/ocv.
-
-## Perfiles por lanzador (sin copias)
-Cada comando usa SU archivo de config vía `OPENCODE_CONFIG`. **Nada se copia
-nunca sobre `opencode.json`**, que es solo el perfil por defecto.
-
-| Comando | Archivo de config | LM Studio (VRAM) |
-|---------|-------------------|------------------|
-| `ocv`, `opencode` | `opencode.json` | ✅ Carga modelo (todos los agentes y MCPs activos) |
-| `ocv-local`, `opencode-local` | `opencode-local.json` | ✅ Carga modelo (todos los agentes, MCPs esenciales) |
-| `ocv-cloud`, `opencode-cloud` | `opencode-cloud.json` | ❌ NO carga modelo (`SKIP_LMSTUDIO=1`) |
-
-- En cloud, el agente local está **desactivado** (`agent.local.disable`) y `small_model`
-  apunta a la nube (`opencode-go/deepseek-v4-flash`); el provider LM Studio está
-  bloqueado (`disabled_providers`).
-- El antiguo `switch-mcp-profile.sh` (copiaba local/cloud sobre `opencode.json`)
-  está ELIMINADO desde el 18/08/2026.
-
 ## 🏆 Proveedor NVIDIA: ranking y metodología de selección de modelos (IMPORTANTE)
 Cuando se trabaje con el proveedor `nvidia` (agente `nvidia` o selector `/models`),
-usar la METODOLOGÍA ya establecida el 05/09/2026 para verificar/actualizar el whitelist.
-Está documentada completa en:
-- **Markdown:** `04-perfiles-opencode-json.md` → sección «Ranking y metodología de selección de modelos NVIDIA»
-- **Grafo de memoria:** entidad «Proveedor NVIDIA en OpenCode»
+usar la METODOLOGÍA establecida el 05/09/2026 para verificar/actualizar el whitelist.
+Documentada completa en `04-perfiles-mimocode-json.md` y en el grafo de memoria.
 
 Resumen de la metodología (en orden, obligatorio):
-1. **Catálogo real:** `GET https://integrate.api.nvidia.com/v1/models` — el catálogo `models.dev` de OpenCode está DESACTUALIZADO para NVIDIA (lista modelos retirados).
-2. **HTTP 200 real:** `POST /chat/completions` a cada candidato. Los listados en el catálogo sin endpoint de chat desplegado devuelven **404** → descartar.
-3. **Velocidad:** generación real de ~180 tokens (NO limitar a 5), exigir **≥ ~10 tok/s**. Los modelos lentos (como DeepSeek a ~1 tok/s) son inútiles como agente.
-4. **Tool calling (OBLIGATORIO para OpenCode):** petición con `tools: [get_current_time]` + `tool_choice: auto`; exigir `tool_calls` reales en la respuesta. Sin tools = inutilizable en OpenCode.
+1. **Catálogo real:** `GET https://integrate.api.nvidia.com/v1/models` — el catálogo `models.dev` está DESACTUALIZADO para NVIDIA (lista modelos retirados).
+2. **HTTP 200 real:** `POST /chat/completions` a cada candidato. Los listados sin endpoint de chat desplegado devuelven **404** → descartar.
+3. **Velocidad:** generación real de ~180 tokens, exigir **≥ ~10 tok/s**. Los modelos lentos son inútiles como agente.
+4. **Tool calling (OBLIGATORIO):** petición con `tools: [get_current_time]` + `tool_choice: auto`; exigir `tool_calls` reales. Sin tools = inutilizable.
 5. **Reintentos:** los 429/500/503/timeout se reintentan con más margen antes de decidir.
 
-Whitelist actual (05/09/2026): 8 modelos operativos en los 3 perfiles. Los retirados devuelven **410 Gone** (end of life) y se eliminan del whitelist. Detalle completo (ranking y descartados) en el markdown citado.
-
-### 🤖 Verificación automática del whitelist (cada 15 días)
-Desde el **05/09/2026** existe un check automático que aplica la metodología anterior:
-- **Script:** `~/.config/opencode/check-nvidia-whitelist.sh`
-- **Timer systemd:** `check-nvidia-whitelist.timer` (días 1 y 16 de cada mes a las 10:00, retardo aleatorio 30 min)
-- **Qué hace:**
-  1. Verifica que los modelos del whitelist actual dan HTTP 200 real. Los **410 Gone** se ELIMINAN automáticamente de los 3 perfiles JSON.
-  2. Escanea el catálogo real buscando modelos NUEVOS (no vistos antes) y les aplica la metodología completa (velocidad ≥ 10 tok/s + tool calling).
-  3. Los que pasan TODO quedan como **CANDIDATOS** (log + notificación) para revisión manual de Antonio — NO se añaden solos.
-  4. Reintenta 429/500/503/timeout con margen antes de decidir.
-- **Log:** `~/.config/opencode/data/nvidia-whitelist.log`
-- **Estado:** `~/.config/opencode/data/nvidia-whitelist-state.json` (modelos vistos, retirados, última ejecución)
-- **API key:** se lee de `~/.local/share/opencode/auth.json` (clave `nvidia.key`, formato `nvapi-*`) — no está hardcodeada en el script.
-- Si el timer avisa de candidatos nuevos, revisar y, si procede, añadirlos al whitelist de los 3 perfiles siguiendo la metodología.
-- Ejecutar manualmente: `bash ~/.config/opencode/check-nvidia-whitelist.sh`
-- El script se documenta también en `04-perfiles-opencode-json.md`.
+Whitelist actual: 8 modelos operativos en los 3 perfiles. Los retirados devuelven **410 Gone** y se eliminan.
+- La verificación automática (`check-nvidia-whitelist.sh` + timer) pertenece a **OpenCode** y
+  actualiza los perfiles de OpenCode, NO los de MiMoCode. Tras un check automático, revisar
+  si hay cambios y aplicarlos manualmente al whitelist de los 3 perfiles de MiMoCode.
 
 ## Iniciar LM Studio manualmente
 ```bash
@@ -477,26 +312,18 @@ Si el modelo se satura, usar:
 /home/antonio/.lmstudio/bin/lms unload --all
 ```
 
-## 📊 Tokens/s (todas las fuentes)
-
-### En la TUI (plugin opencode-throughput)
-El plugin TUI `opencode-throughput` (registrado en `tui.json`) muestra en la barra
-lateral de OpenCode el rendimiento de CADA solicitud y de CADA modelo/provider:
-- TPS medio, TTFT, latencia, tokens ↑/↓ y coste por modelo
-- Lista "Recent" con cada petición: `TTFT | tok/s | latencia | ↑in ↓out`
-Funciona para TODOS los providers (local, NVIDIA, cloud) porque engancha los
-eventos de mensaje, no depende del proxy.
+## 📊 Tokens/s
 
 ### Proxy local (puerto 4001)
-El proxy `lmstudio-proxy.py` registra métricas por request en `metrics.json`
-(`METRICS_EXPORT_PATH` en `.env`, activado con `ENABLE_METRICS=true`) y además
-inyecta `stats.tokens_per_second` en respuestas no-streaming.
+El proxy `~/.config/opencode/lmstudio-proxy.py` (compartido) registra métricas por request
+en `metrics.json` (`METRICS_EXPORT_PATH` en `.env`, activado con `ENABLE_METRICS=true`) y
+además inyecta `stats.tokens_per_second` en respuestas no-streaming.
 
 Método rápido por terminal:
 ```bash
 curl -s http://localhost:4001/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model":"models-qwen3.5-9b","messages":[{"role":"user","content":"hola"}]}' | \
+  -d '{"model":"models-qwen3.8-9b","messages":[{"role":"user","content":"hola"}]}' | \
   python3 -c "import json,sys; d=json.load(sys.stdin); u=d['usage']; s=d.get('stats',{}); print(f\"Prompt: {u['prompt_tokens']} tok\\nGenerados: {u['completion_tokens']} tok\\nVelocidad: {s.get('tokens_per_second','N/A')} tok/s\")"
 ```
 
@@ -506,9 +333,11 @@ dashboard con la última velocidad, la media, peticiones totales y el histórico
 de peticiones del proxy local. Datos crudos en `/api/metrics`.
 Iniciar: `python3 ~/.config/opencode/lmstudio-metrics-server.py 4200`
 
+> 📁 `~/.config/mimocode/` - Configuración activa de MiMoCode · `~/Config/mimocode/` - Copia de seguridad e instalador
+
 # CHECKLIST ANTES DE RESPONDER
 - ¿Respuesta en español?
 - ¿Fecha/hora en formato España?
 - ¿Decimales con coma?
-- Si pregunta por el tiempo: ¿he usado wttr.in?
+- Si pregunta por el tiempo: ¿he usado AEMET/wttr.in?
 - ¿He usado la herramienta directamente en vez de describir lo que haría?

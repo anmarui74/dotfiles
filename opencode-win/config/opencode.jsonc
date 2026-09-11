@@ -1,0 +1,122 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "small_model": "opencode-go/deepseek-flash",
+  "instructions": [
+    "C:/Users/evo01/.config/opencode/AGENTS.md"
+  ],
+  "default_agent": "cloud",
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "*": "ask",
+      "sudo *": "deny",
+      "pkexec *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "prompt": "{file:./prompts/read-agents.txt}",
+      "model": "opencode-go/deepseek-flash"
+    },
+    "plan": {
+      "prompt": "{file:./prompts/read-agents.txt}"
+    },
+    "local": {
+      "description": "Agente local desactivado en Windows (requiere LM Studio + proxy en localhost:4001)",
+      "mode": "primary",
+      "model": "opencode-go/deepseek-flash",
+      "disable": true
+    },
+    "cloud": {
+      "description": "Agente cloud - DeepSeek V4.1 Flash Off-Peak: pipeline diario de codigo, coste minimo",
+      "mode": "primary",
+      "model": "opencode-go/deepseek-flash",
+      "permission": {
+        "task": {
+          "*": "allow"
+        }
+      }
+    },
+    "nvidia": {
+      "description": "Agente NVIDIA - Muse Glimmer 30B de Meta: tool calling nativo, gratis via NIM (requiere API key nvidia en auth.json)",
+      "mode": "all",
+      "model": "nvidia/meta/muse-glimmer-30b",
+      "temperature": 1,
+      "top_p": 0.95
+    },
+    "multimodal": {
+      "description": "Agente multimodal - Muse Glimmer 30B con soporte de imagen + texto (requiere API key nvidia)",
+      "mode": "all",
+      "model": "nvidia/meta/muse-glimmer-30b",
+      "temperature": 0.8,
+      "top_p": 0.9,
+      "prompt": "Eres un asistente multimodal experto. Analiza imagenes, screenshots y documentos junto con el texto. Para contextos largos, resume, extrae key points y responde con referencias precisas."
+    }
+  },
+  "provider": {
+    "nvidia": {
+      "whitelist": [
+        "minimaxai/minimax-m3",
+        "openai/gpt-oss-20b",
+        "meta/llama-3.2-11b-vision-instruct",
+        "meta/muse-glimmer-30b",
+        "nvidia/nemotron-3-super-120b-a12b",
+        "nvidia/nemotron-3-ultra-550b-a55b",
+        "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+      ],
+      "options": {
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      }
+    }
+  },
+  "lsp": false,
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "filesystem": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:/Users/evo01"
+      ],
+      "enabled": true
+    },
+    "memory": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "environment": {
+        "MEMORY_FILE_PATH": "C:/Users/evo01/.config/opencode/data/memory/memory.jsonl"
+      },
+      "enabled": true
+    },
+    "fetch": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "mcp-fetch-server"
+      ],
+      "enabled": true
+    },
+    "sequential_thinking": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": true
+    }
+  }
+}

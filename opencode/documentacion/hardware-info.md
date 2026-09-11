@@ -52,7 +52,7 @@
 | VRAM | 16376 MiB (~16 GB GDDR6X) |
 | Driver | nvidia 610.57.04 · CUDA 13.3 · Vulkan 1.4 · PCIe Gen4 x16 |
 | iGPU integrada | AMD Radeon Raphael (RDNA2) · driver amdgpu |
-| Uso CUDA | LM Studio (Qwen 3.8-9B) y whisper-cpp (transcripción ~0,85 s) |
+| Uso CUDA | LM Studio (Qwen 3.5-9B) y whisper-cpp (transcripción ~0,85 s) |
 
 ## 🖥️ Monitores
 

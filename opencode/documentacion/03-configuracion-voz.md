@@ -397,13 +397,7 @@ def speak_block(text):
     "session_rename": "f8"
   },
   "plugin": [
-    [
-      "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
-      {
-        "endpoint": "http://localhost:4001/v1",
-        "model": "models-qwen3.8-9b"
-      }
-    ],
+    "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
     ["opencode-throughput", {}]
   ]
 }
@@ -414,7 +408,7 @@ El plugin se carga como **plugin TUI** de OpenCode apuntando directamente a `ind
 | Opción | Valor | Propósito |
 |--------|-------|-----------|
 | `endpoint` | `http://localhost:4001/v1` | Endpoint del proxy LM Studio usado para la **normalización STT** |
-| `model` | `models-qwen3.8-9b` | Modelo local Qwen 3.8 usado en la normalización |
+| `model` | `qwen3.8-9b` | Modelo local Qwen 3.8 usado en la normalización |
 
 Estas opciones se añadieron el **18/08/2026** para que la normalización STT use explícitamente el modelo local vía el proxy (antes usaba valores por defecto).
 
@@ -444,7 +438,7 @@ Se pasa desde `tui.json` en `options` del plugin:
 ```javascript
 const cfg = {
   endpoint: pluginOptions?.endpoint,      // Ej: http://localhost:4001/v1
-  model: pluginOptions?.model,            // Ej: models-qwen3.8-9b
+  model: pluginOptions?.model,            // Ej: qwen3.8-9b
   apiKeyEnv: pluginOptions?.apiKeyEnv,    // Variable de entorno con API key
   maxTokens: 2048,
   reasoningEffort: null,

@@ -89,6 +89,7 @@ archivos = {
     'tui.json': 'TUIEOF',
     'AGENTS.md': 'AGEOF', '.env': 'ENVEOF',
     'sync-opencode.sh': 'SYNCEOF',
+    'mcp-fetch-fix.js': 'MCPFIXEOF',
     'init-opencode.sh': 'INITEOF', 'start-lmstudio-server.sh': 'SERVEREOF',
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
