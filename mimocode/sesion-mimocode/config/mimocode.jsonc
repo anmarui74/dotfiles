@@ -11,6 +11,9 @@
   "default_agent": "nvidia",
   "share": "manual",
   "autoupdate": false,
+  "experimental": {
+    "predict_next_prompt": false
+  },
   "permission": {
     "edit": "ask",
     "bash": {
