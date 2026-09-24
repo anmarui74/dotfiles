@@ -1,0 +1,6 @@
+[16/09/2026 01:10:04] 🔴 Sigue el bug: NVIDIA rechaza prompt_cache_key (nvidia/meta/muse-glimmer-30b)
+[16/09/2026 17:18:52] 🔴 Sigue el bug: NVIDIA rechaza prompt_cache_key (nvidia/meta/muse-glimmer-30b)
+[17/09/2026 10:55:09] 🎉 POSIBLE FIX: nvidia/meta/muse-glimmer-30b respondió sin el error de prompt_cache_key
+[17/09/2026 10:55:09] 👉 Revisar la versión de OpenCode y retirar este vigilante si procede.
+[17/09/2026 11:12:05] 🎉 POSIBLE FIX: nvidia/meta/muse-glimmer-30b respondió sin el error de prompt_cache_key
+[17/09/2026 11:12:05] 👉 Revisar la versión de OpenCode y retirar este vigilante si procede.

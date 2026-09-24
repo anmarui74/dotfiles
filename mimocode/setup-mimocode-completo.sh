@@ -1,0 +1,1 @@
+sesion-mimocode/setup-mimocode-completo.sh

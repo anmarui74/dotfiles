@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "keybinds": {
+    "session_rename": "f8"
+  },
+  "plugin": [
+    "/home/antonio/.config/opencode/opencode-voice-modified/index.js",
+    "/home/antonio/.config/opencode/opencode-sidebar-mimo/index.tsx"
+  ],
+  "plugin_enabled": {
+    "internal:sidebar-context": false
+  }
+}
