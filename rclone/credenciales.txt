@@ -1,0 +1,6 @@
+Client ID: 682740452054-tfg0mm3pnlmk0qblj7q1crveg5nb228r.apps.googleusercontent.com
+Client Secret: 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
+
+Generado el: 06/09/2026
+Proyecto: rclone-drive
+Uso: rclone Google Drive

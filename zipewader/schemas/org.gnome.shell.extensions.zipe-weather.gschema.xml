@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema path="/org/gnome/shell/extensions/zipe-weather/" id="org.gnome.shell.extensions.zipe-weather">
+    <key type="d" name="latitude">
+      <default>36.9157</default>
+      <summary>Latitud</summary>
+      <description>Latitud de la ubicación</description>
+    </key>
+    <key type="d" name="longitude">
+      <default>-2.4411</default>
+      <summary>Longitud</summary>
+      <description>Longitud de la ubicación</description>
+    </key>
+    <key type="s" name="city-name">
+      <default>'Pechina'</default>
+      <summary>Nombre de la ciudad</summary>
+      <description>Nombre para mostrar de la ubicación</description>
+    </key>
+  </schema>
+</schemalist>

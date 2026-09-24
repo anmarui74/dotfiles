@@ -1,0 +1,153 @@
+ configuration {
+    display-drun: "Aplicaciones";
+    display-run: "Ejecutar";
+    display-window: "Windows";
+    display-emoji: "Emojis";
+    drun-display-format: "{icon} {name}";
+    font: "DroidSansMono Nerd 12";
+    show-icons: true;
+    icon-theme: "Paper";
+}
+
+@theme "/dev/null"
+
+* {
+    blue:  #0000FF;
+    white: #FFFFFF;
+    black: #000000;
+    grey:  #eeeeee;
+    grey2: #566573CC;
+
+    spacing: 5;
+    background-color: #00000000;
+    border-color: #444444FF;
+    anchor: center;
+    location: center;
+}
+window {
+    transparency: "real";
+    background-color: #00000000;
+    border: 0;
+    border-radius: 10;
+    margin: 0;
+    padding: 0;
+    x-offset: 0;
+    y-offset: 0;
+    width: 700;
+}
+mainbox {
+    padding: 0;
+    border: 0;
+    margin: 0;
+    spacing: 1%;
+}
+message {
+    border: 2px;
+    padding: 1em;
+    background-color: @white;
+    text-color: @black;
+}
+textbox normal {
+    text-color: #002B36FF;
+    padding: 0;
+    border: 0;
+}
+listview {
+    fixed-height: 1;
+    border: 2px;
+    padding: 1em;
+    reverse: false;
+
+    columns: 1;
+    lines: 20;
+    background-color: @grey2;
+}
+element {
+    border: 0;
+    padding: 2px;
+    highlight: bold ;
+}
+element-icon {
+    size: 30;
+}
+element-text {
+    background-color: inherit;
+    text-color: inherit;
+
+    vertical-align: 0.5;
+}
+element normal.normal {
+    text-color: #002B36FF;
+    background-color: #56657300;
+}
+element normal.urgent {
+    text-color: #D75F00FF;
+    background-color: #F5F5F5FF;
+}
+element normal.active {
+    text-color: #005F87FF;
+    background-color: #F5F5F5FF;
+}
+element selected.normal {
+    text-color: #F5F5F5FF;
+    background-color: #4271AE66;
+}
+element selected.urgent {
+    text-color: #F5F5F5FF;
+    background-color: #D75F00FF;
+}
+element selected.active {
+    text-color: #F5F5F5FF;
+    background-color: #005F87FF;
+}
+element alternate.normal {
+    text-color: #002B36FF;
+    background-color: #56657300;
+}
+element alternate.urgent {
+    text-color: #D75F00FF;
+    background-color: #D0D0D0FF;
+}
+element alternate.active {
+    text-color: #005F87FF;
+    background-color: #D0D0D0FF;
+}
+scrollbar {
+    border: 0;
+    padding: 0;
+}
+inputbar {
+    spacing: 0;
+    border: 2px;
+    padding: 0.5em 1em;
+    background-color: @grey2;
+    index: 0;
+}
+inputbar normal {
+    foreground-color: #002B36FF;
+    background-color: #566573CC;
+}
+mode-switcher {
+    border: 2px;
+    padding: 0.5em 1em;
+    background-color: @grey;
+    index: 10;
+}
+button selected {
+    text-color: #4271AEFF;
+}
+inputbar {
+    children:   [ prompt,textbox-prompt-colon,entry,case-indicator ];
+}
+textbox-prompt-colon {
+    expand:     false;
+    str:        ":";
+    margin:     0px 0.3em 0em 0em ;
+    text-color: @black;
+}
+error-message {
+    border: 2px;
+    padding: 1em;
+    background-color: #FF8888;
+    text-color: @black;
+}

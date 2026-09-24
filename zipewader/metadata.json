@@ -1,0 +1,8 @@
+{
+  "name": "Zipe Weather",
+  "description": "Tiempo en tu ubicación - pronóstico 10 días",
+  "uuid": "zipe-weather@antonio",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "version": 2,
+  "settings-schema": "org.gnome.shell.extensions.zipe-weather"
+}

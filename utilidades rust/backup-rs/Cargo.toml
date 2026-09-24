@@ -1,0 +1,27 @@
+[package]
+name = "backup-rs"
+version = "1.0.0"
+edition = "2021"
+description = "Backup automatizado versionado para Arch Linux con watching de archivos"
+license = "MIT"
+
+[[bin]]
+name = "backup"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive", "env"] }
+notify = { version = "6.1", features = ["crossbeam-channel"] }
+walkdir = "2.5"
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+toml = "1.0"
+anyhow = "1.0"
+tokio = { version = "1.40", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dirs = "5.0"
+indicatif = "0.17"
+humantime = "2.1"
+regex = "1.10"
+filetime = "0.2"

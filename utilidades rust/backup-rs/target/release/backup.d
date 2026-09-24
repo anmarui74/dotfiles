@@ -1,0 +1,1 @@
+/home/antonio/Config/utilidades\ rust/backup-rs/target/release/backup: /home/antonio/Config/utilidades\ rust/backup-rs/src/backup.rs /home/antonio/Config/utilidades\ rust/backup-rs/src/config.rs /home/antonio/Config/utilidades\ rust/backup-rs/src/main.rs /home/antonio/Config/utilidades\ rust/backup-rs/src/watcher.rs

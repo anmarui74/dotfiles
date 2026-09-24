@@ -1,0 +1,29 @@
+Dolphin como root junto a Kate también como root 
+
+Deberíamos poder usar Dolphin como root, pero aún no es posible. Incluso en KDE neon nos dice que usemos el gestor de archivos normal y nos pedirá la contraseña cuando sea necesario, pero de esta manera no aparecen algunas opciones en el menú. 
+
+En realidad, no es 100% necesario. Podemos realizar todos los cambios que queramos desde el terminal, pero creo que no está de más poder usar, al menos, Dolphin como root, y si podemos hacer lo mismo con Kate, pues mejor que mejor. El secreto para conseguir esto es hacer una copia del lanzador original y cambiarle la orden que le dice cómo iniciará, un proceso que os contamos a continuación. 
+
+Dolphin como root con un archivo .desktop modificado 
+
+El proceso es sencillo y seguro. Lo «peligroso» es lo que podemos hacer después, ya que si tocamos lo que no debemos podemos hacer que algo deje de funcionar. Lo conseguiríamos de esta manera: 
+
+Vamos a la carpeta usr/share/applications. 
+
+Allí buscamos «dolphin», también podemos buscar «kate» si queremos hacer lo mismo y poder usar el editor como root. El archivo de Dolphin se llama org.kde.dolphin.desktop, y el de Kate org.kde.kate.desktop. 
+
+Los copiamos en el escritorio para editarlos o directamente en donde acabarán, es decir, en nuestra carpeta personal/.local/share/applications. 
+
+Abrimos el archivo .desktop con Kate, por ejemplo, y lo editamos. Hay que editar como mínimo una línea, pero se recomienda editar dos o tres: 
+
+En la línea donde pone «exec» cambiaremos lo que hay detrás del símbolo igual (=) por esto pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY KDE_SESSION_VERSION=5 KDE_FULL_SESSION=true dbus-launch dolphin %u en el caso de Dolphin y esto pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY KDE_SESSION_VERSION=5 KDE_FULL_SESSION=true dbus-launch kate -b %U en el caso de Kate.  
+
+Si necesitamos hacer esto con alguna otra app, sólo hay que cambiar el final, desde donde aparece el nombre de la aplicación hasta el final. En Dophin es dolphin %u, que sería el lanzador de la aplicación. 
+
+El nombre de la aplicación merece la pena cambiarlo a algo así como Dolphin Root y Kate Root. Este es el nombre que aparecerá en el lanzador de apps. 
+
+También podemos ir al nombre (name) y comentario (comment) de nuestro idioma y cambiarlo. 
+
+Si los habíamos dejado en nuestra carpeta personal/.local/share/applications, las aplicaciones ya deberían aparecer en el menú de apps. Deberemos poner nuestra contraseña para poder abrir las apps de esta manera. 
+
+Esto es sólo un atajo de algo que debería funcionar desde Framework 91, pero bueno, para el que lo necesite y quiera hacerlo con interfaz de usuario, esta es una posibilidad. 

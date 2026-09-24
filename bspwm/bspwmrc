@@ -1,0 +1,56 @@
+#! /bin/sh
+
+sxhkd &
+# setxkbmap es &
+setxkbmap us -variant intl &
+#$HOME/.screenlayout/izquierda.sh &
+picom &
+nitrogen --restore &
+xscreensaver &
+nm-applet &
+blueberry-tray &
+volumeicon &
+megasync &
+dropbox &
+$HOME/.digistorage-es-dist/storagegui &
+# Fedora
+# /usr/libexec/polkit-gnome-authentication-agent-1 &
+# ArchLinux
+/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+# polybar mainbar-bspwm &
+# polybar mainbar-bspwm-extra &
+$HOME/.config/polybar/launch.sh &
+xsetroot -cursor_name left_ptr
+
+xrandr --output DP-0 --mode 2560x1440 --pos 0x0 --rotate left --output DP-2 --primary --mode 2560x1440 --pos 1440x560 --rotate normal &
+# xrandr -s 2560x1440+0+0 1440x2560+2560+100 &
+# xrandr --output DVI-D-0 --off --output HDMI-0 --off --output HDMI-1 --off --output DP-0 --primary --mode 2560x1440 --pos 0x0 --rotate normal --output DP-1 --off --output DP-2 --mode 2560x1440 --pos 2560x50 --rotate right --output DP-3 --off &
+# xrandr --output DVI-D-0 --off --output HDMI-0 --off --output HDMI-1 --off --output DP-0 --mode 2560x1440 --pos 0x0 --rotate left --output DP-1 --off --output DP-2 --primary --mode 2560x1440 --pos 1440x560 --rotate normal --output DP-3 --off &
+
+bspc config pointer-modifier mod1
+
+bspc monitor DP-2 -s DP-0
+bspc monitor DP-2 -d 1 2 3 4 5
+bspc monitor DP-0 -d 6 7 8 9 0
+
+bspc wm -O DP-2 DP-0
+
+bspc config border_width         2 
+bspc config window_gap          12
+bspc config normal_border_color "#B7B7B7"
+bspc config active_border_color "#F08F5B"
+bspc config focused_border_color "#FF0000"
+bspc config presel_border_color "#2659CD"
+
+bspc config split_ratio          0.52
+bspc config borderless_monocle   true
+bspc config gapless_monocle      true
+
+bspc rule -a Gimp desktop='^4' state=floating follow=on
+bspc rule -a Chromium desktop='^2'
+bspc rule -a Vlc state=floating
+bspc rule -a Kupfer.py focus=on
+bspc rule -a Screenkey manage=off
+
+bspc rule -a scratchpad sticky=on state=floating
+
