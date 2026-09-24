@@ -1,0 +1,9 @@
+[Unit]
+Description=Verificación quincenal whitelist NVIDIA MiMoCode
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.config/mimocode/check-nvidia-whitelist.sh
+User=antonio
+Environment=HOME=/home/antonio

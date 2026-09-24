@@ -1,0 +1,12 @@
+{
+  "$schema": "https://mimo.xiaomi.com/mimocode/tui.json",
+  // Plugin de voz modificado (v0.6.0): SIN normalización por LLM y SIN transcripción vía API.
+  // El STT transcribe con whisper-cpp local y el TTS limpia el markdown con regex locales
+  // (speak-kokoro-gpu). Por eso NO necesita endpoint ni modelo: funciona igual en los 3 perfiles.
+  "keybinds": {
+    "session_rename": "none"
+  },
+  "plugin": [
+    "/home/antonio/.config/mimocode/mimocode-voice-modified/index.js"
+  ]
+}

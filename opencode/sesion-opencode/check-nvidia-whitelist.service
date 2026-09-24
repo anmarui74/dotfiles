@@ -1,0 +1,6 @@
+[Unit]
+Description=Check NVIDIA whitelist status (models 410 Gone / new candidates)
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.config/opencode/check-nvidia-whitelist.sh

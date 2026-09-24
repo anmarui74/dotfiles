@@ -1,0 +1,13 @@
+[Unit]
+Description=Check NVIDIA whitelist every 15 days (días 1 y 16 de cada mes)
+
+[Timer]
+# Quincenal: días 1 y 16 de cada mes a las 10:00
+OnCalendar=*-*-1,16 10:00:00
+# Margen por si el equipo está apagado
+Persistent=true
+# Pequeño retardo aleatorio para evitar picos
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target
