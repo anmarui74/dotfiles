@@ -1,0 +1,10 @@
+return {
+    "vim-airline/vim-airline",
+		lazy = false,
+		priority = 1000,
+		dependencies = {
+			"vim-airline/vim-airline-themes",
+			"nvim-tree/nvim-wevb-devicons",
+            --"ryanoasis/vim-devicons",
+		},
+}
