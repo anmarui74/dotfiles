@@ -1,7 +1,0 @@
-[gdrive]
-type = drive
-client_id = 682740452054-tfg0mm3pnlmk0qblj7q1crveg5nb228r.apps.googleusercontent.com
-client_secret = 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
-token = {"access_token":"ya29.a0AdMD6Ehf7IEyRS3MGD3_b-NM3ZPFTPn-yItH7CHcOlVYyZE-MWFzUDsTRn_IOH_pml_7E4NzGdOWPS3OsoSlxGqaSmy3ectd2wI-L3wGgyNVkSOWAfRMQmdAbySEFRMacjiFdpQA5APBYwAcFW7MLwK64jrYzGuwPe2gGPS3XAh5DJGorX_x9VhKuV5xvzOCu-S28vVcaCgYKATsSARASFQHGX2MiNCvupvktYZfFN1tw7S_wpQ0207","token_type":"Bearer","refresh_token":"1//03KS2--NHOQvlCgYIARAAGAMSNgF-L9IrStjxaZbo26bD84ePNcltmCpP0g7miAwQOAOFp_wptheuW7cWOcbOm4o9R6v2Cwatdw","expiry":"2026-09-19T21:09:52.898327815+02:00","expires_in":3599}
-team_drive = 
-
