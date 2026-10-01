@@ -1,0 +1,5 @@
+name: nvidia-whitelist-profile
+kind: model-provider
+version: 1.0.0
+description: NVIDIA NIM limitado al whitelist de OpenCode (equivalente a nvidia-filter)
+author: Hermes Agent

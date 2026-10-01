@@ -1,0 +1,191 @@
+#!/home/antonio/.local/share/tts-local/venv313/bin/python3
+"""kokoro-tts - sintetiza texto a FICHERO de audio con Kokoro v1.0 (GPU/CUDA).
+
+Adaptador de Kokoro para Hermes Agent (proveedor TTS de tipo comando).
+A diferencia de speak-kokoro-gpu (que reproduce por paplay), este script NO
+reproduce: escribe el audio en --out y termina. Hermes se encarga de la
+entrega/reproduccion.
+
+Incluye el "locucionario": limpieza de ANSI, recuadros Unicode, emojis y
+marcado markdown antes de sintetizar.
+
+Uso:
+    kokoro-tts --text-file respuesta.txt --out /tmp/voz.wav
+    kokoro-tts --text-file t.txt --out voz.wav --voice em_alex --speed 1.1
+    echo "Hola Antonio" | kokoro-tts --out /tmp/voz.wav --stdin
+
+Variables de entorno:
+    SPEAK_VOICE_KOKORO   voz por defecto (ef_dora)
+    SPEAK_SPEED          velocidad por defecto (1.0)
+"""
+import os
+
+os.environ.setdefault("ONNX_PROVIDER", "CUDAExecutionProvider")
+os.environ.setdefault("CUDA_MODULE_LOADING", "LAZY")
+os.environ.setdefault("ORT_LOGGING_LEVEL", "3")
+
+import argparse
+import re
+import subprocess
+import sys
+import tempfile
+
+sys.path.insert(0, "/home/antonio/.local/share/tts-local/venv313/lib/python3.13/site-packages")
+
+import numpy as np
+import soundfile as sf
+from kokoro_onnx import EspeakConfig, Kokoro
+
+KOKO_MODEL = os.path.expanduser("~/.local/share/kokoro/kokoro-v1.0.onnx")
+KOKO_VOICES = os.path.expanduser("~/.local/share/kokoro/voices-v1.0.bin")
+ESPEAK_LIB = "/usr/lib/libespeak-ng.so"
+ESPEAK_DATA = "/usr/share/espeak-ng-data"
+
+ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x1b]*\x1b\\|\x1b[PX^_]|[^\x1b]*\x1b\\|\x1b][0-9;]*[\x07\x1b]|\x1b[=<>FGH]|\x1b[NOPQ\\]')
+BOX_RE = re.compile(r'[\u2500-\u257f\u2580-\u259f\u25a0-\u25ff]')
+EMOJI_RE = re.compile(
+    '['
+    '\U0001F300-\U0001F9FF'
+    '\U0001FA00-\U0001FA6F'
+    '\U0001FA70-\U0001FAFF'
+    '\u2600-\u27BF'
+    '\u2300-\u23FF'
+    '\u25A0-\u25FF'
+    '\u2B05-\u2B55'
+    '\u2934-\u2935'
+    '\u3030\u303D'
+    '\u3297\u3299'
+    '\uFE00-\uFE0F'
+    '\u200D'
+    ']+'
+)
+MARKDOWN_SUBS = [
+    (re.compile(r'```.*?```', re.S), ' código '),
+    (re.compile(r'`([^`]*)`'), r'\1'),
+    (re.compile(r'!\[[^\]]*\]\([^)]*\)'), ''),
+    (re.compile(r'\[([^\]]*)\]\([^)]*\)'), r'\1'),
+    (re.compile(r'^\s{0,3}#{1,6}\s*', re.M), ''),
+    (re.compile(r'^\s{0,3}>\s?', re.M), ''),
+    (re.compile(r'^\s{0,3}[-*+]\s+', re.M), ''),
+    (re.compile(r'^\s{0,3}\d+\.\s+', re.M), ''),
+    (re.compile(r'\*\*|__|~~'), ''),
+    (re.compile(r'^\s*\|.*\|\s*$', re.M), ' '),
+    (re.compile(r'\s*\|\s*'), ', '),
+]
+MAX_BLOCK = 320
+
+
+def limpiar(texto):
+    """Locucionario: deja solo texto pronunciable."""
+    texto = ANSI_RE.sub('', texto)
+    texto = BOX_RE.sub('', texto)
+    texto = EMOJI_RE.sub('', texto)
+    for patron, reemplazo in MARKDOWN_SUBS:
+        texto = patron.sub(reemplazo, texto)
+    texto = re.sub(r'[⬝■▣●▸▀▄╹┃╻━┏┓┗┛┣┫┳┻╋┠┨┷┯┥┝┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋]+', '', texto)
+    texto = re.sub(r'[▰▱▔▏▎▍▌▋▊▉-]+', '', texto)
+    texto = re.sub(r'[ \t]+', ' ', texto)
+    lineas = [l.strip() for l in texto.splitlines()]
+    return '\n'.join(l for l in lineas if l)
+
+
+def bloques(texto):
+    """Trocea en frases y agrupa hasta MAX_BLOCK caracteres."""
+    frases = re.split(r'(?<=[.!?…:;])\s+|\n+', texto)
+    salida, actual = [], ''
+    for frase in frases:
+        frase = frase.strip()
+        if not frase:
+            continue
+        if not actual:
+            actual = frase
+        elif len(actual) + len(frase) + 1 <= MAX_BLOCK:
+            actual += ' ' + frase
+        else:
+            salida.append(actual)
+            actual = frase
+        while len(actual) > MAX_BLOCK:
+            corte = actual.rfind(' ', 0, MAX_BLOCK)
+            if corte <= 0:
+                break
+            salida.append(actual[:corte])
+            actual = actual[corte + 1:].strip()
+    if actual:
+        salida.append(actual)
+    return [s for s in salida if len(s) >= 2]
+
+
+def convertir(wav_path, out_path):
+    ffmpeg = None
+    for candidato in ('ffmpeg', '/usr/bin/ffmpeg',
+                      os.path.expanduser('~/.hermes/tools/ffmpeg-9.0.1-linux-x64/bin/ffmpeg')):
+        try:
+            if subprocess.run([candidato, '-version'], stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL).returncode == 0:
+                ffmpeg = candidato
+                break
+        except OSError:
+            continue
+    if not ffmpeg:
+        raise RuntimeError(f'no encuentro ffmpeg para escribir {out_path}')
+    subprocess.run([ffmpeg, '-nostdin', '-y', '-i', wav_path, out_path],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+
+def main():
+    ap = argparse.ArgumentParser(description='Kokoro v1.0 (CUDA) -> fichero de audio')
+    ap.add_argument('--text-file', help='fichero UTF-8 con el texto')
+    ap.add_argument('--stdin', action='store_true', help='leer el texto de stdin')
+    ap.add_argument('--out', required=True, help='fichero de audio de salida')
+    ap.add_argument('--voice', default=os.environ.get('SPEAK_VOICE_KOKORO', 'ef_dora'))
+    ap.add_argument('--lang', default='es')
+    ap.add_argument('--speed', type=float, default=float(os.environ.get('SPEAK_SPEED', '1.0')))
+    args = ap.parse_args()
+
+    if args.text_file:
+        with open(args.text_file, encoding='utf-8', errors='replace') as fh:
+            crudo = fh.read()
+    elif args.stdin or not sys.stdin.isatty():
+        crudo = sys.stdin.read()
+    else:
+        ap.error('hace falta --text-file, --stdin o texto por stdin')
+
+    texto = limpiar(crudo)
+    trozos = bloques(texto)
+    if not trozos:
+        sys.stderr.write('KOKORO: no hay texto pronunciable\n')
+        return 1
+
+    cfg = EspeakConfig(lib_path=ESPEAK_LIB, data_path=ESPEAK_DATA)
+    try:
+        engine = Kokoro(KOKO_MODEL, KOKO_VOICES, espeak_config=cfg)
+    except Exception as exc:
+        sys.stderr.write(f'KOKORO ERR al cargar el modelo: {exc}\n')
+        return 1
+
+    partes, sr = [], 24000
+    for trozo in trozos:
+        audio, sr = engine.create(trozo, voice=args.voice, lang=args.lang, speed=args.speed)
+        partes.append(np.asarray(audio, dtype=np.float32))
+
+    audio_final = np.concatenate(partes) if len(partes) > 1 else partes[0]
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)) or '.', exist_ok=True)
+
+    if args.out.lower().endswith('.wav'):
+        sf.write(args.out, audio_final, sr)
+    else:
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+            tmp_wav = tmp.name
+        try:
+            sf.write(tmp_wav, audio_final, sr)
+            convertir(tmp_wav, args.out)
+        finally:
+            try:
+                os.unlink(tmp_wav)
+            except OSError:
+                pass
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

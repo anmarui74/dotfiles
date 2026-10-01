@@ -1,0 +1,12 @@
+{
+  "gestionados": {
+    "glimmer": "meta/muse-glimmer-30b",
+    "vision": "meta/llama-3.2-11b-vision-instruct",
+    "gpt-oss": "openai/gpt-oss-20b",
+    "nvidia": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nemotron-super": "nvidia/nemotron-3-super-120b-a12b",
+    "lightning": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "nano-omni": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+  },
+  "actualizado": "2026-09-30T23:07:29"
+}

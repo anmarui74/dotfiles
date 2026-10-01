@@ -1,0 +1,11 @@
+[Unit]
+Description=Hermes — publicar el estado cada 10 minutos (red de seguridad del dual boot)
+
+[Timer]
+Unit=hermes-dual-sync-export.service
+OnBootSec=3min
+OnUnitActiveSec=10min
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

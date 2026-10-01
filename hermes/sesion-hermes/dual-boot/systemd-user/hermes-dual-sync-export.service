@@ -1,0 +1,8 @@
+[Unit]
+Description=Hermes — publicar el estado en la carpeta compartida (dual boot)
+Documentation=file:///home/antonio/Config/hermes/AGENTS.md
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.local/bin/hermes-dual-sync export --quiet --solo-si-cambia
+TimeoutStartSec=180

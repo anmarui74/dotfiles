@@ -1,0 +1,17 @@
+# Credenciales: NUNCA se versionan (van solo en backups\ + sesion-hermes\, con ACL restringida)
+.env
+*.env
+auth.json
+credenciales/
+shared/
+backups/
+*.zip
+*.tar.gz
+*-restore.*
+restore-win.cmd
+# Ruido de ejecución
+__pycache__/
+*.pyc
+*.lock
+*.pid
+*.sock

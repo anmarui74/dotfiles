@@ -1,0 +1,23 @@
+[Unit]
+Description=LM Studio con ventana (interfaz gráfica; sirve también el API en el 1234)
+Documentation=https://lmstudio.ai/docs/developer/core/headless
+# Arrancar esta unidad = abrir la ventana. `Conflicts` para antes el servicio
+# headless: si sigue vivo con su SingletonLock, la app muestra la lista de
+# modelos VACÍA. Al parar esta unidad, `ExecStopPost` devuelve el modo servicio.
+Conflicts=lm-studio-app.service
+After=graphical-session.target
+
+[Service]
+Type=simple
+# El script limpia los Singleton* huérfanos (los que apuntan a un PID muerto)
+# antes de lanzar la app; systemd --user le pasa el entorno de la sesión.
+ExecStart=%h/.local/bin/lm-studio-gui-run
+Environment=TMPDIR=/tmp
+Restart=no
+# La app ignora SIGTERM (systemd tenía que matarla con SIGKILL y la unidad quedaba
+# en «failed»), así que se para en seco y sin espera: vuelve antes el modo servicio.
+KillSignal=SIGKILL
+TimeoutStopSec=8
+# Matarla con SIGKILL no es un fallo, es el método de parada previsto.
+SuccessExitStatus=SIGKILL 137
+ExecStopPost=/usr/bin/systemctl --user start lm-studio-app.service

@@ -1,0 +1,21 @@
+[Unit]
+Description=Hermes — importar el estado compartido (dual boot) antes de arrancar el gateway
+Documentation=file:///home/antonio/Config/hermes/AGENTS.md
+Before=hermes-gateway.service
+Wants=network-online.target
+After=network-online.target
+# El disco compartido está en fstab con x-systemd.automount: sin esto el import podía
+# correr antes de que el NTFS estuviera montado (arranque 10:44:13 → import 10:44:26 →
+# montaje real 10:47:43) y se quedaba sin hacer nada, en silencio. Fuerza el montaje.
+RequiresMountsFor=/mnt/seagate
+After=mnt-seagate.automount
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.local/bin/hermes-dual-sync import --quiet
+TimeoutStartSec=180
+# Un fallo aquí (disco no montado, NTFS sucio por Windows) nunca debe bloquear el arranque
+SuccessExitStatus=0 1
+
+[Install]
+WantedBy=default.target

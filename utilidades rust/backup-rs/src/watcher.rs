@@ -22,7 +22,12 @@ impl FileWatcher {
         let debounce_ms = config.watch.debounce_ms;
         let mut mirror_was_mounted = std::collections::HashMap::new();
         for m in &config.mirrors {
-            mirror_was_mounted.insert(m.name.clone(), m.destination.exists());
+            let mounted = if m.uri.is_some() {
+                m.destination.exists()
+            } else {
+                crate::is_on_mounted_disk(&m.destination)
+            };
+            mirror_was_mounted.insert(m.name.clone(), mounted);
         }
         Self {
             config,
@@ -86,7 +91,14 @@ impl FileWatcher {
         let mut engine = BackupEngine::new(self.config.clone());
 
         for m in &mirrors {
-            let now_mounted = m.destination.exists();
+            // Para espejos de disco, "montado" = punto de montaje real (evita
+            // confundir el directorio "stub" del root fs con el disco montado).
+            // Para espejos de red, basta con que exista (CIFS/GVFS).
+            let now_mounted = if m.uri.is_some() {
+                m.destination.exists()
+            } else {
+                crate::is_on_mounted_disk(&m.destination)
+            };
             let was_mounted = self.mirror_was_mounted.get(&m.name).copied().unwrap_or(false);
 
             // Si acaba de montarse → sincronizar
@@ -160,7 +172,14 @@ impl FileWatcher {
         // como antonio, y el SEAGATE/Linux es de root → no puede escribir → se omite
         // (se sincroniza manualmente con "backup once"/"backup mirror" con sudo).
         let mirrors: Vec<_> = self.config.mirrors.iter()
-            .filter(|m| m.destination.exists() && is_writable_path(&m.destination))
+            .filter(|m| {
+                let present = if m.uri.is_some() {
+                    m.destination.exists()
+                } else {
+                    crate::is_on_mounted_disk(&m.destination)
+                };
+                present && is_writable_path(&m.destination)
+            })
             .cloned()
             .collect();
 

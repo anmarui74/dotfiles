@@ -1,0 +1,32 @@
+{
+  "_comentario": "Exportado desde el Hermes de Linux (cachyos) para el Hermes de Windows. Solo nombres de modelos: NINGUNA clave de API.",
+  "generado": "29/09/2026 21:21",
+  "origen": "linux-cachyos",
+  "aliases": {
+    "local": "lmstudio/qwen3.8-9b",
+    "nvidia": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+    "nemotron-super": "nvidia/nvidia/nemotron-3-super-120b-a12b",
+    "gpt-oss": "nvidia/openai/gpt-oss-20b",
+    "glimmer": "nvidia/meta/muse-glimmer-30b",
+    "lightning": "nvidia/nvidia/nemotron-3.5-lightning-30b-a3b",
+    "nano-omni": "nvidia/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+    "vision": "nvidia/meta/llama-3.2-11b-vision-instruct",
+    "local-qwen35": "lmstudio/qwen3.5-9b",
+    "local-gemma": "lmstudio/google/gemma-4-e4b",
+    "multimodal": "opencode-go/mimo-v2.5"
+  },
+  "whitelist_nvidia": [
+    "meta/muse-glimmer-30b",
+    "meta/llama-3.2-11b-vision-instruct",
+    "openai/gpt-oss-20b",
+    "nvidia/nemotron-3-ultra-550b-a55b",
+    "nvidia/nemotron-3-super-120b-a12b",
+    "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+  ],
+  "notas": [
+    "aliases -> hermes config set model.aliases.<nombre> <modelo> --force",
+    "whitelist_nvidia -> providers.nvidia.whitelist en %USERPROFILE%\\.config\\opencode\\opencode.json (lo lee el plugin nvidia)",
+    "El plugin vive en %LOCALAPPDATA%\\hermes\\plugins\\model-providers\\nvidia\\"
+  ]
+}

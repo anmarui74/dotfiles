@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Operativo | 18/08/2026 | Antonio |
+| ✅ Operativo | 01/10/2026 · rev. 01/10/2026 | Antonio |
 
 > Herramienta CLI en **Rust** para Arch Linux (CachyOS) que respalda automáticamente los directorios personales
 > (`Config`, `Documentos`, `Descargas`, `Imágenes`, `Vídeos`, incluidos archivos
@@ -37,7 +37,7 @@ directorios personales de Antonio hacia **dos discos**:
 | Disco | Uso | Comportamiento |
 |-------|-----|----------------|
 | **Crucial** (SSD 1 TB, btrfs) | Backup versionado incremental | Snapshots con hardlinks + espejo `actual/` |
-| **SEAGATE** (HDD 4 TB, NTFS) | Espejo plano "machacar" | Copia, sobrescribe y borra según el home (requiere root) |
+| **SEAGATE** (HDD 4 TB, NTFS) | Espejo plano "machacar" | Copia, sobrescribe y borra según el home (**sin root**: `ntfs3` con `uid=1000`) |
 | **MyCloud** (WD, SMB) | Espejo nube "machacar" | Copia, sobrescribe y borra según el home (**sin root**, vía CIFS + rsync) |
 
 Las **fuentes** son: `Config`, `Documentos`, `Descargas`, `Imágenes`, `Vídeos`,
@@ -48,39 +48,48 @@ Tiene **dos modos complementarios**:
 
 | Modo | Comando | Qué hace |
 |------|---------|----------|
-| **Backup manual (principal)** | `backup once` | Snapshot incremental del Crucial (sin contraseña) + SEAGATE (pide sudo una vez) + NUBE (sin root) |
-| **Actualizar espejos** | `backup mirror` | Sincroniza los espejos machacados: SEAGATE (pide sudo) y NUBE antonio/public (sin root) |
+| **Backup manual (principal)** | `backup once` | Snapshot incremental del Crucial + espejo SEAGATE + NUBE (todo como `antonio`, sin root) |
+| **Actualizar espejos** | `backup mirror` | Sincroniza los espejos machacados: SEAGATE y NUBE antonio/public (sin root) |
 | **Daemon (opcional)** | `backup run` | Sincroniza el espejo `actual/` del Crucial, la NUBE, y vigila cambios en tiempo real (queda corriendo) |
 
 > 🏠 **Uso recomendado (sin daemon):** el servicio systemd está **deshabilitado**.
 > No hay vigilancia automática en segundo plano. Los backups se hacen **manualmente**
 > con `backup once` (todo) o `backup mirror` (solo SEAGATE) cuando quieras.
 
-> 🔌 **Montaje automático:** tanto `backup once` como `backup run` intentan montar
-> automáticamente los discos de destino si están desmontados:
+> 🔌 **Montaje automático (solo si hace falta):** `backup once`/`backup mirror`
+> montan el disco de destino **solo si aún no es un punto de montaje**. Si ya está
+> montado, **no lo tocan: solo copian**.
 > - El **Crucial** se monta con `udisksctl` **sin contraseña** gracias a una regla
 >   polkit **específica solo para ese disco** (`/dev/sda1`). Así queda como sesión
 >   de usuario y **Nautilus puede montarlo/desmontarlo sin pedir permisos**.
-> - El **SEAGATE** NO tiene regla polkit (no se da privilegio a antonio). Su montaje
->   y copia requieren **`sudo`**.
+> - El **SEAGATE** (`/mnt/seagate`) está en el **fstab** con `x-systemd.automount`
+>   (`ntfs3`, `uid=1000,gid=1000`), así que lo monta el sistema y es **escribible
+>   por `antonio`**. Si no estuviera montado, se intenta montar con `sudo` (pide la
+>   contraseña una vez, NUNCA pkexec).
 
-> 🔒 **Elevación a root (solo SEAGATE):** el espejo plano vive en
-> `/SEAGATE/Linux`, que es propiedad de **root**. Cuando `backup once` llega al
-> SEAGATE, eleva **solo esa parte** con `sudo backup _mirror-only` (pide la
-> contraseña de `sudo` una sola vez, NUNCA pkexec). El proceso root monta y copia
-> el SEAGATE. El **Crucial nunca se copia como root**: su snapshot se hace siempre
-> como `antonio` antes de la elevación.
+> 🔒 **Sin root al copiar:** tanto el Crucial como el SEAGATE se copian **como
+> `antonio`**. El SEAGATE está montado con `uid=1000,gid=1000`, así que antonio
+> escribe directamente y **no hay elevación a root en el caso normal**. El antiguo
+> `sudo backup _mirror-only` queda solo como respaldo para el caso raro de un
+> destino montado pero **no escribible** por antonio.
+
+> 🛡️ **Seguridad:** nunca se escribe en un destino que **no sea un punto de montaje
+> real**. Si el disco no está montado (p. ej. `/mnt/seagate` es solo un directorio
+> "stub" del sistema de ficheros raíz), el backup **aborta/omite** en lugar de
+> llenar el disco del sistema. El disco se resuelve por **etiqueta**
+> (`/dev/disk/by-label`), **sin distinguir mayúsculas** (un disco `SEAGATE` montado
+> en `/mnt/seagate`).
 
 > 🖥️ **Daemon (`backup run`, opcional):** si se ejecuta, corre como **`antonio`**
-> (no root), gestiona el Crucial (sin privilegios) y **omite el SEAGATE** (requiere
-> root y no tiene terminal para sudo). Actualmente **el servicio systemd está
-> deshabilitado**: no corre en segundo plano salvo que lo lances manualmente.
+> (no root) y solo sincroniza espejos que sean **puntos de montaje reales y
+> escribibles**. Actualmente **el servicio systemd está deshabilitado**: no corre en
+> segundo plano salvo que lo lances manualmente.
 
 ### Arquitectura
 
 ```
 backup once  →  Backup/<YYYY-MM-DD_HH-MM-SS>/   (snapshot de restauración, Crucial)
-             +  SEAGATE/Linux                    (espejo machacado, con sudo)
+             +  /mnt/seagate/Linux               (espejo machacado, sin root)
 backup run   →  Backup/actual/                  (espejo siempre al día, opcional)
                  └── + vigilancia en tiempo real con notify (solo si se lanza)
 ```
@@ -104,18 +113,30 @@ Además del backup versionado en el Crucial, se pueden definir **espejos planos*
 | Archivo eliminado | Se borra del espejo |
 
 - Pensado para discos NTFS (p. ej. el HDD **SEAGATE**) que no soportan hardlinks fiables
-- Compara por **tamaño** (fiable en NTFS)
-- **Requiere root** (el destino `/SEAGATE/Linux` es de root): `backup once`/`backup mirror`
-  lo elevan con `sudo` una sola vez.
-- El **daemon lo omite** (si se ejecuta, corre como antonio y no puede escribir en root);
-  por eso el SEAGATE se sincroniza **manualmente** con `backup once` o `backup mirror`.
-- Ejemplo: `SEAGATE/Linux` mantiene una copia machacada de las 10 fuentes
+- **Incremental**: compara por **tamaño + fecha de modificación** y solo copia lo que
+  cambió; preserva el `mtime` para no recopiar en ejecuciones posteriores. Borra del
+  espejo lo que ya no existe en el origen
+- **Sin root**: el SEAGATE se monta por fstab con `uid=1000,gid=1000`, así que
+  `antonio` escribe directamente y `backup once`/`backup mirror` copian como `antonio`.
+- El destino **debe estar en un disco realmente montado**; si no, se omite (nunca
+  escribe en un directorio "stub" del root fs). El disco se resuelve por etiqueta sin
+  distinguir mayúsculas (`SEAGATE` ↔ `/mnt/seagate`); el montaje es en `/mnt/seagate`
+  y la copia en `/mnt/seagate/Linux`.
+- El **daemon lo sincroniza** si el disco está montado y es escribible.
+- Ejemplo: `/mnt/seagate/Linux` mantiene una copia machacada de las fuentes
 
 ```toml
 [[mirrors]]
 name = "SEAGATE"
-destination = "/run/media/antonio/SEAGATE/Linux"
+destination = "/mnt/seagate/Linux"
 ```
+
+> 💡 **Si el SEAGATE no monta** (`mnt-seagate.mount` en *failed*): normalmente es que
+> el volumen NTFS quedó **sucio** por un apagado no limpio de Windows (Fast Startup).
+> Síntoma en `dmesg`: `ntfs3(sdd1): volume is dirty and "force" flag is not set!`.
+> Solución: limpiar el flag con `pkexec ntfsfix -d /dev/disk/by-label/SEAGATE`
+> (o arrancar Windows y apagarlo del todo), y reintentar. Mientras el disco no esté
+> montado, `backup` **omite** el espejo (no escribe en `/mnt/seagate`).
 
 > ⚠️ **Aviso:** el espejo plano **machaca y borra** — lo que se elimine del origen
 > desaparece del espejo. No guarda historial de versiones.
@@ -1144,10 +1165,17 @@ impl FileWatcher {
         let paths: Vec<PathBuf> = self.pending.drain().collect();
 
         // Solo se propagan los cambios a los espejos planos en los que PODEMOS
-        // escribir. El daemon corre como antonio y el SEAGATE/Linux es de root,
-        // así que se omite (sin errores). Se sincroniza con "backup once/mirror".
+        // escribir. Para los espejos de disco se exige además que el destino sea
+        // un punto de montaje real (nunca un directorio "stub" del root fs).
         let mirrors: Vec<_> = self.config.mirrors.iter()
-            .filter(|m| m.destination.exists() && is_writable_path(&m.destination))
+            .filter(|m| {
+                let present = if m.uri.is_some() {
+                    m.destination.exists()
+                } else {
+                    crate::is_mount_point(&m.destination)
+                };
+                present && is_writable_path(&m.destination)
+            })
             .cloned()
             .collect();
 
@@ -1195,9 +1223,9 @@ impl FileWatcher {
 ```
 
 > 💡 **Espejos planos en el daemon:** el watcher solo propaga los cambios a los
-> espejos planos en los que puede escribir. Como el daemon corre como `antonio` y
-> `/SEAGATE/Linux` es de root, lo **omite silenciosamente** (sin errores de
-> permisos). El SEAGATE se actualiza con `backup once` o `backup mirror` manual.
+> espejos planos que sean **puntos de montaje reales y escribibles** por `antonio`.
+> El SEAGATE (`/mnt/seagate`, `uid=1000`) entra en esa categoría, así que el daemon
+> lo sincroniza si está montado; si no, lo omite sin errores.
 ```
 
 ---
@@ -1252,8 +1280,8 @@ recursive = true
 
 > Nota: la config real de Antonio incluye además las fuentes `Cursos informatica`,
 > `Varios Linux`, `modelos_ia`, `start-lmstudio.sh` y `system-info.sh`, y los
-> espejos planos `SEAGATE` (local, requiere root) y `NUBE-antonio`/`NUBE-public`
-> (nube SMB, sin root).
+> espejos planos `SEAGATE` (local en `/mnt/seagate/Linux`, sin root) y
+> `NUBE-antonio`/`NUBE-public` (nube SMB, sin root).
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1289,9 +1317,11 @@ recursive = true
 ```
 
 > ⚠️ **fstab:** el Crucial NO usa `/etc/fstab`: se monta/desmonta con `udisksctl` +
-> regla polkit (para Nautilus). El SEAGATE se monta con sudo solo en `backup once/mirror`.
-> La **nube MyCloud SÍ usa `/etc/fstab`** con opciones `users` + `x-systemd.automount`
-> (montaje sin root). El daemon corre como `antonio` y omite el SEAGATE (requiere root).
+> regla polkit (para Nautilus). El **SEAGATE SÍ usa `/etc/fstab`** (`/mnt/seagate`,
+> `ntfs3`, `uid=1000,gid=1000`, `x-systemd.automount`), así que lo monta el sistema y
+> es **escribible por `antonio`** (sin root). La **nube MyCloud también usa `/etc/fstab`**
+> con opciones `users` + `x-systemd.automount` (montaje sin root). El daemon corre como
+> `antonio` y solo sincroniza espejos que sean puntos de montaje reales y escribibles.
 
 ---
 
@@ -1324,8 +1354,9 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=backup-rs
 
-# Corre como antonio (el Crucial se monta sin privilegios). El SEAGATE
-# (root) se omite en el daemon; se sincroniza con "backup once"/"backup mirror".
+# Corre como antonio (el Crucial se monta sin privilegios y el SEAGATE está
+# montado por fstab con uid=1000, escribible por antonio). El daemon solo
+# sincroniza espejos que sean puntos de montaje reales y escribibles.
 NoNewPrivileges=yes
 PrivateTmp=yes
 
@@ -1334,8 +1365,8 @@ WantedBy=multi-user.target
 ```
 
 > 🖥️ **Si se habilita**, el daemon corre como `antonio` (no root), gestiona el
-> Crucial sin privilegios y omite el SEAGATE (requiere root). Para habilitarlo:
-> `sudo systemctl enable --now backup-rs`. Para deshabilitarlo:
+> Crucial sin privilegios y sincroniza el SEAGATE si está montado y es escribible.
+> Para habilitarlo: `sudo systemctl enable --now backup-rs`. Para deshabilitarlo:
 > `sudo systemctl disable --now backup-rs`.
 
 ### Montaje del Crucial (Nautilus sin contraseña)
@@ -1381,16 +1412,20 @@ polkit.addRule(function(action, subject) {
 2. Uso diario (MANUAL — no hay daemon, el servicio está deshabilitado)
 
 3. backup once (desde la terminal, el comando principal)
-   ├── 3.1. monta el Crucial con udisksctl (sin contraseña, regla polkit)
+   ├── 3.1. monta el Crucial con udisksctl (sin contraseña, regla polkit),
+   │        solo si no está ya montado
    ├── 3.2. snapshot versionado del Crucial como antonio (sin root)
-   ├── 3.3. SEAGATE: detecta que requiere root → "sudo backup _mirror-only"
-   │        (pide sudo UNA vez) → como root monta y machaca en SEAGATE/Linux
+   ├── 3.3. SEAGATE (/mnt/seagate/Linux): el disco ya lo monta fstab en
+   │        /mnt/seagate (uid=1000) → copia directa como antonio (sin sudo).
+   │        Si no estuviera montado, lo intenta montar (sudo, una vez) y, si
+   │        aun así el disco no está montado, lo OMITE (nunca escribe en un
+   │        "stub" del root fs)
    ├── 3.4. NUBE (antonio + public): monta los shares CIFS (fstab users/automount,
    │        sin root) y machaca con rsync en MyCloud/<share>/Linux
-   └── 3.5. termina (el Crucial NO se reprocesa como root)
+   └── 3.5. termina (todo el proceso como antonio)
    ↓
-4. Actualizar solo el SEAGATE (opcional, si el Crucial ya está al día)
-   └── backup mirror   (pide sudo una vez; los espejos nube se hacen sin root)
+4. Actualizar solo los espejos (opcional, si el Crucial ya está al día)
+   └── backup mirror   (SEAGATE + nube, todo sin root)
    ↓
 5. Restauración (manual)
    └── backup list
@@ -1421,14 +1456,14 @@ backup --version
 backup init
 backup init --force
 
-# Backup completo: snapshot del Crucial (sin contraseña) + SEAGATE (pide sudo una vez) + NUBE (sin root)
+# Backup completo: snapshot del Crucial + espejo SEAGATE + NUBE (todo sin root)
 backup once
 
-# Daemon de vigilancia (Crucial + nube en tiempo real; omite el SEAGATE que requiere root)
+# Daemon de vigilancia (Crucial + espejos montados y escribibles en tiempo real)
 backup run
 
-# Sincronizar manualmente los espejos planos (machacar, p. ej. SEAGATE) — pide sudo
-# (los espejos nube se sincronizan también aquí, sin root)
+# Sincronizar manualmente los espejos planos (machacar, p. ej. SEAGATE) — sin root
+# (los espejos nube se sincronizan también aquí)
 backup mirror
 
 # Estado y versiones

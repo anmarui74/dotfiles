@@ -1,0 +1,13 @@
+# Nunca versionar credenciales de Hermes en el repo de dotfiles.
+# La copia saneada se genera con ~/Config/hermes/backup-hermes.sh, que ya las excluye;
+# esto es la segunda barrera por si alguien hace `git add -A` a mano.
+.env
+*.env
+auth.json
+credenciales/
+shared/
+backups/
+*.tar.gz
+*-restore.sh
+*.lock
+__pycache__/

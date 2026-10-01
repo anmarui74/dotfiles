@@ -1,0 +1,143 @@
+#!/home/antonio/.local/share/tts-local/venv313/bin/python3
+"""speak-kokoro-gpu: locucion local con Kokoro v1.0 usando GPU (CUDA).
+
+Misma interfaz que speak. Elige la voz ef_dora (Dora, femenina) por defecto.
+Fuerza el provider CUDAExecutionProvider (sin TensorRT) en la RTX 4070 Ti
+SUPER: ~3,7x mas rapido que CPU en textos largos (RTF ~0,038).
+
+Uso:
+    echo "Hola Antonio" | speak-kokoro-gpu
+    cat respuesta.txt | speak-kokoro-gpu
+
+Se pueden elegir otras voces de Kokoro v1.0 en espanol via env:
+    VOZ=em_alex speak-kokoro-gpu < texto
+"""
+import os
+os.environ.setdefault("ONNX_PROVIDER", "CUDAExecutionProvider")
+os.environ.setdefault("CUDA_MODULE_LOADING", "LAZY")
+os.environ.setdefault("ORT_LOGGING_LEVEL", "3")
+
+import sys
+sys.path.insert(0, "/home/antonio/.local/share/tts-local/venv313/lib/python3.13/site-packages")
+
+import re
+import subprocess
+import tempfile
+import signal
+
+from kokoro_onnx import Kokoro, EspeakConfig
+
+KOKO_MODEL = os.path.expanduser("~/.local/share/kokoro/kokoro-v1.0.onnx")
+KOKO_VOICES = os.path.expanduser("~/.local/share/kokoro/voices-v1.0.bin")
+VOICE = os.environ.get("SPEAK_VOICE_KOKORO", "ef_dora")
+LANC = "es"
+SPEED = float(os.environ.get("SPEAK_SPEED", "1.0"))
+
+ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x1b]*\x1b\\|\x1b[PX^_]|[^\x1b]*\x1b\\|\x1b][0-9;]*[\x07\x1b]|\x1b[=<>FGH]|\x1b[NOPQ\\]')
+BOX_RE = re.compile(r'[\u2500-\u257f\u2580-\u259f\u25a0-\u25ff]')
+EMOJI_RE = re.compile(
+    '['
+    '\U0001F300-\U0001F9FF'
+    '\U0001FA00-\U0001FA6F'
+    '\U0001FA70-\U0001FAFF'
+    '\u2600-\u27BF'
+    '\u2300-\u23FF'
+    '\u25A0-\u25FF'
+    '\u2B05-\u2B55'
+    '\u2934-\u2935'
+    '\u3030\u303D'
+    '\u3297\u3299'
+    '\uFE00-\uFE0F'
+    '\u200D'
+    ']+'
+)
+
+_current = None  # proceso paplay en curso (SIGTERM)
+
+def _sigterm(signum, frame):
+    global _current
+    if _current and _current.poll() is None:
+        try:
+            _current.kill()
+        except Exception:
+            pass
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, _sigterm)
+
+def clean_line(text):
+    text = ANSI_RE.sub("", text)
+    text = BOX_RE.sub("", text)
+    text = EMOJI_RE.sub("", text)
+    text = re.sub(r'[⬝■▣●▸▀▄╹┃╻━┏┓┗┛┣┫┳┻╋┠┨┷┯┥┝┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋]+', '', text)
+    text = re.sub(r'[▰▱▔▏▎▍▌▋▊▉]+', '', text)
+    text = ' '.join(text.split())
+    return text.strip()
+
+def ensure_punct(text):
+    if not text:
+        return text
+    if text[-1] in '.!?':
+        return text
+    if text.endswith('...'):
+        return text
+    return text + '.'
+
+def speak_block(text):
+    global _current
+    if not text or len(text) < 4:
+        return
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        fname = f.name
+    try:
+        audio, sr = ENGINE.create(text, voice=VOICE, lang=LANC, speed=SPEED)
+        import soundfile as sf
+        sf.write(fname, audio, sr)
+        _current = subprocess.Popen(["paplay", fname],
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _current.wait()
+        _current = None
+    except Exception as e:
+        sys.stderr.write(f"KOKORO ERR: {e}\n")
+    finally:
+        try:
+            os.unlink(fname)
+        except OSError:
+            pass
+
+def split_blocks(lines):
+    text = ' '.join(ensure_punct(l) for l in lines if l)
+    if not text:
+        return []
+    parts = []
+    resto = text
+    m = re.match(r'^.{40,}?[.!?]\s+', text)
+    if m and len(text) > 200:
+        parts.append(m.group(0).strip())
+        resto = text[m.end():].strip()
+    if resto:
+        parts.append(resto)
+    return parts
+
+def main():
+    lines = []
+    for line in sys.stdin:
+        line = line.rstrip("\n")
+        clean = clean_line(line)
+        if not clean or len(clean) < 4:
+            continue
+        if clean.lower() in ('build', 'opencode zen', 'max', 'tab', 'agents', 'ctrl+p', 'commands', 'tip'):
+            continue
+        lines.append(clean)
+    if not lines:
+        return
+
+    global ENGINE
+    cfg = EspeakConfig(lib_path="/usr/lib/libespeak-ng.so", data_path="/usr/share/espeak-ng-data")
+    ENGINE = Kokoro(KOKO_MODEL, KOKO_VOICES, espeak_config=cfg)
+
+    for block in split_blocks(lines):
+        speak_block(block)
+
+if __name__ == "__main__":
+    main()

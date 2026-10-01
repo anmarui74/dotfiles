@@ -1,0 +1,10 @@
+[Unit]
+Description=Vigilante del servidor local de LM Studio (anti «servidor mudo»)
+Documentation=file:///home/antonio/Config/hermes/AGENTS.md
+After=lm-studio-app.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.local/bin/lm-studio-watchdog
+# Irrelevante para el rendimiento: ~5 ms de CPU por pasada. Nice alto por cortesía.
+Nice=10

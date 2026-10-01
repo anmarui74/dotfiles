@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+"""hermes-voz — arranca Hermes y activa el modo voz solo.
+
+Envuelve el CLI de Hermes en un pty, espera a que el prompt esté listo,
+inyecta un comando de arranque (por defecto `/voice on`) y cede el control
+a la terminal, que sigue funcionando con normalidad.
+
+Uso:
+    hermes-voz [argumentos de hermes]
+
+Variables de entorno:
+    HV_CMD   comando a inyectar al arrancar (por defecto "/voice on")
+    HV_WAIT  segundos máximos de espera al prompt (por defecto 45)
+"""
+from __future__ import annotations
+
+import fcntl
+import os
+import pty
+import select
+import signal
+import struct
+import sys
+import termios
+import time
+import tty
+
+READY_MARKERS = ("Type your message or /help for commands", "\u276f")
+STARTUP_CMD = os.environ.get("HV_CMD", "/voice on")
+WAIT_SECONDS = float(os.environ.get("HV_WAIT", "45"))
+FALLBACK_WINSIZE = struct.pack("HHHH", 40, 120, 0, 0)
+
+
+def _win_size(fd: int) -> bytes:
+    try:
+        return fcntl.ioctl(fd, termios.TIOCGWINSZ, b"\0" * 8)
+    except OSError:
+        return FALLBACK_WINSIZE
+
+
+def _set_win_size(fd: int, winsize: bytes) -> None:
+    try:
+        fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
+    except OSError:
+        pass
+
+
+def main() -> int:
+    args = sys.argv[1:]
+    if args and args[0] in ("-h", "--help"):
+        print(__doc__)
+        return 0
+
+    stdin_fd = sys.stdin.fileno()
+    stdout_fd = sys.stdout.fileno()
+    winsize = _win_size(stdin_fd)
+
+    pid, master = pty.fork()
+    if pid == 0:  # child: the real Hermes CLI owns the pty
+        os.execvp("hermes", ["hermes", *args])
+        os._exit(127)
+
+    _set_win_size(master, winsize)
+
+    def _on_winch(_signum, _frame):
+        _set_win_size(master, _win_size(stdin_fd))
+
+    previous_winch = signal.signal(signal.SIGWINCH, _on_winch)
+    previous_tty = termios.tcgetattr(stdin_fd) if os.isatty(stdin_fd) else None
+    if previous_tty is not None:
+        tty.setraw(stdin_fd)
+
+    buffer = ""
+    # prompt_toolkit: el texto y el CR que lo envía no pueden ir en la misma escritura
+    # (lo interpreta como pegado y mete un salto de línea). Fases: ready -> typing -> done.
+    phase = "ready"
+    typed_at = 0.0
+    deadline = time.monotonic() + WAIT_SECONDS
+    exit_code = 0
+    try:
+        while True:
+            ready, _, _ = select.select([master, stdin_fd], [], [], 0.5)
+            if master in ready:
+                try:
+                    chunk = os.read(master, 65536)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                os.write(stdout_fd, chunk)
+                if phase == "ready":
+                    buffer = (buffer + chunk.decode("utf-8", "replace"))[-8000:]
+                    if any(marker in buffer for marker in READY_MARKERS) or time.monotonic() > deadline:
+                        time.sleep(0.4)  # deja que el prompt quede montado
+                        os.write(master, STARTUP_CMD.encode())
+                        phase = "typing"
+                        typed_at = time.monotonic()
+                elif phase == "typing":
+                    echoed = STARTUP_CMD in chunk.decode("utf-8", "replace")
+                    if echoed or time.monotonic() - typed_at > 2.0:
+                        time.sleep(0.5)  # ventana antirrapid-enter del CLI (50 ms)
+                        os.write(master, b"\r")
+                        phase = "done"
+            if stdin_fd in ready:
+                try:
+                    typed = os.read(stdin_fd, 65536)
+                except OSError:
+                    break
+                if not typed:
+                    break
+                os.write(master, typed)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        signal.signal(signal.SIGWINCH, previous_winch)
+        if previous_tty is not None:
+            termios.tcsetattr(stdin_fd, termios.TCSADRAIN, previous_tty)
+        try:
+            _, status = os.waitpid(pid, 0)
+            if os.WIFEXITED(status):
+                exit_code = os.WEXITSTATUS(status)
+        except ChildProcessError:
+            pass
+    return exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

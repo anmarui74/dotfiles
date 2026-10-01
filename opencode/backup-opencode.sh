@@ -295,6 +295,7 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
       --exclude='models/' \
       --exclude='build/' \
       --exclude='data/*.log' \
+      --exclude='data/onlyoffice-ai/localstorage-snapshot/' \
       --exclude='mcp-memory-backup-*.jsonl' \
       --exclude='*.bak*' \
       "${CONFIG_BACKUP}/" "${DOTFILES_OPENCODE}/"
@@ -303,6 +304,9 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
     find "${DOTFILES_OPENCODE}" -name '*.tar.gz' -delete 2>/dev/null || true
     find "${DOTFILES_OPENCODE}" \( -name '.env' -o -name 'auth.json' \) -delete 2>/dev/null || true
     rm -rf "${DOTFILES_OPENCODE}/credenciales" 2>/dev/null || true
+    # El snapshot de localStorage del plugin OnlyOffice-IA guarda la clave del proveedor
+    # (localstorage-snapshot/leveldb/*.log): basura de caché, fuera del repo público.
+    rm -rf "${DOTFILES_OPENCODE}/data/onlyoffice-ai/localstorage-snapshot" 2>/dev/null || true
 
     # Saneado del instalador desde cero (embebe el .env con la clave AEMET real)
     SETUP_DOTFILES="${DOTFILES_OPENCODE}/sesion-opencode/setup-opencode-completo.sh"
