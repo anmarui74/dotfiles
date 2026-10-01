@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use chrono::Local;
-use filetime::FileTime;
+use filetime::{set_file_mtime, FileTime};
 use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
 use std::fs;
@@ -295,7 +295,9 @@ impl BackupEngine {
         Ok(())
     }
 
-    /// Copia un archivo al espejo machacando (por tamaño para fiabilidad en NTFS)
+    /// Copia un archivo al espejo machacando. Espejo **incremental**: si el
+    /// destino ya existe con el **mismo tamaño y fecha** (o más nueva), se omite;
+    /// solo se copian los archivos modificados y se preserva el `mtime`.
     fn copy_plain(&mut self, src_path: &Path, dest_path: &Path) -> Result<()> {
         if let Some(parent) = dest_path.parent() {
             fs::create_dir_all(parent)
@@ -304,10 +306,15 @@ impl BackupEngine {
 
         let src_meta = fs::metadata(src_path)
             .with_context(|| format!("metadata src: {}", src_path.display()))?;
+        let src_mtime = FileTime::from_last_modification_time(&src_meta);
 
-        // Comparar por tamaño: si coincide, consideramos que está actualizado
+        // Sin cambios si el destino existe con el MISMO tamaño y una fecha de
+        // modificación >= a la del origen (espejo: solo lo necesario, no todo).
         let up_to_date = match fs::metadata(dest_path) {
-            Ok(d) => d.len() == src_meta.len(),
+            Ok(d) => {
+                d.len() == src_meta.len()
+                    && FileTime::from_last_modification_time(&d) >= src_mtime
+            }
             Err(_) => false,
         };
 
@@ -321,6 +328,9 @@ impl BackupEngine {
         fs::remove_file(dest_path).ok();
         copy_contents(src_path, dest_path)
             .with_context(|| format!("copy_contents {} → {}", src_path.display(), dest_path.display()))?;
+        // Preservar la fecha de modificación del origen para que las próximas
+        // ejecuciones detecten "sin cambios" (tamaño + fecha) y no recopien.
+        let _ = set_file_mtime(dest_path, src_mtime);
         self.stats.files_copied += 1;
         self.stats.bytes_copied += src_meta.len();
 

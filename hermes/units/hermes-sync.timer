@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync Hermes cada 30 min
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=30min
+Unit=hermes-sync.service
+
+[Install]
+WantedBy=default.target

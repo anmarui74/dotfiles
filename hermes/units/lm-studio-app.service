@@ -1,0 +1,27 @@
+[Unit]
+Description=LM Studio en modo servicio (sirve el API local en el 1234, sin ventana)
+Documentation=https://lmstudio.ai/docs/developer/core/headless
+# Modo servicio oficial de la app (--run-as-service): el mismo motor de LM Studio
+# pero sin interfaz, así que al iniciar sesión NO aparece ninguna ventana.
+# Para abrir la ventana hay que parar antes esta unidad (si sigue viva con su
+# SingletonLock, la app muestra la lista de modelos VACÍA): atajo `lm-studio-gui`.
+After=network-online.target
+
+[Service]
+Type=simple
+# systemd --user hereda el entorno de la sesión, pero NO el TMPDIR del agente: el
+# AppImage se monta en /tmp y no dentro de la caché de Hermes.
+ExecStart=/usr/bin/lm-studio --run-as-service
+Environment=TMPDIR=/tmp
+Restart=on-failure
+RestartSec=15
+# El servidor HTTP puede quedarse mudo (acepta conexiones y no responde); el
+# vigilante lm-studio-watchdog.timer lo detecta y reinicia esta unidad.
+TimeoutStopSec=20
+# LM Studio ignora SIGTERM (en modo servicio también): sin esto systemd esperaba el
+# timeout completo antes de matarlo. Se para en seco y la señal cuenta como éxito.
+KillSignal=SIGKILL
+SuccessExitStatus=SIGKILL 137
+
+[Install]
+WantedBy=default.target

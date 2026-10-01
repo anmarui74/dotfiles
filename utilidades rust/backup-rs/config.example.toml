@@ -72,7 +72,7 @@ recursive = true
 # Espejos planos (machacan: copian, sobrescriben y borran según el origen)
 [[mirrors]]
 name = "SEAGATE"
-destination = "/run/media/antonio/SEAGATE/Linux"
+destination = "/mnt/seagate/Linux"
 
 # Espejo de red (nube): se monta sin root (CIFS kernel vía fstab `users`/automount,
 # o GVFS como fallback) y se sincroniza con rsync (rápido y fiable sobre SMB).

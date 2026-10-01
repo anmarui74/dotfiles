@@ -1,0 +1,9 @@
+[Unit]
+Description=Hermes sync: .hermes -> Config/hermes + backup
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/Config/hermes/sync-hermes.sh --quiet
+StandardOutput=journal
+StandardError=journal

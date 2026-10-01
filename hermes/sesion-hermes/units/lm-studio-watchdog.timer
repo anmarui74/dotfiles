@@ -1,0 +1,12 @@
+[Unit]
+Description=Comprobar cada 5 min que el servidor local de LM Studio responde
+Documentation=file:///home/antonio/Config/hermes/AGENTS.md
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=lm-studio-watchdog.service
+
+[Install]
+WantedBy=timers.target

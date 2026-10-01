@@ -1,0 +1,14 @@
+[Unit]
+Description=Hermes — publicar el estado compartido al apagar (dual boot)
+DefaultDependencies=no
+Before=shutdown.target
+Conflicts=reboot.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.local/bin/hermes-dual-sync export --quiet
+TimeoutStartSec=90
+RemainAfterExit=no
+
+[Install]
+WantedBy=shutdown.target

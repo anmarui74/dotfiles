@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# whisper-stt - transcripcion local con whisper.cpp (CUDA) para Hermes Agent.
+#
+# Adaptador del pipeline STT de OpenCode (sox -> whisper-cli) como proveedor
+# STT de tipo comando de Hermes: convierte cualquier audio a WAV 16 kHz mono
+# con ffmpeg y transcribe con el build CUDA de whisper.cpp (modelo
+# large-v3-turbo-q5_0). El texto se escribe en --out (UTF-8) y tambien en stdout.
+#
+# Uso:
+#   whisper-stt --in audio.ogg --out /tmp/transcript.txt
+#   whisper-stt --in audio.wav            # escribe el texto por stdout
+#
+# Variables: STT_WHISPER_MODEL (ruta del .bin), STT_WHISPER_LANG (por defecto es)
+set -euo pipefail
+
+MODELO="${STT_WHISPER_MODEL:-$HOME/.local/share/whisper-cpp/models/ggml-large-v3-turbo-q5_0.bin}"
+IDIOMA="${STT_WHISPER_LANG:-es}"
+WHISPER_CLI="${STT_WHISPER_CLI:-$HOME/.local/share/whisper-cpp/bin/whisper-cli}"
+LIBDIR="$(dirname "$WHISPER_CLI")"
+
+IN=""
+OUT=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --in) IN="$2"; shift 2 ;;
+    --out) OUT="$2"; shift 2 ;;
+    --model) MODELO="$2"; shift 2 ;;
+    --language|-l) IDIOMA="$2"; shift 2 ;;
+    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
+    *) echo "whisper-stt: argumento no reconocido: $1" >&2; exit 2 ;;
+  esac
+done
+
+[ -n "$IN" ] || { echo "whisper-stt: falta --in" >&2; exit 2; }
+[ -r "$IN" ] || { echo "whisper-stt: no puedo leer $IN" >&2; exit 2; }
+[ -x "$WHISPER_CLI" ] || { echo "whisper-stt: falta $WHISPER_CLI" >&2; exit 3; }
+[ -r "$MODELO" ] || { echo "whisper-stt: falta el modelo $MODELO" >&2; exit 3; }
+
+FFMPEG="$(command -v ffmpeg || true)"
+if [ -z "$FFMPEG" ] && [ -x "$HOME/.hermes/tools/ffmpeg-9.0.1-linux-x64/bin/ffmpeg" ]; then
+  FFMPEG="$HOME/.hermes/tools/ffmpeg-9.0.1-linux-x64/bin/ffmpeg"
+fi
+[ -n "$FFMPEG" ] || { echo "whisper-stt: falta ffmpeg" >&2; exit 3; }
+
+WAV="$(mktemp --suffix=.wav)"
+BASETXT="$(mktemp -u)"
+trap 'rm -f "$WAV" "$BASETXT.txt"' EXIT
+
+# 1) normalizar a 16 kHz mono PCM16 (lo que espera whisper.cpp)
+if ! "$FFMPEG" -nostdin -y -i "$IN" -ar 16000 -ac 1 -c:a pcm_s16le "$WAV" >/dev/null 2>&1; then
+  echo "whisper-stt: ffmpeg no pudo convertir $IN" >&2
+  exit 4
+fi
+
+# 2) descartar silencio: whisper alucina frases cuando no hay voz (max_volume muy bajo)
+MIN_DB="${STT_MIN_DB:--50}"
+NIVEL_MAX="$("$FFMPEG" -nostdin -i "$WAV" -af volumedetect -f null - 2>&1 \
+  | sed -n 's/.*max_volume: \(-*[0-9.]*\) dB.*/\1/p' | head -1)"
+if [ -n "$NIVEL_MAX" ]; then
+  SIN_VOZ="$(awk -v n="$NIVEL_MAX" -v t="$MIN_DB" 'BEGIN { print (n+0 < t+0) ? "si" : "no" }')"
+  if [ "$SIN_VOZ" = "si" ]; then
+    echo "whisper-stt: audio sin voz (max_volume ${NIVEL_MAX} dB < ${MIN_DB} dB)" >&2
+    [ -n "$OUT" ] && { mkdir -p "$(dirname "$OUT")"; : > "$OUT"; }
+    exit 0
+  fi
+fi
+
+# 3) transcribir en GPU (el build CUDA detecta la GPU solo; -ng desactivaria la GPU)
+export LD_LIBRARY_PATH="$LIBDIR:${LD_LIBRARY_PATH:-}"
+VAD_MODELO="${STT_VAD_MODEL:-$HOME/.local/share/whisper-cpp/models/ggml-silero-v5.1.2.bin}"
+VAD_ARGS=()
+if [ -r "$VAD_MODELO" ]; then
+  VAD_ARGS=(--vad -vm "$VAD_MODELO" -vt "${STT_VAD_THRESHOLD:-0.5}")
+fi
+"$WHISPER_CLI" -m "$MODELO" -f "$WAV" -l "$IDIOMA" -np -nt "${VAD_ARGS[@]}" -otxt -of "$BASETXT" >/dev/null 2>&1 || {
+  echo "whisper-stt: whisper-cli falló" >&2
+  exit 5
+}
+
+TEXTO="$(cat "$BASETXT.txt" 2>/dev/null || true)"
+if [ -n "$OUT" ]; then
+  mkdir -p "$(dirname "$OUT")"
+  printf '%s\n' "$TEXTO" > "$OUT"
+fi
+printf '%s\n' "$TEXTO"

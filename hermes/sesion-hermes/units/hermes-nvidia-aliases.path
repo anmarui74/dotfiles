@@ -1,0 +1,12 @@
+[Unit]
+Description=Vigila el whitelist NVIDIA de OpenCode y recompone los alias de Hermes
+Documentation=file:%h/Config/hermes/AGENTS.md
+
+[Path]
+# check-nvidia-whitelist.sh (días 1 y 16, vía check-nvidia-whitelist.timer)
+# reescribe este fichero cuando retira modelos o cambia la lista.
+PathModified=%h/.config/opencode/opencode.json
+Unit=hermes-nvidia-aliases.service
+
+[Install]
+WantedBy=paths.target

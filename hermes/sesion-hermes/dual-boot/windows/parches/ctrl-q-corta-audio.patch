@@ -1,0 +1,119 @@
+diff --git a/hermes_cli/cli_tui_mixin.py b/hermes_cli/cli_tui_mixin.py
+index 7bc9c1b53..4667684af 100644
+--- a/hermes_cli/cli_tui_mixin.py
++++ b/hermes_cli/cli_tui_mixin.py
+@@ -1010,6 +1010,7 @@ class CLITuiMixin:
+         """Ctrl+C priority: cancel voice recording → cancel foreground UI/overlay prompt →
+         interrupt the running agent (first press) → force exit (second press within 2s) → when
+         idle clear the draft or exit."""
++        self._tui_cut_tts("Ctrl+C")
+         now = time.time()
+         if self._tui_cancel_voice_recording(event):
+             return
+@@ -1033,22 +1034,43 @@ class CLITuiMixin:
+         else:
+             self._tui_clear_or_exit(event)
+ 
++    def _tui_cut_tts(self, motivo: str) -> None:
++        """Corta la reproducción de audio en curso (interrupción explícita del usuario).
++
++        ``stop_playback()`` termina el reproductor (subproceso o ``sounddevice``) y el evento de
++        parada drena la tubería de streaming; ``mark_speech_interrupted`` evita que una respuesta
++        obsoleta se retome después. Solo actúa si hay algo sonando, para que la tecla no tenga
++        efectos colaterales cuando no se está reproduciendo nada.
++        """
++        try:
++            from tools.voice_mode import is_audio_output_active, stop_playback
++            _done = getattr(self, "_voice_tts_done", None)
++            if _done is not None and _done.is_set() and not is_audio_output_active():
++                return
++            from tools.tts_streaming import mark_speech_interrupted
++            mark_speech_interrupted()
++            if self._voice_tts_stop is not None:
++                self._voice_tts_stop.set()
++            stop_playback()
++            if _done is not None:
++                _done.set()
++            # El log va al final y aislado: si el import fallara no debe impedir el corte.
++            try:
++                from cli import logger
++                logger.info("TTS CUT: %s", motivo)
++            except Exception:
++                pass
++        except Exception:
++            pass
++
+     def _tui_handle_ctrl_q(self, event):
+-        """Ctrl+Q: like Ctrl+C minus the double-press force exit (and it leaves the palette)."""
+-        if self._tui_cancel_voice_recording(event):
+-            return
+-        if self._tui_cancel_foreground_ui(event, closers=(
+-            ("_slash_confirm_state", lambda: self._submit_slash_confirm_response("cancel")),
+-            ("_model_picker_state", self._close_model_picker))):
+-            return
+-        overlay_cleared = self._tui_clear_blocking_overlays(event)
+-        if overlay_cleared and not (self._agent_running and self.agent):
+-            return
+-        if self._agent_running and self.agent:
+-            print("\n⚡ Interrupting agent...")
+-            request_hard_interrupt(self.agent)
+-        else:
+-            self._tui_clear_or_exit(event)
++        """Ctrl+Q: corta la locución en curso y nada más (parche local).
++
++        De serie esta tecla interrumpía el turno igual que Ctrl+C, sin la salida forzada por
++        doble pulsación. Antonio la quiere **solo** para callar el TTS: interrumpir el turno,
++        cerrar selectores y demás prioridades siguen siendo cosa de Ctrl+C.
++        """
++        self._tui_cut_tts("Ctrl+Q")
+ 
+     def _tui_make_clarify_number_handler(self, idx):
+         def handler(event):
+diff --git a/tools/voice_mode.py b/tools/voice_mode.py
+index 5cba4bf47..ab19667f7 100644
+--- a/tools/voice_mode.py
++++ b/tools/voice_mode.py
+@@ -969,6 +969,10 @@ def _split_wav_for_transcription(wav_path: str, *, max_file_size: int) -> List[s
+ # ── Audio playback (interruptable) ──
+ _active_playback: Optional[subprocess.Popen] = None  # so stop_playback can interrupt it
+ _playback_lock = threading.Lock()
++# Deliberate cuts (Ctrl+Q/Ctrl+C, barge-in): the player chain must NOT fall through to the
++# next candidate after the current one is killed — otherwise aplay restarts the SAME
++# sentence from the beginning, so the user hears a click and the voice "won't stop".
++_playback_interrupted = threading.Event()
+ 
+ 
+ def _set_active_playback(proc) -> None:
+@@ -980,6 +984,7 @@ def _set_active_playback(proc) -> None:
+ def stop_playback() -> None:
+     """Interrupt the currently playing audio (if any)."""
+     global _active_playback
++    _playback_interrupted.set()  # latched for the current player chain, cleared per playback
+     with _playback_lock:
+         proc = _active_playback
+         _active_playback = None
+@@ -1098,6 +1103,12 @@ def _run_system_player(cmd: List[str]) -> bool:
+         rc = proc.returncode
+         if rc == 0:
+             return True
++        if rc < 0:
++            # Killed by a signal (stop_playback's terminate): a deliberate cut, not a device
++            # failure — trying the next player would restart the same sentence (see #16181-ish
++            # "Ctrl+Q only clicks"). Latch it so the caller stops walking the candidate list.
++            _playback_interrupted.set()
++            return False
+         # e.g. WSL ffplay/aplay with no audio device — fall through to the next player.
+         logger.debug("System player %s exited with code %d, trying next", cmd[0], rc)
+     except subprocess.TimeoutExpired:
+@@ -1119,7 +1130,11 @@ def _play_audio_file_impl(file_path: str) -> bool:
+     # macOS skips sounddevice output (TCC media-library prompt); afplay handles all formats.
+     if file_path.endswith(".wav") and _sounddevice_output_allowed() and _play_wav_via_sounddevice(file_path):
+         return True
++    _playback_interrupted.clear()  # fresh playback: a previous cut must not abort this one
+     for cmd in _system_player_candidates(file_path):
++        if _playback_interrupted.is_set():
++            logger.info("Audio playback cut by user, not trying other players")
++            return False
+         if shutil.which(cmd[0]) and _run_system_player(cmd):
+             return True
+     logger.warning("No audio player available for %s", file_path)

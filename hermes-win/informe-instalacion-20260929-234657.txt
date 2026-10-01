@@ -1,0 +1,39 @@
+﻿Informe de instalación desde cero — 29/09/2026 23:46
+HERMES_HOME: D:\prueba-cero\hermes
+InstallDir: D:\prueba-cero\hermes\hermes-agent
+
+ok    PowerShell 5.1.26100.9549
+ok    git disponible
+ok    tar disponible
+ok    robocopy disponible
+ok    node disponible
+ok    acceso a hermes-agent.nousresearch.com
+ok    Hermes ya está instalado en D:\prueba-cero\hermes (se omite la instalación)
+ok    versión: Hermes Agent v0.21.5+4202.g8423c47.dirty (2026.9.24) ┬À upstream 47310227
+ok    configuración, credenciales y datos restaurados
+ok    usando D:\HermesSync\windows\aplicar-ajustes-linux.ps1
+ok    ajustes aplicados
+ok    parche Ctrl+Q aplicado
+ok    script del hook: D:\prueba-cero\hermes\agent-hooks\backup-hermes.sh
+ok    hook declarado en config.yaml
+ok    aprobación escrita en D:\prueba-cero\hermes\shell-hooks-allowlist.json
+ok    lms: C:\Users\evo01\.lmstudio\bin\lms.exe
+ok    API de LM Studio respondiendo en http://127.0.0.1:1234
+ok    modelos en LM Studio: qwen3.8-9b, text-embedding-nomic-embed-text-v1.5
+ok    alias locales a comprobar: qwen3.8-9b, qwen3.5-9b, google/gemma-4-e4b
+ok    modelo de alias presente: qwen3.8-9b
+aviso falta el modelo 'qwen3.5-9b' de los alias: descárgalo con  lms get qwen3.5-9b   (o repite con -DescargarModelo)
+aviso falta el modelo 'google/gemma-4-e4b' de los alias: descárgalo con  lms get google/gemma-4-e4b   (o repite con -DescargarModelo)
+ok    LM_API_KEY presente en .env
+ok    tarea HermesBackup-Win registrada/actualizada
+ok    config.yaml
+ok    .env
+ok    auth.json
+ok    SOUL.md
+ok    memories\MEMORY.md
+ok    skills
+ok    alias de modelo: 11
+ok    plugin nvidia idéntico al de la carpeta común (DF8D371637F7…)
+ok    parche Ctrl+Q aplicado en el repo
+ok    tarea HermesBackup-Win registrada
+ok    hook on_session_end sano (hermes hooks doctor)

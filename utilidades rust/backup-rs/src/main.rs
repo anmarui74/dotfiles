@@ -165,11 +165,23 @@ async fn run_backup_once(config: &Config) -> Result<()> {
         }
     }
 
+    // Seguridad: si el disco del Crucial no está realmente montado, abortar. Un
+    // directorio "stub" existe en el sistema de ficheros raíz y escribir en él
+    // llenaría el disco del sistema.
+    if !is_on_mounted_disk(&config.backup.destination) {
+        anyhow::bail!(
+            "El disco de destino {} no está montado. Móntalo (o revisa el disco) antes de hacer el backup.",
+            config.backup.destination.display()
+        );
+    }
+
     // 1) Snapshot del Crucial como el usuario actual (antonio, sin root)
     let mut engine = BackupEngine::new(config.clone());
     engine.run()?;
 
-    // 2) Espejos planos (machacar, p. ej. SEAGATE/Linux que es de root, o NUBE vía SMB).
+    // 2) Espejos planos (machacar): discos locales (p. ej. SEAGATE en /mnt/seagate)
+    //    y NUBE vía SMB. Todos se sincronizan como antonio (sin root) cuando el
+    //    destino es un punto de montaje real y escribible.
     for mirror in &config.mirrors {
         let dest = &mirror.destination;
 
@@ -188,15 +200,31 @@ async fn run_backup_once(config: &Config) -> Result<()> {
             continue;
         }
 
-        // Determinar si este mirror requiere root. El SEAGATE/Linux es de root,
-        // así que antonio no puede escribir en él (ni montarlo con udisks sin
-        // que dispare pkexec). En ese caso elevamos con sudo directamente.
-        // (Comprobamos el disco por label aunque esté desmontado: si el destino
-        //  ya existe y no es escribible, o el disco está presente, requiere root.)
-        let disk_present = mirror_disk_exists(dest);
-        let need_root = !is_root() && (dest.exists() && !is_writable(dest) || disk_present);
+        // Espejo de disco local (p. ej. SEAGATE en /mnt/seagate/Linux).
+        // Si el disco YA está montado, se copia directamente (sin montar y sin
+        // sudo). Si no, se intenta montar. Si tras eso el destino no está en un
+        // disco realmente montado, se OMITE: nunca se escribe en un directorio
+        // "stub" del sistema de ficheros raíz.
+        if !is_on_mounted_disk(dest) {
+            ensure_mount(dest, &config.backup.folder_name, true);
+        }
 
-        if need_root {
+        if !is_on_mounted_disk(dest) {
+            println!("⏭️  Espejo {} no está montado, se omite: {}", mirror.name, dest.display());
+            continue;
+        }
+
+        // Escribibilidad: se comprueba sobre la raíz del disco (el subdirectorio
+        // destino puede no existir todavía).
+        let disk_base = resolve_disk(dest)
+            .map(|(_, base)| base)
+            .unwrap_or_else(|| dest.clone());
+
+        if is_writable(&disk_base) {
+            println!("🔗 Sincronizando espejo plano: {} ({})", mirror.name, dest.display());
+            engine.sync_mirror_plain(dest)?;
+        } else {
+            // Montado pero no escribible por antonio: elevar una sola vez.
             println!("🔒 El destino del espejo {} requiere root, elevando con sudo (una sola vez)...", mirror.name);
             let config_path = Config::config_path();
             let status = std::process::Command::new("sudo")
@@ -208,40 +236,10 @@ async fn run_backup_once(config: &Config) -> Result<()> {
             if !status.map(|s| s.success()).unwrap_or(false) {
                 anyhow::bail!("No se pudo elevar a root la sincronización del espejo {} (sudo cancelado o fallido)", mirror.name);
             }
-        } else if dest.exists() {
-            // No requiere root: sincronizar directamente (si está montado)
-            engine.sync_mirror_plain(dest)?;
-        } else {
-            // El destino no existe: puede estar desmontado. Intentar montar con
-            // udisksctl (sin pkexec gracias a la regla polkit de discos de backup)
-            ensure_mount(dest, &config.backup.folder_name, true);
-            if dest.exists() {
-                engine.sync_mirror_plain(dest)?;
-            } else {
-                println!("⏭️  Espejo {} no está montado, se omite: {}", mirror.name, dest.display());
-            }
         }
     }
 
     Ok(())
-}
-
-/// Comprueba si el disco de un mirror (por su label) está presente físicamente.
-fn mirror_disk_exists(dest: &Path) -> bool {
-    let components: Vec<String> = dest
-        .components()
-        .filter_map(|c| c.as_os_str().to_str().map(|s| s.to_string()))
-        .collect();
-    for comp in components.iter().rev() {
-        if comp == "media" || comp == "run" || comp == "antonio" {
-            break;
-        }
-        let dev = format!("/dev/disk/by-label/{}", comp);
-        if Path::new(&dev).exists() {
-            return true;
-        }
-    }
-    false
 }
 
 /// Comprueba si el proceso actual corre como root.
@@ -340,118 +338,150 @@ fn ensure_network_mount(mirror: &MirrorConfig) -> Option<PathBuf> {
     }
 }
 
-/// Intenta montar un disco por etiqueta si su punto de montaje no existe.
-/// Devuelve la ruta de montaje real del disco (puede diferir del destino
-/// configurado si udisks2 eligió un nombre alternativo, p. ej. CRUCIAL1).
-///
-/// Estrategia: primero `udisksctl` (no pide nada para discos extraíbles). Si
-/// falla por ser un disco de sistema (exige auth) y `can_use_sudo` es true,
-/// usa `sudo mount` (pedirá la contraseña de sudo en la terminal, NO pkexec).
-/// En el daemon (`can_use_sudo=false`) no usa sudo (no hay terminal) y omite.
-fn ensure_mount(destination: &Path, _folder_name: &str, can_use_sudo: bool) -> Option<PathBuf> {
-    // El punto de montaje de udisks2 es /run/media/<usuario>/<ETIQUETA>.
-    // Buscamos, en la ruta del destino, el primer componente (desde la derecha)
-    // que corresponda a una etiqueta de disco real.
-    let components: Vec<String> = destination
+/// Busca en /dev/disk/by-label un dispositivo cuya etiqueta coincida con `name`
+/// sin distinguir mayúsculas/minúsculas (un disco "SEAGATE" montado en
+/// /mnt/seagate). Devuelve la ruta real del enlace, p. ej. "/dev/disk/by-label/SEAGATE".
+fn find_by_label(name: &str) -> Option<String> {
+    let entries = std::fs::read_dir("/dev/disk/by-label").ok()?;
+    for entry in entries.flatten() {
+        if let Some(s) = entry.file_name().to_str() {
+            if s.eq_ignore_ascii_case(name) {
+                return Some(format!("/dev/disk/by-label/{}", s));
+            }
+        }
+    }
+    None
+}
+
+/// Resuelve el disco asociado a un destino y su punto de montaje (raíz del disco).
+/// Devuelve `(dev, base)` donde `base` es la raíz del disco (p. ej. `/mnt/seagate`
+/// para un destino `/mnt/seagate/Linux`) y `dev` es `/dev/disk/by-label/<X>`.
+/// La etiqueta se busca **sin distinguir mayúsculas**, ignorando el ruido de la
+/// ruta (`/`, `mnt`, `media`, `run`, `antonio`).
+pub(crate) fn resolve_disk(destination: &Path) -> Option<(String, PathBuf)> {
+    let comps: Vec<String> = destination
         .components()
         .filter_map(|c| c.as_os_str().to_str().map(|s| s.to_string()))
         .collect();
 
-    // Recorremos de derecha a izquierda buscando /dev/disk/by-label/<comp> real
-    for comp in components.iter().rev() {
-        if comp == "media" || comp == "run" {
-            break;
-        }
-        let dev = format!("/dev/disk/by-label/{}", comp);
-        if !Path::new(&dev).exists() {
+    for i in (0..comps.len()).rev() {
+        let comp = &comps[i];
+        if comp == "/" || comp == "mnt" || comp == "media" || comp == "run" || comp == "antonio" {
             continue;
         }
-
-        // Si ya hay un montaje real del disco, devolver su ruta
-        if let Some(target) = find_mount_target(&dev) {
-            return Some(target);
-        }
-
-        // Punto de montaje SIEMPRE en /run/media/antonio/<label> (el usuario real),
-        // incluso cuando el proceso corre como root (_mirror-only / daemon root).
-        // Así el disco queda accesible en la sesión de antonio y Nautilus lo ve.
-        let base = Path::new("/run/media/antonio").join(comp);
-
-        println!("🔌 Montando disco {}...", comp);
-
-        // CASO 1: Si somos root (daemon), montar directamente con `mount`
-        // (sin udisksctl, que en un proceso sin sesión gráfica dispararía pkexec).
-        if is_root() {
-            std::process::Command::new("mkdir").arg("-p").arg(&base).status().ok();
-            let ok = std::process::Command::new("mount")
-                .arg(&dev)
-                .arg(&base)
-                .status()
-                .map(|s| s.success())
-                .unwrap_or(false);
-            if ok {
-                println!("✅ Disco {} montado (root)", comp);
-                return Some(base);
-            } else {
-                eprintln!("⚠️  No se pudo montar {} (root)", comp);
-                return None;
+        if let Some(dev) = find_by_label(comp) {
+            // base = ruta hasta (e incluyendo) el componente que es el disco
+            let mut base = PathBuf::from("/");
+            for c in comps.iter().skip(1).take(i) {
+                base.push(c);
             }
-        }
-
-        // CASO 2: No somos root (antonio interactivo).
-        // a) Intentar udisksctl primero (para el Crucial hay una regla polkit que lo
-        //    permite sin permisos; queda como sesión de usuario y Nautilus lo maneja).
-        let udisks_ok = std::process::Command::new("udisksctl")
-            .arg("mount")
-            .arg("-b")
-            .arg(&dev)
-            .status()
-            .map(|s| s.success())
-            .unwrap_or(false);
-
-        if udisks_ok {
-            println!("✅ Disco {} montado", comp);
-            return find_mount_target(&dev);
-        }
-
-        // b) Si udisksctl falló (p. ej. SEAGATE, que no tiene regla polkit), usar
-        //    `sudo mount` (pedirá la contraseña de sudo en la terminal, NO pkexec).
-        //    Solo en modo interactivo (backup once / mirror).
-        if !can_use_sudo {
-            eprintln!("⚠️  No se pudo montar {} (sin terminal para sudo)", comp);
-            return None;
-        }
-
-        let mkdir_ok = std::process::Command::new("sudo")
-            .arg("mkdir")
-            .arg("-p")
-            .arg(&base)
-            .status()
-            .map(|s| s.success())
-            .unwrap_or(false);
-
-        if !mkdir_ok {
-            eprintln!("⚠️  No se pudo crear el punto de montaje {} (¿permisos?)", base.display());
-            return None;
-        }
-
-        let mount_ok = std::process::Command::new("sudo")
-            .arg("mount")
-            .arg(&dev)
-            .arg(&base)
-            .status()
-            .map(|s| s.success())
-            .unwrap_or(false);
-
-        if mount_ok {
-            println!("✅ Disco {} montado (sudo)", comp);
-            return Some(base);
-        } else {
-            eprintln!("⚠️  No se pudo montar {} (¿permisos?)", comp);
-            return None;
+            return Some((dev, base));
         }
     }
     None
+}
+
+/// Indica si `destination` está en un **disco realmente montado** (no en un
+/// directorio "stub" del sistema de ficheros raíz). Vale tanto si el destino es
+/// la raíz del disco (`/run/media/antonio/CRUCIAL`) como un subdirectorio
+/// (`/mnt/seagate/Linux`).
+pub(crate) fn is_on_mounted_disk(destination: &Path) -> bool {
+    if let Some((dev, _base)) = resolve_disk(destination) {
+        match find_mount_target(&dev) {
+            Some(target) => destination.starts_with(&target),
+            None => false,
+        }
+    } else {
+        // Sin etiqueta reconocible: exigir que sea un punto de montaje real.
+        is_mount_point(destination)
+    }
+}
+
+/// Intenta montar el disco asociado a `destination` si aún no está montado.
+/// Devuelve la ruta de montaje, o None si no se pudo.
+///
+/// Estrategia:
+///   1. Si el disco ya está montado → devolver su punto de montaje.
+///   2. Si no, montarlo en la **raíz del disco** (`base`), deducida de la ruta
+///      (p. ej. `/mnt/seagate` para un destino `/mnt/seagate/Linux`). Como
+///      `antonio` usa `udisksctl` (regla polkit del Crucial) y, si falla y
+///      `can_use_sudo`, `sudo mount` (pide la contraseña en la terminal, NUNCA
+///      pkexec). Como root monta directamente.
+fn ensure_mount(destination: &Path, _folder_name: &str, can_use_sudo: bool) -> Option<PathBuf> {
+    let (dev, base) = resolve_disk(destination)?;
+
+    // 1) Ya montado en algún sitio: devolver su punto de montaje.
+    if let Some(target) = find_mount_target(&dev) {
+        return Some(target);
+    }
+
+    println!("🔌 Montando disco {} en {}...", dev, base.display());
+
+    // CASO 1: root (daemon / _mirror-only): montar directamente.
+    if is_root() {
+        std::process::Command::new("mkdir").arg("-p").arg(&base).status().ok();
+        let ok = std::process::Command::new("mount")
+            .arg(&dev)
+            .arg(&base)
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false);
+        if ok {
+            println!("✅ Disco {} montado (root) en {}", dev, base.display());
+            return Some(base);
+        }
+        eprintln!("⚠️  No se pudo montar {} (root)", dev);
+        return None;
+    }
+
+    // CASO 2: antonio. a) udisksctl (regla polkit del Crucial; Nautilus lo ve).
+    let udisks_ok = std::process::Command::new("udisksctl")
+        .arg("mount")
+        .arg("-b")
+        .arg(&dev)
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+
+    if udisks_ok {
+        println!("✅ Disco {} montado", dev);
+        return find_mount_target(&dev).or_else(|| Some(base));
+    }
+
+    // b) udisksctl falló: `sudo mount` en la terminal (NUNCA pkexec).
+    if !can_use_sudo {
+        eprintln!("⚠️  No se pudo montar {} (sin terminal para sudo)", dev);
+        return None;
+    }
+
+    let mkdir_ok = std::process::Command::new("sudo")
+        .arg("mkdir")
+        .arg("-p")
+        .arg(&base)
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+
+    if !mkdir_ok {
+        eprintln!("⚠️  No se pudo crear el punto de montaje {} (¿permisos?)", base.display());
+        return None;
+    }
+
+    let mount_ok = std::process::Command::new("sudo")
+        .arg("mount")
+        .arg(&dev)
+        .arg(&base)
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+
+    if mount_ok {
+        println!("✅ Disco {} montado (sudo) en {}", dev, base.display());
+        Some(base)
+    } else {
+        eprintln!("⚠️  No se pudo montar {} (¿permisos?)", dev);
+        None
+    }
 }
 
 /// Devuelve el punto de montaje real de un dispositivo (findmnt), o None si no está montado.
@@ -477,7 +507,7 @@ fn find_mount_target(dev: &str) -> Option<PathBuf> {
 }
 
 /// Comprueba si una ruta es un punto de montaje real (no un directorio vacío residual).
-fn is_mount_point(path: &Path) -> bool {
+pub(crate) fn is_mount_point(path: &Path) -> bool {
     let output = std::process::Command::new("findmnt")
         .arg("-n")
         .arg(path)
@@ -500,6 +530,14 @@ async fn run_daemon(config: &Config) -> Result<()> {
             println!("📌 Disco principal montado en: {}", mount.display());
             config.backup.destination = mount;
         }
+    }
+
+    // Seguridad: no escribir en un destino cuyo disco no esté realmente montado.
+    if !is_on_mounted_disk(&config.backup.destination) {
+        anyhow::bail!(
+            "El disco de destino {} no está montado. Móntalo antes de arrancar el daemon.",
+            config.backup.destination.display()
+        );
     }
 
     let mut engine = BackupEngine::new(config.clone());
@@ -559,10 +597,13 @@ fn sync_plain_mirrors(engine: &mut BackupEngine, config: &Config, can_use_sudo: 
 
         let dest = &mirror.destination;
 
-        // ensure_mount garantiza que el disco esté montado
-        ensure_mount(&mirror.destination, &config.backup.folder_name, true);
+        // Montar si hace falta y sincronizar SOLO si el disco está realmente
+        // montado (nunca escribir en un directorio "stub" del root fs).
+        if !is_on_mounted_disk(dest) {
+            ensure_mount(dest, &config.backup.folder_name, true);
+        }
 
-        if !dest.exists() {
+        if !is_on_mounted_disk(dest) {
             println!("⏭️  Espejo {} no está montado, se omite: {}", mirror.name, dest.display());
             continue;
         }

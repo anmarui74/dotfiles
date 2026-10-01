@@ -1,0 +1,12 @@
+[Unit]
+Description=Aviso por Telegram cuando el gateway de Hermes esta listo
+After=hermes-gateway.service
+Wants=hermes-gateway.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/hermes-ready-notify.sh
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target
