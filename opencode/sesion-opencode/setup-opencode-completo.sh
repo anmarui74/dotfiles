@@ -503,6 +503,7 @@ cat > "$DIR_CONFIG/opencode-cloud.json" << 'CLOUDEOF'
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "cloud",
+  "model": "opencode-go/longcat-2.5-preview-free",
   "experimental": {
     "policies": [
       { "action": "provider.use", "resource": "lmstudio", "effect": "deny" },

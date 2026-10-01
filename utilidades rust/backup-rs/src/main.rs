@@ -194,7 +194,7 @@ async fn run_backup_once(config: &Config) -> Result<()> {
                     engine.sync_network_mirror(&mounted)?;
                 }
                 None => {
-                    println!("⏭️  Espejo nube {} no accesible (share no montado), se omite: {}", mirror.name, mirror.uri.as_ref().unwrap());
+                    println!("⏭️  Espejo nube {} no accesible (share no montado), se omite: {}", mirror.name, mirror.uri.as_deref().unwrap_or(""));
                 }
             }
             continue;
@@ -205,18 +205,19 @@ async fn run_backup_once(config: &Config) -> Result<()> {
         // sudo). Si no, se intenta montar. Si tras eso el destino no está en un
         // disco realmente montado, se OMITE: nunca se escribe en un directorio
         // "stub" del sistema de ficheros raíz.
-        if !is_on_mounted_disk(dest) {
+        let disk = resolve_disk(dest);
+        if !disk_is_mounted(&disk, dest) {
             ensure_mount(dest, &config.backup.folder_name, true);
         }
 
-        if !is_on_mounted_disk(dest) {
+        if !disk_is_mounted(&disk, dest) {
             println!("⏭️  Espejo {} no está montado, se omite: {}", mirror.name, dest.display());
             continue;
         }
 
         // Escribibilidad: se comprueba sobre la raíz del disco (el subdirectorio
         // destino puede no existir todavía).
-        let disk_base = resolve_disk(dest)
+        let disk_base = disk
             .map(|(_, base)| base)
             .unwrap_or_else(|| dest.clone());
 
@@ -251,15 +252,26 @@ fn is_root() -> bool {
         .unwrap_or(false)
 }
 
-/// Comprueba si un directorio es escribible por el usuario actual.
+/// Comprueba si una ruta es escribible por el usuario actual.
+/// - Directorio: crea y borra un fichero de prueba dentro.
+/// - Fichero: comprueba permiso de apertura en modo append.
+/// - Si no existe o no es accesible: false.
 fn is_writable(path: &Path) -> bool {
-    let probe = path.join("._probe_write");
-    match std::fs::File::create(&probe) {
-        Ok(_) => {
-            let _ = std::fs::remove_file(&probe);
-            true
+    match std::fs::metadata(path) {
+        Ok(m) if m.is_dir() => {
+            let probe = path.join("._probe_write");
+            match std::fs::File::create(&probe) {
+                Ok(_) => {
+                    let _ = std::fs::remove_file(&probe);
+                    true
+                }
+                Err(_) => false,
+            }
         }
-        Err(_) => false,
+        Ok(m) if m.is_file() => {
+            std::fs::OpenOptions::new().append(true).open(path).is_ok()
+        }
+        _ => false,
     }
 }
 
@@ -381,20 +393,24 @@ pub(crate) fn resolve_disk(destination: &Path) -> Option<(String, PathBuf)> {
     None
 }
 
+/// Dado un disco ya resuelto (`resolve_disk`), indica si está montado y el
+/// destino cuelga de ese montaje.
+fn disk_is_mounted(disk: &Option<(String, PathBuf)>, destination: &Path) -> bool {
+    match disk {
+        Some((dev, _base)) => find_mount_target(dev)
+            .map(|target| destination.starts_with(&target))
+            .unwrap_or(false),
+        // Sin etiqueta reconocible: exigir que sea un punto de montaje real.
+        None => is_mount_point(destination),
+    }
+}
+
 /// Indica si `destination` está en un **disco realmente montado** (no en un
 /// directorio "stub" del sistema de ficheros raíz). Vale tanto si el destino es
 /// la raíz del disco (`/run/media/antonio/CRUCIAL`) como un subdirectorio
 /// (`/mnt/seagate/Linux`).
 pub(crate) fn is_on_mounted_disk(destination: &Path) -> bool {
-    if let Some((dev, _base)) = resolve_disk(destination) {
-        match find_mount_target(&dev) {
-            Some(target) => destination.starts_with(&target),
-            None => false,
-        }
-    } else {
-        // Sin etiqueta reconocible: exigir que sea un punto de montaje real.
-        is_mount_point(destination)
-    }
+    disk_is_mounted(&resolve_disk(destination), destination)
 }
 
 /// Intenta montar el disco asociado a `destination` si aún no está montado.
@@ -445,7 +461,7 @@ fn ensure_mount(destination: &Path, _folder_name: &str, can_use_sudo: bool) -> O
 
     if udisks_ok {
         println!("✅ Disco {} montado", dev);
-        return find_mount_target(&dev).or_else(|| Some(base));
+        return find_mount_target(&dev).or(Some(base));
     }
 
     // b) udisksctl falló: `sudo mount` en la terminal (NUNCA pkexec).
@@ -599,11 +615,12 @@ fn sync_plain_mirrors(engine: &mut BackupEngine, config: &Config, can_use_sudo: 
 
         // Montar si hace falta y sincronizar SOLO si el disco está realmente
         // montado (nunca escribir en un directorio "stub" del root fs).
-        if !is_on_mounted_disk(dest) {
+        let disk = resolve_disk(dest);
+        if !disk_is_mounted(&disk, dest) {
             ensure_mount(dest, &config.backup.folder_name, true);
         }
 
-        if !is_on_mounted_disk(dest) {
+        if !disk_is_mounted(&disk, dest) {
             println!("⏭️  Espejo {} no está montado, se omite: {}", mirror.name, dest.display());
             continue;
         }
