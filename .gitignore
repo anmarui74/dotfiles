@@ -1,0 +1,8 @@
+# Nunca versionar credenciales ni backups en el repo de dotfiles.
+# La copia saneada se genera con ~/Config/opencode/backup-opencode.sh, que ya los
+# excluye del volcado; esto es la SEGUNDA barrera por si alguien hace `git add -A`.
+**/*.env
+**/auth.json
+**/credenciales/
+**/backups/**/*.tar.gz
+**/mcp-memory-backup-*.jsonl

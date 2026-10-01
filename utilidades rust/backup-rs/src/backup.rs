@@ -177,7 +177,7 @@ impl BackupEngine {
             // sincronización a la nube no falle.
             for name in SMB_VETOED_NAMES {
                 cmd.arg("--exclude").arg(format!("{name}/"));
-                cmd.arg("--exclude").arg(format!("{name}"));
+                cmd.arg("--exclude").arg(name);
             }
 
             // Locale C para que las cifras de --stats sean estables (sin . miles)
@@ -251,7 +251,7 @@ impl BackupEngine {
                     .to_string_lossy()
                     .to_string();
                 let dest_dir = mirror.join(&source_name);
-                self.sync_plain_source(&source, &dest_dir)?;
+                self.sync_plain_source(source, &dest_dir)?;
             } else {
                 eprintln!("⚠️  Origen no existe: {}", source.path.display());
             }
@@ -263,12 +263,11 @@ impl BackupEngine {
     }
 
     /// Sincroniza una fuente a su destino espejo, borrando lo que ya no exista
-    fn sync_plain_source(&mut self, source: &SourceConfig, dest_dir: &PathBuf) -> Result<()> {
+    fn sync_plain_source(&mut self, source: &SourceConfig, dest_dir: &Path) -> Result<()> {
         // 1) Copiar / sobrescribir archivos del origen
         if source.path.is_file() {
             // Fuente = archivo suelto
-            let dest_path = dest_dir.clone();
-            self.copy_plain(&source.path, &dest_path)?;
+            self.copy_plain(&source.path, dest_dir)?;
             return Ok(());
         }
 
@@ -312,8 +311,15 @@ impl BackupEngine {
         // modificación >= a la del origen (espejo: solo lo necesario, no todo).
         let up_to_date = match fs::metadata(dest_path) {
             Ok(d) => {
-                d.len() == src_meta.len()
-                    && FileTime::from_last_modification_time(&d) >= src_mtime
+                if d.len() != src_meta.len() {
+                    false
+                } else if src_mtime > FileTime::now() {
+                    // Origen con mtime "en el futuro" (raro): no usar la fecha para
+                    // no recopiar indefinidamente; basta con que coincida el tamaño.
+                    true
+                } else {
+                    FileTime::from_last_modification_time(&d) >= src_mtime
+                }
             }
             Err(_) => false,
         };
@@ -338,7 +344,7 @@ impl BackupEngine {
     }
 
     /// Borra recursivamente del espejo los archivos que no existen en el origen
-    fn remove_extra_files(&mut self, dest_dir: &PathBuf, source_root: &PathBuf) -> Result<()> {
+    fn remove_extra_files(&mut self, dest_dir: &Path, source_root: &Path) -> Result<()> {
         for entry in WalkDir::new(dest_dir).follow_links(false).into_iter().filter_map(Result::ok) {
             if !entry.file_type().is_file() {
                 continue;
@@ -395,7 +401,7 @@ impl BackupEngine {
         Ok(versions.last().map(|e| e.path()))
     }
 
-    fn sync_all(&mut self, dest_dir: &PathBuf) -> Result<()> {
+    fn sync_all(&mut self, dest_dir: &Path) -> Result<()> {
         let pb = ProgressBar::new_spinner();
         pb.set_style(
             ProgressStyle::default_spinner()
@@ -404,12 +410,11 @@ impl BackupEngine {
         );
 
         let sources = self.config.sources.clone();
-        let dest_dir = dest_dir.clone();
 
         for source in &sources {
             if source.path.exists() {
                 pb.set_message(format!("Procesando: {}", source.path.display()));
-                self.backup_source(source, &dest_dir)
+                self.backup_source(source, dest_dir)
                     .with_context(|| format!("Falló la fuente: {}", source.path.display()))?;
             } else {
                 eprintln!("⚠️  Origen no existe: {}", source.path.display());
@@ -420,7 +425,7 @@ impl BackupEngine {
         Ok(())
     }
 
-    fn backup_source(&mut self, source: &SourceConfig, dest_dir: &PathBuf) -> Result<()> {
+    fn backup_source(&mut self, source: &SourceConfig, dest_dir: &Path) -> Result<()> {
         // Si la fuente es un archivo individual, copiarlo directamente
         if source.path.is_file() {
             let source_name = source.path
@@ -518,7 +523,7 @@ impl BackupEngine {
         true
     }
 
-    fn copy_file(&mut self, entry: &DirEntry, source: &SourceConfig, dest_dir: &PathBuf) -> Result<()> {
+    fn copy_file(&mut self, entry: &DirEntry, source: &SourceConfig, dest_dir: &Path) -> Result<()> {
         let src_path = entry.path();
         let relative_path = src_path.strip_prefix(&source.path).unwrap();
         let source_name = source.path

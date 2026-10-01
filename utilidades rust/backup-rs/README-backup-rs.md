@@ -492,8 +492,16 @@ async fn init_config(config: &Config, force: bool) -> Result<()> {
 
 async fn run_backup_once(config: &Config) -> Result<()> {
     println!("🚀 Ejecutando backup one-shot...");
+
+    // 1) Montar el Crucial si hace falta (udisksctl, sin contraseña) y
+    //    abortar si el disco no acaba siendo un disco realmente montado.
+    // 2) Snapshot versionado del Crucial como antonio (sin root).
     let mut engine = BackupEngine::new(config.clone());
     engine.run()?;                    // → snapshot con timestamp
+
+    // 3) Espejos planos (machacar): SEAGATE (/mnt/seagate/Linux) y NUBE (SMB).
+    //    Todo como antonio; solo se escribe en discos realmente montados.
+    sync_plain_mirrors(&mut engine, &config, true)?;
     Ok(())
 }
 
@@ -1165,14 +1173,14 @@ impl FileWatcher {
         let paths: Vec<PathBuf> = self.pending.drain().collect();
 
         // Solo se propagan los cambios a los espejos planos en los que PODEMOS
-        // escribir. Para los espejos de disco se exige además que el destino sea
-        // un punto de montaje real (nunca un directorio "stub" del root fs).
+        // escribir. Para los espejos de disco se exige además que el destino esté
+        // en un disco realmente montado (nunca un directorio "stub" del root fs).
         let mirrors: Vec<_> = self.config.mirrors.iter()
             .filter(|m| {
                 let present = if m.uri.is_some() {
                     m.destination.exists()
                 } else {
-                    crate::is_mount_point(&m.destination)
+                    crate::is_on_mounted_disk(&m.destination)
                 };
                 present && is_writable_path(&m.destination)
             })
