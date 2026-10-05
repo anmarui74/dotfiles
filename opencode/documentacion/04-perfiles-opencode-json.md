@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 📁 Perfiles | 26/07/2026 · rev. 22/09/2026 | Antonio |
+| 📁 Perfiles | 26/07/2026 · rev. 05/10/2026 | Antonio |
 
 > Perfiles local / cloud / activo, MCPs y proveedores
 
@@ -111,9 +111,9 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
       ]
     },
     "nvidia": {
-      "description": "Agente NVIDIA - NVIDIA Nemotron 3 Super 120B (A12B): ~74 tok/s medida, tool calling nativo, gratis vía NIM. Predeterminado del agente nvidia desde el 17/09/2026 (antes Muse Glimmer 30B). Usable como primario (Shift+Tab) y como subagente delegado por DeepSeek",
+      "description": "Agente NVIDIA - NVIDIA Nemotron 3 Ultra 550B (A55B): modelo mayor de la familia Nemotron 3, tool calling nativo, gratis vía NIM. Actualizado el 24/09/2026 (antes Nemotron 3 Super 120B A12B). Usable como primario (Shift+Tab) y como subagente delegado por DeepSeek",
       "mode": "all",
-      "model": "nvidia/nvidia/nemotron-3-super-120b-a12b"
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
     },
     "multimodal": {
       "description": "Agente multimodal - MiMo V2.5 (Xiaomi, 311B MoE, 1M contexto, omnimodal). Usable como primario (Shift+Tab) y como subagente delegado",
@@ -270,7 +270,7 @@ Diferencias respecto a `opencode.json` (por defecto):
 | **Agente principal** | `cloud` (OpenCode Go) | `local` (Qwen 3.8 local) | `cloud` (OpenCode Go) |
 | **Agente local** | ✅ activo (primario) | ✅ activo (primario) | ❌ desactivado |
 | **Modelo cloud** | ✅ OpenCode Go (deepseek-v4.1-flash) | ✅ OpenCode Go (deepseek-v4.1-flash) | ✅ OpenCode Go (deepseek-v4.1-flash) |
-| **Agente NVIDIA** | ✅ primario/subagente Nemotron 3 Super 120B | ✅ primario/subagente Nemotron 3 Super 120B | ✅ primario/subagente Nemotron 3 Super 120B |
+| **Agente NVIDIA** | ✅ primario/subagente Nemotron 3 Ultra 550B | ✅ primario/subagente Nemotron 3 Ultra 550B | ✅ primario/subagente Nemotron 3 Ultra 550B |
 | **Agente multimodal** | ✅ primario/subagente MiMo V2.5 (`opencode-go/mimo-v2.5`) | ✅ primario/subagente (heredado de global) | ✅ primario/subagente (heredado de global) |
 | **context7** | ✅ | ❌ | ✅ |
 | **filesystem** | ✅ | ✅ | ✅ |
@@ -384,7 +384,7 @@ Define agentes (personas/modos del asistente):
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
 - **local:** Agente local, usa el modelo Qwen 3.8 Q6_K vía LM Studio (puerto 4001). Es **primario** en el perfil activo y en el perfil local; **desactivado** (`disabled: true`) en el perfil cloud
 - **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4.1-flash`). Desde el **09/09/2026** tiene la regla `{ "action": "subagent", "resource": "*", "effect": "allow" }`, lo que le permite **delegar automáticamente** a los subagentes (nvidia, multimodal, general, explore)
-- **nvidia:** `mode: all` (primario y subagente), usa por defecto **NVIDIA Nemotron 3 Super 120B (A12B)** (`nvidia/nvidia/nemotron-3-super-120b-a12b`) desde el **17/09/2026** (antes Muse Glimmer 30B). ~74 tok/s medidas, tool calling nativo. DeepSeek lo invoca automáticamente para código pesado
+- **nvidia:** `mode: all` (primario y subagente), usa por defecto **NVIDIA Nemotron 3 Ultra 550B (A55B)** (`nvidia/nvidia/nemotron-3-ultra-550b-a55b`) desde el **24/09/2026** (antes Nemotron 3 Super 120B A12B, y antes Muse Glimmer 30B). Modelo mayor de la familia Nemotron 3, tool calling nativo. DeepSeek lo invoca automáticamente para código pesado
 - **multimodal:** `mode: all` (solo en `opencode.json`; heredado por fusión en local y cloud), usa **MiMo V2.5** (`opencode-go/mimo-v2.5`, Xiaomi, 311B MoE, 1M contexto, omnimodal) con prompt optimizado para imagen + texto y recuperación de contexto largo. (Antes usaba `opencode-go/deepseek-v4.1-flash#multimodal`.)
 
 Campos por agente: `system` para el prompt (antes `prompt`), `model`
@@ -402,7 +402,7 @@ Proveedores de modelos. Configurados:
   - **Tools:** Habilitadas
 
 - **nvidia** (cloud, desde el **18/08/2026**):
-  - **Modelo agente:** `nvidia/nvidia/nemotron-3-super-120b-a12b` (NVIDIA Nemotron 3 Super 120B A12B; antes Muse Glimmer 30B)
+  - **Modelo agente:** `nvidia/nvidia/nemotron-3-ultra-550b-a55b` (NVIDIA Nemotron 3 Ultra 550B A55B; desde el **24/09/2026**; antes Nemotron 3 Super 120B A12B y antes Muse Glimmer 30B)
   - **Whitelist:** 7 modelos operativos (rev. **11/09/2026**: se retiró `minimaxai/minimax-m3`, verificado con HTTP 410 Gone, fin de vida el 09/09/2026). Vive en `providers.nvidia.whitelist`: V2 **ignora** esta clave (no tiene equivalente V2) y la aplica el plugin `nvidia-filter`.
   - **Parámetros:** `providers.nvidia.body` = `{temperature: 1, top_p: 0.95}`. ⚠️ V2 **descarta** `temperature`/`top_p` a nivel de agente; hay que ponerlos en el provider, el modelo o una variante.
   - **API Key:** `nvapi-*` (en `auth.json` de OpenCode)
@@ -428,8 +428,8 @@ Proveedores de modelos. Configurados:
 |---|--------|-----------|--------------|-----------|
 | 1 | `meta/muse-glimmer-30b` | 144,9 tok/s | ✅ | ⭐⭐⭐⭐⭐ *(agente nvidia del 05/09 al 17/09/2026)* |
 | 2 | `nvidia/nemotron-3.5-lightning-30b-a3b` | 119,6 tok/s | ✅ | ⭐⭐⭐⭐⭐ |
-| 3 | `nvidia/nemotron-3-super-120b-a12b` | 93,4 tok/s | ✅ | ⭐⭐⭐⭐ *(agente nvidia desde 17/09/2026)* |
-| 4 | `nvidia/nemotron-3-ultra-550b-a55b` | 74,5 tok/s | ✅ | ⭐⭐⭐⭐ |
+| 3 | `nvidia/nemotron-3-super-120b-a12b` | 93,4 tok/s | ✅ | ⭐⭐⭐⭐ *(agente nvidia del 17/09 al 24/09/2026)* |
+| 4 | `nvidia/nemotron-3-ultra-550b-a55b` | 74,5 tok/s | ✅ | ⭐⭐⭐⭐ *(agente nvidia desde el 24/09/2026)* |
 | 5 | `meta/llama-3.2-11b-vision-instruct` | 50,7 tok/s | ✅ | ⭐⭐⭐⭐ |
 | 6 | `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | 40,3 tok/s | ✅ | ⭐⭐⭐⭐ |
 | 7 | `openai/gpt-oss-20b` | 34,2 tok/s | ✅ | ⭐⭐⭐⭐ |
@@ -452,6 +452,38 @@ Proveedores de modelos. Configurados:
 **Retirados del whitelist original (410 Gone, end of life):** `z-ai/glm-5.2`, `openai/gpt-oss-120b`, `stepfun-ai/step-3.7-flash`, `thinkingmachines/inkling`, `meta/llama-3.1-8b-instruct`, `meta/llama-3.1-70b-instruct`, `meta/llama-3.3-70b-instruct`, `nvidia/llama-3.3-nemotron-super-49b-v1` y `v1.5`, `nvidia/nemotron-3-nano-30b-a3b`, `nvidia/nemotron-mini-4b-instruct`, `nvidia/nemotron-nano-12b-v2-vl`, `nvidia/nvidia-nemotron-nano-9b-v2`, `nvidia/llama-3.1-nemotron-nano-vl-8b-v1`.
 
 > 💡 **Conclusión:** el catálogo `models.dev` que integra OpenCode está desactualizado para NVIDIA (listaba modelos ya retirados). Por eso el `whitelist` manual es necesario: evita que aparezcan modelos muertos (410) en el selector `/models`.
+
+#### 🐞 Bug histórico de V2: `prompt_cache_key` — RESUELTO en 2.0.4+ (verificado 05/10/2026)
+
+OpenCode V2 (2.0.3) enviaba el parámetro `prompt_cache_key` en **todas** las peticiones Chat Completions a proveedores OpenAI-compatibles. La API de NVIDIA NIM no lo soporta y rechazaba la petición:
+
+```
+HTTP 400 · Validation: Unsupported parameter(s): `prompt_cache_key`
+```
+
+Esto dejaba inutilizables casi todos los modelos NVIDIA (muse-glimmer, los 4 nemotron…) hasta el punto de necesitar un proxy local que eliminaba el parámetro.
+
+| Dato | Valor |
+|------|-------|
+| Reporte | issue [#49240](https://github.com/anomalyco/opencode/issues/49240) (abierto el 15/09/2026) |
+| Duplicado de | [#45113](https://github.com/anomalyco/opencode/issues/45113) |
+| Fix | PR [#49121](https://github.com/anomalyco/opencode/pull/49121) — `feat(ai): allowlist prompt_cache_key sending per provider` (merge 15/09/2026) |
+| Mecanismo | Chat Completions **omite** `prompt_cache_key` salvo `compatibility.supportsPromptCacheKey` (por defecto: off) |
+| Versión mínima | **2.0.4+** |
+| Cierre oficial | 05/10/2026 por `rekram1-node` («Any version 2.0.4 or later has fix») |
+
+**Verificación end-to-end (05/10/2026, OpenCode v2.0.22, Nemotron 3 Ultra 550B):**
+
+| Prueba | Resultado |
+|--------|-----------|
+| API NVIDIA **con** `prompt_cache_key` | 🔴 HTTP 400 `Unsupported parameter(s)` |
+| API NVIDIA **sin** el parámetro | ✅ HTTP 200 |
+| `opencode run --standalone --model nvidia/nvidia/nemotron-3-ultra-550b-a55b "di OK"` | ✅ responde `OK 👍` (exit 0) |
+| Intercepción del body real del provider `nvidia` (proxy local) | ✅ `prompt_cache_key`, `prompt_cache_retention`, `safety_identifier` y `store` **AUSENTES**; solo `messages`, `model`, `stream`, `stream_options`, `temperature`, `top_p` |
+
+> ✅ **Conclusión:** el bug está corregido y **operativo**. El whitelist NVIDIA de 7 modelos funciona sin el error de `prompt_cache_key`. Se retiró el vigilante `check-nvidia-prompt-cache.sh` + su timer/service systemd (17/09/2026).
+
+> 🔧 **Truco de diagnóstico:** para interceptar las peticiones del provider `nvidia` built-in basta con `providers.nvidia.settings.baseURL` apuntando a un proxy local. El path de `prompts/` se resuelve relativo al directorio del archivo indicado en `OPENCODE_CONFIG` (si el config está en `/tmp`, copiar `prompts/` allí o da `ConfigInvalidError`).
 
 ### `lsp` — ❌ retirado (V2)
 

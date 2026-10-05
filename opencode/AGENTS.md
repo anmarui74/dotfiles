@@ -238,10 +238,15 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
   El agente `local` y el agente `title` (vía `agents.title.model`) usan **`local/qwen3.8-9b`**.
 - **✅ NVIDIA en V2 (`prompt_cache_key`) — RESUELTO (17/09/2026):** el bug del runtime
   OpenAI-compatible de V2 (2.0.3) que inyectaba `prompt_cache_key` y la API de NVIDIA rechazaba
-  (`Validation: Unsupported parameter(s)`) está **corregido en OpenCode 2.0.5**. Verificado
-  end-to-end con `muse-glimmer-30b` y los 4 nemotron (super/ultra/lightning/nano-omni): todos
-  responden, tanto en `--standalone` como en el servicio compartido. Por eso se retiró el
-  vigilante `check-nvidia-prompt-cache.sh` + su timer y servicio systemd (17/09/2026).
+  (`Validation: Unsupported parameter(s)`) está **corregido en OpenCode 2.0.4+** (PR
+  [#49121](https://github.com/anomalyco/opencode/pull/49121), merge 15/09/2026: Chat Completions
+  omite `prompt_cache_key` salvo `compatibility.supportsPromptCacheKey`). El reporte fue el issue
+  [#49240](https://github.com/anomalyco/opencode/issues/49240) (duplicado de
+  [#45113](https://github.com/anomalyco/opencode/issues/45113)), **cerrado el 05/10/2026** por
+  `rekram1-node` confirmando «any version 2.0.4 or later has fix». Verificado end-to-end con
+  `muse-glimmer-30b` y los 4 nemotron (super/ultra/lightning/nano-omni): todos responden, tanto en
+  `--standalone` como en el servicio compartido. Por eso se retiró el vigilante
+  `check-nvidia-prompt-cache.sh` + su timer y servicio systemd (17/09/2026).
 
 ---
 

@@ -27,9 +27,9 @@
       "model": "local/qwen3.8-9b"
     },
     "cloud": {
-      "description": "Agente cloud predeterminado - NVIDIA Nemotron 3 Ultra 550B (A55B): modelo mayor de la familia Nemotron 3, tool calling nativo, gratis vía NIM",
+      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash vía OpenCode Go: pipeline diario de código y agentic coding",
       "mode": "primary",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+      "model": "opencode-go/deepseek-v4.1-flash",
       "permissions": [
         { "action": "subagent", "resource": "*", "effect": "allow" }
       ]
