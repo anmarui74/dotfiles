@@ -7,9 +7,10 @@ de Linux en dos cosas que allí se resolvieron a mano:
 1. **Ctrl+Q corta la locución en curso y nada más** (no interrumpe el turno; interrumpir sigue
    siendo Ctrl+C, que además corta el audio). Sin el parche, Ctrl+Q en Windows interrumpe el
    turno y la voz sigue sonando.
-2. **Los agentes/modelos** (alias de modelo `nvidia`, `local`, `gpt-oss`, `glimmer`, `multimodal`…)
-   y el plugin `nvidia` que limita el catálogo al whitelist de OpenCode, para que el selector
-   `/model` muestre lo mismo que en Linux.
+2. **Los agentes/modelos**: los alias de modelo (`nvidia`, `local`, `gpt-oss`, `glimmer`,
+   `multimodal`…), el **modelo por defecto** (`deepseek-v4.1-flash` vía `opencode-go`, el mismo que
+   en Linux) y el plugin `nvidia` que limita el catálogo al whitelist de OpenCode, para que el
+   selector `/model` muestre lo mismo que en Linux.
 
 ---
 
@@ -19,7 +20,7 @@ de Linux en dos cosas que allí se resolvieron a mano:
 |---|---|
 | `aplicar-ajustes-linux.ps1` | **El que se ejecuta.** Aplica el parche del CLI, copia el plugin y fija los alias. |
 | `parches\ctrl-q-corta-audio.patch` | Parche local del CLI (toca `hermes_cli/cli_tui_mixin.py` y `tools/voice_mode.py`). |
-| `alias-modelos.json` | Export de Linux: alias de modelo + whitelist NVIDIA. **Solo nombres, ninguna clave.** |
+| `alias-modelos.json` | Export de Linux: alias de modelo, modelo por defecto (el «agente general») y whitelist NVIDIA. **Solo nombres, ninguna clave.** |
 | `plugins\model-providers\nvidia\` | Plugin que sustituye al perfil NVIDIA de serie y filtra por el whitelist. |
 
 ---
@@ -55,7 +56,12 @@ Es **idempotente**: si ya está aplicado, no cambia nada.
    `%LOCALAPPDATA%\hermes\plugins\model-providers\nvidia\`.
 3. **Alias de modelo**: `hermes config set model.aliases.<nombre> <modelo> --force` para cada uno
    de los 11 del export.
-4. **Whitelist NVIDIA**: si existe `%USERPROFILE%\.config\opencode\opencode.json`, actualiza solo
+4. **Modelo por defecto**: `hermes config set model.default <modelo>` y
+   `hermes config set model.provider <proveedor>` con lo que traiga `agente_por_defecto` del export
+   (hoy `deepseek-v4.1-flash` / `opencode-go`). Después limpia `model.base_url` y `model.api_mode`
+   **solo si están puestos**: una ruta heredada de otro proveedor dejaría el modelo nuevo apuntando
+   al relay viejo.
+5. **Whitelist NVIDIA**: si existe `%USERPROFILE%\.config\opencode\opencode.json`, actualiza solo
    `providers.nvidia.whitelist` con los 7 ids del export (no toca nada más). Si no existe, avisa y
    sigue: los alias funcionan igual, solo no se filtra el catálogo.
 
@@ -68,7 +74,8 @@ Es **idempotente**: si ya está aplicado, no cambia nada.
 git -C "$env:LOCALAPPDATA\hermes\hermes-agent" apply --reverse --check "$PWD\parches\ctrl-q-corta-audio.patch"
 echo $LASTEXITCODE
 
-# 2. Alias visibles para Hermes
+# 2. Modelo por defecto y alias que ve Hermes (deben coincidir con los de Linux)
+hermes config get model
 hermes config get model.aliases
 
 # 3. Plugin en su sitio
@@ -87,6 +94,8 @@ reinicia Hermes después de aplicarlo.
 - Después de cada `hermes update` en Windows: el actualizador autostashea los cambios locales y
   los restaura, pero un conflicto puede dejarlos aparcados. Si `Ctrl+Q` vuelve a interrumpir el
   turno, vuelve a ejecutar el `.ps1`.
+- Si en Linux cambian los alias o el modelo por defecto, vuelve a ejecutarlo para que Windows se
+  iguale (el `agente_por_defecto` del export lo fija el paso 4).
 - Si el parche no aplica limpio (el código aguas arriba cambió), **no lo fuerces a ciegas**: deja
   constancia en `NOTA-PARA-LINUX.md` con el error de `git apply` y se reconcilia desde Linux.
 

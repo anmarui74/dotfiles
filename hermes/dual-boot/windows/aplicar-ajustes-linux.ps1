@@ -6,7 +6,8 @@
        turno; Ctrl+C la corta además de interrumpir. Toca dos ficheros del repo:
        hermes_cli/cli_tui_mixin.py y tools/voice_mode.py.
     2) AGENTES/MODELOS: restaura los alias de modelo (nvidia, local, gpt-oss, glimmer,
-       multimodal…) y el plugin `nvidia` que limita el catálogo del proveedor al whitelist
+       multimodal…), fija el modelo por defecto (deepseek-v4.1-flash via opencode-go, igual
+       que en Linux) y el plugin `nvidia` que limita el catálogo del proveedor al whitelist
        de OpenCode, para que el selector /model muestre lo mismo que en Linux.
 
   Uso (sin administrador), desde esta carpeta (la carpeta windows/ de HermesSync):
@@ -141,6 +142,40 @@ else {
     }
 }
 
+# ── 3a. Modelo por defecto (el «agente general») ──
+Write-Host ""
+Write-Host "3a. Modelo por defecto (agente general)"
+# El export trae el modelo por defecto que tiene Linux. Sin este paso, Windows solo heredaba
+# los alias y el modelo por defecto se quedaba como estuviera en cada equipo.
+$def = $null
+if ($datos) { $def = $datos.agente_por_defecto }
+if (-not $def) { Aviso "el export no trae agente_por_defecto: no toco el modelo por defecto" }
+elseif (-not (Get-Command hermes -ErrorAction SilentlyContinue)) {
+    Mal "no encuentro el comando 'hermes' en el PATH: abre una consola nueva o instala Hermes"
+}
+elseif ($SoloEstado) {
+    Aviso "estado: se fijaria model.default = $($def.modelo) (provider $($def.proveedor))"
+}
+else {
+    $mod = [string]$def.modelo
+    $prov = [string]$def.proveedor
+    $c1 = Correr "hermes" @("config", "set", "model.default", "$mod")
+    $c2 = Correr "hermes" @("config", "set", "model.provider", "$prov")
+    if ($c1 -eq 0 -and $c2 -eq 0) { Ok "modelo por defecto: $mod (proveedor $prov)" }
+    else { Mal "no pude fijar el modelo por defecto ($mod / $prov): $script:SalidaNativa" }
+    # Un base_url/api_mode heredados de otro proveedor dejarian el modelo nuevo apuntando al
+    # relay viejo (paso al cambiar de nvidia a opencode-go): se limpian solo si estan puestos.
+    $limpiados = 0
+    foreach ($k in @("model.base_url", "model.api_mode")) {
+        if ((Correr "hermes" @("config", "get", $k)) -eq 0) {
+            $viejo = $script:SalidaNativa
+            if ((Correr "hermes" @("config", "unset", $k)) -eq 0) { Ok "limpiado ${k} (era $viejo)"; $limpiados++ }
+            else { Aviso "no pude limpiar ${k}: $script:SalidaNativa" }
+        }
+    }
+    if ($limpiados -eq 0) { Ok "sin ruta de proveedor heredada (base_url/api_mode ya vacios)" }
+}
+
 # ── 3b. Whitelist NVIDIA que lee el plugin ──
 Write-Host ""
 Write-Host "3b. Whitelist NVIDIA (OpenCode)"
@@ -252,6 +287,9 @@ if ((Test-Path $cacheModelos) -and ($whitelist.Count -gt 0)) {
     } catch { Aviso "no pude leer $cacheModelos" }
 }
 if (Get-Command hermes -ErrorAction SilentlyContinue) {
+    Write-Host "   Modelo por defecto visto por Hermes:"
+    & hermes config get model.default
+    & hermes config get model.provider
     Write-Host "   Alias vistos por Hermes:"
     & hermes config get model.aliases
 }

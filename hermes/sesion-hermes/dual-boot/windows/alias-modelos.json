@@ -1,7 +1,11 @@
 {
   "_comentario": "Exportado desde el Hermes de Linux (cachyos) para el Hermes de Windows. Solo nombres de modelos: NINGUNA clave de API.",
-  "generado": "29/09/2026 21:21",
+  "generado": "05/10/2026 11:55",
   "origen": "linux-cachyos",
+  "agente_por_defecto": {
+    "modelo": "deepseek-v4.1-flash",
+    "proveedor": "opencode-go"
+  },
   "aliases": {
     "local": "lmstudio/qwen3.8-9b",
     "nvidia": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
@@ -26,7 +30,9 @@
   ],
   "notas": [
     "aliases -> hermes config set model.aliases.<nombre> <modelo> --force",
+    "agente_por_defecto -> hermes config set model.default <modelo> + model.provider <proveedor>; ademas limpia model.base_url/model.api_mode si quedaron puestos por otro proveedor",
     "whitelist_nvidia -> providers.nvidia.whitelist en %USERPROFILE%\\.config\\opencode\\opencode.json (lo lee el plugin nvidia)",
-    "El plugin vive en %LOCALAPPDATA%\\hermes\\plugins\\model-providers\\nvidia\\"
+    "El plugin vive en %LOCALAPPDATA%\\hermes\\plugins\\model-providers\\nvidia\\",
+    "Es una foto del config de Linux: si alli cambian los alias o el modelo por defecto, regenerar este export"
   ]
 }
