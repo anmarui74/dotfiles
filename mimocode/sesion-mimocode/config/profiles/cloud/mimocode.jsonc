@@ -1,9 +1,9 @@
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
-  "model": "opencode-go/deepseek-v4.1-flash",
+  "model": "opencode-go/mimo-v2.6-flash",
   "vision_model": "opencode-go/deepseek-v4-flash-vision-exp",
   "model_groups": {
-    "lite": "opencode-go/deepseek-v4.1-flash"
+    "lite": "opencode-go/mimo-v2.6-flash"
   },
   "instructions": [
     "AGENTS.md"
@@ -30,7 +30,7 @@
       "model": "opencode-go/deepseek-v4.1-flash"
     },
     "build": {
-      "model": "opencode-go/deepseek-v4.1-flash",
+      "model": "opencode-go/mimo-v2.6-flash",
       "prompt": "Al inicio de cada sesión, usa la herramienta Read para leer ~/.config/mimocode/AGENTS.md y seguir las instrucciones del usuario."
     },
     "plan": {
@@ -44,9 +44,9 @@
       "model": "lmstudio/models-qwen3.8-9b"
     },
     "cloud": {
-      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash vía OpenCode Go: pipeline diario de código y agentic coding",
+      "description": "Agente cloud predeterminado - MiMo V2.6 Flash vía OpenCode Go: pipeline diario de código y agentic coding",
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4.1-flash",
+      "model": "opencode-go/mimo-v2.6-flash",
       "permission": {
         "actor": "allow",
         "task": "allow"

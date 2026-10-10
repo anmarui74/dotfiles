@@ -3,7 +3,7 @@ Replicación del plugin de voz independiente para MiMoCode.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 10/09/2026 · rev. 23/09/2026 | Antonio |
+| ✅ Activo | 10/09/2026 · rev. 09/10/2026 | Antonio |
 > Replicación exacta de `ocv` de OpenCode con plugin `mimocode-voice-modified` independiente
 
 ---

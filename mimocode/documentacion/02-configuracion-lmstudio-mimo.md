@@ -3,7 +3,7 @@ Servidor LM Studio, proxy propio en el puerto 4001 y modelos locales de MiMoCode
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 10/09/2026 · rev. 23/09/2026 | Antonio |
+| ✅ Activo | 10/09/2026 · rev. 09/10/2026 | Antonio |
 
 > Infraestructura LM Studio **propia** de MiMoCode (ya no se reutiliza la de OpenCode)
 

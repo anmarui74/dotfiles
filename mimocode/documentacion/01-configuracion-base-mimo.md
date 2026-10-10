@@ -3,7 +3,7 @@ Configuración global de MiMoCode, esquema, proveedores y lanzadores.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 10/09/2026 · rev. 23/09/2026 | Antonio |
+| ✅ Activo | 10/09/2026 · rev. 09/10/2026 | Antonio |
 
 > Configuración global, esquema, proveedores y lanzadores
 
@@ -37,7 +37,7 @@ MiMoCode hereda la estructura de OpenCode pero con esquema propio `https://mimo.
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
   "model": "nvidia/meta/muse-glimmer-30b",
   "model_groups": {
-    "lite": "opencode-go/deepseek-v4.1-flash"
+    "lite": "opencode-go/mimo-v2.6-flash"
   },
   "default_agent": "nvidia",
   "share": "manual",
@@ -45,7 +45,7 @@ MiMoCode hereda la estructura de OpenCode pero con esquema propio `https://mimo.
 }
 ```
 
-> El grupo `lite` define un tier de modelo barato. **`small_model` NO se usa en MiMoCode** (no está definido en ninguno de los 3 perfiles). Valores reales de `lite`: `opencode-go/deepseek-v4.1-flash` en global y cloud, `lmstudio/models-qwen3.8-9b` en local.
+> El grupo `lite` define un tier de modelo barato. **`small_model` NO se usa en MiMoCode** (no está definido en ninguno de los 3 perfiles). Valores reales de `lite` (rev. 09/10/2026): `opencode-go/mimo-v2.6-flash` en global y cloud, `lmstudio/models-qwen3.8-9b` en local (regla de Antonio: la delegación barata del perfil local se queda en LM Studio).
 
 > 🔒 Los lanzadores exportan `MIMOCODE_ENABLE_ANALYSIS=false` (telemetría desactivada por privacidad).
 
@@ -71,7 +71,7 @@ MiMoCode es **autónomo**: NO depende de `~/.config/opencode/`. Tiene su propia 
 
 ### Agentes
 
-Los **7 agentes** (`title`, `build`, `plan`, `local`, `cloud`, `nvidia`, `multimodal`) están replicados en los 3 perfiles desde la config activa de OpenCode. Detalle completo en `04-perfiles-mimocode-json.md` → sección «Agentes».
+Los **8 agentes** (`title`, `build`, `plan`, `local`, `cloud`, `nvidia`, `multimodal`, `compose`) están replicados en los 3 perfiles desde la config activa de OpenCode. Detalle completo en `04-perfiles-mimocode-json.md` → sección «Agentes».
 
 ---
 

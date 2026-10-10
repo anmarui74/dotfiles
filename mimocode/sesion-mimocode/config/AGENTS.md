@@ -183,6 +183,8 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
 - `~/Config/mimocode/` es la copia de SEGURIDAD para instalaciones desde limpio
 - Estructura `~/Config/mimocode/`:
   - `backups/mimocode/` → tarballs `mimocode-backup-*.tar.gz` (config + credenciales + instalador + restore.sh)
+  - `backups/` (raíz) → **copias fechadas del grafo de memoria** (`mimocode-memory-backup-<fecha>.jsonl`)
+    — histórico LOCAL de rotación, **excluido** del volcado a dotfiles (evita duplicados versionados)
   - `documentacion/` → documentación de incidencias de MiMoCode
   - `sesion-mimocode/` → INSTALADOR desde cero (`setup-mimocode-completo.sh`) + `config/` (copia canónica de la config activa que restaura el instalador)
   - En la raíz solo viven: `AGENTS.md`, `backup-mimocode.sh`, `check-setup-completo.sh`
@@ -205,17 +207,43 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
     `~/Config/mimocode/backups/mimocode/` (es el backup de restauración y las necesita); donde
     **NUNCA** deben estar es en `~/Documentos/dotfiles/`.
 - **Sincronización automática**: el timer systemd `mimocode-sync.timer` ejecuta
-  `~/.config/mimocode/sync-mimocode.sh --quiet` cada 30 min y mantiene
-  `sesion-mimocode/config/` idéntico a la config activa (rsync, sin node_modules ni `.bak`).
+  `~/.config/mimocode/sync-mimocode.sh --quiet` cada 30 min. Ese script (rev. 10/10/2026) hace
+  **dos** cosas: mantiene `sesion-mimocode/config/` idéntico a la config activa (rsync, sin
+  node_modules ni `.bak`) **y, al terminar, regenera el tarball** llamando a
+  `backup-mimocode.sh` (paridad con `sync-opencode.sh`). Si el backup falla, el sync sale con
+  error y el detalle queda en `/tmp/mimocode-backup-last.log`.
+  ⚠️ **Guarda anti-bucle**: `backup-mimocode.sh` vuelve a llamar al sync (su paso 0), así que
+  esa llamada se hace con `MIMOCODE_LLAMADO_POR_BACKUP=1`. Sin esa variable, lanzar el backup a
+  mano dispararía un segundo backup (doble trabajo) y podría recursar.
 - Cada vez que modifiques, crees o elimines algo en `~/.config/mimocode/`:
-  1. **Sincroniza la copia canónica**: `bash ~/.config/mimocode/sync-mimocode.sh`
-  2. Si el cambio afecta a la instalación, actualiza `setup-mimocode-completo.sh`
-  3. Regenera el tarball: `bash ~/Config/mimocode/backup-mimocode.sh`
-     (el backup sincroniza y verifica automáticamente antes de empaquetar)
+  1. **Sincroniza y regenera**: `bash ~/.config/mimocode/sync-mimocode.sh`
+     (sincroniza la copia canónica **y** regenera el tarball; ya no hay que lanzar el backup aparte)
+  2. Si el cambio afecta a la instalación, actualiza `setup-mimocode-completo.sh` y, si tocaste
+     `backup-mimocode.sh`, **reembebe su heredoc `BKUEOF`** (el check aborta el backup si difieren)
+  3. Backup completo a mano (opcional, p. ej. tras un cambio grande):
+     `bash ~/Config/mimocode/backup-mimocode.sh` (sincroniza y verifica antes de empaquetar)
 - El tarball se genera en `~/Config/mimocode/backups/mimocode/` e incluye:
   `config.tar.gz` (config activa), `setup.tar.gz` (instalador), `credenciales/auth.json`
   (claves de `~/.local/share/mimocode/auth.json`), `scripts/` (backup + check) y `restore.sh`
-- Retención: 30 días (los tarballs antiguos se eliminan solos)
+- **Grafo de memoria**: además de viajar dentro de `config.tar.gz`, cada ejecución deja una
+  **copia fechada local** en `~/Config/mimocode/backups/mimocode-memory-backup-<fecha>.jsonl`
+  (histórico de rotación; **NUNCA** se vuelca a dotfiles, para no acumular duplicados
+  versionados en el repo — 179 ficheros fue el daño en OpenCode). Copia estable del grafo
+  → `sesion-mimocode/config/data/memory/memory.jsonl` (la que sí viaja a dotfiles, vía sync).
+- **Retención**: `RETENTION_DAYS="${LOG_RETENTION_DAYS:-30}"` → **30 días por defecto**,
+  configurable con la variable `LOG_RETENTION_DAYS` en el entorno. Se aplica a los tarballs
+  **y** a las copias fechadas del grafo. Además hay **poda diaria**: de cada día solo se
+  conserva el **último** tarball (paridad con `backup-opencode.sh`).
+  *(rev. 09/10/2026: antes estaba en 30 días hardcodeado, sin copias del grafo ni poda diaria)*
+  ⚠️ *(rev. 10/10/2026)*: el `find` de la poda debe usar `mimocode-backup-${DAY}-*.tar.gz`.
+  Copiar el patrón de OpenCode (`opencode-*-${DAY}-*`) **no vale**: allí el `*` casa el literal
+  `backup` del nombre, aquí ese guion ya lo consume el prefijo y el `find` no casaba con nada
+  (la poda no borraba nunca). Con el sync regenerando cada 30 min, sin poda serían decenas de
+  tarballs al día.
+  ⚠️ **Ojo con las copias del grafo**: la poda diaria cubre **también** las
+  `mimocode-memory-backup-<fecha>.jsonl` (paso 7c, rev. 10/10/2026: conservar solo la última de
+  cada día), además de la retención de 30 días. Sin esa poda, al regenerar el backup cada
+  30 min se acumularían ~48 copias/día (~5 MB/día, ~150 MB a 30 días).
 
 ### 🔐 Copia en dotfiles (SIN claves de API) — AUTOMÁTICA
 `backup-mimocode.sh` (paso 8) la genera en cada backup volcando `~/Config/mimocode/` a
@@ -234,8 +262,13 @@ archivo con claves de API. Esa copia **NUNCA** debe contener ninguna clave de ni
   **vaciar la carpeta destino antes**.
 - ⚠️ Los tarballs `backups/mimocode/*.tar.gz` **incluyen `credenciales/auth.json`**
   (claves `nvapi-*`/`sk-*`) → **NO** se copian a dotfiles.
-- Excluir siempre: `backups/mimocode/` (tarballs), `.env`/`*.env`, `auth.json`,
-  `credenciales/`, `node_modules/`, `*.bak*`.
+- Excluir siempre (lista exacta del `rsync` del paso 8): `backups/` (el **directorio entero**:
+  tarballs, copias fechadas del grafo y restos de la raíz), `.env`/`*.env`, `auth.json`,
+  `credenciales/`, `node_modules/`, `*.bak*`, `*.tar.gz`, `__pycache__/`, `*.pyc`,
+  `data/*.log`, `mimocode-memory-backup-*.jsonl`.
+  🧹 *(rev. 09/10/2026: se amplió de `backups/mimocode/` a `backups/` — antes solo se excluía
+  el subdirectorio de tarballs y acababan en el repo `backups/duplicados-raiz-20260909/`,
+  un `.pyc` de `lmstudio-proxy` y `data/nvidia-whitelist.log`.)*
 - 🧴 **Saneado del instalador en dotfiles**: `setup-mimocode-completo.sh` **SÍ embebe
   `auth.json` con las claves reales** (paso 4, **a propósito**: así una instalación desde cero
   queda operativa con la misma configuración, igual que OpenCode hace con su `.env`). Por eso
@@ -249,13 +282,22 @@ archivo con claves de API. Esa copia **NUNCA** debe contener ninguna clave de ni
   el grafo de memoria:
   ```bash
   cd ~/Documentos/dotfiles
-  git grep -nIP --exclude='*.md' '(nvapi-|oc_sk_)[A-Za-z0-9_-]{15,}|(^|[^A-Za-z0-9])sk-[A-Za-z0-9]{25,}|AEMET_API_KEY=[A-Za-z0-9]{15,}'
+  git grep -nIP -e '(nvapi-|oc_sk_)[A-Za-z0-9_-]{15,}|(^|[^A-Za-z0-9])sk-[A-Za-z0-9]{25,}|AEMET_API_KEY=[A-Za-z0-9]{15,}' -- ':(exclude)*.md'
   ```
+  ⚠️ **`--exclude='*.md'` NO funciona** desde git 2.56.0: esa opción desapareció de
+  `git grep` (da `error: option 'exclude-standard' no toma valores`). Se usa el
+  **pathspec mágico** `':(exclude)*.md'`, que sí es válido. Devolver `exit=1` = sin claves.
 - ⚠️ El riesgo de claves está en **dos** sitios: los tarballs de `backups/` y el **instalador
   embebido** (que viaja dentro de `sesion-mimocode/`). Ambos se excluyen/sanean en el volcado
   a dotfiles.
-- El `.gitignore` del repo debe incluir `mimocode/backups/mimocode/*.tar.gz`,
-  `**/*.env`, `**/auth.json` y `**/credenciales/`.
+- El `.gitignore` del repo debe incluir `**/backups/**/*.tar.gz`, `**/*.env`, `**/auth.json`,
+  `**/credenciales/` y `**/mimocode-memory-backup-*.jsonl` (segunda barrera por si alguien
+  hace `git add -A`; la primera es el `rsync` del paso 8).
+- ✅ **El grafo de memoria SÍ se versiona en dotfiles** (decisión de Antonio, 22/09/2026:
+  «el grafo nunca se excluye de dotfiles»). Por eso el `.gitignore` de la config
+  (`~/.config/mimocode/.gitignore`) usa `data/*.log` y **NO** `data/`: con `data/` el grafo
+  quedaba ignorado para git y dejaba de viajar al repo. *(arreglado el 09/10/2026:
+  estaba en `data/` y `memory.jsonl` NO estaba trakeado, al contrario que en OpenCode.)*
 
 ## Atención al script setup-mimocode-completo.sh (IMPORTANTE)
 El script `~/Config/mimocode/sesion-mimocode/setup-mimocode-completo.sh` es el INSTALADOR desde
@@ -353,10 +395,13 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
   que indica de qué archivo procede cada entrada).
 - **Cada perfil declara sus bloques `lsp` y `mcp` COMPLETOS a propósito** (son autodescriptivos: el archivo se
   entiende por sí solo, sin depender de otro). Comportamiento por perfil (verificado 11/09/2026):
-  - `mimocode.jsonc` (global): los **5 MCP activos**. Modelo barato (grupo `lite`) → `opencode-go/deepseek-v4.1-flash`.
+  - `mimocode.jsonc` (global): los **5 MCP activos**. Modelo barato (grupo `lite`) → `opencode-go/mimo-v2.6-flash`.
   - `profiles/local`: solo `filesystem`, `memory` y `fetch` (`context7` y `sequential_thinking` con `enabled: false`)
     + modelo local. Es lo que se ve en la TUI: 3 MCP "Connected".
+    **`lite` → `lmstudio/models-qwen3.8-9b`** (regla de Antonio, 09/10/2026: en el perfil local
+    la delegación barata se queda EN LOCAL; `build`/`cloud` sí van a `opencode-go/mimo-v2.6-flash`).
   - `profiles/cloud`: los **5 MCP activos** pero `disabled_providers: ["lmstudio"]` → NO carga el modelo local.
+    **`lite` → `opencode-go/mimo-v2.6-flash`** (raíz `model` y agentes `build`/`cloud` también).
   ⚠️ Al añadir o cambiar un LSP o un MCP hay que replicarlo a mano en los 3 archivos: **la duplicación es intencional**.
   Verificación rápida de coherencia (debe dar `lsp 11` en los tres, y MCP 5 · 3 · 5):
   ```bash
@@ -453,7 +498,7 @@ OpenCode. Los 3 perfiles de **MiMoCode NO se actualizan solos**: hay que corregi
    ```
 4. Cerrar el ciclo:
    ```bash
-   bash ~/.config/mimocode/sync-mimocode.sh && bash ~/Config/mimocode/backup-mimocode.sh
+   bash ~/.config/mimocode/sync-mimocode.sh   # sincroniza Y regenera el tarball
    ```
 
 **Comprobar si un modelo concreto sigue vivo** (sustituir `MODELO`):

@@ -3,7 +3,7 @@ Perfiles global, local y cloud, MCPs y plugin de voz.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 10/09/2026 · rev. 23/09/2026 | Antonio |
+| ✅ Activo | 10/09/2026 · rev. 09/10/2026 | Antonio |
 
 > Perfiles global / local / cloud, MCPs y plugin de voz
 
@@ -47,25 +47,25 @@ La selección se hace con `MIMOCODE_CONFIG_DIR` en los lanzadores `start-mimo*.s
 
 ### Archivo: `~/.config/mimocode/mimocode.jsonc`
 
-Perfil por defecto para `mimo`. Incluye `model` principal, `model_groups.lite` (modelo barato), `default_agent`, `permission` con `external_directory`, los **7 agentes**, los 3 proveedores (`opencode-go`, `nvidia`, `lmstudio`) y los **5 MCP**. **El plugin de voz NO va aquí** (los plugins TUI van en `tui.json`).
+Perfil por defecto para `mimo`. Incluye `model` principal, `model_groups.lite` (modelo barato), `default_agent`, `permission` con `external_directory`, los **8 agentes**, los 3 proveedores (`opencode-go`, `nvidia`, `lmstudio`) y los **5 MCP**. **El plugin de voz NO va aquí** (los plugins TUI van en `tui.json`).
 
 ```jsonc
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
   "model": "nvidia/meta/muse-glimmer-30b",
   "model_groups": {
-    "lite": "opencode-go/deepseek-v4.1-flash"
+    "lite": "opencode-go/mimo-v2.6-flash"
   },
   "default_agent": "nvidia",
   "share": "manual",
   "autoupdate": "notify",
-  "agent":    { /* 7 agentes — ver sección «Agentes» */ },
+  "agent":    { /* 8 agentes — ver sección «Agentes» */ },
   "provider": { /* opencode-go, nvidia (whitelist 7), lmstudio */ },
   "mcp":      { /* context7, filesystem, memory, fetch, sequential_thinking */ }
 }
 ```
 
-> ⚠️ **`small_model` NO se usa en MiMoCode**: no está definido en ninguno de los 3 perfiles. El modelo barato se fija con `model_groups.lite` (`opencode-go/deepseek-v4.1-flash` en global y cloud; `lmstudio/models-qwen3.8-9b` en local).
+> ⚠️ **`small_model` NO se usa en MiMoCode**: no está definido en ninguno de los 3 perfiles. El modelo barato se fija con `model_groups.lite` (`opencode-go/mimo-v2.6-flash` en global y cloud; `lmstudio/models-qwen3.8-9b` en local — **regla de Antonio 09/10/2026**: en el perfil local la delegación barata se queda EN LOCAL).
 >
 > ⚠️ El `model` top-level del global sigue en `nvidia/meta/muse-glimmer-30b`, pero el **agente** `nvidia` —que es el `default_agent`— apunta desde el 23/09/2026 a `nvidia/nvidia/nemotron-3-ultra-550b-a55b`. El top-level no lo usa ningún agente.
 
@@ -85,11 +85,17 @@ Replica `opencode-local.json` con esquema MiMoCode. Agente por defecto `local`. 
 
 ### Archivo: `~/.config/mimocode/profiles/cloud/mimocode.jsonc`
 
-Replica `opencode-cloud.json`. Desactiva el proveedor local (`disabled_providers: ["lmstudio"]`), `default_agent: cloud`, `model` = `opencode-go/deepseek-v4.1-flash`, `share`/`autoupdate` definidos y `permission.external_directory` añadido. Carga los **5 MCP** igual que el perfil global, pero **NO** carga el modelo local.
+Replica `opencode-cloud.json`. Desactiva el proveedor local (`disabled_providers: ["lmstudio"]`), `default_agent: cloud`, `model` = `opencode-go/mimo-v2.6-flash`, `share`/`autoupdate` definidos y `permission.external_directory` añadido. Carga los **5 MCP** igual que el perfil global, pero **NO** carga el modelo local.
 
 > 🔴 **El agente `local` va con `disable: true`** (22/09/2026), replicando el `disabled: true` de `opencode-cloud.json`. Es coherente con `disabled_providers: ["lmstudio"]`: no habría modelo local que usar. El agente `title` también apunta a la nube (`opencode-go/deepseek-v4.1-flash`).
 
-> 🤖 **Modelo de `opencode-go` = `deepseek-v4.1-flash` (11/09/2026):** en los 3 perfiles se sustituyó `opencode-go/deepseek-v4-flash` por `opencode-go/deepseek-v4.1-flash` en el modelo de trabajo (`model` top-level y agentes `build`, `plan` y `cloud`) y en `model_groups.lite`. `provider.opencode-go` no admite un campo de "modelo por defecto" en el esquema, así que el predeterminado se fija en las claves `model` / `model_groups` / `agent.<nombre>.model`.
+> 🤖 **Modelo de trabajo de `opencode-go` = `opencode-go/mimo-v2.6-flash` (09/10/2026):**
+> - `MiMo-V2.6-Flash` es ahora el modelo de los agentes **`build`** y **`cloud`** en los 3 perfiles,
+>   del **`model` raíz del perfil cloud** y de **`model_groups.lite`** en global y cloud.
+> - Historial: `deepseek-v4-flash` → `deepseek-v4.1-flash` (11/09/2026) → `mimo-v2.6-flash` en
+>   `build`/`cloud`/`lite` (09/10/2026). `plan` y `title` **siguen** en `deepseek-v4.1-flash`.
+> - `provider.opencode-go` no admite un campo de "modelo por defecto" en el esquema, así que el
+>   predeterminado se fija en las claves `model` / `model_groups` / `agent.<nombre>.model`.
 
 ---
 
@@ -116,7 +122,7 @@ Los plugins TUI y los keybinds van en el archivo TUI separado `tui.json` (NO en 
 
 ## Agentes
 
-Los **7 agentes** están replicados en los 3 perfiles a partir de la configuración **activa** de OpenCode
+Los **8 agentes** están replicados en los 3 perfiles a partir de la configuración **activa** de OpenCode
 (`~/.config/opencode/opencode.json`, `opencode-local.json` y `opencode-cloud.json`), traducidos al
 esquema de MiMoCode:
 
@@ -130,20 +136,21 @@ esquema de MiMoCode:
 | Agente | `mode` | Global | Local | Cloud |
 |--------|--------|--------|-------|-------|
 | `title` | (def.) | `lmstudio/models-qwen3.8-9b` | `lmstudio/models-qwen3.8-9b` | `opencode-go/deepseek-v4.1-flash` |
-| `build` | (def.) | `opencode-go/deepseek-v4.1-flash` | `opencode-go/deepseek-v4.1-flash` | `opencode-go/deepseek-v4.1-flash` |
-| `plan` | (def.) | `opencode-go/deepseek-v4.1-flash` | `opencode-go/deepseek-v4.1-flash` | `opencode-go/deepseek-v4.1-flash` |
+| `build` | (def.) | `opencode-go/mimo-v2.6-flash` | `opencode-go/mimo-v2.6-flash` | `opencode-go/mimo-v2.6-flash` |
+| `plan` | (def.) | `opencode-go/deepseek-v4.1-flash` | igual | igual |
 | `local` | `primary` | `lmstudio/models-qwen3.8-9b` | `lmstudio/models-qwen3.8-9b` | 🔴 `disable: true` |
-| `cloud` | `primary` | `opencode-go/deepseek-v4.1-flash` | `opencode-go/deepseek-v4.1-flash` | `opencode-go/deepseek-v4.1-flash` |
+| `cloud` | `primary` | `opencode-go/mimo-v2.6-flash` | `opencode-go/mimo-v2.6-flash` | `opencode-go/mimo-v2.6-flash` |
 | `nvidia` | `all` | `nvidia/nvidia/nemotron-3-ultra-550b-a55b` | igual | igual |
 | `multimodal` | `all` | `opencode-go/mimo-v2.5` | igual | igual |
+| `compose` | `primary` | `nvidia/meta/muse-glimmer-30b` | igual | igual |
 
 > 🤖 `build` y `plan` conservan el prompt que en OpenCode era `{file:./prompts/read-agents.txt}`, con la ruta adaptada a `~/.config/mimocode/AGENTS.md` y el texto **inline** (MiMoCode ya carga `AGENTS.md` vía `instructions`, así que es un recordatorio redundante pero fiel al original). `multimodal` mantiene su prompt de sistema original.
 > 🔐 El agente `cloud` declara `permission { actor: allow, task: allow }` — el equivalente MiMoCode del `permissions: [{action: "subagent"}]` de OpenCode — para poder delegar en subagentes.
 > ⚠️ `mode: all` permite usar el agente tanto como primario (Shift+Tab) como de subagente; `primary` lo limita a primario.
 > ⚠️ `nvidia` ya no lleva `temperature: 1` / `top_p: 0.95` (eran un ajuste específico de Muse Glimmer); ahora apunta a **Nemotron 3 Ultra 550B**, actualizado el 23/09/2026.
-> ✅ Verificado con `mimo debug config` el 23/09/2026: los 3 perfiles cargan los 7 agentes sin error de esquema.
+> ✅ Verificado con `mimo debug config` el 09/10/2026: los 3 perfiles cargan los **8 agentes** sin error de esquema.
 
-Comprobación rápida de coherencia (debe listar **7** agentes en los tres, con `local` `OFF` solo en cloud):
+Comprobación rápida de coherencia (debe listar **8** agentes en los tres, con `local` `OFF` solo en cloud):
 
 ```bash
 for p in "" profiles/local profiles/cloud; do
@@ -161,9 +168,10 @@ done
 
 | Característica | Global | Local | Cloud |
 |----------------|--------|-------|-------|
-| `model` | nvidia/meta/muse-glimmer-30b | lmstudio/models-qwen3.8-9b | opencode-go/deepseek-v4.1-flash |
+| `model` | nvidia/meta/muse-glimmer-30b | lmstudio/models-qwen3.8-9b | opencode-go/mimo-v2.6-flash |
+| `model_groups.lite` | opencode-go/mimo-v2.6-flash | lmstudio/models-qwen3.8-9b | opencode-go/mimo-v2.6-flash |
 | `default_agent` | nvidia | local | cloud |
-| Agentes | **7** | **7** | **7** (`local` desactivado) |
+| Agentes | **8** | **8** | **8** (`local` desactivado) |
 | LM Studio | ✅ | ✅ | ❌ |
 | MCP activos | **5** (todos) | **3**: `filesystem`, `memory`, `fetch` | **5** (todos) |
 | MCP desactivados | - | `context7`, `sequential_thinking` | - |

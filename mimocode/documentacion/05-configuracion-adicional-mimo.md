@@ -3,7 +3,7 @@ LSP, MCP, permisos y variables de entorno.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 10/09/2026 · rev. 23/09/2026 | Antonio |
+| ✅ Activo | 10/09/2026 · rev. 10/10/2026 | Antonio |
 
 > LSP, MCP, permisos y variables
 
@@ -51,7 +51,7 @@ Servidores de lenguaje en `lsp` del config global: python, c, cpp, rust, typescr
 
 ---
 
-## Estructura de ficheros (rev. 23/09/2026)
+## Estructura de ficheros (rev. 10/10/2026)
 
 Además de la configuración, `~/.config/mimocode/` contiene la **infraestructura propia** y el sistema de backup:
 
@@ -59,7 +59,7 @@ Además de la configuración, `~/.config/mimocode/` contiene la **infraestructur
 |-------------------|---------|
 | `mimocode.jsonc`, `profiles/`, `tui.json` | Configuración (3 perfiles + TUI) |
 | `AGENTS.md` | Instrucciones del agente (referenciado en `instructions`) |
-| `sync-mimocode.sh` | Sincroniza la copia canónica; borra restos de config en la raíz de `Config/` |
+| `sync-mimocode.sh` | Sincroniza la copia canónica, borra restos de config en la raíz de `Config/` y **al terminar regenera el tarball** llamando a `backup-mimocode.sh` (guarda anti-bucle `MIMOCODE_LLAMADO_POR_BACKUP=1`) |
 | `start-lmstudio.sh`, `start-lmstudio-server.sh`, `lmstudio-proxy.py` | Infraestructura LM Studio **propia** (autónoma de OpenCode) |
 | `mimocode-voice-modified/` | Plugin de voz |
 | `data/memory/memory.jsonl` | Grafo de memoria MCP |
@@ -69,8 +69,9 @@ Además de la configuración, `~/.config/mimocode/` contiene la **infraestructur
 |--------------|---------|
 | `~/Config/mimocode/backup-mimocode.sh` | Backup (sincroniza + verifica + empaqueta) |
 | `~/Config/mimocode/check-setup-completo.sh` | Verifica el setup y los **11 heredocs** del instalador |
-| `~/Config/mimocode/sesion-mimocode/setup-mimocode-completo.sh` | Instalador autónomo (13 pasos) |
+| `~/Config/mimocode/sesion-mimocode/setup-mimocode-completo.sh` | Instalador autónomo (14 pasos: PASO 0 → 13) |
 | `~/Config/mimocode/backups/mimocode/*.tar.gz` | Tarballs (permisos `600`, directorio `700`) |
+| `~/Config/mimocode/backups/mimocode-memory-backup-*.jsonl` | Copias **fechadas** del grafo (una por backup; retención `LOG_RETENTION_DAYS`, 30 días por defecto, **más poda diaria**: solo la última de cada día; NO van a dotfiles) |
 
 > 🔐 **Claves**: van en `~/Config/mimocode/` (tarballs + instalador embebido) y **NUNCA** en `~/Documentos/dotfiles/`.
 > Detalle en `06-agents-md-mimo.md` → «Reglas de backup y claves».

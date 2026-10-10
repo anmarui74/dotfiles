@@ -3,7 +3,7 @@ Diagnóstico completo del fondo translúcido en kitty y comentario listo para pu
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Diagnóstico cerrado · ✅ comentario **publicado** en el issue #1146 | 16/09/2026 · rev. 16/09/2026 | Antonio |
+| ✅ Diagnóstico cerrado · ✅ comentario **publicado** en el issue #1146 | 16/09/2026 · rev. 10/10/2026 | Antonio |
 
 > Es un **bug de MiMoCode**, no de la configuración ni del terminal: `renderer.setBackgroundColor(theme.background)` hace que el terminal aplique su `background_opacity` a **toda** la TUI, con cualquier tema. El arreglo está propuesto en el PR **#1382**, sin fusionar.
 
@@ -24,7 +24,7 @@ Diagnóstico completo del fondo translúcido en kitty y comentario listo para pu
 |---|---|
 | Issue oficial | [#1146](https://github.com/XiaomiMiMo/MiMo-Code/issues/1146) *"Theme background stays transparent after changing theme"* — **ABIERTO** (19/06/2026) |
 | PR de arreglo | [#1382](https://github.com/XiaomiMiMo/MiMo-Code/pull/1382) *"fix(tui): use solid system theme background"* — **sin fusionar** |
-| Versión afectada | **0.1.14**, que es la **última** publicada (02/09/2026) → no hay actualización que lo arregle |
+| Versión afectada | **0.1.14** (al reportarse). La última publicada hoy es **0.1.15** (22/09/2026), pero el arreglo no ha entrado: el issue #1146 sigue **abierto** y el PR #1382 **sin fusionar** |
 | Síntoma | Los colores del tema se aplican, pero el fondo se queda translúcido (se ve el escritorio) con **cualquier** tema y persiste tras reiniciar |
 | Alcance | Cualquier terminal que aplique opacidad al fondo por defecto (kitty, etc.) |
 

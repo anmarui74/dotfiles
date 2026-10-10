@@ -3,7 +3,7 @@ Restaurar la configuración, el grafo de memoria y el sistema completo desde un 
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🛟 Recuperación | 10/09/2026 · rev. 23/09/2026 | Antonio |
+| 🛟 Recuperación | 10/09/2026 · rev. 10/10/2026 | Antonio |
 
 > Procedimiento paso a paso para restaurar MiMoCode desde un tarball, recuperar el
 > grafo de memoria o instalar todo desde cero con el instalador autónomo.
@@ -45,8 +45,9 @@ systemctl --user stop mimocode-sync.timer 2>/dev/null
 pkill -f "lmstudio-proxy" 2>/dev/null
 ```
 
-> ⚠️ El timer `mimocode-sync.timer` sincroniza cada 30 min; detenerlo evita que interfiera.
-> Al terminar, reactivarlo con `systemctl --user start mimocode-sync.timer`.
+> ⚠️ El timer `mimocode-sync.timer` sincroniza **y regenera el tarball** cada 30 min (desde el
+> 10/10/2026): detenerlo evita que interfiera durante la restauración y que te pise el estado a
+> medio restaurar. Al terminar, reactivarlo con `systemctl --user start mimocode-sync.timer`.
 
 ---
 
@@ -54,17 +55,22 @@ pkill -f "lmstudio-proxy" 2>/dev/null
 
 Cuando el grafo se pierde o se corrompe.
 
-1. **Localizar el backup más reciente** (el grafo viaja en la copia canónica y en dotfiles):
+1. **Localizar el backup más reciente** (hay 3 fuentes: copias fechadas locales, copia canónica y dotfiles):
 
    ```bash
+   # Copias FECHADAS locales: una por ejecución de backup (retención 30 días).
+   # Son las únicas que permiten volver a un estado ANTERIOR, no solo al último.
+   ls -t ~/Config/mimocode/backups/mimocode-memory-backup-*.jsonl | head -3
+
+   # Copia estable (siempre la última sincronizada)
    ls -t ~/Config/mimocode/sesion-mimocode/config/data/memory/memory.jsonl
    ```
 
-2. **Guardar el actual por seguridad** y copiar el bueno:
+2. **Guardar el actual por seguridad** y copiar el bueno (ajusta la fuente al que quieras restaurar):
 
    ```bash
    cp ~/.config/mimocode/data/memory/memory.jsonl ~/.config/mimocode/data/memory/memory.jsonl.corrupto 2>/dev/null
-   cp ~/Config/mimocode/sesion-mimocode/config/data/memory/memory.jsonl \
+   cp ~/Config/mimocode/backups/mimocode-memory-backup-AAAAAAMMDD-HHMMSS.jsonl \
       ~/.config/mimocode/data/memory/memory.jsonl
    ```
 
@@ -112,7 +118,7 @@ Para recuperar la configuración completa (incluidas credenciales) desde un back
 ## Escenario C: instalación desde cero
 
 El instalador `setup-mimocode-completo.sh` es **autónomo**: deja MiMoCode igual que la
-instalación activa partiendo de un sistema limpio. **13 pasos**:
+instalación activa partiendo de un sistema limpio. **14 pasos** (PASO 0 → 13):
 
 ```bash
 bash ~/Config/mimocode/setup-mimocode-completo.sh

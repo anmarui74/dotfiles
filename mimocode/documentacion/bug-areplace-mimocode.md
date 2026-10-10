@@ -4,7 +4,7 @@ Error fatal en TUI MiMoCode 0.1.14 relacionado con `A.replace(/\n$/,"")` en el b
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ⚠️ abierto | 09/09/2026 · rev. 09/09/2026 | Antonio |
+| ⚠️ abierto | 09/09/2026 · rev. 10/10/2026 | Antonio |
 
 > Reporte inicial a partir de stack trace de OpenCode 0.1.14. MiMoCode es fork y comparte la TUI.
 
@@ -17,6 +17,7 @@ Error fatal en TUI MiMoCode 0.1.14 relacionado con `A.replace(/\n$/,"")` en el b
 4. [Logs revisados](#logs-revisados)
 5. [Pasos de reproducción](#pasos-de-reproducción)
 6. [Mitigación](#mitigación)
+7. [Estado a 10/10/2026](#estado-a-10102026)
 
 ---
 
@@ -49,6 +50,15 @@ Revisión 09/09/2026 09:03-09:07. No se encontró `A.replace` en logs activos. S
 
 ## Mitigación
 Reiniciar sesión, forzar agente build, monitorear logs activos.
+
+---
+
+## Estado a 10/10/2026
+
+- La CLI está en **0.1.15** (`mimo --version`), que es la **última publicada** (v0.1.15, 22/09/2026).
+- El patrón `replace(/\n$/, "")` **sigue presente** en el bundle (`~/.mimocode/bin/mimo`), así que el
+  fallo no se puede dar por resuelto por cambio de versión.
+- Sin cambios en el diagnóstico ni en la mitigación (forzar `build`, reiniciar sesión).
 
 ---
 
