@@ -10,7 +10,7 @@
     4. Hace la primera importación del estado de Linux.
 
   Uso (PowerShell normal, SIN administrador):
-    powershell -ExecutionPolicy Bypass -File E:\HermesSync\windows\instalar-en-windows.ps1
+    powershell -ExecutionPolicy Bypass -File D:\HermesSync\windows\instalar-en-windows.ps1
     ... -SaltarSemilla   (si quieres configurar Hermes a mano)
     ... -SoloTareas      (sólo registra las tareas programadas)
 #>

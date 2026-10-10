@@ -6,7 +6,7 @@
 #   lm-studio-gui estado     qué modo está activo
 #
 # El modo servicio (sin ventana) es el del arranque de sesión y el que sirve el
-# API en el 1234 para Hermes/OpenCode; la ventana es solo para gestionar modelos.
+# API en el 1234 para Hermes; la ventana es solo para gestionar modelos.
 set -uo pipefail
 
 SERVICIO="lm-studio-app.service"

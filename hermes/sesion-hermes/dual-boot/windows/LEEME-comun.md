@@ -1,5 +1,9 @@
 # HermesSync — estado compartido de Hermes entre Linux y Windows
 
+> ⚠️ Las letras de unidad pueden cambiar entre sesiones: identifica el disco compartido por
+> su **etiqueta (`SEAGATE`)**, no por la letra. En las últimas sesiones de Windows era `D:`
+> (el `E:` de este equipo es el volumen espejo `TOSHIBA`).
+
 Esta carpeta es el punto de encuentro de los dos sistemas que tienes en el mismo PC
 (dual boot): el Hermes de Linux y el de Windows. Nunca están encendidos a la vez, así
 que cada uno **publica** aquí su estado al terminar y **recoge** el del otro al arrancar.
@@ -29,7 +33,7 @@ HermesSync/
    del disco SEAGATE si no es `E:`):
 
    ```powershell
-   powershell -ExecutionPolicy Bypass -File E:\HermesSync\windows\instalar-en-windows.ps1
+   powershell -ExecutionPolicy Bypass -File D:\HermesSync\windows\instalar-en-windows.ps1
    ```
 
    Ese único comando:
@@ -42,14 +46,14 @@ HermesSync/
 3. Comprueba que todo está al día:
 
    ```powershell
-   powershell -ExecutionPolicy Bypass -File E:\HermesSync\windows\hermes-dual-sync.ps1 -Accion estado
+   powershell -ExecutionPolicy Bypass -File D:\HermesSync\windows\hermes-dual-sync.ps1 -Accion estado
    ```
 
 La carpeta `semilla` contiene claves de API en claro. Se genera **solo a petición**
 (`hermes-dual-sync semilla` en Linux, `-Accion semilla` en Windows) y ya no se recrea sola
 cuando falta. En cuanto el segundo sistema esté configurado, bórrala desde cualquiera de los
 dos (Linux: `rm -rf /mnt/seagate/HermesSync/semilla`; Windows:
-`Remove-Item E:\HermesSync\semilla -Recurse -Force`) y no volverá.
+`Remove-Item D:\HermesSync\semilla -Recurse -Force`) y no volverá.
 
 ## Rutina diaria (automática)
 
@@ -72,7 +76,7 @@ hermes-dual-sync listar-historico    # copias guardadas
 hermes-dual-sync restaurar <equipo> <epoch>
 ```
 
-En Windows (PowerShell, dentro de `E:\HermesSync\windows`):
+En Windows (PowerShell, dentro de `D:\HermesSync\windows`):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File hermes-dual-sync.ps1 -Accion estado

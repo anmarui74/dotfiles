@@ -3,7 +3,7 @@ Seguimiento del problema de compatibilidad de esquemas del servidor MCP memory.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ⚠️ Abierto · pendiente de mantenedores | 31/07/2026 · rev. 22/09/2026 | Antonio |
+| 🔒 Cerrado automáticamente · sin arreglar | 31/07/2026 · rev. 10/10/2026 | Antonio |
 
 > 📋 Seguimiento del problema de compatibilidad de esquemas del servidor MCP memory.
 
@@ -49,9 +49,14 @@ defecto) y OpenCode solo valida 2020-12. El SDK oficial de MCP ya tiene el fix.
 | Etapa | Estado |
 |-------|--------|
 | Creado (31/07/2026) | ✅ |
-| Respuesta de mantenedores | ⬜ Pendiente |
-| Arreglado | ⬜ Pendiente |
-| Verificado tras arreglo | ⬜ Pendiente |
+| Respuesta de mantenedores | ⬜ Ninguna (solo el bot: posibles duplicados #39333 y #39392) |
+| Arreglado | ⬜ No |
+| Cerrado | 🔒 **30/09/2026**, por el bot de GitHub y **sin arreglar** (`not_planned`): cierre automático a los 60 días sin actividad |
+| Verificado tras arreglo | ⬜ No aplica |
+
+> 🤖 El cierre es **administrativo, no un arreglo**. Mensaje del bot: «To stay organized issues are
+> automatically closed after 60 days of no activity. If the issue is still relevant please open a
+> new one.» El rechazo de `outputSchema` draft-07 **no consta como corregido** en OpenCode.
 
 ---
 

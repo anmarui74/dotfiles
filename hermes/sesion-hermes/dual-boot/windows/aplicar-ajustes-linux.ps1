@@ -9,6 +9,11 @@
        multimodal…), fija el modelo por defecto (deepseek-v4.1-flash via opencode-go, igual
        que en Linux) y el plugin `nvidia` que limita el catálogo del proveedor al whitelist
        de OpenCode, para que el selector /model muestre lo mismo que en Linux.
+    3) AVISOS DEL ESQUEMA: si la copia LOCAL del motor del dual boot se ha quedado
+       atrás respecto a la distribuida (o el lanzador de la carpeta Inicio dejó de
+       importar antes del gateway), lo dice para que se actualice.  No lo cambia
+       por su cuenta: la copia local es la que manda y una republicación desde
+       Linux no debe revertir arreglos hechos aquí.
 
   Uso (sin administrador), desde esta carpeta (la carpeta windows/ de HermesSync):
 
@@ -251,6 +256,32 @@ else {
     if ($ultima) { $salto = "`r`n" }
     [System.IO.File]::AppendAllText($envFile, "$salto# LM Studio local (127.0.0.1:1234): marca el proveedor para el selector /model`r`nLM_API_KEY=$valorLm`r`n", (New-Object System.Text.UTF8Encoding($false)))
     Ok "LM_API_KEY anadida a $envFile"
+}
+
+# ── 3d. Motor del esquema dual boot: ¿la copia local está al día? ──
+Write-Host ""
+Write-Host "3d. Motor del esquema dual boot (hermes-dual-sync.ps1)"
+# Windows ejecuta SU copia (%LOCALAPPDATA%\hermes\dual-boot), a propósito, para que una
+# republicación desde Linux no revierta arreglos locales.  Aquí solo se avisa si difiere:
+# esa copia no tendría los últimos arreglos (import por fusión con Hermes en marcha, etc.).
+$desfase = @()
+foreach ($par in @(@((Join-Path $raiz 'hermes-dual-sync.ps1'), (Join-Path $HermesHome 'dual-boot\hermes-dual-sync.ps1')),
+                   @((Join-Path $raiz 'copiar-state.py'), (Join-Path $HermesHome 'dual-boot\copiar-state.py')))) {
+    if (-not (Test-Path $par[0])) { Aviso "no encuentro la copia distribuida: $($par[0])" }
+    elseif (-not (Test-Path $par[1])) { $desfase += (Split-Path -Leaf $par[1]) }
+    elseif ((Get-FileHash $par[0]).Hash -ne (Get-FileHash $par[1]).Hash) { $desfase += (Split-Path -Leaf $par[1]) }
+}
+if ($desfase.Count -eq 0) { Ok "motor local al día (idéntico al distribuido)" }
+elseif ($SoloEstado) { Aviso ("estado: pendiente de actualizar -> " + ($desfase -join ", ")) }
+else {
+    Aviso ("la copia LOCAL del motor difiere de la distribuida: " + ($desfase -join ", "))
+    Aviso ("actualízala con: powershell -ExecutionPolicy Bypass -File `"$raiz\actualizar-motor-local.ps1`"")
+}
+$inicio = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Startup\Hermes_Gateway.vbs'
+if (Test-Path $inicio) {
+    $textoLanzador = Get-Content $inicio -Raw -Encoding Default
+    if ($textoLanzador -match 'hermes-sync\.cmd') { Ok "lanzador de la carpeta Inicio: importa antes del gateway" }
+    else { Aviso "el lanzador de la carpeta Inicio NO importa antes del gateway (registrar-tareas.cmd)" }
 }
 
 # ── 4. Verificación ──

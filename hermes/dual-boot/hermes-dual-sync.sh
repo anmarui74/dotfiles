@@ -235,8 +235,12 @@ hacer_export() {
     fi
 
     # 7) Manifiesto
-    sesiones="$(sqlite3 "$HERMES_HOME_DIR/state.db" 'SELECT COUNT(*) FROM sessions;' 2>/dev/null || echo 0)"
-    mensajes="$(sqlite3 "$HERMES_HOME_DIR/state.db" 'SELECT COUNT(*) FROM messages;' 2>/dev/null || echo 0)"
+    # Los recuentos del manifiesto se toman de la COPIA publicada, no de la base
+    # viva: la viva puede llevar alguna sesión más (p. ej. una oculta y sin mensajes
+    # creada entre la copia y el recuento) y entonces el otro equipo abortaba el
+    # import (state.db remota tiene N sesiones y el manifiesto declara M). 10/10/2026.
+    sesiones="$(sqlite3 "$COMUN/estado/state.db" 'SELECT COUNT(*) FROM sessions;' 2>/dev/null || echo 0)"
+    mensajes="$(sqlite3 "$COMUN/estado/state.db" 'SELECT COUNT(*) FROM messages;' 2>/dev/null || echo 0)"
     sha="$(sha256sum "$COMUN/estado/state.db" | awk '{print $1}')"
     version="$(hermes --version 2>/dev/null | head -1 | sed 's/^Hermes Agent //; s/ .*//')"
     python3 - "$COMUN/estado/MANIFEST.json" "$HOST_ACTUAL" "$sesiones" "$mensajes" "$sha" "$version" "$HERMES_HOME_DIR" <<'PY'
@@ -319,7 +323,7 @@ hacer_import() {
     if [ -z "$ses_remotas" ]; then
         morir "state.db remota ilegible (no tiene tabla de sesiones). Import abortado."
     elif [ -n "$r_sesiones" ] && [ "$r_sesiones" != "0" ] && [ "$ses_remotas" != "$r_sesiones" ]; then
-        morir "state.db remota tiene $ses_remotas sesiones pero el manifiesto declara $r_sesiones: copia incompleta. Import abortado."
+        avisar "AVISO: la copia tiene $ses_remotas sesiones y el manifiesto declara $r_sesiones; el sha256 ya se comprueba aparte, sigo con el import."
     fi
 
     log "📥 Importando estado de '$r_host' publicado el $(date -d "@$r_epoch" '+%d/%m/%Y %H:%M') ($r_sesiones sesiones)"

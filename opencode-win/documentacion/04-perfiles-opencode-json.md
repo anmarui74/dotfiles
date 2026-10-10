@@ -3,7 +3,7 @@ Perfiles global, local y cloud, agentes, MCPs y proveedores en OpenCode V2
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo (V2 · 3 perfiles) | 10/09/2026 · rev. 24/09/2026 | Antonio |
+| ✅ Activo (V2 · 3 perfiles) | 10/09/2026 · rev. 03/10/2026 | Antonio |
 
 > Config activa en `C:\Users\evo01\.config\opencode\`. Los perfiles usan la **sintaxis canónica V2** (`agents`, `providers`, `permissions`, `mcp.servers`) y se activan por lanzador.
 
@@ -29,25 +29,25 @@ Perfiles global, local y cloud, agentes, MCPs y proveedores en OpenCode V2
 
 ## Descripción general
 
-OpenCode fusiona la configuración: primero la **global** (`opencode.jsonc`), luego el archivo indicado por `OPENCODE_CONFIG`. Por eso `opencode.jsonc` es la **base común** (agentes, proveedores, MCPs, permisos) y los otros perfiles contienen **solo lo que difiere**.
+OpenCode fusiona la configuración: primero el archivo indicado por `OPENCODE_CONFIG`. La **app de escritorio (V2)** lee siempre `opencode.jsonc`, que también está en **esquema V2**.
 
-Hay **tres archivos** en `C:\Users\evo01\.config\opencode\`:
+Hay **tres archivos** en `C:\Users\evo01\.config\opencode\`, todos en formato V2:
 
 | Archivo | Propósito |
 |---------|-----------|
-| `opencode.jsonc` | **GLOBAL / base común** · agente `cloud` por defecto · todos los agentes, proveedores y MCPs |
-| `opencode-local.json` | **LOCAL** · agente `local` (Qwen 3.8 en LM Studio) · solo MCPs esenciales (`fetch`, `filesystem`, `memory`); `context7` y `sequential_thinking` deshabilitados |
-| `opencode-cloud.json` | **CLOUD estricto** · agente `cloud` · bloquea los providers `lmstudio` y `local` y desactiva el agente local |
+| `opencode.jsonc` | **GLOBAL / base común** · agente `cloud` por defecto · agentes, proveedores, MCPs y `lsp` |
+| `opencode-local.json` | **LOCAL** · agente `local` (Qwen 3.8 en LM Studio) · MCPs esenciales (`fetch`, `filesystem`, `memory`) y `lsp` |
+| `opencode-cloud.json` | **CLOUD estricto** · agente `cloud` · bloquea los providers `lmstudio` y `local`, desactiva el agente local y mantiene `lsp` |
 
-Cada perfil se activa con **su propia función de PowerShell** vía `OPENCODE_CONFIG`. **Nada se copia nunca sobre `opencode.jsonc`.**
+Cada perfil se activa con **su propia función de PowerShell** vía `OPENCODE_CONFIG`.
 
-| Función | Config | Agente por defecto | LM Studio | MCPs |
-|---------|--------|--------------------|-----------|------|
-| `ocv` | `opencode.jsonc` | `cloud` | ✅ Carga modelo | Todos (5) |
-| `ocv-local` | `opencode-local.json` | `local` (Qwen local) | ✅ Carga modelo | 3 esenciales |
-| `ocv-cloud` | `opencode-cloud.json` | `cloud` | ❌ No carga | Todos (5) |
+| Función | Config | Agente por defecto | LM Studio | MCPs | LSP |
+|---------|--------|--------------------|-----------|------|-----|
+| `ocv` | `opencode.jsonc` | `cloud` | ✅ Carga modelo | Todos (5) | ✅ |
+| `ocv-local` | `opencode-local.json` | `local` (Qwen local) | ✅ Carga modelo | 3 esenciales | ✅ |
+| `ocv-cloud` | `opencode-cloud.json` | `cloud` | ❌ No carga | Todos (5) | ✅ |
 
-> 🔄 **Cambio del 24/09/2026:** se eliminó `opencode-local-min.json` (ya no existe) y se creó `opencode-cloud.json`. Ahora la estructura es **idéntica a la de Linux** (un perfil por lanzador).
+> 🔄 **Cambio del 03/10/2026:** la V1 de escritorio (winget) se sustituyó por la **app de escritorio V2** (NSIS desde `opencode.ai/download`, instalada en `%LOCALAPPDATA%\Programs\@opencodedesktop`). Al aceptar esquema V2, se unificaron los tres perfiles en V2 y se añadió `lsp` a todos (comando Python corregido a `basedpyright`).
 
 ---
 

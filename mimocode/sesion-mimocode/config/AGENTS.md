@@ -302,7 +302,7 @@ archivo con claves de API. Esa copia **NUNCA** debe contener ninguna clave de ni
 ## Atención al script setup-mimocode-completo.sh (IMPORTANTE)
 El script `~/Config/mimocode/sesion-mimocode/setup-mimocode-completo.sh` es el INSTALADOR desde
 cero, en paridad con el de OpenCode. Deja MiMoCode **igual que la instalación activa** partiendo
-de un sistema limpio. **13 pasos:**
+de un sistema limpio. **14 pasos:**
 
 | Paso | Qué hace |
 |------|----------|
@@ -384,8 +384,8 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 - **Los lanzadores se ejecutan en la ventana ACTUAL — NO abren ventana nueva** (rev. 16/09/2026, tras
   revertir un intento previo que sí la abría). **⛔ `~/.config/kitty/kitty.conf` está VETADO.**
   ⚠️ **El fondo translúcido de la TUI NO se arregla por configuración: es un BUG OFICIAL de MiMoCode**
-  (issue **#1146**, abierto; PR de arreglo **#1382** sin fusionar; afecta también a la última versión,
-  0.1.14). Causa: `theme.tsx:484-486` → `renderer.setBackgroundColor(values().background)` publica como
+  (issue **#1146**, abierto; PR de arreglo **#1382** sin fusionar; sigue sin arreglarse en la última
+  versión instalada, **0.1.15**). Causa: `theme.tsx:484-486` → `renderer.setBackgroundColor(values().background)` publica como
   fondo por defecto del terminal **el mismo color que pinta**, y el terminal le aplica su
   `background_opacity`. `thinkingOpacity` sólo afecta al **texto** del pensamiento: no lo arregla.
   Diagnóstico completo y comentario publicado: `~/Config/mimocode/documentacion/bug-fondo-translucido-mimocode.md`.

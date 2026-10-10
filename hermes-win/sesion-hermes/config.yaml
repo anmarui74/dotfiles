@@ -69,6 +69,9 @@ plugins:
 # =============================================================================
 # Model Configuration
 # =============================================================================
+  enabled:
+    - homeassistant
+  disabled: []
 model:
   # Default model to use (can be overridden with --model flag)
   # Both "default" and "model" work as the key name here.
@@ -473,7 +476,6 @@ compression:
   # the server compacts first. Invalid values use this automatic behavior. If
   # the local trigger is unavailable, automatic mode uses 200000.
   codex_responses_compact_threshold:
-
   # Number of non-system messages to protect at the head of the transcript, in
   # ADDITION to the system prompt (which is always implicitly protected).
   # Head messages are NEVER summarized — they survive every compression
@@ -736,7 +738,6 @@ memory:
 # is a best-effort single-host/profile runtime guard; Hermes fails open if the
 # local runtime lease registry cannot be read or locked.
 max_concurrent_sessions:
-
 # When true, group/channel chats use one session per participant when the platform
 # provides a user ID. This is the secure default and prevents users in the same
 # room from sharing context, interrupts, and token costs. Set false only if you
@@ -1165,7 +1166,6 @@ platform_toolsets:
   yuanbao: [hermes-yuanbao]
   teams: [hermes-teams]
   google_chat: [hermes-google_chat]
-
 # =============================================================================
 # Gateway Platform Settings
 # =============================================================================
@@ -2096,7 +2096,12 @@ tts:
 known_plugin_toolsets:
   cli:
     - a2a
+    - homeassistant
     - spotify
+  acp:
+    - homeassistant
+  webhook:
+    - homeassistant
 known_builtin_toolsets:
   cli:
     - browser
@@ -2137,3 +2142,7 @@ hooks:
   on_session_end:
     - command: C:/Users/evo01/AppData/Local/hermes/agent-hooks/backup-hermes.sh
       timeout: 120
+_left_core_scoped:
+  - homeassistant
+_left_core_installed:
+  - homeassistant

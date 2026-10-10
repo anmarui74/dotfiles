@@ -14,7 +14,7 @@ de Linux en dos cosas que allí se resolvieron a mano:
 
 ---
 
-## 1. Material (todo en esta carpeta, `E:\HermesSync\windows\`)
+## 1. Material (todo en esta carpeta, `D:\HermesSync\windows\`)
 
 | Fichero | Qué es |
 |---|---|
@@ -28,7 +28,7 @@ de Linux en dos cosas que allí se resolvieron a mano:
 ## 2. Cómo se ejecuta (sin administrador)
 
 ```powershell
-cd E:\HermesSync\windows
+cd D:\HermesSync\windows
 powershell -ExecutionPolicy Bypass -File .\aplicar-ajustes-linux.ps1
 ```
 
@@ -64,6 +64,12 @@ Es **idempotente**: si ya está aplicado, no cambia nada.
 5. **Whitelist NVIDIA**: si existe `%USERPROFILE%\.config\opencode\opencode.json`, actualiza solo
    `providers.nvidia.whitelist` con los 7 ids del export (no toca nada más). Si no existe, avisa y
    sigue: los alias funcionan igual, solo no se filtra el catálogo.
+6. **Avisos del esquema**: si la copia local del motor del dual boot
+   (`%LOCALAPPDATA%\hermes\dual-boot\hermes-dual-sync.ps1`, que es la que Windows ejecuta de verdad)
+   difiere de la distribuida, o si el lanzador de la carpeta Inicio ha dejado de importar antes del
+   gateway, lo avisa — sin cambiar nada — con el comando exacto para arreglarlo
+   (`windows\actualizar-motor-local.ps1` / `registrar-tareas.cmd`). Detalles:
+   `windows\PARA-WINDOWS-motor-fusion.md`.
 
 ---
 
@@ -103,6 +109,6 @@ reinicia Hermes después de aplicarlo.
 
 ## 6. Al terminar, deja constancia
 
-Escribe o amplía `E:\HermesSync\NOTA-PARA-LINUX.md` diciendo: qué ejecutaste, el resultado de la
+Escribe o amplía `D:\HermesSync\NOTA-PARA-LINUX.md` diciendo: qué ejecutaste, el resultado de la
 verificación (exit de `git apply --reverse --check`, alias aplicados, si el whitelist se actualizó)
 y cualquier cosa que no pudieras hacer. El motor de Linux lee esa carpeta al arrancar.

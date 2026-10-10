@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🔧 Utilidades | 26/07/2026 · rev. 22/09/2026 | Antonio |
+| 🔧 Utilidades | 26/07/2026 · rev. 10/10/2026 | Antonio |
 
 > Variables de entorno, sincronización, systemd y scripts
 
@@ -203,10 +203,11 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 ### ¿Qué hace?
 
 1. **Sincroniza** la configuración de `~/.config/opencode/` → `~/Config/opencode/sesion-opencode/`
-2. Copia archivos individuales (JSON, scripts, `.env`) al directorio de sesión
-3. Copia directorios: `commands/`, `prompts/`, `skills/`, `skills-disabled/`, `plugins/`, plugin de voz (más `cli.json`)
-4. Sincroniza los **manuales** de `~/.config/opencode/documentacion/` → `~/Config/opencode/documentacion/` y `AGENTS.md` a la raíz de `~/Config/opencode/` (regla: los manuales viven SOLO en las carpetas `documentacion/` de la config activa y del backup; `sesion-opencode/` es solo configuración/scripts)
-5. **Regenera** el tarball de backup ejecutando `backup-opencode.sh`
+2. **Espeja** los manuales en el vault de **Obsidian** ejecutando `sync-obsidian.sh --quiet` (paso `1b`; ver [Sync con Obsidian](#sync-obsidian-sh))
+4. Copia archivos individuales (JSON, scripts, `.env`) al directorio de sesión
+5. Copia directorios: `commands/`, `prompts/`, `skills/`, `skills-disabled/`, `plugins/`, plugin de voz (más `cli.json`)
+6. Sincroniza los **manuales** de `~/.config/opencode/documentacion/` → `~/Config/opencode/documentacion/` y `AGENTS.md` a la raíz de `~/Config/opencode/` (regla: los manuales viven SOLO en las carpetas `documentacion/` de la config activa y del backup; `sesion-opencode/` es solo configuración/scripts)
+7. **Regenera** el tarball de backup ejecutando `backup-opencode.sh`
 
 > 📌 El backup completo se genera en `~/Config/opencode/backups/opencode/` con retención de 30 días y poda de 1 tarball por día.
 >
@@ -305,7 +306,9 @@ Persistent=true
 WantedBy=timers.target
 ```
 
-**Propósito:** Ejecuta `check-fix.sh` cada 3 días para comprobar si el **issue #39164** de OpenCode (bug de tools locales) se ha cerrado. Si está cerrado, muestra una notificación de escritorio.
+**Propósito:** Ejecuta `check-fix.sh` **a diario a las 10:00** (`OnCalendar=*-*-* 10:00:00`, con `RandomizedDelaySec=30m`) para comprobar si el **issue #39164** de OpenCode (bug de tools locales) se ha cerrado. Si está cerrado, muestra una notificación de escritorio.
+
+> 🕐 El unit lleva además `OnUnitActiveSec=3d`, pero **no añade nada**: con varias cláusulas `On*`, systemd dispara con la primera que venza, y el `OnCalendar` diario siempre vence antes. La cadencia real es **diaria a las 10:00** (verificado el 10/10/2026). Se deja el `OnCalendar` tal cual por decisión de Antonio; el texto de este manual es el que se ajusta a la realidad.
 
 ### `check-timeline-fix.timer`
 
@@ -313,7 +316,7 @@ WantedBy=timers.target
 - `~/.config/systemd/user/check-timeline-fix.service`
 - `~/.config/systemd/user/check-timeline-fix.timer`
 
-Mismo patrón: cada 3 días ejecuta `check-timeline-fix.sh` para vigilar el PR #26861 (fix del timeline TUI).
+Mismo patrón: **a diario a las 10:00** ejecuta `check-timeline-fix.sh` para vigilar el PR #26861 (fix del timeline TUI).
 
 ### `check-nvidia-whitelist.timer`
 
@@ -329,12 +332,14 @@ Mismo patrón: los **días 1 y 16 de cada mes** a las 10:00 (con retardo aleator
 # Ver estado
 systemctl --user status init-opencode.service
 systemctl --user status opencode-sync.timer
+systemctl --user status sync-obsidian.path
 systemctl --user status check-opencode-fix.timer
 systemctl --user status check-timeline-fix.timer
 
 # Activar
 systemctl --user enable init-opencode.service
 systemctl --user enable opencode-sync.timer
+systemctl --user enable --now sync-obsidian.path
 
 # Desactivar
 systemctl --user disable opencode-sync.timer
@@ -342,6 +347,7 @@ systemctl --user disable opencode-sync.timer
 # Ejecutar manualmente
 systemctl --user start init-opencode.service
 systemctl --user start check-opencode-fix.service
+systemctl --user start sync-obsidian.service
 ```
 
 ---
@@ -389,7 +395,7 @@ Verifica el estado del **issue #39164** de OpenCode (un bug que afecta al sistem
 
 **Archivo:** `~/.config/opencode/check-timeline-fix.sh`
 
-Vigila el **PR #26861** de OpenCode (fix del timeline TUI). Se ejecuta automáticamente cada 3 días vía el timer systemd `check-timeline-fix.timer` y registra el resultado en `data/timeline-fix.log`. Si el PR se mergea, avisa para retirar el script `timeline-completo`.
+Vigila el **PR #26861** de OpenCode (fix del timeline TUI). Se ejecuta automáticamente **a diario a las 10:00** vía el timer systemd `check-timeline-fix.timer` y registra el resultado en `data/timeline-fix.log`. Si el PR se mergea, avisa para retirar el script `timeline-completo`.
 
 ### `check-setup-completo.sh` (10/08/2026)
 
@@ -399,9 +405,10 @@ Vigila el **PR #26861** de OpenCode (fix del timeline TUI). Se ejecuta automáti
 
 - `bash -n` (sintaxis)
 - `shellcheck` (sin errores reales; SC2016 en heredocs = OK)
-- **41 heredocs embebidos** comparados uno a uno contra los archivos activos
+- **44 heredocs embebidos** comparados uno a uno contra los archivos activos
   (incluye `timeline-completo` y `speak` de `~/.local/bin/`, los plugins de
-  `plugins/`, los 4 servicios/timers systemd y los manuales de hardware
+  `plugins/`, los **6** servicios/timers systemd —incl. `sync-obsidian.service`
+  y `sync-obsidian.path`— y los manuales de hardware
   `documentacion/hardware-info.md` y `documentacion/README-hardware.md`)
 - Estructura completa de pasos (1-19 + sub-pasos `4b`, `14b`, `15b`)
 - Comandos necesarios presentes en el sistema
@@ -422,6 +429,23 @@ Verifica el whitelist del proveedor NVIDIA aplicando la metodología completa:
 - **Log:** `data/nvidia-whitelist.log` · **Estado:** `data/nvidia-whitelist-state.json`
 - **API key:** se lee de `~/.local/share/opencode/auth.json` (clave `nvidia.key`), no está hardcodeada.
 - Ejecutar manualmente: `bash ~/.config/opencode/check-nvidia-whitelist.sh`
+
+### `sync-obsidian.sh` (10/10/2026)
+
+**Archivo:** `~/.config/opencode/sync-obsidian.sh`
+
+Espeja los manuales de `~/.config/opencode/documentacion/*.md` en el **vault de Obsidian** (`~/MEGA/Obsidian/Obsidian/armarui74/OpenCode/`), aplicando la transformación del vault: **línea en blanco inicial + reescritura de enlaces** (`archivo.md` → `💻 Título.md`, con los espacios como `%20`).
+
+Se ejecuta **automáticamente** por dos vías (y también de forma manual):
+
+1. **⚡ Inmediato al editar:** la unidad `sync-obsidian.path` (systemd de usuario) vigila `~/.config/opencode/documentacion/` y, en cuanto cambia un manual, dispara `sync-obsidian.service` (que ejecuta `sync-obsidian.sh --quiet`).
+2. **🕐 Periódico (red de seguridad):** al final de `sync-opencode.sh`, cada 30 min vía el timer `opencode-sync.timer`.
+
+- Modos manuales: sin argumentos (aplica), `--check` (solo comprueba; sale con código 1 si hay desfases), `--quiet` (salida mínima, para systemd).
+- Vault alternativo: `OBSIDIAN_VAULT=/ruta/a/la/carpeta bash sync-obsidian.sh`.
+- **Log:** `data/sync-obsidian.log`.
+- Unidades systemd: `~/.config/systemd/user/sync-obsidian.service` · `sync-obsidian.path` (habilitada con `systemctl --user enable --now sync-obsidian.path`).
+- Ejecutar manualmente: `bash ~/.config/opencode/sync-obsidian.sh`
 
 ### `setup-lmstudio-models.sh`
 
@@ -566,7 +590,7 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── opencode.json              # Config principal (perfil activo)
 ├── opencode-local.json        # Perfil local
 ├── opencode-cloud.json        # Perfil cloud
-├── cli.json                   # Config TUI V2 (plugins: voz + sidebar-mimo)
+├── cli.json                   # Config TUI V2 (plugin de voz; sidebar-mimo se autodescubre en plugins/)
 ├── AGENTS.md                  # Instrucciones del sistema
 ├── .env                       # Variables de entorno
 ├── package.json               # Vacío ({}): el binario resuelve sus deps
@@ -579,6 +603,7 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── setup-lmstudio-models.sh   # Verificar modelos
 ├── start-opencode-server.sh    # Lanzador OpenCode/OCV (carga LM Studio salvo SKIP_LMSTUDIO)
 ├── sync-opencode.sh           # Sincronización
+├── sync-obsidian.sh           # Espejo de los manuales en el vault de Obsidian
 ├── bootstrap-ocv.sh           # Instalador completo desde limpio
 ├── check-fix.sh               # Verificar issue #39164
 ├── check-timeline-fix.sh      # Vigilar PR #26861 (fix timeline)
@@ -590,6 +615,10 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── lmstudio-metrics-server.py # Dashboard web de métricas (puerto 4200)
 │
 ├── settings.lmstudio.json     # Settings de LM Studio
+│
+├── service.json               # 🔐 Password del servicio local V2 (SECRETO: no va a dotfiles ni a informes)
+├── qwen-qwen3.5-9b.json       # Resto del experimento de modelo local (31/07/2026; no se usa)
+├── models/                    # Resto: Qwen3.5-9B-Q6_K.gguf (7,45 GB, duplicado del de LM Studio; excluido del backup)
 │
 ├── opencode-voice-modified/   # Plugin de voz
 │   ├── index.js               # Punto de entrada (V1)
@@ -633,12 +662,17 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
     ├── metrics.json          # Métricas de tokens/s del proxy LM Studio
     ├── init.log              # Log de inicialización
     ├── sync.log              # Log de sincronización
+    ├── sync-obsidian.log     # Log del espejo a Obsidian
     ├── available_models.txt  # Modelos disponibles
+    ├── inxi-summary.txt      # Volcado resumen de `inxi`
+    ├── memory_status.txt     # Estado del grafo de memoria
     ├── issue_status.txt      # Estado del issue #39164
     ├── timeline-fix.log      # Estado del PR #26861
     ├── setup-check.log       # Log de verificación del setup
     ├── nvidia-whitelist.log  # Log del check NVIDIA
-    └── nvidia-whitelist-state.json  # Estado del check NVIDIA
+    ├── nvidia-whitelist-state.json  # Estado del check NVIDIA
+    ├── rotate-service-password.sh   # 🔐 Rota la password del servicio local V2 (10/10/2026)
+    └── rotate-service-password.log  # Log de la rotación (solo hashes, nunca la password)
 ```
 
 ### `~/Config/opencode/` (backup)
@@ -663,7 +697,7 @@ Config/opencode/
 │   ├── memory/                # Grafo de memoria (copia estable → dotfiles)
 │   └── ...                    # Logs y estado
 │
-├── documentacion/             # 📚 Manuales en Markdown (01-08 + README + hardware-info, etc.)
+├── documentacion/             # 📚 Manuales en Markdown (01-09 + README + hardware-info, etc.)
 ├── sesion-opencode/           # Setup completo + scripts/config sincronizados cada 30 min
 │   ├── setup-opencode-completo.sh   # Instalador completo (con PASO 19: OnlyOffice)
 │   ├── backup-opencode.sh
@@ -673,16 +707,48 @@ Config/opencode/
 └── (respaldo-config/ fue eliminado el 09/08/2026 por obsoleto)
 ```
 
+> 🔐 **`service.json`** guarda la **contraseña del servicio local V2** de OpenCode (la copia viva es
+> `~/.local/state/opencode/service.json`). Es un **secreto**: nunca a `~/Documentos/dotfiles/` ni a
+> informes. ⚠️ Ojo: el **escáner de claves del backup no lo detecta**, porque su patrón busca formas
+> de API key y no una contraseña suelta. Desde el **10/10/2026** el `sync` **no lo propaga** a
+> `~/Config/opencode/` (el `backup-opencode.sh` además lo excluye del volcado a dotfiles y el
+> `.gitignore` del repo incluye `**/service.json`), así que no llega al repo.
+
+> 🗄️ **Restos del experimento de modelo local (31/07/2026), CONSERVADOS**: `models/Qwen3.5-9B-Q6_K.gguf`
+> —**7,45 GB**, duplicado del que ya sirve LM Studio desde `~/.lmstudio/models/Qwen/`— y
+> `qwen-qwen3.5-9b.json`, el preset que apunta a ese fichero. Hoy no los usa nada (`models/` está
+> excluido del backup) y **se mantienen a propósito por decisión de Antonio (10/10/2026): no borrarlos**.
+
+### 🔄 Rotación de la contraseña del servicio V2 (10/10/2026)
+
+El servicio local V2 se autentica con la password de `service.json`. Si se filtra (se pegó en un
+chat, en un informe o en el historial), se rota con:
+
+```bash
+bash ~/.config/opencode/data/rotate-service-password.sh
+```
+
+- Está pensado para lanzarse **desacoplado** (`setsid`; lo hace el agente): `opencode service set
+  password …` **detiene el servicio**, así que el script arranca con un `sleep 8` de margen para que
+  el turno en curso termine de responder antes de tumbarlo.
+- Genera una password nueva de **43 caracteres** (`openssl rand -base64 64` filtrado a
+  alfanuméricos), la aplica (`service set password` + `service start`), consulta `service status` y
+  `/api/info`, y **verifica el cambio** comparando el hash de antes con el de después.
+- El log (`data/rotate-service-password.log`) guarda **solo hashes sha256 truncados**: nunca la
+  password en claro.
+- Tras rotarla, `sync-opencode.sh` mantiene `service.json` fuera de `~/Config/opencode/` y
+  `backup-opencode.sh` lo excluye del volcado a dotfiles (ver la tabla de claves de abajo).
+
 ### Política de retención de backups
 
 | Regla | Detalle |
 |-------|---------|
 | **Retención** | Tarballs con más de 30 días (`LOG_RETENTION_DAYS`) se borran automáticamente |
-| **Poda diaria** | Solo se conserva el **primer** tarball de cada día |
+| **Poda diaria** | Solo se conserva el **último** tarball de cada día (`sort | tail -1`). Desde el 10/10/2026 el sync regenera el backup cada 30 min, así que sin poda se acumularían decenas al día |
 | **Total esperado** | ~30 tarballs (~50 MB) en estado estable |
 | **Carpeta** | `~/Config/opencode/backups/opencode/` |
 
-### 🔐 Claves de API y copia en dotfiles (rev. 22/09/2026)
+### 🔐 Claves de API y copia en dotfiles (rev. 10/10/2026)
 
 | Regla | Detalle |
 |-------|---------|
@@ -693,6 +759,7 @@ Config/opencode/
 | **Grafo de memoria** | **No se excluye** de dotfiles, pero va en **UNA sola copia** (`data/memory/memory.jsonl`). Las copias fechadas `mcp-memory-backup-*.jsonl` se quedan solo en local (eran **179** versionadas) |
 | **`backups/` excluido** | Se excluye **todo** el directorio `backups/` del volcado (tarballs y copias fechadas del grafo se quedan solo en local). Desde el 22/09/2026; antes solo se excluía `backups/opencode/` y se colaban restos como `.lmstudio/` |
 | **Saneado del instalador** | En dotfiles sale con las claves como `TU_CLAVE_AQUI`. **Nunca** sanear el canónico de `sesion-opencode/` |
+| **`service.json`** | 🔐 Guarda la **password del servicio local V2** de OpenCode (copia viva en `~/.local/state/opencode/service.json`). Fuera de dotfiles y fuera de informes. ⚠️ El `git grep` de abajo **no lo detecta**: su patrón no cubre contraseñas sueltas |
 
 Verificar antes de commitear:
 

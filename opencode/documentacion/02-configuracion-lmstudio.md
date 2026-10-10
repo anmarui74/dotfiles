@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🌟 Proveedor principal | 26/07/2026 · rev. 22/09/2026 | Antonio |
+| 🌟 Proveedor principal | 26/07/2026 · rev. 10/10/2026 | Antonio |
 
 > Servidor de inferencia principal con proxy en puerto 4001
 
@@ -204,16 +204,23 @@ Script **lanzador real** que ejecuta `opencode`/`ocv` (el binario `~/.local/bin/
 
 ### Archivo: `~/.config/opencode/settings.lmstudio.json`
 
-Configuración persistente de LM Studio:
+Copia de respaldo de la configuración de la GUI de LM Studio. El archivo **vivo** que lee
+el servidor es `~/.lmstudio/settings.json` (ahí es donde se fija el contexto). Contenido
+real del respaldo:
 
 | Parámetro | Valor |
 |-----------|-------|
 | `language` | `es` (español) |
-| `defaultContextLength` | `81920` (tokens) |
-| `devMode` | Habilitado |
-| `chatConfig` | Configuración de chat por defecto |
+| `downloadsFolder` | `/home/antonio/.lmstudio/models` |
+| `developerMode` | `true` (habilitado) |
+| `autoLoadBundledLLM` | `true` |
+| `modelLoadingGuardrails.mode` | `high` |
+| `chat` / `developer` / `ui` / `sidebar` | Preferencias de la interfaz (chat, actualizaciones, barra lateral…) |
 
-La ventana de 80K de contexto permite que el modelo maneje conversaciones largas y archivos grandes sin perder el hilo.
+El **contexto de 80K** no vive en este respaldo, sino en `~/.lmstudio/settings.json` del
+servidor, donde `defaultContextLength` es `{"type":"custom","value":"81920"}` (lo fija el
+PASO 2 de `init-opencode.sh`, verificado el 10/10/2026). Esa ventana permite que el modelo
+maneje conversaciones largas y archivos grandes sin perder el hilo.
 
 ---
 

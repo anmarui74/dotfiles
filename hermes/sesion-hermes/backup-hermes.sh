@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# backup-hermes.sh — Backup de Hermes Agent (esquema equivalente al de OpenCode)
+# backup-hermes.sh — Backup de Hermes Agent (configuración, datos, skills y credenciales)
 # Genera tarball con restore.sh dentro; respaldo canónico en sesion-hermes/.
 # Puntos del esquema (ver ~/Config/hermes/AGENTS.md):
 #   - ~/.hermes/ es la configuración ACTIVA
@@ -55,6 +55,7 @@ done
 for s in backup-hermes.sh sync-hermes.sh check-setup-completo.sh bootstrap-hermes.sh \
          hermes-modelos-viables.sh hermes-modelos-viables.py hermes-parche-ctrlq.sh \
          lm-studio-watchdog.sh hermes-nvidia-aliases.sh hermes-nvidia-aliases.py \
+         hermes-auditoria-manual.sh hermes-auditoria-manual.py \
          lm-studio-gui.sh lm-studio-gui-run.sh; do
     if [ -f "${BACKUP_BASE}/${s}" ]; then
         cp -p "${BACKUP_BASE}/${s}" "${SESION_DIR}/${s}"
@@ -64,6 +65,24 @@ done
 if [ -f "${BACKUP_BASE}/AGENTS.md" ]; then
     cp -p "${BACKUP_BASE}/AGENTS.md" "${SESION_DIR}/AGENTS.md"
 fi
+# Copia de respaldo legible de la documentación de configuración
+# (documentos/ = copias; el original de cada uno sigue en su ruta de siempre)
+DOCS_DIR="${BACKUP_BASE}/documentos"
+mkdir -p "${DOCS_DIR}"
+for f in AGENTS.md SISTEMA-CACHYOS.md; do
+    if [ -f "${BACKUP_BASE}/${f}" ]; then
+        cp -p "${BACKUP_BASE}/${f}" "${DOCS_DIR}/${f}"
+    fi
+done
+if [ -f "${HERMES_ACTIVO}/SOUL.md" ]; then
+    cp -p "${HERMES_ACTIVO}/SOUL.md" "${DOCS_DIR}/SOUL.md"
+fi
+if [ -d "${BACKUP_BASE}/dual-boot/windows" ]; then
+    mkdir -p "${DOCS_DIR}/dual-boot"
+    rsync -a --delete --include='*/' --include='*.md' --exclude='*' \
+          "${BACKUP_BASE}/dual-boot/windows/" "${DOCS_DIR}/dual-boot/"
+fi
+echo "   📄 documentos/ actualizado (copia de la documentación de configuración)"
 # Scripts del esquema dual boot (Linux ↔ Windows)
 if [ -d "${BACKUP_BASE}/dual-boot" ]; then
     rsync -a --delete "${BACKUP_BASE}/dual-boot/" "${SESION_DIR}/dual-boot/"
@@ -153,6 +172,7 @@ for s in backup-hermes.sh sync-hermes.sh check-setup-completo.sh bootstrap-herme
          setup-hermes-completo.sh \
          hermes-parche-ctrlq.sh lm-studio-watchdog.sh hermes-nvidia-aliases.sh \
          hermes-nvidia-aliases.py hermes-modelos-viables.sh hermes-modelos-viables.py \
+         hermes-auditoria-manual.sh hermes-auditoria-manual.py \
          lm-studio-gui.sh lm-studio-gui-run.sh instalar-stack-voz.sh \
          AGENTS.md; do
     if [ -f "${BACKUP_BASE}/${s}" ]; then
@@ -240,6 +260,7 @@ if [ -d "${SOURCE_DIR}/esquema" ]; then
     chmod +x "$BASE_ESQUEMA"/*.sh 2>/dev/null || true
     ln -sfn "$BASE_ESQUEMA/dual-boot/hermes-dual-sync.sh" "$LOCAL_BIN/hermes-dual-sync"
     ln -sfn "$BASE_ESQUEMA/hermes-modelos-viables.sh" "$LOCAL_BIN/hermes-modelos-viables"
+    ln -sfn "$BASE_ESQUEMA/hermes-auditoria-manual.sh" "$LOCAL_BIN/hermes-auditoria-manual"
     ln -sfn "$BASE_ESQUEMA/hermes-nvidia-aliases.sh" "$LOCAL_BIN/hermes-nvidia-aliases"
     ln -sfn "$BASE_ESQUEMA/hermes-parche-ctrlq.sh" "$LOCAL_BIN/hermes-parche-ctrlq"
     ln -sfn "$BASE_ESQUEMA/lm-studio-watchdog.sh" "$LOCAL_BIN/lm-studio-watchdog"
@@ -352,6 +373,7 @@ if [ -d "${DOTFILES_DIR}" ]; then
     rsync -a --delete --delete-excluded \
       --exclude='backups/' \
       --exclude='logs/' \
+      --exclude='SISTEMA-CACHYOS.md' \
       --exclude='credenciales/' \
       --exclude='shared/' \
       --exclude='.env' --exclude='*.env' \

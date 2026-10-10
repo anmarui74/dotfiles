@@ -97,19 +97,25 @@ monitores, audio, USB, sensores, red, etc.), LEE el archivo:
 ```
 ~/.config/opencode/data/hardware/index.json
 ```
-Ese JSON contiene TODA la información de su sistema. No ejecutes comandos de
-detección (inxi, lspci, dmidecode, etc.) a menos que el usuario lo pida
-explícitamente o que el JSON no tenga la respuesta.
+Ese JSON contiene TODA la información de su sistema. Para **consultas puntuales**
+NO hace falta ejecutar comandos de detección (inxi, lspci, dmidecode…): usa el
+JSON (solo si el usuario pide un escaneo en vivo o el JSON no tiene el dato).
 
 Consulta rápida desde terminal: `source ~/.config/opencode/hardware-query.sh && hw_query <campo>`
 
-Para REGENERAR el índice con los datos reales actuales del hardware:
-```bash
-python3 ~/.config/opencode/hardware-query.py scan
-```
-(Escanea lscpu, lspci, lsusb, nvidia-smi, sensors, lsblk, dmidecode, iw,
-xrandr, free, /proc... y actualiza data/hardware/index.json. Usa pkexec
-para dmidecode: saldrá una ventana pidiendo contraseña la primera vez.)
+✅ **Ojo:** el **escaneo sí usa** `inxi`, `lspci`, `dmidecode`, `smartctl`,
+`nvidia-smi`, `sensors`… — es precisamente lo que genera el JSON. No hay
+contradicción: esa prohibición es solo para consultas sueltas. Dos vías de escaneo:
+
+1. **Índice** (`data/hardware/index.json`), escaneo estructurado:
+   ```bash
+   python3 ~/.config/opencode/hardware-query.py scan
+   ```
+   (lscpu, lspci, lsusb, nvidia-smi, sensors, lsblk, dmidecode, iw, xrandr, free,
+   /proc… → `data/hardware/index.json`. Usa `pkexec` para `dmidecode`.)
+2. **Informe del sistema** (`~/informe-sistema.md`), volcado completo con `inxi`,
+   `dmidecode`, `smartctl`, `nvidia-smi`, `btrfs` y `sensors`. Procedimiento en
+   `documentacion/09-informe-sistema.md`.
 
 ⚠️ **Si lo lanza el AGENTE** (no hereda la sesión gráfica), `pkexec` no alcanza
 el agente polkit y falla en silencio: la RAM (DIMMs) y la placa base quedarían
@@ -261,7 +267,7 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
   - `sesion-opencode/` → setup completo desde limpio + **respaldo canónico** de los
     archivos de configuración (`opencode.json`, `opencode-local.json`, `opencode-cloud.json`,
     `cli.json`, `plugins/`, scripts, `AGENTS.md`, `.env`, etc.)
-  - `respaldo-config/` → snapshot antiguo de la configuración
+  - ~~`respaldo-config/`~~ → **eliminado el 09/08/2026** (obsoleto; ya no existe)
   - `legacy/` → scripts y carpetas obsoletos
   - En la raíz solo viven: `AGENTS.md`, `backup-opencode.sh`, `bootstrap-ocv.sh`, `sync-opencode.sh`
     y el enlace simbólico `setup-opencode-completo.sh` → `sesion-opencode/setup-opencode-completo.sh`
@@ -281,6 +287,10 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
     (salvo `AGENTS.md`) ni en `sesion-opencode/`. `AGENTS.md` es configuración (no manual) →
     vive en la raíz de `~/.config/opencode/` y de `~/Config/opencode/`.
     El `sync-opencode.sh` aplica esta regla automáticamente.
+  - 🔄 **Espejo en Obsidian:** `sync-obsidian.sh` copia los manuales de
+    `~/.config/opencode/documentacion/` al vault (`💻 Título.md`, con los enlaces
+    reescritos). Se ejecuta **solo**: al guardar un manual (unidad `sync-obsidian.path`)
+    y en cada `sync-opencode.sh` (cada 30 min). Manual: `bash ~/.config/opencode/sync-obsidian.sh`.
 - Cada vez que modifiques, crees o elimines algo en `~/.config/opencode/`:
   1. **Copia el archivo** a `~/Config/opencode/sesion-opencode/` (respaldo canónico).
      NUNCA a la raíz de `~/Config/opencode/` si es un archivo de configuración.
@@ -308,7 +318,8 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
   (repo git `anmarui74/dotfiles`), excluyendo cualquier archivo con claves de API.
   Esa copia **NUNCA** debe contener ninguna clave de ningún tipo. Reglas que aplica:
   1. **Excluir siempre** (no copiar ni commitear): `.env` y cualquier `*.env`, `auth.json`,
-     el directorio `credenciales/` y los tarballs `*.tar.gz` (contienen `.env` +
+     **`service.json`** (password del servicio local V2: es un secreto, ver la comprobación
+     aparte del punto 2), el directorio `credenciales/` y los tarballs `*.tar.gz` (contienen `.env` +
      `credenciales/auth.json` en claro). Se excluye **todo** el directorio `backups/`
      (desde el 22/09/2026: los tarballs y las copias fechadas del grafo se quedan solo en
      local). También se excluyen `node_modules/`, `__pycache__/`, `models/`, `build/`,
@@ -321,6 +332,10 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
      git grep -nIP '(nvapi-|oc_sk_)[A-Za-z0-9_-]{15,}|(^|[^A-Za-z0-9])sk-[A-Za-z0-9]{25,}|AEMET_API_KEY=[A-Za-z0-9]{15,}' -- ':(exclude)*.md'
      ```
      Si devuelve algo, NO hacer commit/push y eliminar el fichero.
+     ⚠️ **`service.json` se le escapa a ese patrón**: contiene una **password suelta** (la del
+     servicio local V2 de OpenCode; su copia viva es `~/.local/state/opencode/service.json`) y el
+     `git grep` busca formas de API key. Comprobación aparte antes de commitear:
+     `find ~/Documentos/dotfiles -name 'service.json*'` → debe salir **vacío**.
   3. El `.gitignore` del repo debe incluir:
      ```
      **/*.env

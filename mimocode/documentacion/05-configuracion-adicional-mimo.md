@@ -13,6 +13,8 @@ LSP, MCP, permisos y variables de entorno.
 1. [LSP](#lsp)
 2. [MCP](#mcp)
 3. [Permisos](#permisos)
+4. [Variables de entorno](#variables-de-entorno)
+5. [Estructura de ficheros](#estructura-de-ficheros-rev-10102026)
 
 ---
 
@@ -51,6 +53,33 @@ Servidores de lenguaje en `lsp` del config global: python, c, cpp, rust, typescr
 
 ---
 
+## Variables de entorno
+
+No hay `.env` en `~/.config/mimocode/` (el proxy lo leería si existiera, pero es opcional). Las variables que maneja MiMoCode son estas:
+
+| Variable | Dónde se define | Efecto |
+|----------|-----------------|--------|
+| `MIMOCODE_CONFIG_DIR` | `start-mimo-local.sh`, `start-mimo-cloud.sh` | Activa el perfil (`profiles/local`, `profiles/cloud`) con **merge** sobre el global |
+| `MIMOCODE_ENABLE_ANALYSIS` | los 3 lanzadores (defecto `false`) | Telemetría; se puede forzar con `=true` |
+| `SKIP_LMSTUDIO` | `start-mimo.sh`, `start-mimo-local.sh` | Si está definida, **no** carga el modelo local en VRAM |
+| `MIMOCODE_LLAMADO_POR_BACKUP` | `backup-mimocode.sh` → `sync-mimocode.sh` | Guarda anti-bucle (evita que backup ↔ sync se recursen) |
+| `LOG_RETENTION_DAYS` | entorno del usuario (defecto `30`) | Retención de tarballs **y** copias fechadas del grafo |
+| `METRICS_EXPORT_PATH` / `ENABLE_METRICS` | `.env` opcional del proxy (defecto `true` / `<CONFIG_DIR>/data/metrics.json`) | Ruta y activación de las métricas tok/s |
+| `MEMORY_FILE_PATH` | `mimocode.jsonc` → MCP `memory` | Ruta del grafo `data/memory/memory.jsonl` |
+
+```bash
+# Telemetría a mano
+MIMOCODE_ENABLE_ANALYSIS=true mimo
+
+# Arrancar sin cargar el modelo en VRAM
+SKIP_LMSTUDIO=1 mimo-local
+
+# Retención de backups a 7 días
+LOG_RETENTION_DAYS=7 bash ~/Config/mimocode/backup-mimocode.sh
+```
+
+---
+
 ## Estructura de ficheros (rev. 10/10/2026)
 
 Además de la configuración, `~/.config/mimocode/` contiene la **infraestructura propia** y el sistema de backup:
@@ -62,8 +91,10 @@ Además de la configuración, `~/.config/mimocode/` contiene la **infraestructur
 | `sync-mimocode.sh` | Sincroniza la copia canónica, borra restos de config en la raíz de `Config/` y **al terminar regenera el tarball** llamando a `backup-mimocode.sh` (guarda anti-bucle `MIMOCODE_LLAMADO_POR_BACKUP=1`) |
 | `start-lmstudio.sh`, `start-lmstudio-server.sh`, `lmstudio-proxy.py` | Infraestructura LM Studio **propia** (autónoma de OpenCode) |
 | `mimocode-voice-modified/` | Plugin de voz |
+| `package.json`, `package-lock.json` | Dependencias npm del config (`@mimo-ai/plugin` 0.1.14); el `node_modules/` del directorio es suyo |
+| `check-nvidia-whitelist.{sh,py}` + `.service`/`.timer` | Copia propia del check NVIDIA (días 1 y 16). ⚠️ El que está **instalado y activo** es el de OpenCode (`~/.config/opencode/`); estas copias no están instaladas |
 | `data/memory/memory.jsonl` | Grafo de memoria MCP |
-| `data/metrics.json` | Métricas del proxy (tokens/s) |
+| `data/metrics.json` | Métricas del proxy (tokens/s) — se crea en la **primera** petición que atiende el proxy propio de MiMoCode |
 
 | Ruta externa | Función |
 |--------------|---------|

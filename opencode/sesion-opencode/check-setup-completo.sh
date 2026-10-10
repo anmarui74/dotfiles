@@ -89,6 +89,7 @@ archivos = {
     'cli.json': 'TUIEOF',
     'AGENTS.md': 'AGEOF', '.env': 'ENVEOF',
     'sync-opencode.sh': 'SYNCEOF',
+    'sync-obsidian.sh': 'SYNCOBSEOF',
     'mcp-fetch-fix.js': 'MCPFIXEOF',
     'init-opencode.sh': 'INITEOF', 'start-lmstudio-server.sh': 'SERVEREOF',
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
@@ -121,6 +122,8 @@ extra_archivos = [
     ('systemd check-opencode-fix.timer', 'CHKFIXTIMEREOF', '/home/antonio/.config/systemd/user/check-opencode-fix.timer'),
     ('systemd check-nvidia-whitelist.service', 'NVIDIAWL-SERVEOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.service'),
     ('systemd check-nvidia-whitelist.timer', 'NVIDIAWL-TIMEREOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.timer'),
+    ('systemd sync-obsidian.service', 'SYNCOBS-SERVEOF', '/home/antonio/.config/systemd/user/sync-obsidian.service'),
+    ('systemd sync-obsidian.path', 'SYNCOBS-PATHEOF', '/home/antonio/.config/systemd/user/sync-obsidian.path'),
 ]
 
 ok = 0

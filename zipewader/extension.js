@@ -1,6 +1,14 @@
+// Zipe Weather — extensión de GNOME Shell
+// Muestra el tiempo actual y el pronóstico de 10 días en la barra superior.
+// Datos: Open-Meteo (https://open-meteo.com)
+//
+// Compatible con GNOME Shell 45 – 51 (ESM, GNOME 45+).
+// Rev. 07/10/2026: añadido soporte de GNOME 51, limpieza de deprecaciones
+// (log() -> console.debug) y guardas de destrucción para evitar errores
+// cuando llega una respuesta HTTP después de desactivar la extensión.
+
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
-import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import GLib from 'gi://GLib';
 import Soup from 'gi://Soup';
@@ -85,14 +93,15 @@ const ZipeWeatherIndicator = GObject.registerClass(
   class ZipeWeatherIndicator extends PanelMenu.Button {
     _init(settings) {
       super._init(0.0, 'Tiempo — 30°', false);
-      log('Zipe Weather: init start');
+      console.debug('Zipe Weather: init start');
 
       this._settings = settings;
+      this._destroyed = false;
 
       try {
         this.set_size(100, -1);
       } catch (e) {
-        log('Zipe Weather: set_size error - ' + e);
+        console.debug('Zipe Weather: set_size error - ' + e);
       }
 
       this.set_style('min-width: 100px; padding: 0 4px;');
@@ -116,23 +125,24 @@ const ZipeWeatherIndicator = GObject.registerClass(
 
       this.add_child(box);
 
-      this._settings.connect('changed', () => {
-        log('Zipe Weather: settings changed, refetching');
+      // Guardamos el handler para desconectarlo al destruir el indicador.
+      this._settingsHandlerId = this._settings.connect('changed', () => {
+        console.debug('Zipe Weather: settings changed, refetching');
         this._fetchWeather();
       });
 
       this.menu.setSourceAlignment(0.5);
       this.menu._arrowAlignment = 0.5;
-      if (this.menu.box) {
-          this.menu.box.add_style_class_name('zipe-menu-content');
-      }
-      log('Zipe Weather: init calling fetch');
+      if (this.menu.box)
+        this.menu.box.add_style_class_name('zipe-menu-content');
+
+      console.debug('Zipe Weather: init calling fetch');
       this._fetchWeather();
       this._timeout = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 3600, () => {
         this._fetchWeather();
         return GLib.SOURCE_CONTINUE;
       });
-      log('Zipe Weather: init done');
+      console.debug('Zipe Weather: init done');
     }
 
     _fetchWeather() {
@@ -143,6 +153,8 @@ const ZipeWeatherIndicator = GObject.registerClass(
       const session = new Soup.Session({ timeout: 10 });
       const message = Soup.Message.new('GET', url);
       session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (_session, result) => {
+        // La extensión puede haberse desactivado mientras la petición estaba en vuelo.
+        if (this._destroyed) return;
         try {
           const bytes = _session.send_and_read_finish(result);
           const text = new TextDecoder().decode(bytes.toArray());
@@ -150,7 +162,7 @@ const ZipeWeatherIndicator = GObject.registerClass(
           this._updateUI(data);
           this._retryCount = 0;
         } catch (e) {
-          log('Zipe Weather: error - ' + (e.message || e));
+          console.debug('Zipe Weather: error - ' + (e.message || e));
           this._label.text = '⚠️';
           this._scheduleRetry();
         }
@@ -158,10 +170,11 @@ const ZipeWeatherIndicator = GObject.registerClass(
     }
 
     _scheduleRetry() {
+      if (this._destroyed) return;
       if (this._retryCount === undefined) this._retryCount = 0;
       this._retryCount++;
       const delay = Math.min(this._retryCount * 15, 300);
-      log(`Zipe Weather: retry ${this._retryCount} in ${delay}s`);
+      console.debug(`Zipe Weather: retry ${this._retryCount} in ${delay}s`);
       if (this._retryTimeout) GLib.source_remove(this._retryTimeout);
       this._retryTimeout = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, delay, () => {
         this._retryTimeout = null;
@@ -171,6 +184,7 @@ const ZipeWeatherIndicator = GObject.registerClass(
     }
 
     _updateUI(data) {
+      if (this._destroyed) return;
       if (!data || !data.daily) return;
 
       this.menu.removeAll();
@@ -199,8 +213,9 @@ const ZipeWeatherIndicator = GObject.registerClass(
         const fecha = formatDate(times[i]);
         const maxT = Math.round(tempsMax[i]);
         const minT = Math.round(tempsMin[i]);
-        const probLluvia = `${precipProbs[i]}%`;
-        const lluvia = `${precips[i].toFixed(1)} mm`;
+        const prob = precipProbs[i];
+        const probLluvia = `${prob == null ? '—' : prob}%`;
+        const lluvia = `${Number(precips[i] ?? 0).toFixed(1)} mm`;
         const viento = `${Math.round(winds[i])} km/h`;
 
         const fechaLabel = new St.Label({ text: fecha, style_class: 'zipe-col-fecha' });
@@ -233,6 +248,12 @@ const ZipeWeatherIndicator = GObject.registerClass(
     }
 
     destroy() {
+      this._destroyed = true;
+
+      if (this._settingsHandlerId) {
+        this._settings.disconnect(this._settingsHandlerId);
+        this._settingsHandlerId = null;
+      }
       if (this._timeout) {
         GLib.source_remove(this._timeout);
         this._timeout = null;
@@ -248,7 +269,7 @@ const ZipeWeatherIndicator = GObject.registerClass(
 
 export default class ZipeWeatherExtension extends Extension {
   enable() {
-    log('Zipe Weather: enabling');
+    console.debug('Zipe Weather: enabling');
     this._settings = this.getSettings();
     this._indicator = new ZipeWeatherIndicator(this._settings);
     Main.panel.addToStatusArea('zipe-weather', this._indicator, 0, 'right');

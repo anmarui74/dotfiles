@@ -3,7 +3,7 @@ Registro del cuelgue del equipo del 22/09/2026 por caída de la GPU NVIDIA del b
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🔴 Incidencia · pendiente revisión de hardware | 22/09/2026 · rev. 22/09/2026 | Antonio |
+| 🔴 Incidencia · pendiente revisión de hardware | 22/09/2026 · rev. 10/10/2026 | Antonio |
 
 > El equipo se quedó bloqueado (sesión gráfica muerta) durante una auditoría de
 > seguridad. El análisis de los logs demuestra que la causa fue la **GPU
@@ -168,7 +168,7 @@ cat /proc/driver/nvidia/params | grep -iE 'EnableGpuFirmware|PreserveVideoMemory
 |----------|--------|
 | Sistema | ✅ Operativo (reiniciado a las 06:21:59) |
 | GPU | ✅ Funcionando (RTX 4070 Ti SUPER, 47 °C en reposo) |
-| Driver | ✅ 615.71.09 cargado |
+| Driver | ✅ 615.78.08 cargado (actualizado desde el 615.71.09 del incidente; ver `hardware-info.md`) |
 | Cambios aplicados | ❌ Ninguno (a la espera de revisar el hardware) |
 
 ---

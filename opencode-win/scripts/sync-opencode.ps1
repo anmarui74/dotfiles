@@ -71,6 +71,7 @@ function Copy-Fichero {
 Write-Output '📦 Configuracion principal:'
 Copy-Fichero (Join-Path $ORIGEN 'opencode.jsonc')   (Join-Path $DESTINO 'opencode.jsonc')
 Copy-Fichero (Join-Path $ORIGEN 'opencode-local.json') (Join-Path $DESTINO 'opencode-local.json')
+Copy-Fichero (Join-Path $ORIGEN 'opencode-cloud.json') (Join-Path $DESTINO 'opencode-cloud.json')
 Copy-Fichero (Join-Path $ORIGEN 'tui.json')          (Join-Path $DESTINO 'tui.json')
 Copy-Fichero (Join-Path $ORIGEN 'cli.json')          (Join-Path $DESTINO 'cli.json')
 Copy-Fichero (Join-Path $ORIGEN 'AGENTS.md')         (Join-Path $DESTINO 'AGENTS.md')

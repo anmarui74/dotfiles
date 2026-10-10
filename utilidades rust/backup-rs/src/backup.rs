@@ -318,7 +318,13 @@ impl BackupEngine {
                     // no recopiar indefinidamente; basta con que coincida el tamaño.
                     true
                 } else {
-                    FileTime::from_last_modification_time(&d) >= src_mtime
+                    // La comparación va en SEGUNDOS, no al nanosegundo: un destino
+                    // NTFS (SEAGATE) guarda el mtime con precisión de 100 ns, así que
+                    // la fecha escrita queda unos ns por DEBAJO de la del origen y
+                    // comparar al ns hace que el fichero se recopie en cada pasada
+                    // (~11 GB por pasada en este home). A segundos el desfase
+                    // desaparece; es el mismo criterio que usa rsync.
+                    FileTime::from_last_modification_time(&d).seconds() >= src_mtime.seconds()
                 }
             }
             Err(_) => false,

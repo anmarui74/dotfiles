@@ -14,7 +14,11 @@
 [CmdletBinding()]
 param(
   [string]$BackupRoot = "D:\Linux\Config\opencode-win",
-  [int]$RetentionDays = 30
+  [int]$RetentionDays = 30,
+  [string]$DestinoFConfig   = "F:\@home\antonio\Config\opencode-win",
+  [string]$DestinoFDotfiles = "F:\@home\antonio\Documentos\dotfiles\opencode-win",
+  [string]$UnidadF = "F:",
+  [switch]$SinF
 )
 
 $ErrorActionPreference = "Continue"
@@ -27,6 +31,36 @@ $CheckScript  = Join-Path $BackupRoot "scripts\check-setup-completo.ps1"
 function Write-Step($msg, $color = "Cyan") { Write-Host $msg -ForegroundColor $color }
 function Write-Ok($msg)  { Write-Host "🟢 $msg" -ForegroundColor Green }
 function Write-Warn2($msg) { Write-Host "🟡 $msg" -ForegroundColor Yellow }
+
+# Espejo fiel de carpetas (equivalente a robocopy /MIR): el destino queda idéntico
+# al origen, borrando lo que sobre, salvo los nombres de $Keep. Omite siempre .git.
+function Sync-Mirror {
+  param(
+    [Parameter(Mandatory=$true)][string]$Source,
+    [Parameter(Mandatory=$true)][string]$Dest,
+    [string[]]$Keep = @()
+  )
+  if (-not (Test-Path -LiteralPath $Source)) { Write-Warn2 "Origen no existe: $Source"; return }
+  New-Item -ItemType Directory -Path $Dest -Force | Out-Null
+  # Purga del destino salvo lo preservado
+  Get-ChildItem -LiteralPath $Dest -Force -ErrorAction SilentlyContinue |
+    Where-Object { $Keep -notcontains $_.Name } |
+    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+  # Copia del origen (siempre sin .git)
+  Get-ChildItem -LiteralPath $Source -Recurse -Force -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -notmatch '\\\.git(\\|$)' } |
+    ForEach-Object {
+      $rel = $_.FullName.Substring($Source.Length).TrimStart('\')
+      $dst = Join-Path $Dest $rel
+      if ($_.PSIsContainer) {
+        if (-not (Test-Path -LiteralPath $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }
+      } else {
+        $dir = Split-Path $dst -Parent
+        if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+        Copy-Item -LiteralPath $_.FullName -Destination $dst -Force
+      }
+    }
+}
 
 # --- 0) Verificacion previa (check-setup-completo.ps1) --------------------
 if (Test-Path -LiteralPath $CheckScript) {
@@ -149,6 +183,37 @@ if ($leaks.Count -gt 0) {
   $leaks | ForEach-Object { Write-Warn2 "  $_" }
 } else {
   Write-Ok "Verificado: sin claves API en dotfiles"
+}
+
+# --- 4) Publicacion dual-boot a F: (espejo desde D:) -----------------------
+# F: es la particion Linux montada en Windows (@home/antonio). Se publica el
+# respaldo completo y la copia saneada de dotfiles. En dotfiles se preserva .git
+# (es un repo git real en la home de Linux).
+if ($SinF) {
+  Write-Step "Publicacion a F: omitida (-SinF)."
+} elseif (-not (Test-Path -LiteralPath "$UnidadF\")) {
+  Write-Warn2 "Unidad $UnidadF no disponible: se omite la publicacion a F:."
+} else {
+  Write-Step "Publicando espejo en F: (respaldo + dotfiles)..."
+  Sync-Mirror -Source $BackupRoot   -Dest $DestinoFConfig
+  Write-Ok  "Respaldo publicado: $DestinoFConfig"
+  Sync-Mirror -Source $DotfilesRoot -Dest $DestinoFDotfiles -Keep @('.git')
+  Write-Ok  "Dotfiles publicados: $DestinoFDotfiles"
+  # Verificacion de claves en la copia publicada en F: (la de dotfiles)
+  $leaksF = @()
+  if (Test-Path -LiteralPath $DestinoFDotfiles) {
+    Get-ChildItem -LiteralPath $DestinoFDotfiles -Recurse -File -Force -ErrorAction SilentlyContinue |
+      Where-Object { $textExt -contains $_.Extension.ToLower() -or $_.Name -eq '.gitignore' } |
+      ForEach-Object {
+        if (Select-String -LiteralPath $_.FullName -Pattern $secretPatterns -ErrorAction SilentlyContinue) { $leaksF += $_.FullName }
+      }
+  }
+  if ($leaksF.Count -gt 0) {
+    Write-Warn2 "ATENCION: posibles claves API en la copia de F: (revisar):"
+    $leaksF | ForEach-Object { Write-Warn2 "  $_" }
+  } else {
+    Write-Ok "Verificado: sin claves API en la copia de dotfiles de F:"
+  }
 }
 
 Write-Ok "Backup completado."

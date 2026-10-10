@@ -23,7 +23,7 @@ Guía completa del sistema de voz, modelos y herramientas en Windows
 | 01 | [Configuración de Ollama + Proxy](01-configuracion-ollama.md) | 🦙 Proxy de Ollama _(EN DESUSO)_ · LiteLLM · bug #34892 |
 | 02 | [Configuración de LM Studio + Proxy](02-configuracion-lmstudio.md) | 🖥️ Proxy de LM Studio (4001) · `ocv` · carga de modelo en Windows |
 | 03 | [Configuración completa de Voz](03-configuracion-voz.md) | 🎤 STT/TTS **implementado en Windows (GPU)**: whisper.cpp CUDA + Kokoro GPU con **servidor persistente** · atajos `Ctrl+R`, `Leader+R`, `Leader+S`, `Leader+V`, `Ctrl+Q` |
-| 04 | [Los perfiles de `opencode.json`](04-perfiles-opencode-json.md) | 📋 Perfiles V2 Windows (`opencode.jsonc` / `opencode-local.json` / `opencode-cloud.json`) con `lsp: {}` (V2 no ejecuta LSP) · MCPs · proveedores · agentes |
+| 04 | [Los perfiles de `opencode.json`](04-perfiles-opencode-json.md) | 📋 Perfiles V2 Windows (`opencode.jsonc` / `opencode-local.json` / `opencode-cloud.json`) con LSP `npx` + MCPs · agentes y proveedores |
 | 05 | [Configuración adicional](05-configuracion-adicional.md) | ⚙️ Instalador · Programador de tareas · scripts `.ps1` · estructura |
 | 06 | [AGENTS.md al detalle](06-agents-md.md) | 📜 Reglas de comportamiento de OpenCode |
 
@@ -35,6 +35,19 @@ Guía completa del sistema de voz, modelos y herramientas en Windows
 | [README-hardware.md](README-hardware.md) | 🖥️ Comandos rápidos de consulta de hardware (PowerShell) |
 | [notas-opencode-go.md](notas-opencode-go.md) | ☁️ Modelos de OpenCode Go alojados en China (opt-in) |
 | [seguimiento-issue-memory.md](seguimiento-issue-memory.md) | 🐛 Seguimiento del issue MCP memory (draft-07 vs 2020-12) |
+
+---
+
+## 🎛️ Perfiles de configuración
+
+| Archivo | Uso | LSP | MCP |
+|---------|-----|-----|-----|
+| `opencode.jsonc` | `ocv` + app escritorio (global/base) | ✅ | Todos |
+| `opencode-local.json` | `ocv-local` | ✅ | Esenciales |
+| `opencode-cloud.json` | `ocv-cloud` | ✅ | Todos |
+
+> Los tres perfiles usan **esquema V2** (`permissions`, `agents`, `providers`, `mcp`, `lsp`) con servidores LSP `npx -y` (Python vía `basedpyright`).
+> La **app de escritorio V2** se instala desde `opencode.ai/download` (NSIS) en `%LOCALAPPDATA%\Programs\@opencodedesktop`.
 
 ---
 

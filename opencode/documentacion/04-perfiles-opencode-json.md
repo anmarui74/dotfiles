@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 📁 Perfiles | 26/07/2026 · rev. 05/10/2026 | Antonio |
+| 📁 Perfiles | 26/07/2026 · rev. 10/10/2026 | Antonio |
 
 > Perfiles local / cloud / activo, MCPs y proveedores
 
@@ -523,15 +523,18 @@ en la config activa.
 {}
 ```
 
-`package-lock.json` es un **resto heredado** de cuando se instalaba el SDK
-`@opencode-ai/plugin` (última versión anotada, `1.18.8`). Actualmente no se usa y
-**ambos archivos se excluyen del backup** (`backup-opencode.sh` aplica
-`--exclude=package.json` y `--exclude=package-lock.json`).
+`package-lock.json` es un **resto histórico**: nació cuando se instalaba el SDK
+`@opencode-ai/plugin` (última versión anotada, `1.18.8`) y **hoy está vacío** —
+`lockfileVersion 3` con `"packages": {}` (regenerado el 06/10/2026). **No es
+necesario**: el `package.json` activo está en `{}`, el binario de OpenCode resuelve
+sus propias dependencias y **ambos archivos se excluyen del backup**
+(`backup-opencode.sh` aplica `--exclude=package.json` y `--exclude=package-lock.json`).
+Se conserva solo como testimonio de aquella instalación; se puede borrar sin efectos.
 
 | Archivo | Estado | Propósito |
 |---------|--------|-----------|
 | `package.json` | `{}` (vacío) | Sin dependencias npm en la config activa |
-| `package-lock.json` | Resto heredado (`@opencode-ai/plugin` 1.18.8) | Lock antiguo, no se usa ni se respalda |
+| `package-lock.json` | **Vacío** (`lockfileVersion 3`, `"packages": {}`) | Resto histórico, no se usa ni se respalda |
 
 > 📌 El `package.json` no incluye `@ai-sdk/*` ni `@renjfk/opencode-voice`: los SDK de AI
 > los resuelve el propio binario de OpenCode, y el plugin de voz

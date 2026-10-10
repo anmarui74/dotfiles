@@ -3,7 +3,7 @@ Guía completa del sistema de voz, modelos y herramientas.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Índice de documentación | 26/07/2026 · rev. 22/09/2026 | Antonio |
+| ✅ Índice de documentación | 26/07/2026 · rev. 10/10/2026 | Antonio |
 
 > 📁 Índice de todos los manuales de configuración de OpenCode
 > (`~/.config/opencode/documentacion/`).
@@ -35,6 +35,7 @@ Guía completa del sistema de voz, modelos y herramientas.
 | 06 | [AGENTS.md al detalle](06-agents-md.md) | 📜 Reglas de comportamiento de OpenCode |
 | 07 | [Playbook de Recuperación](07-playbook-recuperacion.md) | 🛟 Restaurar OpenCode · grafo de memoria · reinstalación desde limpio |
 | 08 | [Incidencia GPU Xid 79](08-incidencia-gpu-xid79.md) | 💥 GPU caída del bus PCIe (22/09/2026) |
+| 09 | [Informe del sistema — procedimiento](09-informe-sistema.md) | 📝 Generar informe del equipo con `pkexec` (inxi, SMART, btrfs, sensores) |
 
 ### Notas y hardware
 
@@ -58,7 +59,7 @@ Flujo de **voz → texto → IA → respuesta**:
 | 1️⃣ | 🎤 **Tú (Antonio)** | Hablas o escribes |
 | 2️⃣ | **STT** — `sox` + `whisper-cpp` | Audio capturado y transcrito en **GPU** |
 | 3️⃣ | **TUI de OpenCode** | Teclado + comandos `/stt-*` |
-| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build`/`plan` **deepseek-v4.1-flash** + `local` Qwen 3.8 + `nvidia` Nemotron 3 Super 120B + `multimodal` MiMo V2.5 · 5 MCP · 50 skills |
+| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build`/`plan` **deepseek-v4.1-flash** + `local` Qwen 3.8 + `nvidia` Nemotron 3 Ultra 550B + `multimodal` MiMo V2.5 · 5 MCP · 50 skills |
 | 5️⃣ | **TTS** — `Kokoro GPU` → `paplay` + **Pantalla** | 🔊 Audio por voz · 📄 Texto en pantalla |
 
 ---
@@ -70,7 +71,7 @@ Flujo de **voz → texto → IA → respuesta**:
 | **LM Studio** | `http://localhost:1234` | Modelo local `qwen3.8-9b` (80K contexto) |
 | **Proxy OpenCode ↔ LM Studio** | `http://localhost:4001` | Intermediario con métricas (tokens/s) |
 | **OpenCode Go (cloud)** | `https://opencode.ai` | Agentes `cloud` + `build`: `deepseek-v4.1-flash` |
-| **NVIDIA NIM (cloud)** | `https://integrate.api.nvidia.com/v1` | Agente `nvidia`: Nemotron 3 Super 120B A12B (~74 tok/s, 1M contexto) |
+| **NVIDIA NIM (cloud)** | `https://integrate.api.nvidia.com/v1` | Agente `nvidia`: Nemotron 3 Ultra 550B A55B (~74,5 tok/s, 1M contexto) |
 | **Ollama** _(en desuso)_ | `http://localhost:11434` | Modelos `llama3.1`, `gemma4`, `deepseek-r1`, `qwen3.5` (LiteLLM) |
 
 **Secuencia de arranque:**
@@ -125,7 +126,7 @@ start-opencode-server.sh
 bash ~/.config/opencode/init-opencode.sh
 
 # Lanzar OpenCode
-bash ~/.config/opencode/start-opencode.sh      # o directamente: ocv
+bash ~/.config/opencode/start-opencode-server.sh   # lanzador real (o directamente: ocv)
 
 # Perfiles por lanzador (cada uno usa SU config, sin copiar nada)
 ocv / opencode                                   # opencode.json (todos los agentes activos)
@@ -134,6 +135,9 @@ ocv-cloud / opencode-cloud                       # opencode-cloud.json (sin mode
 
 # Sincronizar configuración (timer automático cada 30 min)
 bash ~/.config/opencode/sync-opencode.sh
+
+# Espejar los manuales en el vault de Obsidian (también se hace en cada sync)
+bash ~/.config/opencode/sync-obsidian.sh
 
 # Regenerar backup (verifica el setup; si falla, aborta)
 bash ~/Config/opencode/backup-opencode.sh
@@ -153,7 +157,7 @@ set -a; source ~/.config/opencode/.env; set +a
 
 > 🕐 **Timeline:** la TUI solo muestra las últimas ~6 peticiones (PR #26861 sin
 > mergear). `timeline-completo` lee todas desde `opencode.db`. Un timer systemd
-> (`check-timeline-fix.timer`, cada 3 días) vigila el PR.
+> (`check-timeline-fix.timer`, a diario a las 10:00) vigila el PR.
 >
 > 💾 **Backup:** el automático (`opencode-sync.timer`, cada 30 min) hace exactamente
 > lo mismo que el manual: ejecuta `backup-opencode.sh`, que verifica el setup

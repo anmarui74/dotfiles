@@ -3,6 +3,12 @@
 #  Lanzadores de OpenCode con LM Studio local (equivalente Windows de ocv)
 # =====================================================================
 
+# Codificacion UTF-8: evita que los acentos y caracteres especiales salgan
+# corruptos (�) al mostrar la salida de programas externos (git, python...).
+$OutputEncoding = [System.Text.Encoding]::UTF8
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+try { chcp 65001 | Out-Null } catch {}
+
 $global:OpenCodeConfigDir = "C:\Users\evo01\.config\opencode"
 
 # ---------------------------------------------------------------------
@@ -201,3 +207,5 @@ function hw_query {
     )
     & "$global:OpenCodeConfigDir\scripts\hardware-query.ps1" -Campo $Campo
 }
+
+

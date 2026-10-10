@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🛟 Recuperación | 05/09/2026 · rev. 22/09/2026 | Antonio |
+| 🛟 Recuperación | 05/09/2026 · rev. 10/10/2026 | Antonio |
 
 > Procedimiento paso a paso para restaurar OpenCode desde un backup o una
 > reinstalación desde limpio, recuperar el grafo de memoria y re-sincronizar
@@ -165,15 +165,23 @@ bash /tmp/opencode-restore/setup-opencode-completo.sh
 Siguiendo el [Escenario A](#escenario-a-restaurar-el-grafo-de-memoria), copia
 el backup del grafo a la ruta activa.
 
-### Paso 5 — Restaurar la base de datos de sesiones (opcional)
+### Paso 5 — Base de datos de sesiones (NO incluida en el tarball)
+
+⚠️ El tarball de backup **no incluye** `~/.local/share/opencode/opencode.db`: cubre
+`~/.config/opencode/`, más `auth.json` (credenciales) y el grafo de memoria. Para no perder
+el historial de sesiones/peticiones, haz una copia aparte **antes** de reinstalar:
 
 ```bash
-cp ~/Config/opencode/backups/opencode/opencode-backup-XXXX.tar.gz /tmp/ && \
-cd /tmp && tar xzf opencode-backup-XXXX.tar.gz opencode.db 2>/dev/null
-cp /tmp/opencode.db ~/.local/share/opencode/opencode.db
+cp ~/.local/share/opencode/opencode.db ~/Config/opencode/backups/opencode.db.$(date +%Y%m%d)
 ```
 
-> Este paso recupera el historial de sesiones y peticiones (TUI timeline).
+Y al reinstalar, restáurala en su sitio:
+
+```bash
+cp ~/Config/opencode/backups/opencode.db.XXXXXXXX ~/.local/share/opencode/opencode.db
+```
+
+> Este paso recupera el historial de sesiones y peticiones (TUI timeline, `timeline-completo`).
 
 ### Paso 6 — Re-sincronizar y verificar
 
@@ -189,14 +197,16 @@ Para cuando solo necesitas un fichero concreto (un JSON, script o doc).
 
 ```bash
 tar xzf ~/Config/opencode/backups/opencode/opencode-backup-XXXX.tar.gz \
-  -C /tmp/opencode-restore .config/opencode/opencode.json
+  -C /tmp/opencode-restore ./opencode.json
 ```
 
 ### Paso 2 — Copiar a la ruta activa
 
 ```bash
-cp /tmp/opencode-restore/.config/opencode/opencode.json ~/.config/opencode/opencode.json
+cp /tmp/opencode-restore/opencode.json ~/.config/opencode/opencode.json
 ```
+
+> 📌 Dentro del tarball los archivos van en la **raíz** (`./opencode.json`, `./AGENTS.md`, `./cli.json`, `./documentacion/…`), **no** bajo `.config/opencode/`.
 
 ### Paso 3 — Re-sincronizar a Config/opencode
 
@@ -238,7 +248,7 @@ bash ~/Config/opencode/backup-opencode.sh
 | 6 | Timer de sync activo | `systemctl --user status opencode-sync.timer` |
 | 7 | Variables de entorno | `echo $MEMORY_FILE_PATH` |
 | 8 | Historial de sesiones | `timeline-completo --sesiones` |
-| 9 | Plugin TUI de voz + throughput | abrir `opencode` y verificar barra lateral |
+| 9 | Plugin TUI de voz + sidebar-mimo | abrir `opencode` y verificar barra lateral |
 
 ---
 
@@ -255,6 +265,6 @@ bash ~/Config/opencode/backup-opencode.sh
 
 ---
 
-> 📁 Este playbook vive en `~/.config/opencode/07-playbook-recuperacion.md`
-> (activo) y `~/Config/opencode/documentacion/07-playbook-recuperacion.md`
-> (backup). Sincronizado en el setup vía heredoc `PLAYBOOKEOF`.
+> 📁 Este playbook vive en `~/.config/opencode/documentacion/07-playbook-recuperacion.md`
+> (activo) y `~/Config/opencode/documentacion/07-playbook-recuperacion.md` (backup, lo copia
+> `sync-opencode.sh`). **No** va embebido en el instalador.

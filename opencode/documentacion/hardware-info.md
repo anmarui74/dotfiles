@@ -3,17 +3,19 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 16/08/2026 · rev. 22/09/2026 | Antonio |
+| ✅ Activo | 16/08/2026 · rev. 10/10/2026 | Antonio |
+
+> 🕐 **Re-verificado el 10/10/2026** con volcado privilegiado completo (`pkexec`): CPU, RAM, placa, GPU, discos/SMART, red y sensores. El índice `data/hardware/index.json` aún data del **22/09/2026**. Volcado completo: `hardware-query.py scan` (pide `pkexec`).
 
 | 🖥️ Sistema | 🐧 Kernel | 📐 Arquitectura |
 |------------|----------|-----------------|
-| CachyOS (Arch rolling) | 7.2.6-1-cachyos | x86_64 |
+| CachyOS (Arch rolling) | 7.2.9-2-cachyos | x86_64 |
 
 | 🖥️ Escritorio | 🐚 Shell | 🌍 Locale / Zona |
 |---------------|----------|------------------|
-| GNOME 50.3 (Wayland, GDM) | zsh | es_ES.UTF-8 · Europe/Madrid |
+| GNOME 51.0 (Wayland, GDM) | zsh | es_ES.UTF-8 · Europe/Madrid |
 
-> 📊 **Información actualizada:** 22/09/2026 · Escaneada con `hardware-query.py scan`
+> 📊 **Información actualizada:** 10/10/2026 · Verificada con volcado privilegiado `pkexec` (`inxi`, `dmidecode`, `smartctl`, `nvidia-smi`, `btrfs`, `sensors`)
 
 ---
 
@@ -68,8 +70,8 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 |---|---|
 | GPU dedicada | NVIDIA GeForce RTX 4070 Ti SUPER (Ada Lovelace, AD103) |
 | VRAM | 16376 MiB (~16 GB GDDR6X) |
-| Driver | nvidia 615.71.09 · CUDA 13.4 · Vulkan 1.4 · PCIe Gen4 x16 |
-| iGPU integrada | AMD Radeon Raphael (RDNA2) · driver amdgpu |
+| Driver | nvidia 615.78.08 · CUDA 13.4 · Vulkan 1.4 · PCIe Gen4 x16 |
+| iGPU integrada | AMD Radeon 610M (Raphael, RDNA2) · driver amdgpu · bus 71:00.0 |
 | Uso CUDA | LM Studio (Qwen 3.8-9B) y whisper-cpp (transcripción ~0,85 s) |
 
 > ⚠️ El **22/09/2026** la GPU sufrió un **Xid 79** ("GPU has fallen off the bus") que
@@ -77,22 +79,24 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 
 ## 🖥️ Monitores
 
-| Conexión | Tamaño | Resolución activa | ¿Principal? |
-|---|---|---|---|
-| DP-1 | 27,2" (600×340 mm) | 5760×3240 (4K, escala 150%) · 60 Hz | No |
-| DP-2 | 27,2" (600×340 mm) | 5760×3240 (4K, escala 150%) · 60 Hz | Sí |
+| Conexión | Modelo | Tamaño | Resolución activa | ¿Principal? |
+|---|---|---|---|---|
+| DP-1 | LG HDR 4K | 27,2" (600×340 mm) | **3840×2160** (4K) · 163 ppp · escala 133% · 60 Hz | No |
+| DP-2 | LG HDR 4K | 27,2" (600×340 mm) | **3840×2160** (4K) · 163 ppp · escala 133% · 60 Hz | Sí |
+
+> ⚠️ La resolución **física** es 3840×2160. `xrandr` bajo **Xwayland** reporta 5760×3240 (×1,5), que es un artefacto del servidor X, no la resolución real.
 
 ## 💽 Almacenamiento
 
 | Dispositivo | Modelo | Tamaño | Sistema de archivos | Montaje |
 |---|---|---|---|---|
-| nvme0n1 | Kingston SFYRS1000G | 1 TB | btrfs | `/` y `/home` |
-| nvme1n1 | Kingston SFYRD4000G | 4 TB | NTFS | (particiones Windows) |
-| sda | Crucial CT1000MX500SSD1 | 1 TB | btrfs | no montado |
-| sdb | Toshiba HDWE140 | 3,6 TB | NTFS | no montado |
-| sdc | Toshiba HDWE140 | 3,6 TB | NTFS | no montado |
-| sdd | Seagate ST4000NM0035 | 3,6 TB | NTFS | `/run/media/antonio/SEAGATE` |
-| zram0 | swap comprimido | 61,9 GiB | swap | `[SWAP]` |
+| nvme0n1 | Kingston SFYRS1000G | 1 TB | btrfs + vfat | `/`, `/home`, `/var/*` + `/boot/efi` |
+| nvme1n1 | Kingston SFYRD4000G | 4 TB | NTFS | particiones Windows (no montadas) |
+| sda | Crucial CT1000MX500SSD1 | 1 TB | btrfs | `/run/media/antonio/CRUCIAL` |
+| sdb | Toshiba HDWE140 | 3,6 TB | NTFS (disco dinámico) | `/mnt/toshiba` |
+| sdc | Toshiba HDWE140 | 3,6 TB | NTFS (disco dinámico) | `/mnt/toshiba` |
+| sdd | Seagate ST4000NM0035 | 3,6 TB | NTFS | `/mnt/seagate` |
+| zram0 | swap comprimido (zstd) | 61,9 GiB | swap | `[SWAP]` |
 
 > Contenedor Docker activo: **open-webui** (ghcr.io/open-webui/open-webui:main)
 
@@ -104,9 +108,9 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 |---|---|
 | Chipset | Qualcomm WCN785x Wi-Fi 7 (802.11be), 320 MHz, 2×2 · FastConnect 7800 |
 | Driver | ath12k_wifi7_pci · kernel module ath12k_wifi7 |
-| Red conectada | ZIPE (BSSID 64:64:4a:bc:af:70) · canal 48 · 5240 MHz · ancho 160 MHz |
-| Velocidades | RX 2161–2402 Mbps · TX 1921 Mbps (modo HE / Wi-Fi 6) |
-| Señal | −32 a −35 dBm (excelente) |
+| Red conectada | ZIPE (BSSID 64:64:4a:bc:af:70) · canal 36 · 5180 MHz · ancho 160 MHz |
+| Velocidades | RX 2401,9 Mbps · TX 2401,9 Mbps (HE-MCS 11, NSS 2) |
+| Señal | −36 dBm (excelente) |
 | IP | 192.168.31.112/24 · MAC d8:b3:2f:2d:ff:09 · modo managed |
 
 ### 🔌 Ethernet y Bluetooth
@@ -128,12 +132,14 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 
 | Sensor | Valor |
 |---|---|
-| CPU Tctl | ~51–64 °C |
-| CPU Tccd1 / Tccd2 | ~53 °C / ~51 °C |
-| GPU NVIDIA | ~49–53 °C · consumo 13–28 W |
-| iGPU AMD | ~55 °C · consumo 39 W |
-| NVMe | Composite ~47–60 °C · Sensor 2 ~66–73 °C |
-| WiFi / Ethernet | ~66 °C / ~56 °C |
+| CPU Tctl | ~49–60 °C |
+| CPU Tccd1 / Tccd2 | ~47–50 °C / ~45–49 °C |
+| RAM SPD (`spd5118`) | ~47–50 °C (aviso 55, crítico 85) |
+| GPU NVIDIA | ~45–58 °C · consumo 13–52 W |
+| iGPU AMD | ~49–55 °C · consumo 40–50 W |
+| NVMe (sistema / datos) | Composite ~44–61 °C · Sensor 2 ~66–73 °C |
+| WiFi / Ethernet | ~64 °C / ~52 °C |
+| USB4/xhci (`prom21`) | ~67–69 °C |
 
 ---
 
@@ -152,6 +158,8 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 > export XDG_RUNTIME_DIR="/run/user/1000"
 > python3 ~/.config/opencode/hardware-query.py scan
 > ```
+
+> 📝 Procedimiento completo del **informe del sistema** (SMART, btrfs, sensores): [09-informe-sistema.md](09-informe-sistema.md).
 
 ---
 

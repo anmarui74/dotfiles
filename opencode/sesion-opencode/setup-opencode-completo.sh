@@ -866,7 +866,7 @@ for f in "$CONFIG_ACTIVO"/*.json "$CONFIG_ACTIVO"/*.sh "$CONFIG_ACTIVO"/*.js "$C
     [ -f "$f" ] || continue
     base=$(basename "$f")
     case "$base" in
-        package.json|package-lock.json) continue ;;
+        package.json|package-lock.json|service.json) continue ;;
     esac
     cp "$f" "$SESION_DIR/" 2>/dev/null || true
 done
@@ -899,6 +899,11 @@ fi
 # Eliminar manuales obsoletos que pudieran quedar en sesion-opencode
 rm -f "$SESION_DIR"/*.md 2>/dev/null || true
 
+# service.json es la password del servicio local V2 (copia viva en
+# ~/.local/state/opencode/): un secreto que NUNCA debe ir a Config/opencode/ (de ahí
+# pasaría a dotfiles). Defensa en profundidad por si existía de antes.
+rm -f "$SESION_DIR/service.json" "$CONFIG_BACKUP/service.json" 2>/dev/null || true
+
 # Directorios (sin data/, models/, node_modules/) — sincronizar: borrar destino antes
 # para que la copia refleje exactamente el origen (elimina obsoletos)
 for dir in commands prompts skills skills-disabled plugins; do
@@ -917,6 +922,11 @@ fi
 
 log "✅ Archivos sincronizados"
 
+# ─── 1b. Espejar manuales en el vault de Obsidian (si existe) ───
+if [ -f "$CONFIG_ACTIVO/sync-obsidian.sh" ]; then
+    bash "$CONFIG_ACTIVO/sync-obsidian.sh" --quiet || true
+fi
+
 # ─── 2. Regenerar backup ───
 log "📦 Regenerando tarball de backup..."
 bash "$CONFIG_ACTIVO/backup-opencode.sh" 2>&1 | tail -1
@@ -926,6 +936,142 @@ log "─────────────────────────
 SYNCEOF
 chmod +x "$DIR_CONFIG/sync-opencode.sh"
 info "sync-opencode.sh creado (unificado manual + systemd)"
+
+cat > "$DIR_CONFIG/sync-obsidian.sh" << 'SYNCOBSEOF'
+#!/usr/bin/env bash
+# sync-obsidian.sh — Espeja los manuales de configuración de OpenCode en el vault de Obsidian
+# -------------------------------------------------------------------
+# Uso:
+#   bash sync-obsidian.sh            → comprueba y actualiza el vault
+#   bash sync-obsidian.sh --check    → solo comprueba (no escribe; sale 1 si hay desfases)
+#   bash sync-obsidian.sh --quiet    → salida mínima (para systemd/cron)
+#   OBSIDIAN_VAULT=/ruta bash sync-obsidian.sh   → vault alternativo
+#
+# Transformación aplicada a cada manual (~/.config/opencode/documentacion/*.md):
+#   1. Añade una línea en blanco al inicio.
+#   2. Reescribe los enlaces relativos .md al nombre de la nota en Obsidian
+#      ("💻 Título.md"), con los espacios como %20.
+# -------------------------------------------------------------------
+set -euo pipefail
+
+CONFIG_DOC="${HOME}/.config/opencode/documentacion"
+VAULT="${OBSIDIAN_VAULT:-${HOME}/MEGA/Obsidian/Obsidian/armarui74/OpenCode}"
+LOG_FILE="${HOME}/.config/opencode/data/sync-obsidian.log"
+
+MODE="apply"
+QUIET=0
+for a in "$@"; do
+    case "$a" in
+        --check|-n|--dry-run) MODE="check" ;;
+        --quiet|-q) QUIET=1 ;;
+    esac
+done
+
+if [ ! -d "$VAULT" ]; then
+    echo "⚠️  Vault de Obsidian no encontrado: $VAULT" >&2
+    echo "    Define OBSIDIAN_VAULT=/ruta/a/la/carpeta para otro vault." >&2
+    exit 2
+fi
+
+export SYNC_OBS_CONFIG_DOC="$CONFIG_DOC"
+export SYNC_OBS_VAULT="$VAULT"
+export SYNC_OBS_MODE="$MODE"
+export SYNC_OBS_LOG="$LOG_FILE"
+export SYNC_OBS_QUIET="$QUIET"
+
+python3 - << 'PYEOF'
+import datetime
+import os
+import re
+import sys
+
+cfg_dir = os.environ["SYNC_OBS_CONFIG_DOC"]
+vault = os.environ["SYNC_OBS_VAULT"]
+mode = os.environ["SYNC_OBS_MODE"]
+log_file = os.environ["SYNC_OBS_LOG"]
+quiet = os.environ.get("SYNC_OBS_QUIET") == "1"
+
+# Mapa: fichero en documentacion/  ->  nota en el vault de Obsidian
+M = {
+    "01-configuracion-ollama.md": "💻 01 Configuración de Ollama + Proxy.md",
+    "02-configuracion-lmstudio.md": "💻 02 Configuración de LM Studio + Proxy.md",
+    "03-configuracion-voz.md": "💻 03 Configuración Completa de Voz.md",
+    "04-perfiles-opencode-json.md": "💻 04 Perfiles de opencode.json.md",
+    "05-configuracion-adicional.md": "💻 05 Configuración Adicional.md",
+    "06-agents-md.md": "💻 06 AGENTS.md.md",
+    "07-playbook-recuperacion.md": "💻 07 Playbook de Recuperación.md",
+    "08-incidencia-gpu-xid79.md": "💻 08 Incidencia GPU Xid 79.md",
+    "09-informe-sistema.md": "💻 09 Informe del sistema.md",
+    "hardware-info.md": "💻 Hardware del equipo.md",
+    "README-hardware.md": "💻 README hardware.md",
+    "notas-opencode-go.md": "💻 Notas OpenCode Go.md",
+    "seguimiento-issue-memory.md": "💻 Seguimiento Issue MCP memory.md",
+    "README.md": "💻 README.md",
+    "../data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md": "💻 ONLYOFFICE AI + OpenCode.md",
+}
+
+def _link(m):
+    t = m.group(1)
+    return "](%s)" % M[t].replace(" ", "%20") if t in M else m.group(0)
+
+def transform(txt):
+    return "\n" + re.sub(r"\]\(([^)]*\.md)\)", _link, txt)
+
+ok, cambiados, faltan = [], [], []
+for cfg, vname in M.items():
+    cpath = os.path.join(cfg_dir, cfg)
+    if not os.path.exists(cpath):
+        continue
+    vpath = os.path.join(vault, vname)
+    esperado = transform(open(cpath, encoding="utf-8").read())
+    actual = None
+    if os.path.exists(vpath):
+        actual = open(vpath, encoding="utf-8").read()
+    else:
+        faltan.append(vname)
+    if actual == esperado:
+        ok.append(vname)
+        continue
+    cambiados.append(vname)
+    if mode == "apply":
+        with open(vpath, "w", encoding="utf-8") as f:
+            f.write(esperado)
+        os.chmod(vpath, 0o644)
+
+nuevos = [n for n in cambiados if n in faltan]
+act = [n for n in cambiados if n not in faltan]
+
+if mode == "check":
+    if not quiet:
+        for n in ok:
+            print(f"  ✅ {n}")
+        for n in cambiados:
+            print(f"  ⚠️  desfasado: {n}")
+    print(f"Obsidian: {len(cambiados)} desfasado(s) · {len(ok)} al día")
+else:
+    if not quiet:
+        for n in act:
+            print(f"  🔄 actualizado: {n}")
+        for n in nuevos:
+            print(f"  🆕 creado: {n}")
+    if cambiados or not quiet:
+        print(f"Obsidian: {len(cambiados)} actualizado(s) · {len(ok)} al día")
+
+# Registro en el log
+try:
+    with open(log_file, "a", encoding="utf-8") as f:
+        ts = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        modo = "check" if mode == "check" else "apply"
+        f.write(f"[{ts}] sync-obsidian ({modo}): {len(act)} actualizados, "
+                f"{len(nuevos)} nuevos, {len(ok)} al día\n")
+except OSError:
+    pass
+
+sys.exit(1 if (mode == "check" and cambiados) else 0)
+PYEOF
+SYNCOBSEOF
+chmod +x "$DIR_CONFIG/sync-obsidian.sh"
+info "sync-obsidian.sh creado (espejo del vault de Obsidian)"
 
 # Servicios systemd
 mkdir -p "$HOME/.config/systemd/user"
@@ -954,6 +1100,45 @@ Unit=opencode-sync.service
 [Install]
 WantedBy=default.target
 TIMEREOF
+
+cat > "$HOME/.config/systemd/user/sync-obsidian.service" << 'SYNCOBS-SERVEOF'
+[Unit]
+Description=Espeja los manuales de OpenCode en el vault de Obsidian
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/antonio/.config/opencode/sync-obsidian.sh --quiet
+StandardOutput=journal
+StandardError=journal
+SYNCOBS-SERVEOF
+
+cat > "$HOME/.config/systemd/user/sync-obsidian.path" << 'SYNCOBS-PATHEOF'
+[Unit]
+Description=Vigila los manuales de OpenCode para espejarlos en Obsidian al editarlos
+
+[Path]
+# Cualquier cambio en el directorio (crear/borrar/renombrar) o escritura en un manual
+PathChanged=/home/antonio/.config/opencode/documentacion
+PathModified=/home/antonio/.config/opencode/documentacion/01-configuracion-ollama.md
+PathModified=/home/antonio/.config/opencode/documentacion/02-configuracion-lmstudio.md
+PathModified=/home/antonio/.config/opencode/documentacion/03-configuracion-voz.md
+PathModified=/home/antonio/.config/opencode/documentacion/04-perfiles-opencode-json.md
+PathModified=/home/antonio/.config/opencode/documentacion/05-configuracion-adicional.md
+PathModified=/home/antonio/.config/opencode/documentacion/06-agents-md.md
+PathModified=/home/antonio/.config/opencode/documentacion/07-playbook-recuperacion.md
+PathModified=/home/antonio/.config/opencode/documentacion/08-incidencia-gpu-xid79.md
+PathModified=/home/antonio/.config/opencode/documentacion/09-informe-sistema.md
+PathModified=/home/antonio/.config/opencode/documentacion/hardware-info.md
+PathModified=/home/antonio/.config/opencode/documentacion/README-hardware.md
+PathModified=/home/antonio/.config/opencode/documentacion/notas-opencode-go.md
+PathModified=/home/antonio/.config/opencode/documentacion/seguimiento-issue-memory.md
+PathModified=/home/antonio/.config/opencode/documentacion/README.md
+Unit=sync-obsidian.service
+
+[Install]
+WantedBy=default.target
+SYNCOBS-PATHEOF
 
 cat > "$HOME/.config/systemd/user/init-opencode.service" << 'INITSEOF'
 [Unit]
@@ -1546,6 +1731,7 @@ archivos = {
     'cli.json': 'TUIEOF',
     'AGENTS.md': 'AGEOF', '.env': 'ENVEOF',
     'sync-opencode.sh': 'SYNCEOF',
+    'sync-obsidian.sh': 'SYNCOBSEOF',
     'mcp-fetch-fix.js': 'MCPFIXEOF',
     'init-opencode.sh': 'INITEOF', 'start-lmstudio-server.sh': 'SERVEREOF',
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
@@ -1578,6 +1764,8 @@ extra_archivos = [
     ('systemd check-opencode-fix.timer', 'CHKFIXTIMEREOF', '/home/antonio/.config/systemd/user/check-opencode-fix.timer'),
     ('systemd check-nvidia-whitelist.service', 'NVIDIAWL-SERVEOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.service'),
     ('systemd check-nvidia-whitelist.timer', 'NVIDIAWL-TIMEREOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.timer'),
+    ('systemd sync-obsidian.service', 'SYNCOBS-SERVEOF', '/home/antonio/.config/systemd/user/sync-obsidian.service'),
+    ('systemd sync-obsidian.path', 'SYNCOBS-PATHEOF', '/home/antonio/.config/systemd/user/sync-obsidian.path'),
 ]
 
 ok = 0
@@ -1809,6 +1997,7 @@ systemctl --user daemon-reload 2>/dev/null || true
 systemctl --user disable init-opencode.service 2>/dev/null || true
 systemctl --user enable opencode-sync.timer 2>/dev/null || true
 systemctl --user start opencode-sync.timer 2>/dev/null || true
+systemctl --user enable --now sync-obsidian.path 2>/dev/null || true
 systemctl --user enable --now check-timeline-fix.timer 2>/dev/null || true
 systemctl --user enable --now check-opencode-fix.timer 2>/dev/null || true
 systemctl --user enable --now check-nvidia-whitelist.timer 2>/dev/null || true
@@ -1920,19 +2109,25 @@ monitores, audio, USB, sensores, red, etc.), LEE el archivo:
 ```
 ~/.config/opencode/data/hardware/index.json
 ```
-Ese JSON contiene TODA la información de su sistema. No ejecutes comandos de
-detección (inxi, lspci, dmidecode, etc.) a menos que el usuario lo pida
-explícitamente o que el JSON no tenga la respuesta.
+Ese JSON contiene TODA la información de su sistema. Para **consultas puntuales**
+NO hace falta ejecutar comandos de detección (inxi, lspci, dmidecode…): usa el
+JSON (solo si el usuario pide un escaneo en vivo o el JSON no tiene el dato).
 
 Consulta rápida desde terminal: `source ~/.config/opencode/hardware-query.sh && hw_query <campo>`
 
-Para REGENERAR el índice con los datos reales actuales del hardware:
-```bash
-python3 ~/.config/opencode/hardware-query.py scan
-```
-(Escanea lscpu, lspci, lsusb, nvidia-smi, sensors, lsblk, dmidecode, iw,
-xrandr, free, /proc... y actualiza data/hardware/index.json. Usa pkexec
-para dmidecode: saldrá una ventana pidiendo contraseña la primera vez.)
+✅ **Ojo:** el **escaneo sí usa** `inxi`, `lspci`, `dmidecode`, `smartctl`,
+`nvidia-smi`, `sensors`… — es precisamente lo que genera el JSON. No hay
+contradicción: esa prohibición es solo para consultas sueltas. Dos vías de escaneo:
+
+1. **Índice** (`data/hardware/index.json`), escaneo estructurado:
+   ```bash
+   python3 ~/.config/opencode/hardware-query.py scan
+   ```
+   (lscpu, lspci, lsusb, nvidia-smi, sensors, lsblk, dmidecode, iw, xrandr, free,
+   /proc… → `data/hardware/index.json`. Usa `pkexec` para `dmidecode`.)
+2. **Informe del sistema** (`~/informe-sistema.md`), volcado completo con `inxi`,
+   `dmidecode`, `smartctl`, `nvidia-smi`, `btrfs` y `sensors`. Procedimiento en
+   `documentacion/09-informe-sistema.md`.
 
 ⚠️ **Si lo lanza el AGENTE** (no hereda la sesión gráfica), `pkexec` no alcanza
 el agente polkit y falla en silencio: la RAM (DIMMs) y la placa base quedarían
@@ -2084,7 +2279,7 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
   - `sesion-opencode/` → setup completo desde limpio + **respaldo canónico** de los
     archivos de configuración (`opencode.json`, `opencode-local.json`, `opencode-cloud.json`,
     `cli.json`, `plugins/`, scripts, `AGENTS.md`, `.env`, etc.)
-  - `respaldo-config/` → snapshot antiguo de la configuración
+  - ~~`respaldo-config/`~~ → **eliminado el 09/08/2026** (obsoleto; ya no existe)
   - `legacy/` → scripts y carpetas obsoletos
   - En la raíz solo viven: `AGENTS.md`, `backup-opencode.sh`, `bootstrap-ocv.sh`, `sync-opencode.sh`
     y el enlace simbólico `setup-opencode-completo.sh` → `sesion-opencode/setup-opencode-completo.sh`
@@ -2104,6 +2299,10 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
     (salvo `AGENTS.md`) ni en `sesion-opencode/`. `AGENTS.md` es configuración (no manual) →
     vive en la raíz de `~/.config/opencode/` y de `~/Config/opencode/`.
     El `sync-opencode.sh` aplica esta regla automáticamente.
+  - 🔄 **Espejo en Obsidian:** `sync-obsidian.sh` copia los manuales de
+    `~/.config/opencode/documentacion/` al vault (`💻 Título.md`, con los enlaces
+    reescritos). Se ejecuta **solo**: al guardar un manual (unidad `sync-obsidian.path`)
+    y en cada `sync-opencode.sh` (cada 30 min). Manual: `bash ~/.config/opencode/sync-obsidian.sh`.
 - Cada vez que modifiques, crees o elimines algo en `~/.config/opencode/`:
   1. **Copia el archivo** a `~/Config/opencode/sesion-opencode/` (respaldo canónico).
      NUNCA a la raíz de `~/Config/opencode/` si es un archivo de configuración.
@@ -2131,7 +2330,8 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
   (repo git `anmarui74/dotfiles`), excluyendo cualquier archivo con claves de API.
   Esa copia **NUNCA** debe contener ninguna clave de ningún tipo. Reglas que aplica:
   1. **Excluir siempre** (no copiar ni commitear): `.env` y cualquier `*.env`, `auth.json`,
-     el directorio `credenciales/` y los tarballs `*.tar.gz` (contienen `.env` +
+     **`service.json`** (password del servicio local V2: es un secreto, ver la comprobación
+     aparte del punto 2), el directorio `credenciales/` y los tarballs `*.tar.gz` (contienen `.env` +
      `credenciales/auth.json` en claro). Se excluye **todo** el directorio `backups/`
      (desde el 22/09/2026: los tarballs y las copias fechadas del grafo se quedan solo en
      local). También se excluyen `node_modules/`, `__pycache__/`, `models/`, `build/`,
@@ -2144,6 +2344,10 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
      git grep -nIP '(nvapi-|oc_sk_)[A-Za-z0-9_-]{15,}|(^|[^A-Za-z0-9])sk-[A-Za-z0-9]{25,}|AEMET_API_KEY=[A-Za-z0-9]{15,}' -- ':(exclude)*.md'
      ```
      Si devuelve algo, NO hacer commit/push y eliminar el fichero.
+     ⚠️ **`service.json` se le escapa a ese patrón**: contiene una **password suelta** (la del
+     servicio local V2 de OpenCode; su copia viva es `~/.local/state/opencode/service.json`) y el
+     `git grep` busca formas de API key. Comprobación aparte antes de commitear:
+     `find ~/Documentos/dotfiles -name 'service.json*'` → debe salir **vacío**.
   3. El `.gitignore` del repo debe incluir:
      ```
      **/*.env
@@ -3665,30 +3869,115 @@ def seccion_gpu_amd():
     return gpu
 
 
+def _monitores_gnome():
+    """Configuración real de monitores desde ~/.config/monitors.xml.
+
+    Evita el artefacto de `xrandr` bajo Xwayland, que reporta la resolución
+    multiplicada (p. ej. 5760x3240 en un panel 4K de 3840x2160).
+    Devuelve {conector: {active_resolution, refresh_hz, scale, primary, vendor, product}}.
+    """
+    import xml.etree.ElementTree as ET
+
+    ruta = os.path.expanduser("~/.config/monitors.xml")
+    try:
+        root = ET.parse(ruta).getroot()
+    except (OSError, ET.ParseError):
+        return {}
+
+    # Conectores actualmente conectados (para elegir la configuración vigente)
+    conectados = set()
+    try:
+        for c in os.listdir("/sys/class/drm"):
+            if "-" not in c:
+                continue
+            try:
+                with open(f"/sys/class/drm/{c}/status") as f:
+                    if f.read().strip() == "connected":
+                        conectados.add(c.split("-", 1)[1])
+            except OSError:
+                pass
+    except OSError:
+        pass
+
+    elegida: JsonDict = {}
+    for cfg in root.findall("configuration"):
+        info: JsonDict = {}
+        for lm in cfg.findall("logicalmonitor"):
+            mon = lm.find("monitor")
+            spec = mon.find("monitorspec") if mon is not None else None
+            mode = mon.find("mode") if mon is not None else None
+            conn = spec.findtext("connector") if spec is not None else None
+            if not conn:
+                continue
+            w = mode.findtext("width") if mode is not None else None
+            h = mode.findtext("height") if mode is not None else None
+            rate = mode.findtext("rate") if mode is not None else None
+            info[conn] = {
+                "interface": conn,
+                "active_resolution": f"{w}x{h}" if w and h else "",
+                "refresh_hz": round(float(rate), 1) if rate else None,
+                "scale": round(float(lm.findtext("scale") or 1), 2),
+                "primary": lm.findtext("primary") == "yes",
+                "vendor": spec.findtext("vendor") if spec is not None else "",
+                "product": spec.findtext("product") if spec is not None else "",
+            }
+        if not elegida:
+            elegida = info
+        # Preferimos la configuración que encaja con los conectores conectados
+        if conectados and set(info) == conectados:
+            elegida = info
+            break
+    return elegida
+
+
 def seccion_displays():
     displays: list[JsonDict] = []
+
+    # 1) xrandr → tamaño físico (mm→cm/pulgadas) y resolución de respaldo
+    xr: dict[str, JsonDict] = {}
     xrandr = run(["xrandr"], timeout=5)
     for line in xrandr.splitlines():
         if " connected" not in line:
             continue
         parts = line.split()
         conn = parts[0]
-        # Resolución activa: "5760x3240+0+0" o "3840x2160+0+0"
-        res = ""
         geom = next((p for p in parts if re.match(r"\d+x\d+\+\d+\+\d+", p)), "")
-        if geom:
-            res = geom.split("+")[0]
-        d: JsonDict = {"interface": conn, "active_resolution": res}
+        d: JsonDict = {
+            "interface": conn,
+            "active_resolution": geom.split("+")[0] if geom else "",
+            "primary": "primary" in line,
+        }
         m = re.search(r"(\d+)mm x (\d+)mm", line)
         if m:
             w_cm, h_cm = int(m.group(1)) / 10, int(m.group(2)) / 10
             d["size_cm"] = f"{w_cm:.0f}x{h_cm:.0f}"
             diag = (w_cm ** 2 + h_cm ** 2) ** 0.5 / 2.54
             d["size_inches"] = round(diag, 1)
-        d["primary"] = "primary" in line
-        d["active_resolution"] = res
+        xr[conn] = d
+
+    # 2) monitors.xml → resolución/escala reales de GNOME (prioritarias)
+    gnome = _monitores_gnome()
+
+    for conn in dict.fromkeys(list(gnome) + list(xr)):
+        g = gnome.get(conn, {})
+        x = xr.get(conn, {})
+        d = {"interface": conn}
+        d["active_resolution"] = g.get("active_resolution") or x.get("active_resolution", "")
+        if g.get("refresh_hz"):
+            d["refresh_hz"] = g["refresh_hz"]
+        if g.get("scale"):
+            d["scale"] = g["scale"]
+        d["primary"] = bool(g.get("primary", x.get("primary", False)))
+        for k in ("size_cm", "size_inches"):
+            if k in x:
+                d[k] = x[k]
+        if g.get("vendor"):
+            d["vendor"] = g["vendor"]
+        if g.get("product"):
+            d["product"] = g["product"]
         displays.append(d)
-    # Fallback: /sys/class/drm
+
+    # 3) Respaldo: /sys/class/drm
     if not displays:
         for conn in sorted(os.listdir("/sys/class/drm")):
             if not conn.startswith("card") or "-" not in conn:
@@ -3703,25 +3992,46 @@ def seccion_displays():
 
 
 def seccion_storage():
+    """Discos físicos con su FS y montajes reales.
+
+    Usa `lsblk --json` (no texto plano) porque las columnas FSTYPE/MOUNTPOINT
+    vacías desplazaban el resto y el MODEL acababa en la columna `fstype`.
+    """
     discos = []
-    salida = run(["lsblk", "-b", "-o", "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL"])
-    actual = None
-    for line in salida.splitlines()[1:]:
-        nombre, resto = line.split(maxsplit=1) if line.strip() else ("", "")
-        if nombre and not nombre.startswith(("└", "├", "`", "|")):
-            # Disco físico
-            parts = line.split()
-            if len(parts) >= 3:
-                model = " ".join(parts[5:]) if len(parts) > 5 else ""
-                discos.append({
-                    "name": parts[0],
-                    "size_bytes": int(parts[1]),
-                    "size_tb": round(int(parts[1]) / 1099511627776, 2),
-                    "type": parts[2],
-                    "fstype": parts[3] if len(parts) > 3 else "",
-                    "mountpoint": parts[4] if len(parts) > 4 else "",
-                    "model": model,
-                })
+    salida = run(["lsblk", "-b", "-J", "-o",
+                  "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL"])
+    try:
+        data = json.loads(salida) if salida.strip().startswith("{") else {}
+    except json.JSONDecodeError:
+        data = {}
+
+    def _recoger(nodo, fstypes, montajes):
+        if nodo.get("fstype"):
+            fstypes.append(nodo["fstype"])
+        if nodo.get("mountpoint"):
+            montajes.append(nodo["mountpoint"])
+        for hijo in nodo.get("children") or []:
+            _recoger(hijo, fstypes, montajes)
+
+    for dev in data.get("blockdevices", []):
+        if dev.get("type") != "disk":
+            continue
+        try:
+            size = int(dev.get("size") or 0)
+        except (TypeError, ValueError):
+            size = 0
+        fstypes: list[str] = []
+        montajes: list[str] = []
+        _recoger(dev, fstypes, montajes)
+        discos.append({
+            "name": dev.get("name", ""),
+            "size_bytes": size,
+            "size_tb": round(size / 1099511627776, 2),
+            "type": dev.get("type", ""),
+            "fstype": ", ".join(sorted(set(fstypes))),
+            "mountpoint": ", ".join(montajes),
+            "model": (dev.get("model") or "").strip(),
+        })
     return discos
 
 
@@ -4867,6 +5177,7 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
       --exclude='backups/' \
       --exclude='.env' --exclude='*.env' \
       --exclude='auth.json' \
+      --exclude='service.json' \
       --exclude='credenciales/' \
       --exclude='*.tar.gz' \
       --exclude='node_modules/' \
@@ -4882,7 +5193,7 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
 
     # Eliminar cualquier resto con credenciales que pudiera haber quedado
     find "${DOTFILES_OPENCODE}" -name '*.tar.gz' -delete 2>/dev/null || true
-    find "${DOTFILES_OPENCODE}" \( -name '.env' -o -name 'auth.json' \) -delete 2>/dev/null || true
+    find "${DOTFILES_OPENCODE}" \( -name '.env' -o -name 'auth.json' -o -name 'service.json' \) -delete 2>/dev/null || true
     rm -rf "${DOTFILES_OPENCODE}/credenciales" 2>/dev/null || true
     # El snapshot de localStorage del plugin OnlyOffice-IA guarda la clave del proveedor
     # (localstorage-snapshot/leveldb/*.log): basura de caché, fuera del repo público.
@@ -4901,6 +5212,13 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
         echo "   ⚠️  ATENCIÓN: posibles claves en la copia de dotfiles. Revisar antes de commitear."
     else
         echo "   ✅ Copia en dotfiles libre de claves de API"
+    fi
+
+    # Verificación aparte para service.json (password del servicio local V2)
+    if find "${DOTFILES_OPENCODE}" -name 'service.json*' 2>/dev/null | grep -q .; then
+        echo "   ⚠️  ATENCIÓN: service.json encontrado en dotfiles (contiene password del servicio V2). Eliminar antes de commitear."
+    else
+        echo "   ✅ service.json ausente en dotfiles (correcto)"
     fi
 fi
 
@@ -5678,17 +5996,19 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 16/08/2026 · rev. 22/09/2026 | Antonio |
+| ✅ Activo | 16/08/2026 · rev. 10/10/2026 | Antonio |
+
+> 🕐 **Re-verificado el 10/10/2026** con volcado privilegiado completo (`pkexec`): CPU, RAM, placa, GPU, discos/SMART, red y sensores. El índice `data/hardware/index.json` aún data del **22/09/2026**. Volcado completo: `hardware-query.py scan` (pide `pkexec`).
 
 | 🖥️ Sistema | 🐧 Kernel | 📐 Arquitectura |
 |------------|----------|-----------------|
-| CachyOS (Arch rolling) | 7.2.6-1-cachyos | x86_64 |
+| CachyOS (Arch rolling) | 7.2.9-2-cachyos | x86_64 |
 
 | 🖥️ Escritorio | 🐚 Shell | 🌍 Locale / Zona |
 |---------------|----------|------------------|
-| GNOME 50.3 (Wayland, GDM) | zsh | es_ES.UTF-8 · Europe/Madrid |
+| GNOME 51.0 (Wayland, GDM) | zsh | es_ES.UTF-8 · Europe/Madrid |
 
-> 📊 **Información actualizada:** 22/09/2026 · Escaneada con `hardware-query.py scan`
+> 📊 **Información actualizada:** 10/10/2026 · Verificada con volcado privilegiado `pkexec` (`inxi`, `dmidecode`, `smartctl`, `nvidia-smi`, `btrfs`, `sensors`)
 
 ---
 
@@ -5743,8 +6063,8 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 |---|---|
 | GPU dedicada | NVIDIA GeForce RTX 4070 Ti SUPER (Ada Lovelace, AD103) |
 | VRAM | 16376 MiB (~16 GB GDDR6X) |
-| Driver | nvidia 615.71.09 · CUDA 13.4 · Vulkan 1.4 · PCIe Gen4 x16 |
-| iGPU integrada | AMD Radeon Raphael (RDNA2) · driver amdgpu |
+| Driver | nvidia 615.78.08 · CUDA 13.4 · Vulkan 1.4 · PCIe Gen4 x16 |
+| iGPU integrada | AMD Radeon 610M (Raphael, RDNA2) · driver amdgpu · bus 71:00.0 |
 | Uso CUDA | LM Studio (Qwen 3.8-9B) y whisper-cpp (transcripción ~0,85 s) |
 
 > ⚠️ El **22/09/2026** la GPU sufrió un **Xid 79** ("GPU has fallen off the bus") que
@@ -5752,22 +6072,24 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 
 ## 🖥️ Monitores
 
-| Conexión | Tamaño | Resolución activa | ¿Principal? |
-|---|---|---|---|
-| DP-1 | 27,2" (600×340 mm) | 5760×3240 (4K, escala 150%) · 60 Hz | No |
-| DP-2 | 27,2" (600×340 mm) | 5760×3240 (4K, escala 150%) · 60 Hz | Sí |
+| Conexión | Modelo | Tamaño | Resolución activa | ¿Principal? |
+|---|---|---|---|---|
+| DP-1 | LG HDR 4K | 27,2" (600×340 mm) | **3840×2160** (4K) · 163 ppp · escala 133% · 60 Hz | No |
+| DP-2 | LG HDR 4K | 27,2" (600×340 mm) | **3840×2160** (4K) · 163 ppp · escala 133% · 60 Hz | Sí |
+
+> ⚠️ La resolución **física** es 3840×2160. `xrandr` bajo **Xwayland** reporta 5760×3240 (×1,5), que es un artefacto del servidor X, no la resolución real.
 
 ## 💽 Almacenamiento
 
 | Dispositivo | Modelo | Tamaño | Sistema de archivos | Montaje |
 |---|---|---|---|---|
-| nvme0n1 | Kingston SFYRS1000G | 1 TB | btrfs | `/` y `/home` |
-| nvme1n1 | Kingston SFYRD4000G | 4 TB | NTFS | (particiones Windows) |
-| sda | Crucial CT1000MX500SSD1 | 1 TB | btrfs | no montado |
-| sdb | Toshiba HDWE140 | 3,6 TB | NTFS | no montado |
-| sdc | Toshiba HDWE140 | 3,6 TB | NTFS | no montado |
-| sdd | Seagate ST4000NM0035 | 3,6 TB | NTFS | `/run/media/antonio/SEAGATE` |
-| zram0 | swap comprimido | 61,9 GiB | swap | `[SWAP]` |
+| nvme0n1 | Kingston SFYRS1000G | 1 TB | btrfs + vfat | `/`, `/home`, `/var/*` + `/boot/efi` |
+| nvme1n1 | Kingston SFYRD4000G | 4 TB | NTFS | particiones Windows (no montadas) |
+| sda | Crucial CT1000MX500SSD1 | 1 TB | btrfs | `/run/media/antonio/CRUCIAL` |
+| sdb | Toshiba HDWE140 | 3,6 TB | NTFS (disco dinámico) | `/mnt/toshiba` |
+| sdc | Toshiba HDWE140 | 3,6 TB | NTFS (disco dinámico) | `/mnt/toshiba` |
+| sdd | Seagate ST4000NM0035 | 3,6 TB | NTFS | `/mnt/seagate` |
+| zram0 | swap comprimido (zstd) | 61,9 GiB | swap | `[SWAP]` |
 
 > Contenedor Docker activo: **open-webui** (ghcr.io/open-webui/open-webui:main)
 
@@ -5779,9 +6101,9 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 |---|---|
 | Chipset | Qualcomm WCN785x Wi-Fi 7 (802.11be), 320 MHz, 2×2 · FastConnect 7800 |
 | Driver | ath12k_wifi7_pci · kernel module ath12k_wifi7 |
-| Red conectada | ZIPE (BSSID 64:64:4a:bc:af:70) · canal 48 · 5240 MHz · ancho 160 MHz |
-| Velocidades | RX 2161–2402 Mbps · TX 1921 Mbps (modo HE / Wi-Fi 6) |
-| Señal | −32 a −35 dBm (excelente) |
+| Red conectada | ZIPE (BSSID 64:64:4a:bc:af:70) · canal 36 · 5180 MHz · ancho 160 MHz |
+| Velocidades | RX 2401,9 Mbps · TX 2401,9 Mbps (HE-MCS 11, NSS 2) |
+| Señal | −36 dBm (excelente) |
 | IP | 192.168.31.112/24 · MAC d8:b3:2f:2d:ff:09 · modo managed |
 
 ### 🔌 Ethernet y Bluetooth
@@ -5803,12 +6125,14 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 
 | Sensor | Valor |
 |---|---|
-| CPU Tctl | ~51–64 °C |
-| CPU Tccd1 / Tccd2 | ~53 °C / ~51 °C |
-| GPU NVIDIA | ~49–53 °C · consumo 13–28 W |
-| iGPU AMD | ~55 °C · consumo 39 W |
-| NVMe | Composite ~47–60 °C · Sensor 2 ~66–73 °C |
-| WiFi / Ethernet | ~66 °C / ~56 °C |
+| CPU Tctl | ~49–60 °C |
+| CPU Tccd1 / Tccd2 | ~47–50 °C / ~45–49 °C |
+| RAM SPD (`spd5118`) | ~47–50 °C (aviso 55, crítico 85) |
+| GPU NVIDIA | ~45–58 °C · consumo 13–52 W |
+| iGPU AMD | ~49–55 °C · consumo 40–50 W |
+| NVMe (sistema / datos) | Composite ~44–61 °C · Sensor 2 ~66–73 °C |
+| WiFi / Ethernet | ~64 °C / ~52 °C |
+| USB4/xhci (`prom21`) | ~67–69 °C |
 
 ---
 
@@ -5827,6 +6151,8 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 > export XDG_RUNTIME_DIR="/run/user/1000"
 > python3 ~/.config/opencode/hardware-query.py scan
 > ```
+
+> 📝 Procedimiento completo del **informe del sistema** (SMART, btrfs, sensores): [09-informe-sistema.md](09-informe-sistema.md).
 
 ---
 

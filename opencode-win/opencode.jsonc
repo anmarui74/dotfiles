@@ -4,10 +4,26 @@
   "model": "opencode-go/deepseek-v4.1-flash",
   "default_agent": "cloud",
   "permissions": [
-    { "action": "edit", "resource": "*", "effect": "ask" },
-    { "action": "shell", "resource": "*", "effect": "ask" },
-    { "action": "shell", "resource": "sudo *", "effect": "deny" },
-    { "action": "shell", "resource": "pkexec *", "effect": "allow" }
+    {
+      "action": "edit",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "sudo *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "pkexec *",
+      "effect": "allow"
+    }
   ],
   "agents": {
     "title": {
@@ -27,15 +43,19 @@
       "model": "local/qwen3.8-9b"
     },
     "cloud": {
-      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash vía OpenCode Go: pipeline diario de código y agentic coding",
+      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash v\u00eda OpenCode Go: pipeline diario de c\u00f3digo y agentic coding",
       "mode": "primary",
       "model": "opencode-go/deepseek-v4.1-flash",
       "permissions": [
-        { "action": "subagent", "resource": "*", "effect": "allow" }
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "allow"
+        }
       ]
     },
     "nvidia": {
-      "description": "Agente NVIDIA - NVIDIA Nemotron 3 Super 120B (A12B): ~74 tok/s medida, tool calling nativo, gratis vía NIM. Predeterminado del agente nvidia desde el 17/09/2026 (antes Muse Glimmer 30B). Usable como primario (Shift+Tab) y como subagente delegado por DeepSeek",
+      "description": "Agente NVIDIA - NVIDIA Nemotron 3 Super 120B (A12B): ~74 tok/s medida, tool calling nativo, gratis v\u00eda NIM. Predeterminado del agente nvidia desde el 17/09/2026 (antes Muse Glimmer 30B). Usable como primario (Shift+Tab) y como subagente delegado por DeepSeek",
       "mode": "all",
       "model": "nvidia/nvidia/nemotron-3-super-120b-a12b"
     },
@@ -49,7 +69,6 @@
   "providers": {
     "nvidia": {
       "whitelist": [
-        "minimaxai/minimax-m3",
         "meta/muse-glimmer-30b",
         "meta/llama-3.2-11b-vision-instruct",
         "openai/gpt-oss-20b",
@@ -141,5 +160,138 @@
       }
     }
   },
-  "lsp": {}
+  "lsp": {
+    "python": {
+      "command": [
+        "npx",
+        "-y",
+        "basedpyright",
+        "--stdio"
+      ],
+      "extensions": [
+        ".py",
+        ".pyw"
+      ]
+    },
+    "typescript": {
+      "command": [
+        "npx",
+        "-y",
+        "typescript-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs"
+      ]
+    },
+    "json": {
+      "command": [
+        "npx",
+        "-y",
+        "vscode-json-languageserver",
+        "--stdio"
+      ],
+      "extensions": [
+        ".json",
+        ".jsonc"
+      ]
+    },
+    "yaml": {
+      "command": [
+        "npx",
+        "-y",
+        "yaml-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".yaml",
+        ".yml"
+      ]
+    },
+    "bash": {
+      "command": [
+        "npx",
+        "-y",
+        "bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".sh",
+        ".bash"
+      ]
+    },
+    "zsh": {
+      "command": [
+        "npx",
+        "-y",
+        "bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".zsh",
+        ".zshrc"
+      ]
+    },
+    "markdown": {
+      "command": [
+        "npx",
+        "-y",
+        "vscode-markdown-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".md",
+        ".markdown"
+      ]
+    },
+    "go": {
+      "command": [
+        "npx",
+        "-y",
+        "gopls"
+      ],
+      "extensions": [
+        ".go"
+      ]
+    },
+    "rust": {
+      "command": [
+        "npx",
+        "-y",
+        "rust-analyzer"
+      ],
+      "extensions": [
+        ".rs"
+      ]
+    },
+    "c": {
+      "command": [
+        "npx",
+        "-y",
+        "clangd"
+      ],
+      "extensions": [
+        ".c",
+        ".h"
+      ]
+    },
+    "cpp": {
+      "command": [
+        "npx",
+        "-y",
+        "clangd"
+      ],
+      "extensions": [
+        ".cpp",
+        ".hpp",
+        ".cc",
+        ".cxx"
+      ]
+    }
+  }
 }

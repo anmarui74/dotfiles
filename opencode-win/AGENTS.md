@@ -219,6 +219,11 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
 - **Credenciales de proveedores**: el backup debe incluir
   `C:\Users\evo01\.local\share\opencode\auth.json` (claves de NVIDIA `nvapi-*` y OpenCode GO `sk-*`).
   Sin él, los agentes en la nube no funcionan tras reinstalar.
+- **Publicación en `F:` (partición Linux montada en Windows)**: al terminar,
+  `backup-opencode.ps1` publica un **espejo** (borra lo que sobre) del respaldo y de los
+  dotfiles en `F:` → `F:\@home\antonio\Config\opencode-win` y
+  `F:\@home\antonio\Documentos\dotfiles\opencode-win` (preservando el `.git` del repo de
+  dotfiles). Se puede omitir con el parámetro `-SinF`.
 
 > ⚠️ **No aplica en Windows:** los tarballs `opencode-backup-*.tar.gz`, el `restore.sh`,
 > el timer `opencode-sync.timer` y el enlace simbólico `setup-opencode-completo.sh`.
@@ -548,17 +553,19 @@ Resumen del setup de OpenCode en Windows:
 | Perfil PowerShell | `C:\Users\evo01\OneDrive\Documentos\WindowsPowerShell\Microsoft.PowerShell_profile.ps1` |
 
 ### Lanzadores (funciones del perfil)
-- **`ocv`** → arranca LM Studio + proxy 4001 + servidor TTS y abre OpenCode con `opencode.jsonc` (global/base).
-- **`ocv-local`** → igual, pero con `opencode-local.json` (MCPs esenciales).
+- **`ocv`** → arranca LM Studio + proxy 4001 + servidor TTS y abre OpenCode con `opencode.jsonc` (global/base V2).
+- **`ocv-local`** → igual, pero con `opencode-local.json` (agente local + MCPs esenciales).
 - **`ocv-cloud`** → OpenCode con `opencode-cloud.json` (providers locales bloqueados, sin LM Studio).
+- **App de escritorio V2** → instalada en `%LOCALAPPDATA%\Programs\@opencodedesktop` (ya no usa winget; la V1 quedó desinstalada).
 - **`ocv-status`** → muestra el estado de los componentes (LM Studio, modelo, proxy y servidor TTS).
 - **`tts-server`** → gestiona el servidor TTS persistente (`status`/`start`/`stop`/`restart`).
 
-### Perfiles (3 archivos)
-- `opencode.jsonc` → global/base: todos los agentes, providers y MCPs; agente `cloud` por defecto.
-- `opencode-local.json` → local: agente `local` (Qwen 3.8 vía LM Studio, puerto 4001) y MCPs esenciales.
-- `opencode-cloud.json` → cloud estricto: bloquea providers locales y desactiva el agente local.
+### Perfiles (3 archivos, todos V2)
+- `opencode.jsonc` → **V2 global/base** (`ocv`): `permissions`, `agents`, `providers`, `mcp`, `lsp`; agente `cloud` por defecto.
+- `opencode-local.json` → **V2 local** (`ocv-local`): agente `local` (Qwen 3.8 vía LM Studio, puerto 4001), MCP esenciales (`fetch`, `filesystem`, `memory`) y `lsp`.
+- `opencode-cloud.json` → **V2 cloud estricto** (`ocv-cloud`): bloquea providers locales, desactiva el agente local y mantiene `lsp`.
 - Selección mediante la variable de entorno `OPENCODE_CONFIG`, fijada por las funciones del perfil.
+- La **app de escritorio V2** (NSIS desde `opencode.ai/download`) lee `opencode.jsonc` y acepta el esquema V2.
 
 ### Servidor TTS (Kokoro)
 - `voice\kokoro-server.py` (puerto **4210**) mantiene el modelo cargado en GPU.
@@ -574,7 +581,7 @@ Resumen del setup de OpenCode en Windows:
 ### Herramientas
 - Python: `C:\Python314\python.exe` (3.14.7)
 - Node: `C:\Program Files\nodejs\node.exe` · npm 11.19.0
-- OpenCode instalado global por npm (paquete `opencode-ai`, comando `opencode`)
+- OpenCode V2 instalado global por npm (paquete `@opencode/cli`, comandos `opencode` y `opencode2`)
 
 ### MCPs configurados
 `context7` (remote), `filesystem` (npx `server-filesystem`, base `C:/Users/evo01`),

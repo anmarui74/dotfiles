@@ -6,7 +6,7 @@
 .DESCRIPTION
   Deja OpenCode totalmente operativo instalando y configurando todo lo necesario:
     1. Requisitos: Node.js LTS, Python 3.14, LM Studio y Git (via winget)
-    2. OpenCode (paquete npm opencode-ai)
+    2. OpenCode V2 (paquete npm @opencode/cli)
     3. Configuracion de OpenCode (opencode.jsonc, opencode-local.json,
        opencode-cloud.json, cli.json, AGENTS.md, prompts) en %USERPROFILE%\.config\opencode
     4. Proxy de LM Studio (lmstudio-proxy.py, puerto 4001) y start-lmstudio.ps1
@@ -258,8 +258,8 @@ if (Get-Command opencode -ErrorAction SilentlyContinue) {
   if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     Write-Err2 "npm no esta disponible; no se puede instalar OpenCode."
   } else {
-    Write-Warn2 "Instalando OpenCode globalmente (opencode-ai)..."
-    $out = (npm install -g opencode-ai 2>&1 | Out-String)
+    Write-Warn2 "Instalando OpenCode V2 globalmente (@opencode/cli)..."
+    $out = (npm install -g @opencode/cli 2>&1 | Out-String)
     if ($LASTEXITCODE -eq 0) { Write-Ok "OpenCode instalado." } else { Write-Err2 "Fallo npm install:"; Write-Host $out }
     Refresh-Path
   }

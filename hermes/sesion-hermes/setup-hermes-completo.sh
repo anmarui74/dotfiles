@@ -202,6 +202,7 @@ fi
 for s in backup-hermes.sh sync-hermes.sh check-setup-completo.sh bootstrap-hermes.sh \
          hermes-modelos-viables.sh hermes-modelos-viables.py hermes-parche-ctrlq.sh \
          lm-studio-watchdog.sh hermes-nvidia-aliases.sh hermes-nvidia-aliases.py \
+         hermes-auditoria-manual.sh hermes-auditoria-manual.py \
          lm-studio-gui.sh lm-studio-gui-run.sh instalar-stack-voz.sh; do
     if [ -f "${SESION_DIR}/${s}" ]; then
         cp -p "${SESION_DIR}/${s}" "${BACKUP_BASE}/${s}"
@@ -233,9 +234,12 @@ if [ -d "${FUENTE_DUAL}" ]; then
     if [ -f "${BACKUP_BASE}/dual-boot/hermes-dual-sync.sh" ]; then
         ln -sfn "${BACKUP_BASE}/dual-boot/hermes-dual-sync.sh" "$LOCAL_BIN/hermes-dual-sync"
     fi
-    # Atajo del comprobador de modelos viables (LM Studio + NVIDIA)
+    # Atajo del comprobador de modelos viables (LM Studio + NVIDIA) y del auditor del manual
     if [ -f "${BACKUP_BASE}/hermes-modelos-viables.sh" ]; then
         ln -sfn "${BACKUP_BASE}/hermes-modelos-viables.sh" "$LOCAL_BIN/hermes-modelos-viables"
+    fi
+    if [ -f "${BACKUP_BASE}/hermes-auditoria-manual.sh" ]; then
+        ln -sfn "${BACKUP_BASE}/hermes-auditoria-manual.sh" "$LOCAL_BIN/hermes-auditoria-manual"
     fi
     ok "esquema de dual boot restaurado en ${BACKUP_BASE}/dual-boot/"
 
@@ -288,6 +292,7 @@ mkdir -p "$LOCAL_BIN"
 ATAJOS=0
 for par in "hermes-dual-sync:dual-boot/hermes-dual-sync.sh" \
            "hermes-modelos-viables:hermes-modelos-viables.sh" \
+           "hermes-auditoria-manual:hermes-auditoria-manual.sh" \
            "hermes-nvidia-aliases:hermes-nvidia-aliases.sh" \
            "hermes-parche-ctrlq:hermes-parche-ctrlq.sh" \
            "lm-studio-watchdog:lm-studio-watchdog.sh" \

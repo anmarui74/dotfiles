@@ -419,30 +419,115 @@ def seccion_gpu_amd():
     return gpu
 
 
+def _monitores_gnome():
+    """Configuración real de monitores desde ~/.config/monitors.xml.
+
+    Evita el artefacto de `xrandr` bajo Xwayland, que reporta la resolución
+    multiplicada (p. ej. 5760x3240 en un panel 4K de 3840x2160).
+    Devuelve {conector: {active_resolution, refresh_hz, scale, primary, vendor, product}}.
+    """
+    import xml.etree.ElementTree as ET
+
+    ruta = os.path.expanduser("~/.config/monitors.xml")
+    try:
+        root = ET.parse(ruta).getroot()
+    except (OSError, ET.ParseError):
+        return {}
+
+    # Conectores actualmente conectados (para elegir la configuración vigente)
+    conectados = set()
+    try:
+        for c in os.listdir("/sys/class/drm"):
+            if "-" not in c:
+                continue
+            try:
+                with open(f"/sys/class/drm/{c}/status") as f:
+                    if f.read().strip() == "connected":
+                        conectados.add(c.split("-", 1)[1])
+            except OSError:
+                pass
+    except OSError:
+        pass
+
+    elegida: JsonDict = {}
+    for cfg in root.findall("configuration"):
+        info: JsonDict = {}
+        for lm in cfg.findall("logicalmonitor"):
+            mon = lm.find("monitor")
+            spec = mon.find("monitorspec") if mon is not None else None
+            mode = mon.find("mode") if mon is not None else None
+            conn = spec.findtext("connector") if spec is not None else None
+            if not conn:
+                continue
+            w = mode.findtext("width") if mode is not None else None
+            h = mode.findtext("height") if mode is not None else None
+            rate = mode.findtext("rate") if mode is not None else None
+            info[conn] = {
+                "interface": conn,
+                "active_resolution": f"{w}x{h}" if w and h else "",
+                "refresh_hz": round(float(rate), 1) if rate else None,
+                "scale": round(float(lm.findtext("scale") or 1), 2),
+                "primary": lm.findtext("primary") == "yes",
+                "vendor": spec.findtext("vendor") if spec is not None else "",
+                "product": spec.findtext("product") if spec is not None else "",
+            }
+        if not elegida:
+            elegida = info
+        # Preferimos la configuración que encaja con los conectores conectados
+        if conectados and set(info) == conectados:
+            elegida = info
+            break
+    return elegida
+
+
 def seccion_displays():
     displays: list[JsonDict] = []
+
+    # 1) xrandr → tamaño físico (mm→cm/pulgadas) y resolución de respaldo
+    xr: dict[str, JsonDict] = {}
     xrandr = run(["xrandr"], timeout=5)
     for line in xrandr.splitlines():
         if " connected" not in line:
             continue
         parts = line.split()
         conn = parts[0]
-        # Resolución activa: "5760x3240+0+0" o "3840x2160+0+0"
-        res = ""
         geom = next((p for p in parts if re.match(r"\d+x\d+\+\d+\+\d+", p)), "")
-        if geom:
-            res = geom.split("+")[0]
-        d: JsonDict = {"interface": conn, "active_resolution": res}
+        d: JsonDict = {
+            "interface": conn,
+            "active_resolution": geom.split("+")[0] if geom else "",
+            "primary": "primary" in line,
+        }
         m = re.search(r"(\d+)mm x (\d+)mm", line)
         if m:
             w_cm, h_cm = int(m.group(1)) / 10, int(m.group(2)) / 10
             d["size_cm"] = f"{w_cm:.0f}x{h_cm:.0f}"
             diag = (w_cm ** 2 + h_cm ** 2) ** 0.5 / 2.54
             d["size_inches"] = round(diag, 1)
-        d["primary"] = "primary" in line
-        d["active_resolution"] = res
+        xr[conn] = d
+
+    # 2) monitors.xml → resolución/escala reales de GNOME (prioritarias)
+    gnome = _monitores_gnome()
+
+    for conn in dict.fromkeys(list(gnome) + list(xr)):
+        g = gnome.get(conn, {})
+        x = xr.get(conn, {})
+        d = {"interface": conn}
+        d["active_resolution"] = g.get("active_resolution") or x.get("active_resolution", "")
+        if g.get("refresh_hz"):
+            d["refresh_hz"] = g["refresh_hz"]
+        if g.get("scale"):
+            d["scale"] = g["scale"]
+        d["primary"] = bool(g.get("primary", x.get("primary", False)))
+        for k in ("size_cm", "size_inches"):
+            if k in x:
+                d[k] = x[k]
+        if g.get("vendor"):
+            d["vendor"] = g["vendor"]
+        if g.get("product"):
+            d["product"] = g["product"]
         displays.append(d)
-    # Fallback: /sys/class/drm
+
+    # 3) Respaldo: /sys/class/drm
     if not displays:
         for conn in sorted(os.listdir("/sys/class/drm")):
             if not conn.startswith("card") or "-" not in conn:
@@ -457,25 +542,46 @@ def seccion_displays():
 
 
 def seccion_storage():
+    """Discos físicos con su FS y montajes reales.
+
+    Usa `lsblk --json` (no texto plano) porque las columnas FSTYPE/MOUNTPOINT
+    vacías desplazaban el resto y el MODEL acababa en la columna `fstype`.
+    """
     discos = []
-    salida = run(["lsblk", "-b", "-o", "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL"])
-    actual = None
-    for line in salida.splitlines()[1:]:
-        nombre, resto = line.split(maxsplit=1) if line.strip() else ("", "")
-        if nombre and not nombre.startswith(("└", "├", "`", "|")):
-            # Disco físico
-            parts = line.split()
-            if len(parts) >= 3:
-                model = " ".join(parts[5:]) if len(parts) > 5 else ""
-                discos.append({
-                    "name": parts[0],
-                    "size_bytes": int(parts[1]),
-                    "size_tb": round(int(parts[1]) / 1099511627776, 2),
-                    "type": parts[2],
-                    "fstype": parts[3] if len(parts) > 3 else "",
-                    "mountpoint": parts[4] if len(parts) > 4 else "",
-                    "model": model,
-                })
+    salida = run(["lsblk", "-b", "-J", "-o",
+                  "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL"])
+    try:
+        data = json.loads(salida) if salida.strip().startswith("{") else {}
+    except json.JSONDecodeError:
+        data = {}
+
+    def _recoger(nodo, fstypes, montajes):
+        if nodo.get("fstype"):
+            fstypes.append(nodo["fstype"])
+        if nodo.get("mountpoint"):
+            montajes.append(nodo["mountpoint"])
+        for hijo in nodo.get("children") or []:
+            _recoger(hijo, fstypes, montajes)
+
+    for dev in data.get("blockdevices", []):
+        if dev.get("type") != "disk":
+            continue
+        try:
+            size = int(dev.get("size") or 0)
+        except (TypeError, ValueError):
+            size = 0
+        fstypes: list[str] = []
+        montajes: list[str] = []
+        _recoger(dev, fstypes, montajes)
+        discos.append({
+            "name": dev.get("name", ""),
+            "size_bytes": size,
+            "size_tb": round(size / 1099511627776, 2),
+            "type": dev.get("type", ""),
+            "fstype": ", ".join(sorted(set(fstypes))),
+            "mountpoint": ", ".join(montajes),
+            "model": (dev.get("model") or "").strip(),
+        })
     return discos
 
 

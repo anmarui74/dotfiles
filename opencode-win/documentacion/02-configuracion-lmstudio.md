@@ -123,7 +123,7 @@ al perfil local.
 
 > symlink `~/.local/bin/opencode` no existen. El `opencode` real se instala global por
 
-> npm (`opencode-ai`).
+> npm (`@opencode/cli`, V2).
 
 ---
 

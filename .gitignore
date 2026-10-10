@@ -4,6 +4,7 @@
 # esto es la SEGUNDA barrera por si alguien hace `git add -A`.
 **/*.env
 **/auth.json
+**/service.json
 **/credenciales/
 **/backups/**/*.tar.gz
 **/mcp-memory-backup-*.jsonl

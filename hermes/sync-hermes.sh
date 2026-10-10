@@ -47,6 +47,7 @@ find "$SESION_DIR" -maxdepth 1 -type f \( -name '.env' -o -name 'auth.json' \) -
 for s in backup-hermes.sh sync-hermes.sh check-setup-completo.sh bootstrap-hermes.sh \
          hermes-modelos-viables.sh hermes-modelos-viables.py hermes-parche-ctrlq.sh \
          lm-studio-watchdog.sh hermes-nvidia-aliases.sh hermes-nvidia-aliases.py \
+         hermes-auditoria-manual.sh hermes-auditoria-manual.py \
          lm-studio-gui.sh lm-studio-gui-run.sh instalar-stack-voz.sh; do
     if [ -f "${BACKUP_BASE}/${s}" ]; then
         cp -p "${BACKUP_BASE}/${s}" "${SESION_DIR}/${s}"

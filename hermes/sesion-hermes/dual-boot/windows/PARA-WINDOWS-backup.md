@@ -42,18 +42,10 @@ Desde Linux, `X:\Linux\Config` se ve **solo lectura** (root:root). Si al escribi
 
 ## 2. Punto de partida: el esquema de Linux como referencia
 
-En la carpeta compartida tienes el original, léelo antes de escribir nada:
-
-- `HermesSync\windows\esquema-linux\AGENTS.md` — documento maestro del esquema de Linux
-  (qué se respalda, credenciales, retención, automatización, reglas).
-- `HermesSync\windows\esquema-linux\backup-hermes.sh` — el generador.
-- `HermesSync\windows\esquema-linux\sync-hermes.sh` — envoltorio para el timer.
-- `HermesSync\windows\esquema-linux\check-setup-completo.sh` — verificación previa.
-- `HermesSync\windows\esquema-linux\setup-hermes-completo.sh` — instalación desde limpio.
-- `HermesSync\windows\LEEME-WINDOWS.md` — tus propias notas del esquema dual boot.
-
-Los `.sh` son de Linux: **no los ejecutes en Windows**, son la especificación a traducir a
-PowerShell (`tar.exe`, `robocopy`, `Compress-Archive`, `schtasks`).
+El esquema de Linux (respaldo canónico, tarball con `restore.sh` dentro, credenciales en 0600,
+retención de 30 días y copia saneada en dotfiles) está documentado en el `AGENTS.md` del esquema de
+Linux (`~/Config/hermes/AGENTS.md` en ese equipo). Reproduce su comportamiento en PowerShell
+(`tar.exe`, `robocopy`, `Compress-Archive`, `schtasks`).
 
 ---
 

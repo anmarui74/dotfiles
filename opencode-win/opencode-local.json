@@ -48,5 +48,139 @@
         ]
       }
     }
+  },
+  "lsp": {
+    "python": {
+      "command": [
+        "npx",
+        "-y",
+        "basedpyright",
+        "--stdio"
+      ],
+      "extensions": [
+        ".py",
+        ".pyw"
+      ]
+    },
+    "typescript": {
+      "command": [
+        "npx",
+        "-y",
+        "typescript-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs"
+      ]
+    },
+    "json": {
+      "command": [
+        "npx",
+        "-y",
+        "vscode-json-languageserver",
+        "--stdio"
+      ],
+      "extensions": [
+        ".json",
+        ".jsonc"
+      ]
+    },
+    "yaml": {
+      "command": [
+        "npx",
+        "-y",
+        "yaml-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".yaml",
+        ".yml"
+      ]
+    },
+    "bash": {
+      "command": [
+        "npx",
+        "-y",
+        "bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".sh",
+        ".bash"
+      ]
+    },
+    "zsh": {
+      "command": [
+        "npx",
+        "-y",
+        "bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".zsh",
+        ".zshrc"
+      ]
+    },
+    "markdown": {
+      "command": [
+        "npx",
+        "-y",
+        "vscode-markdown-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".md",
+        ".markdown"
+      ]
+    },
+    "go": {
+      "command": [
+        "npx",
+        "-y",
+        "gopls"
+      ],
+      "extensions": [
+        ".go"
+      ]
+    },
+    "rust": {
+      "command": [
+        "npx",
+        "-y",
+        "rust-analyzer"
+      ],
+      "extensions": [
+        ".rs"
+      ]
+    },
+    "c": {
+      "command": [
+        "npx",
+        "-y",
+        "clangd"
+      ],
+      "extensions": [
+        ".c",
+        ".h"
+      ]
+    },
+    "cpp": {
+      "command": [
+        "npx",
+        "-y",
+        "clangd"
+      ],
+      "extensions": [
+        ".cpp",
+        ".hpp",
+        ".cc",
+        ".cxx"
+      ]
+    }
   }
 }

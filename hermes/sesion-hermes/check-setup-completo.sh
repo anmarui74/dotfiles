@@ -21,7 +21,7 @@ warn() { echo "   ⚠️  $*"; }
 
 echo "── 1. Sintaxis de los scripts ──"
 for s in backup-hermes.sh sync-hermes.sh check-setup-completo.sh bootstrap-hermes.sh \
-         instalar-stack-voz.sh; do
+         instalar-stack-voz.sh hermes-auditoria-manual.sh; do
     if [ -f "${BACKUP_BASE}/${s}" ]; then
         if bash -n "${BACKUP_BASE}/${s}" 2>/dev/null; then
             ok "${s}"
@@ -87,6 +87,7 @@ done
 echo "── 6. Herramientas del esquema (parche, unidades systemd, atajos) ──"
 for f in hermes-parche-ctrlq.sh lm-studio-watchdog.sh hermes-nvidia-aliases.sh \
          hermes-nvidia-aliases.py lm-studio-gui.sh lm-studio-gui-run.sh \
+         hermes-auditoria-manual.sh hermes-auditoria-manual.py \
          instalar-stack-voz.sh \
          parches/ctrl-q-corta-audio.patch; do
     if [ -f "${BACKUP_BASE}/${f}" ]; then ok "${f}"; else fail "falta ${f} en ${BACKUP_BASE}/"; fi
@@ -98,7 +99,7 @@ for u in hermes-sync.timer hermes-sync.service hermes-ready-notify.service \
     if [ -f "${BACKUP_BASE}/units/${u}" ]; then ok "units/${u}"; else fail "falta units/${u} en ${BACKUP_BASE}/units/"; fi
 done
 for x in hermes-parche-ctrlq hermes-nvidia-aliases lm-studio-watchdog hermes-dual-sync \
-         hermes-modelos-viables lm-studio-gui lm-studio-gui-run; do
+         hermes-modelos-viables hermes-auditoria-manual lm-studio-gui lm-studio-gui-run; do
     if [ -e "$HOME/.local/bin/${x}" ]; then ok "atajo ~/.local/bin/${x}"; else fail "falta el atajo ~/.local/bin/${x}"; fi
 done
 

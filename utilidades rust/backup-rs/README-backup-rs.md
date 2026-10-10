@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Operativo | 01/10/2026 · rev. 01/10/2026 | Antonio |
+| ✅ Operativo | 01/10/2026 · rev. 10/10/2026 | Antonio |
 
 > Herramienta CLI en **Rust** para Arch Linux (CachyOS) que respalda automáticamente los directorios personales
 > (`Config`, `Documentos`, `Descargas`, `Imágenes`, `Vídeos`, incluidos archivos
@@ -116,6 +116,13 @@ Además del backup versionado en el Crucial, se pueden definir **espejos planos*
 - **Incremental**: compara por **tamaño + fecha de modificación** y solo copia lo que
   cambió; preserva el `mtime` para no recopiar en ejecuciones posteriores. Borra del
   espejo lo que ya no existe en el origen
+- ⟳ **La fecha se compara en SEGUNDOS, no al nanosegundo** (arreglado el 10/10/2026):
+  NTFS guarda el `mtime` con precisión de 100 ns, así que la fecha escrita en el espejo
+  quedaba unos nanosegundos **por debajo** de la del origen y el fichero se daba por
+  cambiado en **todas** las pasadas (~11,75 GB recopiados por pasada en este home, con
+  el mismo tráfico hacia el HDD). A segundos el desfase desaparece; es el mismo criterio
+  que usa `rsync`. Ojo si el destino llegara a ser FAT/exFAT (granularidad de 2 s): ahí
+  haría falta además una ventana de tolerancia
 - **Sin root**: el SEAGATE se monta por fstab con `uid=1000,gid=1000`, así que
   `antonio` escribe directamente y `backup once`/`backup mirror` copian como `antonio`.
 - El destino **debe estar en un disco realmente montado**; si no, se omite (nunca
@@ -140,6 +147,37 @@ destination = "/mnt/seagate/Linux"
 
 > ⚠️ **Aviso:** el espejo plano **machaca y borra** — lo que se elimine del origen
 > desaparece del espejo. No guarda historial de versiones.
+
+### Limitaciones del espejo plano (qué NO viaja)
+
+El espejo reproduce **ficheros**; hay dos casos que el motor no gestiona (comprobado
+en `src/backup.rs`) y conviene conocerlos antes de fiarse del espejo como copia fiel
+de la estructura del home:
+
+| Caso | Comportamiento real | Motivo |
+|------|---------------------|--------|
+| **Enlace simbólico** (a fichero o a directorio) | **No se copia**: el espejo no tiene ninguna entrada para él | El recorrido es `WalkDir` con `follow_links(false)` y solo procesa `entry.file_type().is_file()`; un symlink nunca es `is_file()` |
+| **Directorio vacío** | Si falta en el espejo **no se crea**; si sobra **no se borra** | `copy_file` crea directorios solo como padres de ficheros (`create_dir_all`) y `remove_extra_files` hace `continue` con todo lo que no sea fichero |
+| Fichero presente en el espejo y ya inexistente en el origen | Se **borra** (machacar) | `remove_extra_files` recorre el espejo y elimina lo que no existe en el origen (`!src_candidate.exists()`) |
+| Ruta afectada por `exclude_patterns` (p. ej. `**/node_modules/**`) | Si el fichero sigue existiendo en el origen, **permanece** en el espejo aunque no se recorra; solo desaparece si ya no existe en el origen | La exclusión afecta al recorrido del origen, no a la comprobación del borrado |
+
+Consecuencia práctica: con el tiempo el espejo acumula **directorios vacíos** (y restos
+de rutas retiradas del origen) y le faltan los **enlaces simbólicos**. No afecta a la
+restauración de contenido, pero si se quiere el espejo fiel a la estructura del origen
+hay que completarlo a mano con los scripts de `scripts/` (comparan cada origen con cada
+espejo; trabajan sin argumentos en modo informe):
+
+```bash
+cd ~/"Config/utilidades rust/backup-rs/scripts"
+python3 limpiar-espejos.py            # informe de lo que sobra en los espejos
+python3 limpiar-espejos.py --borrar   # borra lo sobrante (ficheros y directorios)
+python3 crear-dirs-vacios.py          # informe de directorios vacíos que faltan
+python3 crear-dirs-vacios.py --crear  # los crea en el espejo
+```
+
+> 💡 Los **symlinks** del origen no tienen sustituto automático: si hace falta el espejo
+> completo (p. ej. para arrancar desde él), hay que recrearlos a mano con `cp -a` o un
+> `rsync -a --links` puntual sobre las rutas afectadas.
 
 ### Espejos de red (nube SMB) — opcional, sin root
 

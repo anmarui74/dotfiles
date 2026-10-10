@@ -146,7 +146,7 @@ El `locucionero` es un filtro que elimina los emojis del texto antes de pasarlo 
 
 ## `sync-opencode.ps1`
 
-En Windows el script equivalente es `D:\Linux\Config\opencode-win\scripts\sync-opencode.ps1`, que sincroniza la config activa (`C:\Users\evo01\.config\opencode\`) con el respaldo (`D:\Linux\Config\opencode-win\`). Además, `scripts\backup-opencode.ps1` regenera la copia de seguridad y vuelca una copia saneada a `D:\Linux\Documentos\dotfiles\opencode-win`.
+En Windows el script equivalente es `D:\Linux\Config\opencode-win\scripts\sync-opencode.ps1`, que sincroniza la config activa (`C:\Users\evo01\.config\opencode\`) con el respaldo (`D:\Linux\Config\opencode-win\`). Además, `scripts\backup-opencode.ps1` regenera la copia de seguridad y vuelca una copia saneada a `D:\Linux\Documentos\dotfiles\opencode-win`. Al terminar, publica un **espejo** del respaldo y de los dotfiles en la partición Linux `F:` (`F:\@home\antonio\Config\opencode-win` y `F:\@home\antonio\Documentos\dotfiles\opencode-win`).
 
 ### ¿Qué hace el instalador en Windows?
 
@@ -402,6 +402,6 @@ opencode-win\
 
 ### Política de retención de backups
 
-`scripts\backup-opencode.ps1` regenera la copia de seguridad y vuelca la config **saneada** (sin `.env`, `auth.json`, `credenciales\` ni `backups\`) a `D:\Linux\Documentos\dotfiles\opencode-win` para poder versionarla en git.
+`scripts\backup-opencode.ps1` regenera la copia de seguridad y vuelca la config **saneada** (sin `.env`, `auth.json`, `credenciales\` ni `backups\`) a `D:\Linux\Documentos\dotfiles\opencode-win` para poder versionarla en git. Tras el volcado, publica un **espejo** (equivalente a `robocopy /MIR`) tanto del respaldo como de los dotfiles en `F:` (partición Linux montada en Windows), preservando el `.git` del repo de dotfiles. Se puede omitir con el parámetro `-SinF`.
 
 > La poda automática de `LOG_RETENTION_DAYS` (30 días) era de Linux; en Windows, si se crea la tarea programada `OpenCode-Backup`, conviene que implemente su propia retención (p. ej. copia con fecha del grafo en `data\memory\`).

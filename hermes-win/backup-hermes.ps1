@@ -12,11 +12,19 @@
     - X:\Linux\Config\Hermes-Win\sesion-hermes\  -> respaldo canónico + instalador
     - X:\Linux\Documentos\dotfiles\hermes-win\   -> copia saneada SIN claves de API
 
+  Réplica en la home de Linux (mismo patrón que el esquema de OpenCode):
+    - <F:>\@home\antonio\Config\Hermes-Win\             -> espejo del respaldo canónico
+    - <F:>\@home\antonio\Documentos\dotfiles\hermes-win\ -> espejo de la copia saneada (repo git)
+  La letra de la partición btrfs de CachyOS vista desde Windows (@home) puede cambiar:
+  si F: no está disponible, se localiza por la marca <letra>:\@home\antonio\.hermes.
+
   Uso:
     powershell -ExecutionPolicy Bypass -File backup-hermes.ps1
     ... -Quiet             (para el programador de tareas: solo escribe el log)
     ... -SinDotfiles       (no refrescar la copia saneada)
+    ... -SinF              (no replicar en la home de Linux)
     ... -Disco D           (forzar la letra del disco compartido)
+    ... -UnidadF G:        (forzar la letra de la partición Linux)
 #>
 [CmdletBinding()]
 param(
@@ -24,6 +32,10 @@ param(
     [string]$HermesHome = '',
     [switch]$SinDotfiles,
     [switch]$SinRetencion,
+    [string]$UnidadF = 'F:',
+    [string]$DestinoFConfig = '',
+    [string]$DestinoFDotfiles = '',
+    [switch]$SinF,
     [switch]$Quiet
 )
 
@@ -129,6 +141,43 @@ function Invoke-Robocopy {
     $rc = Correr -Exe 'robocopy.exe' -Argumentos $op
     if ($rc -ge 8) { Escribir-Log "AVISO: robocopy devolvió $rc al copiar $Origen -> $Destino" -SoloLog }
     return $rc
+}
+
+function Invoke-Espejo {
+    # Espejo fiel de una carpeta en la home de Linux (F:): el destino queda idéntico al
+    # origen salvo $Keep.  Equivale a robocopy /MIR, pero se copia a mano porque el destino
+    # es btrfs visto con WinBtrfs (mismo procedimiento que backup-opencode.ps1).  Nunca
+    # copia .git ni los ficheros transitorios (*.lock/*.pid/*.sock, __pycache__).
+    param(
+        [Parameter(Mandatory=$true)][string]$Origen,
+        [Parameter(Mandatory=$true)][string]$Destino,
+        [string[]]$Keep = @()
+    )
+    if (-not (Test-Path -LiteralPath $Origen)) {
+        Escribir-Log "AVISO: no existe el origen $Origen (réplica omitida)" -SoloLog
+        return
+    }
+    New-Item -ItemType Directory -Force -Path $Destino | Out-Null
+    Get-ChildItem -LiteralPath $Destino -Force -ErrorAction SilentlyContinue |
+        Where-Object { $Keep -notcontains $_.Name } |
+        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    Get-ChildItem -LiteralPath $Origen -Recurse -Force -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.FullName -notmatch '\\\.git(\\|$)' -and
+            $_.FullName -notmatch '\\__pycache__(\\|$)' -and
+            $_.Name -notmatch '\.(lock|pid|sock)$'
+        } |
+        ForEach-Object {
+            $rel = $_.FullName.Substring($Origen.Length).TrimStart('\')
+            $dst = Join-Path $Destino $rel
+            if ($_.PSIsContainer) {
+                if (-not (Test-Path -LiteralPath $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }
+            } else {
+                $dir = Split-Path $dst -Parent
+                if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+                Copy-Item -LiteralPath $_.FullName -Destination $dst -Force
+            }
+        }
 }
 
 function New-Zip {
@@ -459,10 +508,119 @@ if (-not $SinDotfiles) {
     }
 }
 
+# ── 11. Réplica en la home de Linux (F:\@home\antonio) ────────────────────────────────
+# Mismo patrón que el esquema de OpenCode (backup-opencode.ps1, §4): la partición btrfs de
+# CachyOS vista con WinBtrfs es la home real de Linux.  Se publica allí el respaldo canónico
+# completo —con credenciales, igual que en el esquema de Linux— y el espejo de la copia
+# saneada del repo de dotfiles.  En dotfiles se preserva .git: es un repo git real de la
+# home de Linux y el commit lo hace Antonio a mano.
+if ($SinF) {
+    Escribir-Log ''
+    Escribir-Log 'Réplica en la home de Linux omitida (-SinF).'
+} else {
+    $unidad = $UnidadF
+    if (-not (Test-Path "$unidad\")) {
+        $hallada = $null
+        foreach ($l in ([char[]](68..90))) {
+            try { if (Test-Path "${l}:\@home\antonio\.hermes") { $hallada = "${l}:"; break } } catch { }
+        }
+        if ($hallada) { $unidad = $hallada }
+    }
+    $DestFConfig = if ($DestinoFConfig) { $DestinoFConfig } else { "$unidad\@home\antonio\Config\Hermes-Win" }
+    $DestFDotfiles = if ($DestinoFDotfiles) { $DestinoFDotfiles } else { "$unidad\@home\antonio\Documentos\dotfiles\hermes-win" }
+
+    Escribir-Log ''
+    if (-not (Test-Path "$unidad\")) {
+        Escribir-Log "⚠️  La partición de Linux no está disponible ($unidad): se omite la réplica en la home." -SoloLog
+    } else {
+        Escribir-Log "🐧 Replicando en la home de Linux ($unidad\@home\antonio)..."
+        Invoke-Espejo -Origen $Base -Destino $DestFConfig
+        Escribir-Log "   ✅ Respaldo replicado: $DestFConfig"
+        if (-not $SinDotfiles) {
+            if (Test-Path -LiteralPath $DotfilesWin) {
+                Invoke-Espejo -Origen $DotfilesWin -Destino $DestFDotfiles -Keep @('.git')
+                # Verificación (solo lectura) de que la copia replicada sigue sin claves
+                $patronesF = @('(nvapi-|oc_sk_)[A-Za-z0-9_-]{15,}',
+                               '(^|[^A-Za-z0-9])sk-[A-Za-z0-9]{25,}',
+                               'AEMET_API_KEY=[A-Za-z0-9]{15,}',
+                               'NVIDIA_API_KEY=[A-Za-z0-9_-]{15,}',
+                               'OPENCODE_GO_API_KEY=[A-Za-z0-9_-]{15,}',
+                               'BEGIN [A-Z ]*PRIVATE KEY',
+                               '[0-9]{8,12}:[A-Za-z0-9_-]{30,}')
+                $fugas = @(Get-ChildItem -LiteralPath $DestFDotfiles -Recurse -File -Force -ErrorAction SilentlyContinue |
+                           Where-Object { $_.Extension -ne '.md' } |
+                           Where-Object { Select-String -LiteralPath $_.FullName -Pattern $patronesF -ErrorAction SilentlyContinue })
+                if ($fugas.Count -eq 0) {
+                    Escribir-Log '   ✅ Copia en dotfiles de la home replicada libre de claves'
+                } else {
+                    Escribir-Log "   ⚠️  ATENCIÓN: $($fugas.Count) fichero(s) con posibles claves en la copia de dotfiles replicada" -SoloLog
+                }
+            } else {
+                Escribir-Log '   ⚠️  No hay copia saneada en dotfiles todavía: no replico en la home.' -SoloLog
+            }
+        }
+    }
+}
+
+# ── 12. Copia publicada para Linux (X:\HermesSync\windows\esquema-windows) ─────────────
+# Copia de REFERENCIA del esquema que Linux lee desde el disco compartido.  No es un espejo
+# del directorio completo a propósito: NUNCA se publican aquí sesion-hermes\ ni backups\
+# (llevan credenciales).  Solo la lista blanca de scripts y documentos, y solo si cambian.
+$ComunDir = Join-Path (Split-Path $RaizLinux -Parent) 'HermesSync'
+$Publicado = Join-Path $ComunDir 'windows\esquema-windows'
+if (Test-Path -LiteralPath (Join-Path $ComunDir '.hermes-sync')) {
+    Escribir-Log ''
+    Escribir-Log "📚 Refrescando la copia publicada del esquema ($Publicado)..."
+    try {
+    $publicables = @{
+        (Join-Path $Base 'AGENTS-WIN.md')                    = 'AGENTS-WIN.md'
+        (Join-Path $Base 'backup-hermes.ps1')                = 'backup-hermes.ps1'
+        (Join-Path $Base 'sync-hermes.ps1')                  = 'sync-hermes.ps1'
+        (Join-Path $Base 'check-setup-win.ps1')              = 'check-setup-win.ps1'
+        (Join-Path $Base 'restaurar-hermes.ps1')             = 'restaurar-hermes.ps1'
+        (Join-Path $Base 'bootstrap-hermes.ps1')             = 'bootstrap-hermes.ps1'
+        (Join-Path $Base 'registrar-tareas.ps1')             = 'registrar-tareas.ps1'
+        (Join-Path $Base 'instalar-desde-cero.ps1')          = 'instalar-desde-cero.ps1'
+        (Join-Path $Base 'hook-backup-hermes.sh')            = 'hook-backup-hermes.sh'
+        (Join-Path $Base 'commit-parche.txt')                = 'commit-parche.txt'
+        (Join-Path $Base '.gitignore')                       = '.gitignore'
+        (Join-Path $HermesHome 'agent-hooks\backup-hermes.sh') = 'agent-hooks\backup-hermes.sh'
+    }
+    $nPublicados = 0
+    foreach ($origen in $publicables.Keys) {
+        if (-not (Test-Path -LiteralPath $origen)) { continue }
+        $destino = Join-Path $Publicado $publicables[$origen]
+        $dirDestino = Split-Path $destino -Parent
+        if (-not (Test-Path -LiteralPath $dirDestino)) { New-Item -ItemType Directory -Path $dirDestino -Force | Out-Null }
+        if ((Test-Path -LiteralPath $destino) -and
+            ((Get-FileHash -LiteralPath $origen).Hash -eq (Get-FileHash -LiteralPath $destino).Hash)) { continue }
+        Copy-Item -LiteralPath $origen -Destination $destino -Force
+        $nPublicados++
+    }
+    # Frontera de credenciales: si alguna vez apareciera una, se avisa en el log (no se borra a ciegas)
+    $fugasPub = @(Get-ChildItem -LiteralPath $Publicado -Recurse -File -Force -ErrorAction SilentlyContinue |
+                  Where-Object { $_.Name -in @('.env', 'auth.json') -or $_.Name -like '*.env' })
+    if ($fugasPub.Count -gt 0) {
+        Escribir-Log "   ⚠️  ATENCIÓN: hay $($fugasPub.Count) fichero(s) de credenciales en la copia publicada; revísalo." -SoloLog
+    } else {
+        Escribir-Log "   ✅ Copia publicada al día ($nPublicados fichero(s) actualizados, sin credenciales)"
+    }
+    } catch {
+        # Nunca debe tumbar el backup: si la carpeta compartida está en solo lectura, se anota.
+        Escribir-Log "   ⚠️  No he podido refrescar la copia publicada: $($_.Exception.Message)" -SoloLog
+    }
+}
+
 Escribir-Log ''
 Escribir-Log '✅ Backup completado.'
 Escribir-Log "   ZIP: $Zip"
 Escribir-Log '   Para restaurar (prueba SIEMPRE en una carpeta temporal):'
 Escribir-Log "     1. powershell -ExecutionPolicy Bypass -File `"$Base\restaurar-hermes.ps1`" -Destino `"$env:TEMP\restore-hermes`""
 Escribir-Log "     2. o descomprimir el zip y ejecutar restore-win.cmd"
+
+# Cerrar el espejo: el log se sigue escribiendo después de copiarlo, así que la última
+# pasada deja el sync.log de la réplica idéntico al de origen.
+if (-not $SinF -and (Test-Path -LiteralPath $DestFConfig) -and (Test-Path -LiteralPath $script:LogFile)) {
+    Copy-Item -LiteralPath $script:LogFile -Destination (Join-Path $DestFConfig 'sync.log') -Force -ErrorAction SilentlyContinue
+}
 exit 0

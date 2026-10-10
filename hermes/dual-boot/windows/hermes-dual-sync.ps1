@@ -4,12 +4,20 @@
   Uso:
     powershell -ExecutionPolicy Bypass -File hermes-dual-sync.ps1 -Accion auto
     ... -Accion import | export | estado | semilla
-  Opciones: -Forzar  -SoloSiCambia  -Quiet  -SinImport  -Comun "E:\HermesSync"
+  Opciones: -Forzar  -SoloSiCambia  -Quiet  -SinImport  -Comun "D:\HermesSync"
 
   La lógica es la misma que la del script de Linux
   (~/Config/hermes/dual-boot/hermes-dual-sync.sh): nunca hay dos sistemas
   encendidos a la vez, así que vale el criterio "el último que publicó manda",
   con historial y copia local de seguridad antes de cada importación.
+
+  IMPORT CON HERMES EN MARCHA (desde 05/10/2026): no se sustituye state.db —una base
+  abierta por el gateway quedaría ilegible— pero el import tampoco se descarta: se
+  FUSIONAN las sesiones que falten (sin borrar nada de este equipo) y se copian los
+  árboles.  Así la publicación no se queda bloqueada y Windows puede importar y
+  publicar aunque estés usando Hermes.  kanban.db (base que el gateway puede tener
+  abierta) se completa en el primer import con Hermes cerrado; queda anotado en
+  estado.json como importación parcial.
 #>
 [CmdletBinding()]
 param(
@@ -159,9 +167,16 @@ function Invoke-Export {
 
     if ($SoloSiCambia -and (Test-Path $MarcaPublicacion)) {
         $marca = Get-Item $MarcaPublicacion
-        $vigilados = @(Join-Ruta $HermesHome 'state.db', (Join-Ruta $HermesHome 'memories'),
-                       (Join-Ruta $HermesHome 'skills'),  (Join-Ruta $HermesHome 'cron'),
-                       (Join-Ruta $HermesHome 'kanban.db'), (Join-Ruta $HermesHome 'SOUL.md'))
+        # Cada ruta entre parentesis: sin ellos el operador coma de PowerShell agrupa
+        # las seis rutas en un solo elemento, Test-Path falla siempre y el atajo
+        # -SoloSiCambia concluye 'sin cambios' y no publica nunca (arreglado 05/10/2026).
+        $vigilados = @(
+            (Join-Ruta $HermesHome 'state.db'),
+            (Join-Ruta $HermesHome 'memories'),
+            (Join-Ruta $HermesHome 'skills'),
+            (Join-Ruta $HermesHome 'cron'),
+            (Join-Ruta $HermesHome 'kanban.db'),
+            (Join-Ruta $HermesHome 'SOUL.md'))
         $cambios = $vigilados | Where-Object { Test-Path $_ } | ForEach-Object {
             Get-ChildItem -Path $_ -Recurse -File -ErrorAction SilentlyContinue
         } | Where-Object { $_.LastWriteTimeUtc -gt $marca.LastWriteTimeUtc } | Select-Object -First 1
@@ -242,6 +257,91 @@ function Invoke-Export {
     Write-Log "Publicado: $sesiones sesiones / $mensajes mensajes (sha256 $($sha.Substring(0,12))…)"
 }
 
+# ------------------------------------------------- copia del estado de importación
+function Write-EstadoImport {
+    # Deja constancia de la última importación.  Con $Pendientes no vacío queda
+    # marcada como parcial: el próximo import con Hermes cerrado la completa.
+    param([int]$Epoch, [string[]]$Pendientes = @())
+    # La marca se deriva de la época, no del publicado_utc del manifiesto: ConvertFrom-Json
+    # lo convierte a [datetime] y acababa escrito en formato local.  Así el fichero queda
+    # igual de legible que el del motor de Linux.
+    $utc = [DateTimeOffset]::FromUnixTimeSeconds($Epoch).UtcDateTime.ToString('yyyy-MM-ddTHH:mm:ssZ')
+    $estado = [ordered]@{
+        host                = $HostActual
+        ultimo_import_epoch = $Epoch
+        ultimo_import_utc   = "$utc"
+        parcial             = ($Pendientes.Count -gt 0)
+        pendientes          = @($Pendientes)
+    }
+    $estado | ConvertTo-Json | Set-Content -Path $EstadoLocalJson -Encoding UTF8
+    $script:UltimoImportEpoch = $Epoch
+    $script:PendientesImport = @($Pendientes)
+}
+
+# ------------------------------------------------- import con Hermes en marcha
+function Invoke-ImportParcial {
+    # sustituir state.db con Hermes en marcha la corrompe, pero ESO no impide traer
+    # lo del otro equipo: se fusionan las sesiones que falten (la base local es un
+    # superconjunto: no se pierde nada) y se copian los árboles, que son ficheros.
+    # kanban.db se deja para el primer import con Hermes cerrado.
+    param([object]$Remoto, [int]$Epoch)
+    $dbComun = Join-Ruta $Comun 'estado/state.db'
+
+    # Mismas comprobaciones que el import completo: ante una copia dudosa, no tocar nada.
+    $shaReal = (Get-FileHash $dbComun -Algorithm SHA256).Hash.ToLower()
+    if ($Remoto.sha256_state_db -and $shaReal -ne $Remoto.sha256_state_db.ToLower()) {
+        Stop-ConError "la copia de state.db de la carpeta común está corrupta (sha256 no coincide). Import abortado."
+    }
+    $sesRemotas = Get-Sesiones $dbComun
+    if ($sesRemotas -le 0) { Stop-ConError "state.db remota ilegible (sin tabla de sesiones). Import abortado." }
+    if ($Remoto.sesiones -and [int]$Remoto.sesiones -ne 0 -and $sesRemotas -ne [int]$Remoto.sesiones) {
+        # El manifiesto lo escribe el motor de Linux contando las sesiones de su base VIVA,
+        # que puede llevar alguna mas que la copia publicada (p. ej. una sesion oculta sin
+        # mensajes creada entre la copia y el recuento). El sha256 comprobado arriba ya
+        # garantiza que la copia es exactamente la publicada: se avisa, no se bloquea.
+        Write-Log "AVISO: la copia tiene $sesRemotas sesiones y el manifiesto declara $($Remoto.sesiones); el sha256 coincide, sigo con el import."
+    }
+    if (-not $script:Python) { Stop-ConError "hace falta Python (viene con Hermes) para fusionar las sesiones." }
+
+    Write-Log "Hermes está en marcha: importo por fusión (no sustituyo la base de datos)."
+
+    $destinoBackup = Join-Ruta $BackupsLocales "$Epoch-parcial"
+    New-Item -ItemType Directory -Force -Path $destinoBackup | Out-Null
+    Copy-Sqlite (Join-Ruta $HermesHome 'state.db') (Join-Ruta $destinoBackup 'state.db')
+    foreach ($d in $Arboles) { Invoke-Robocopy (Join-Ruta $HermesHome $d) (Join-Ruta $destinoBackup $d) }
+
+    # Ojo con PowerShell 5.1: con $ErrorActionPreference='Stop', el stderr de un
+    # ejecutable nativo (2>&1) puede abortar el script (NativeCommandError).
+    $eapPrevio = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $salida = @(& $script:Python $CopiadorPy --fusionar $dbComun (Join-Ruta $HermesHome 'state.db') 2>&1)
+    $rc = $LASTEXITCODE
+    $ErrorActionPreference = $eapPrevio
+    foreach ($linea in $salida) { if ("$linea".Trim() -ne '') { Write-Log "   $($linea.ToString().Trim())" -SoloLog } }
+    if ($rc -ne 0) { Stop-ConError "falló la fusión de sesiones ($rc); la base local no se ha tocado." }
+
+    $eapPrevio = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $salidaInt = @(& $script:Python $CopiadorPy --integridad (Join-Ruta $HermesHome 'state.db') 2>&1)
+    $rcInt = $LASTEXITCODE
+    $ErrorActionPreference = $eapPrevio
+    $integridad = if ($salidaInt.Count -gt 0) { "$($salidaInt[0])".Trim() } else { '' }
+    if ($rcInt -ne 0 -or $integridad -ne 'ok') {
+        # No se sustituye state.db con Hermes en marcha: se avisa y se deja la copia.
+        Write-Log "ERROR: la base local no queda sana ('$integridad'). Copia previa en $destinoBackup."
+        Write-Log "       No sustituyo state.db con Hermes en marcha: ciérralo y restaura esa copia a mano."
+        exit 1
+    }
+
+    foreach ($d in $Arboles) { Invoke-Robocopy (Join-Ruta $Comun "estado/$d") (Join-Ruta $HermesHome $d) }
+    $soulComun = Join-Ruta $Comun 'estado/SOUL.md'
+    if (Test-Path $soulComun) { Copy-Item $soulComun (Join-Ruta $HermesHome 'SOUL.md') -Force }
+
+    Write-EstadoImport -Epoch $Epoch -Pendientes @('kanban.db')
+    Write-Log "Importado por fusión. Copia de seguridad previa en $destinoBackup"
+    Write-Log "Pendiente para el próximo import con Hermes cerrado: kanban.db"
+}
+
 # ---------------------------------------------------------------- import
 function Invoke-Import {
     $manifiesto = Join-Ruta $Comun 'estado/MANIFEST.json'
@@ -250,14 +350,18 @@ function Invoke-Import {
 
     if ($remoto.host -eq $HostActual) { Write-Log "Lo publicado en la carpeta común lo publicó este mismo equipo."; return }
     $epoch = [int]$remoto.publicado_epoch
-    if ($epoch -le [int]$script:UltimoImportEpoch -and -not $Forzar) {
+    if ($epoch -le [int]$script:UltimoImportEpoch -and -not $Forzar -and $script:PendientesImport.Count -eq 0) {
         Write-Log "Sin novedades de '$($remoto.host)' (última importación: $($script:UltimoImportEpoch))"
         return
     }
     if (Test-HermesVivo) {
-        Write-Log "AVISO: Hermes está en marcha en este equipo; no sustituyo la base de datos."
-        Write-Log "       Se reintentará al cerrar Hermes o al reiniciar el equipo."
-        Write-Log "       A mano: cierra Hermes y ejecuta: hermes-dual-sync.ps1 -Accion import"
+        if ($epoch -le [int]$script:UltimoImportEpoch) {
+            # Nada nuevo que traer y solo queda pendiente lo que exige Hermes cerrado
+            # (kanban.db): se espera sin repetir trabajo en cada pasada de 5 minutos.
+            Write-Log "Pendiente completar la importación (kanban.db) cuando cierres Hermes." -SoloLog
+            return
+        }
+        Invoke-ImportParcial -Remoto $remoto -Epoch $epoch
         return
     }
 
@@ -269,7 +373,11 @@ function Invoke-Import {
     $sesRemotas = Get-Sesiones $dbComun
     if ($sesRemotas -le 0) { Stop-ConError "state.db remota ilegible (sin tabla de sesiones). Import abortado." }
     if ($remoto.sesiones -and [int]$remoto.sesiones -ne 0 -and $sesRemotas -ne [int]$remoto.sesiones) {
-        Stop-ConError "state.db remota tiene $sesRemotas sesiones y el manifiesto declara $($remoto.sesiones). Import abortado."
+        # El manifiesto lo escribe el motor de Linux contando las sesiones de su base VIVA,
+        # que puede llevar alguna mas que la copia publicada (p. ej. una sesion oculta sin
+        # mensajes creada entre la copia y el recuento). El sha256 comprobado arriba ya
+        # garantiza que la copia es exactamente la publicada: se avisa, no se bloquea.
+        Write-Log "AVISO: la copia tiene $sesRemotas sesiones y el manifiesto declara $($remoto.sesiones); el sha256 coincide, sigo con el import."
     }
 
     Write-Log "Importando estado de '$($remoto.host)' de $(Get-Date -Date $remoto.publicado_utc -Format 'dd/MM/yyyy HH:mm') ($sesRemotas sesiones)"
@@ -285,8 +393,8 @@ function Invoke-Import {
     # ilegible, así que en cuanto aparezca cualquier proceso de Hermes no se
     # toca nada y se deja la importación pendiente para el siguiente intento.
     if (Test-HermesVivo) {
-        Write-Log "AVISO: Hermes ha arrancado mientras preparaba la importación; no sustituyo la base de datos."
-        Write-Log "       Queda pendiente: se reintenta al cerrar Hermes o al reiniciar el equipo." -SoloLog
+        Write-Log "AVISO: Hermes ha arrancado mientras preparaba la importación; cambio a fusión."
+        Invoke-ImportParcial -Remoto $remoto -Epoch $epoch
         return
     }
 
@@ -316,9 +424,7 @@ function Invoke-Import {
         if (Test-Path $o) { Copy-Item $o (Join-Ruta $HermesHome $f) -Force }
     }
 
-    $estado = @{ host = $HostActual; ultimo_import_epoch = $epoch; ultimo_import_utc = $remoto.publicado_utc }
-    $estado | ConvertTo-Json | Set-Content -Path $EstadoLocalJson -Encoding UTF8
-    $script:UltimoImportEpoch = $epoch
+    Write-EstadoImport -Epoch $epoch
     Write-Log "Importado. Copia de seguridad previa en $destinoBackup"
 }
 
@@ -335,7 +441,11 @@ function Show-Estado {
         Write-Host "  Publicado por : (nada publicado todavía)"
     }
     Write-Host "── Este equipo ($HostActual) ────────────────────────────"
-    Write-Host "  Última importación: $($script:UltimoImportEpoch)"
+    $sufijo = ''
+    if ($script:PendientesImport.Count -gt 0) {
+        $sufijo = " (parcial; pendiente: $($script:PendientesImport -join ', '))"
+    }
+    Write-Host "  Última importación: $($script:UltimoImportEpoch)$sufijo"
     Write-Host "  Sesiones locales  : $(Get-Sesiones (Join-Ruta $HermesHome 'state.db'))"
     Write-Host "  Semilla           : $(if (Test-Path (Join-Ruta $Comun 'semilla/config.yaml')) { 'disponible en la carpeta común' } else { 'sin generar' })"
 }
@@ -355,8 +465,14 @@ foreach ($sub in @('estado', 'historial', 'logs')) {
 $script:LogFile = Join-Ruta $Comun "logs/$HostActual.log"
 $script:Python = Find-Python
 $script:UltimoImportEpoch = 0
+$script:PendientesImport = @()
 if (Test-Path $EstadoLocalJson) {
-    try { $script:UltimoImportEpoch = [int](Get-Content $EstadoLocalJson -Raw -Encoding UTF8 | ConvertFrom-Json).ultimo_import_epoch } catch { $script:UltimoImportEpoch = 0 }
+    try {
+        $estadoPrevio = Get-Content $EstadoLocalJson -Raw -Encoding UTF8 | ConvertFrom-Json
+        $script:UltimoImportEpoch = [int]$estadoPrevio.ultimo_import_epoch
+        # @(...) fuerza lista: un solo pendiente se deserializa como cadena suelta.
+        $script:PendientesImport = @($estadoPrevio.pendientes) | Where-Object { $_ }
+    } catch { $script:UltimoImportEpoch = 0; $script:PendientesImport = @() }
 }
 
 switch ($Accion) {

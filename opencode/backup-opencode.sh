@@ -287,6 +287,7 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
       --exclude='backups/' \
       --exclude='.env' --exclude='*.env' \
       --exclude='auth.json' \
+      --exclude='service.json' \
       --exclude='credenciales/' \
       --exclude='*.tar.gz' \
       --exclude='node_modules/' \
@@ -302,7 +303,7 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
 
     # Eliminar cualquier resto con credenciales que pudiera haber quedado
     find "${DOTFILES_OPENCODE}" -name '*.tar.gz' -delete 2>/dev/null || true
-    find "${DOTFILES_OPENCODE}" \( -name '.env' -o -name 'auth.json' \) -delete 2>/dev/null || true
+    find "${DOTFILES_OPENCODE}" \( -name '.env' -o -name 'auth.json' -o -name 'service.json' \) -delete 2>/dev/null || true
     rm -rf "${DOTFILES_OPENCODE}/credenciales" 2>/dev/null || true
     # El snapshot de localStorage del plugin OnlyOffice-IA guarda la clave del proveedor
     # (localstorage-snapshot/leveldb/*.log): basura de caché, fuera del repo público.
@@ -321,6 +322,13 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
         echo "   ⚠️  ATENCIÓN: posibles claves en la copia de dotfiles. Revisar antes de commitear."
     else
         echo "   ✅ Copia en dotfiles libre de claves de API"
+    fi
+
+    # Verificación aparte para service.json (password del servicio local V2)
+    if find "${DOTFILES_OPENCODE}" -name 'service.json*' 2>/dev/null | grep -q .; then
+        echo "   ⚠️  ATENCIÓN: service.json encontrado en dotfiles (contiene password del servicio V2). Eliminar antes de commitear."
+    else
+        echo "   ✅ service.json ausente en dotfiles (correcto)"
     fi
 fi
 

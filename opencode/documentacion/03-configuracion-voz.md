@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🗣️ Sistema de voz | 08/09/2026 · rev. 22/09/2026 | Antonio |
+| 🗣️ Sistema de voz | 08/09/2026 · rev. 10/10/2026 | Antonio |
 
 > Flujo completo: sox + whisper (STT) → OpenCode → Kokoro v1.0 GPU (TTS local)
 
@@ -86,7 +86,8 @@ Estructura del plugin:
 
 ```
 opencode-voice-modified/
-├── index.js          # Punto de entrada
+├── index.js          # Punto de entrada (V1)
+├── tui.js            # Puente V2 (Plugin.define) — es el que carga cli.json
 ├── package.json      # Metadatos (name: @renjfk/opencode-voice)
 ├── README.md         # Documentación
 ├── LICENSE           # MIT
@@ -128,9 +129,15 @@ export default {
 {
   "name": "@renjfk/opencode-voice",
   "version": "0.6.0",
-  "description": "Speech-to-text and text-to-speech for OpenCode.",
+  "description": "Speech-to-text and text-to-speech for OpenCode (entrada V2 en tui.js).",
+  "license": "MIT",
   "type": "module",
-  "main": "index.js"
+  "main": "index.js",
+  "exports": {
+    ".": { "import": "./index.js" },
+    "./tui": { "import": "./tui.js" }
+  },
+  "files": ["index.js", "tui.js", "lib"]
 }
 ```
 

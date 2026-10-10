@@ -3,7 +3,7 @@ Perfiles global, local y cloud, MCPs y plugin de voz.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 10/09/2026 · rev. 09/10/2026 | Antonio |
+| ✅ Activo | 10/09/2026 · rev. 10/10/2026 | Antonio |
 
 > Perfiles global / local / cloud, MCPs y plugin de voz
 
@@ -14,10 +14,11 @@ Perfiles global, local y cloud, MCPs y plugin de voz.
 2. [Perfil global (`mimocode.jsonc`)](#perfil-global)
 3. [Perfil local (`profiles/local`)](#perfil-local)
 4. [Perfil cloud (`profiles/cloud`)](#perfil-cloud)
-5. [Agentes](#agentes)
-6. [Comparativa de perfiles](#comparativa)
-7. [Plugin de voz](#plugin-de-voz)
-8. [Cambio entre perfiles](#cambio-entre-perfiles)
+5. [TUI config](#tui-config)
+6. [Agentes](#agentes)
+7. [Comparativa de perfiles](#comparativa)
+8. [Plugin de voz](#plugin-de-voz)
+9. [Cambio entre perfiles](#cambio-entre-perfiles)
 
 ---
 
@@ -99,24 +100,28 @@ Replica `opencode-cloud.json`. Desactiva el proveedor local (`disabled_providers
 
 ---
 
-## TUI config: `~/.config/mimocode/tui.json`
+## TUI config
+
+### Archivo: `~/.config/mimocode/tui.json`
 
 Los plugins TUI y los keybinds van en el archivo TUI separado `tui.json` (NO en `mimocode.jsonc`, cuya clave `plugin` es para plugins de servidor):
 
 ```jsonc
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/tui.json",
+  // v0.6.0: SIN normalización por LLM y SIN transcripción vía API,
+  // por eso NO necesita endpoint ni modelo.
   "keybinds": {
     "session_rename": "none"
   },
   "plugin": [
-    ["/home/antonio/.config/mimocode/mimocode-voice-modified/index.js", {
-      "endpoint": "http://localhost:4001/v1",
-      "model": "models-qwen3.8-9b"
-    }]
+    "/home/antonio/.config/mimocode/mimocode-voice-modified/index.js"
   ]
 }
 ```
+
+> ⚠️ La entrada del plugin es una **ruta simple**, no un par `[ruta, opciones]`: desde v0.6.0
+> (11/09/2026) no se le pasa `endpoint` ni `model`. Es un fichero único, sin variante por perfil.
 
 ---
 

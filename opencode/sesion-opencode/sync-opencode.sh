@@ -41,7 +41,7 @@ for f in "$CONFIG_ACTIVO"/*.json "$CONFIG_ACTIVO"/*.sh "$CONFIG_ACTIVO"/*.js "$C
     [ -f "$f" ] || continue
     base=$(basename "$f")
     case "$base" in
-        package.json|package-lock.json) continue ;;
+        package.json|package-lock.json|service.json) continue ;;
     esac
     cp "$f" "$SESION_DIR/" 2>/dev/null || true
 done
@@ -74,6 +74,11 @@ fi
 # Eliminar manuales obsoletos que pudieran quedar en sesion-opencode
 rm -f "$SESION_DIR"/*.md 2>/dev/null || true
 
+# service.json es la password del servicio local V2 (copia viva en
+# ~/.local/state/opencode/): un secreto que NUNCA debe ir a Config/opencode/ (de ahí
+# pasaría a dotfiles). Defensa en profundidad por si existía de antes.
+rm -f "$SESION_DIR/service.json" "$CONFIG_BACKUP/service.json" 2>/dev/null || true
+
 # Directorios (sin data/, models/, node_modules/) — sincronizar: borrar destino antes
 # para que la copia refleje exactamente el origen (elimina obsoletos)
 for dir in commands prompts skills skills-disabled plugins; do
@@ -91,6 +96,11 @@ if [ -d "$CONFIG_ACTIVO/opencode-voice-modified" ]; then
 fi
 
 log "✅ Archivos sincronizados"
+
+# ─── 1b. Espejar manuales en el vault de Obsidian (si existe) ───
+if [ -f "$CONFIG_ACTIVO/sync-obsidian.sh" ]; then
+    bash "$CONFIG_ACTIVO/sync-obsidian.sh" --quiet || true
+fi
 
 # ─── 2. Regenerar backup ───
 log "📦 Regenerando tarball de backup..."

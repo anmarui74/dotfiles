@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 📜 Reglas del sistema | 26/07/2026 · rev. 22/09/2026 | Antonio |
+| 📜 Reglas del sistema | 26/07/2026 · rev. 10/10/2026 | Antonio |
 
 > Instrucciones del sistema que OpenCode carga al inicio de cada sesión
 
@@ -99,7 +99,7 @@ Config/opencode/
     + enlace simbólico setup-opencode-completo.sh → sesion-opencode/ (sin duplicar)
 ```
 
-El AGENTS.md documenta esta estructura y exige mantener la raíz limpia.
+El AGENTS.md documenta esta estructura y exige mantener la raíz limpia. Además, desde el 10/10/2026 los manuales se **espejan en el vault de Obsidian** con `sync-obsidian.sh` (automático al guardar y en cada sync de 30 min; ver `05-configuracion-adicional.md`).
 
 ---
 
@@ -128,7 +128,7 @@ Razón: OpenCode a veces cambia al inglés espontáneamente. Esta regla **fuerza
 - "Coche" vs. "carro"
 - "Vale" vs. "ok"
 
-### Formato (líneas 12-19)
+### Formato (líneas 12-20)
 
 ```
 - SÍ usamos emoji en pantalla (✈️ 🌤️ 😊)
@@ -142,7 +142,7 @@ Razón: OpenCode a veces cambia al inglés espontáneamente. Esta regla **fuerza
 
 #### El "locucionero"
 
-Es un concepto importante. Cuando el TTS (edge-tts) lee el texto en voz alta, los emojis como ✈️ serían leídos como "avión" o "icono de avión". El **locucionero** es un filtro (implementado en el script `speak`) que elimina los emojis ANTES de pasar el texto a edge-tts, permitiendo que el asistente use emojis en pantalla sin que el TTS los lea.
+Es un concepto importante. Cuando el TTS lee el texto en voz alta, los emojis como ✈️ serían leídos como "avión" o "icono de avión". El **locucionero** es un filtro (implementado en el script de locución activo `speak-kokoro-gpu`, y también en `speak` para el motor de reserva) que elimina los emojis ANTES de pasar el texto al TTS (Kokoro v1.0 en GPU), permitiendo que el asistente use emojis en pantalla sin que el TTS los lea.
 
 #### Formato de fecha y hora
 
@@ -172,23 +172,29 @@ Razón: AEMET es la fuente oficial española. El `api_key` se carga del `.env`
 ISO-8859-15 (hay que convertir con `iconv -f ISO-8859-15 -t UTF-8`). Si AEMET no responde,
 se usa wttr.in como respaldo.
 
-### 💻 Consultar hardware (líneas 29-39) — IMPORTANTE
+### 💻 Consultar hardware (líneas 94-123) — IMPORTANTE
 
 ```
 Cuando Antonio pregunte sobre su hardware, LEE el archivo:
 ~/.config/opencode/data/hardware/index.json
 
-NO ejecutes comandos de detección (inxi, lspci, dmidecode, etc.)
+Para consultas puntuales NO hace falta ejecutar comandos de detección
+(inxi, lspci, dmidecode…): usa el JSON.
 ```
 
-Razón: Ejecutar comandos de hardware (inxi, lspci) es lento y consume recursos. El archivo `index.json` ya contiene **toda** la información del sistema, generada una sola vez. Contiene 26 secciones con datos de CPU, RAM, GPU, discos, monitores, audio, USB, sensores, red, etc.
+Razón: ejecutar `inxi`/`lspci` en cada consulta es lento y consume recursos; el `index.json` ya contiene **toda** la información del sistema (generada una sola vez). Contiene **13 secciones** (más `meta`) con datos de OS, CPU, RAM, placa base, GPU NVIDIA/AMD, monitores, almacenamiento, red, sensores, USB, audio y kernel/boot.
+
+> ⚠️ Esa prohibición **NO contradice** el uso de `inxi`: es precisamente lo que **genera** el
+> JSON. El **escaneo** (`hardware-query.py scan`) y el **informe del sistema**
+> (`documentacion/09-informe-sistema.md`) **sí** usan `inxi`, `lspci`, `dmidecode`, `smartctl`,
+> `nvidia-smi` y `sensors`. La regla solo aplica a las **consultas sueltas**.
 
 Consulta rápida desde terminal:
 ```bash
 source ~/.config/opencode/hardware-query.sh && hw_query <campo>
 ```
 
-### 🔧 Uso de herramientas (líneas 49-57) — OBLIGATORIO
+### 🔧 Uso de herramientas (líneas 125-132) — OBLIGATORIO
 
 ```
 Cuando tengas que hacer una tarea que requiera una herramienta, USA LA HERRAMIENTA directamente.
@@ -230,7 +236,7 @@ AGENTS.md documenta la migración de V1 (1.18.x) a **V2 (2.0.x)**:
 - LSP: V2 **no ejecuta** servidores LSP (bloque retirado; usar `basedpyright`, `tsc --noEmit`, `shellcheck`… por terminal).
 - `instructions` retirado (V2 no carga sus entradas); `AGENTS.md` se **autodescubre**.
 
-### Sincronización con Config/opencode (líneas 78-100) — OBLIGATORIO
+### Sincronización con Config/opencode (líneas 253-353) — OBLIGATORIO
 
 Explica el **sistema de dos directorios**:
 
@@ -251,7 +257,13 @@ Explica el **sistema de dos directorios**:
 4. Ejecuta: bash ~/Config/opencode/backup-opencode.sh
 ```
 
-### Atención a setup-opencode-completo.sh (líneas 101-149) — IMPORTANTE
+🔐 **Secretos (NUNCA en `~/Documentos/dotfiles/`)**: `.env` y `*.env`, `auth.json`, el directorio
+`credenciales/`, los tarballs `*.tar.gz` y **`service.json`** — la password del servicio local V2
+(su copia viva es `~/.local/state/opencode/service.json`). ⚠️ El `git grep` de claves **no la
+detecta** (busca formas de API key, no contraseñas sueltas): la comprobación aparte es
+`find ~/Documentos/dotfiles -name 'service.json*'`, que debe salir **vacío**.
+
+### Atención a setup-opencode-completo.sh (líneas 355-403) — IMPORTANTE
 
 Este script es el **instalador completo embebido**. Contiene toda la configuración dentro de sí mismo (es un script autocontenido).
 
@@ -265,7 +277,7 @@ Este script es el **instalador completo embebido**. Contiene toda la configuraci
 
 ## Sección 3: PERSISTENCIA DE DATOS Y RECUPERACIÓN
 
-### Variables de entorno (líneas 152-157)
+### Variables de entorno (líneas 407-411)
 
 ```bash
 set -a; source /home/antonio/.config/opencode/.env; set +a
@@ -274,7 +286,7 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 - Usa `set -a` para exportar automáticamente todas las variables
 - El `.env` contiene credenciales y rutas sensibles
 
-### Inicialización tras reinicio (líneas 158-171)
+### Inicialización tras reinicio (líneas 413-425)
 
 ```bash
 bash /home/antonio/.config/opencode/init-opencode.sh
@@ -287,7 +299,7 @@ Verifica:
 4. **PWAs** en el Escritorio
 5. **Variables de entorno** (.env)
 
-### Backup del grafo de memoria (líneas 172-176)
+### Backup del grafo de memoria (líneas 427-443)
 
 ```
 Directorio: /home/antonio/Config/opencode/backups/
@@ -297,7 +309,7 @@ Retención:  30 días
 
 El grafo de memoria es un archivo **JSONL** (una línea JSON por entidad) que contiene todas las entidades, observaciones y relaciones que el asistente ha aprendido.
 
-### Recuperación del grafo (líneas 177-190)
+### Recuperación del grafo (líneas 445-459)
 
 Si el grafo se pierde o corrompe:
 
@@ -310,7 +322,7 @@ cp /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl \
    /home/antonio/.config/opencode/data/memory/memory.jsonl
 ```
 
-### Recordatorio MCP memory (líneas 191-201) — IMPORTANTE
+### Recordatorio MCP memory (líneas 461-470) — IMPORTANTE
 
 Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observación**
 del array DEBE incluir el campo `entityName` junto a `contents`. Si falta `entityName`,
@@ -326,7 +338,7 @@ el MCP devuelve error `-32602` (Input validation error). Formato correcto:
 > de omitir `entityName` al usar las herramientas de memoria. Mismo formato para
 > `memory_create_relations` (cada relación necesita `from`, `to`, `relationType`).
 
-### Timeline completo (líneas 202-216)
+### Timeline completo (líneas 472-485)
 
 La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado;
 el PR #26861 que lo arregla sigue abierto, sin mergear). Para ver el historial completo:
@@ -341,13 +353,13 @@ el PR #26861 que lo arregla sigue abierto, sin mergear). Para ver el historial c
 Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3). Todas las peticiones
 de Antonio están guardadas ahí aunque la TUI no las muestre.
 
-### Vigilancia del fix del timeline (líneas 217-224)
+### Vigilancia del fix del timeline (líneas 487-493)
 
 El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861 se ha mergeado.
-Se ejecuta cada 3 días vía el timer systemd `check-timeline-fix.timer` y registra en
+Se ejecuta **a diario a las 10:00** vía el timer systemd `check-timeline-fix.timer` y registra en
 `~/.config/opencode/data/timeline-fix.log`. Si se mergea, avisa para retirar `timeline-completo`.
 
-### Directorios de datos (líneas 225-233)
+### Directorios de datos (líneas 520-527)
 
 | Directorio | Contenido |
 |------------|-----------|
@@ -362,7 +374,7 @@ Se ejecuta cada 3 días vía el timer systemd `check-timeline-fix.timer` y regis
 
 Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otros modelos que puedan necesitar instrucciones más detalladas para tareas específicas.
 
-### PWAs - Abrir (líneas 236-240)
+### PWAs - Abrir (líneas 531-534)
 
 ```
 1. Leer /home/antonio/Escritorio
@@ -372,7 +384,7 @@ Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otr
 
 Las PWAs (Progressive Web Apps) se instalan como accesos directos en el Escritorio con nombres como `chrome-<app-id>-Profile_2.desktop`. La línea `Exec=` contiene el comando completo para lanzarlas.
 
-### PWAs - Cerrar (líneas 241-244)
+### PWAs - Cerrar (líneas 536-538)
 
 ```bash
 # Cerrar una PWA específica
@@ -384,7 +396,7 @@ pkill -f "chrome.*remote-debugging-port"
 
 Usa el puerto de depuración remota (9222) para comunicarse con Chrome.
 
-### Chrome debug (líneas 245-247)
+### Chrome debug (líneas 540-541)
 
 ```bash
 nohup /opt/google/chrome/google-chrome \
@@ -397,7 +409,7 @@ nohup /opt/google/chrome/google-chrome \
 
 Lanza Chrome en modo depuración con un perfil temporal, necesario para controlar PWAs remotamente.
 
-### Carga automática al abrir opencode/ocv (líneas 248-258)
+### Carga automática al abrir opencode/ocv (líneas 543-557)
 
 Al ejecutar `opencode` u `ocv`, el lanzador `start-opencode-server.sh` carga automáticamente:
 
@@ -409,7 +421,7 @@ El servicio systemd `init-opencode.service` está **DESHABILITADO** (no carga el
 
 > 📌 **Perfil cloud:** `ocv-cloud`/`opencode-cloud` exporta `SKIP_LMSTUDIO=1`, por lo que `start-opencode-server.sh` NO carga el modelo local en VRAM.
 
-### Perfiles por lanzador (líneas 259-274)
+### Perfiles por lanzador (líneas 559-581)
 
 Cada comando usa **SU archivo de config** vía `OPENCODE_CONFIG`. Nada se copia nunca sobre `opencode.json`:
 
@@ -428,14 +440,14 @@ catálogo real vía `GET /v1/models` (el catálogo `models.dev` está desactuali
 → velocidad (≥ 10 tok/s) → **tool calling obligatorio** → reintentos de 429/500/503. Detalle
 completo en [04-perfiles-opencode-json.md](04-perfiles-opencode-json.md) y en el grafo de memoria.
 
-### Iniciar LM Studio manualmente (líneas 275-279)
+### Iniciar LM Studio manualmente (líneas 619-623)
 
 ```bash
 bash /home/antonio/.config/opencode/start-lmstudio.sh      # servidor + modelo + proxy
 bash /home/antonio/.config/opencode/start-lmstudio-server.sh  # solo servidor + proxy
 ```
 
-### Liberar VRAM (líneas 281-285)
+### Liberar VRAM (líneas 625-629)
 
 Si el modelo se satura, usar:
 
@@ -523,4 +535,4 @@ Si quieres modificar AGENTS.md:
 El término aparece en la línea 14:
 > "Mi locucionero filtra estos iconos automáticamente antes del TTS, sin necesidad de configuración extra"
 
-Es una **nota para Antonio** (no para el asistente). Le indica que puede usar emojis con libertad porque el sistema de voz los filtra automáticamente. El "locucionero" es el script `speak` (~/.local/bin/speak), que limpia los emojis y caracteres especiales del texto antes de pasarlo a edge-tts.
+Es una **nota para Antonio** (no para el asistente). Le indica que puede usar emojis con libertad porque el sistema de voz los filtra automáticamente. El "locucionero" es el script de locución activo `speak-kokoro-gpu` (~/.local/bin/), que limpia los emojis y caracteres especiales del texto antes de pasarlo a Kokoro v1.0 (el `speak` de edge-tts se mantiene como reserva).

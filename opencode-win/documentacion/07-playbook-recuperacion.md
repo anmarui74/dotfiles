@@ -127,12 +127,15 @@ Get-ChildItem "D:\Linux\Config\opencode-win\backups\opencode\*" |
 ### Paso 2 — Instalar OpenCode y dependencias base
 
 > ⚠️ **No aplica en Windows:** no hay `pacman` ni `pkexec`. OpenCode se instala
-> **globalmente por npm** (paquete `opencode-ai`). Node está en
+> **globalmente por npm** (paquete `@opencode/cli`, V2). Node está en
 > `C:\Program Files\nodejs\node.exe` y npm es la versión 11.19.0.
 
 ```powershell
 # OpenCode (global por npm)
-npm install -g opencode-ai
+npm install -g @opencode/cli
+# OJO: NO instalar el paquete antiguo 'opencode-ai' (V1). Declara el mismo
+# comando 'opencode' que @opencode/cli (V2); al desinstalarlo npm borra el shim
+# 'opencode' de la V2 (queda solo 'opencode2') y hay que reinstalar @opencode/cli.
 
 # Comprobar versiones
 node --version
