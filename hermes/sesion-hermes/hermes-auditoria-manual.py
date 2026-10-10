@@ -178,7 +178,6 @@ if sh("command -v pacman"):
 # ─── 8. Espejo de Obsidian (fiel a los orígenes) ───
 NOTAS = [(f"{BASE}/AGENTS.md", "💻 Manual de Hermes — AGENTS.md"),
          (f"{BASE}/sesion-hermes/SOUL.md", "💻 Identidad de Hermes — SOUL.md"),
-         (f"{HOME}/Config/Hermes-Win/AGENTS-WIN.md", "💻 Manual de Hermes en Windows — AGENTS-WIN.md"),
          (f"{BASE}/dual-boot/windows/LEEME-comun.md", "💻 Dual boot — Estado compartido · LEEME-comun.md"),
          (f"{BASE}/dual-boot/windows/LEEME-WINDOWS.md", "💻 Dual boot — Windows · LEEME-WINDOWS.md"),
          (f"{BASE}/dual-boot/windows/PARA-WINDOWS-motor-fusion.md", "💻 Dual boot — Motor de fusión · PARA-WINDOWS-motor-fusion.md"),
@@ -197,18 +196,37 @@ else:
         while b and b[0] == "":
             b = b[1:]
         check(a == b, f"nota del vault desfasada: {nota}")
-    # enlaces internos del índice
-    indice = f"{VAULT}/💻 README.md"
-    if os.path.isfile(indice):
-        import urllib.parse
+    # Notas del equipo Windows: viven en su propia carpeta del vault (Hermes-win/)
+    NOTAS_WIN = [(f"{HOME}/Config/Hermes-Win/AGENTS-WIN.md",
+                  "💻 Manual de Hermes en Windows — AGENTS-WIN.md"),
+                 (f"{HOME}/Config/Hermes-Win/SISTEMA-WINDOWS.md",
+                  "💻 Sistema — Inventario del equipo en Windows · SISTEMA-WINDOWS.md")]
+    VAULT_WIN = f"{VAULT}/../Hermes-win"
+    for orig, nota in NOTAS_WIN:
+        ruta = f"{VAULT_WIN}/{nota}"
+        if not os.path.isfile(orig) or not os.path.isfile(ruta):
+            aviso(f"nota del espejo ausente: {nota}")
+            continue
+        a = open(orig, encoding="utf-8").read().splitlines()
+        b = open(ruta, encoding="utf-8").read().splitlines()
+        while b and b[0] == "":
+            b = b[1:]
+        check(a == b, f"nota del vault desfasada: {nota}")
+    # enlaces internos de los índices (manuales de Linux y de Windows)
+    import urllib.parse
+    for carpeta in ("Hermes", "Hermes-win", "OpenCode", "OpenCode-win"):
+        raiz = f"{VAULT}/../{carpeta}"
+        indice = f"{raiz}/💻 README.md"
+        if not os.path.isfile(indice):
+            continue
         malos = []
         for m in re.finditer(r"\]\(([^)]+)\)", open(indice, encoding="utf-8").read()):
             p = urllib.parse.unquote(m.group(1))
             if p.startswith(("http", "#")):
                 continue
-            if not os.path.exists(f"{VAULT}/{p if p.endswith('.md') else p + '.md'}"):
+            if not os.path.exists(f"{raiz}/{p if p.endswith('.md') else p + '.md'}"):
                 malos.append(p)
-        check(not malos, f"enlaces rotos en el índice del vault: {malos}")
+        check(not malos, f"enlaces rotos en el índice del vault ({carpeta}): {malos}")
 
 # ─── 9. Copias del manual (canónica y saneada) ───
 for p in (f"{BASE}/sesion-hermes/AGENTS.md", f"{HOME}/Documentos/dotfiles/hermes/AGENTS.md"):

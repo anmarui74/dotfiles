@@ -97,6 +97,7 @@ archivos = {
     'hardware-query.py': 'HARDWARE-QUERY_PYEOF',
     'check-fix.sh': 'CHECK-FIX_SHEOF', 'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
     'check-nvidia-whitelist.sh': 'NVIDIA-WL_SHEOF',
+    'check-mega-pr.sh': 'MEGA-PR_SHEOF',
     'lmstudio-proxy.py': 'LMPROXYEOF', 'lmstudio-metrics-server.py': 'METRICSSRVEOF',
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
@@ -122,6 +123,8 @@ extra_archivos = [
     ('systemd check-opencode-fix.timer', 'CHKFIXTIMEREOF', '/home/antonio/.config/systemd/user/check-opencode-fix.timer'),
     ('systemd check-nvidia-whitelist.service', 'NVIDIAWL-SERVEOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.service'),
     ('systemd check-nvidia-whitelist.timer', 'NVIDIAWL-TIMEREOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.timer'),
+    ('systemd check-mega-pr.service', 'CHECKMEGAPR-SERVEOF', '/home/antonio/.config/systemd/user/check-mega-pr.service'),
+    ('systemd check-mega-pr.timer', 'CHECKMEGAPR-TIMEREOF', '/home/antonio/.config/systemd/user/check-mega-pr.timer'),
     ('systemd sync-obsidian.service', 'SYNCOBS-SERVEOF', '/home/antonio/.config/systemd/user/sync-obsidian.service'),
     ('systemd sync-obsidian.path', 'SYNCOBS-PATHEOF', '/home/antonio/.config/systemd/user/sync-obsidian.path'),
 ]

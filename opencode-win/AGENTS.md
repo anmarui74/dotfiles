@@ -454,11 +454,10 @@ Resumen de la metodología (en orden, obligatorio):
 4. **Tool calling (OBLIGATORIO para OpenCode):** petición con `tools: [get_current_time]` + `tool_choice: auto`; exigir `tool_calls` reales en la respuesta. Sin tools = inutilizable en OpenCode.
 5. **Reintentos:** los 429/500/503/timeout se reintentan con más margen antes de decidir.
 
-Whitelist actual (05/09/2026): 8 modelos operativos en los perfiles. Los retirados devuelven **410 Gone** (end of life) y se eliminan del whitelist.
+Whitelist actual (rev. 10/10/2026): 7 modelos operativos en los perfiles. Los retirados devuelven **410 Gone** (end of life) y se eliminan del whitelist (p. ej. `minimaxai/minimax-m3`, retirado el 09/09/2026).
 
 | Proveedor/Modelo |
 |------------------|
-| `minimaxai/minimax-m3` |
 | `openai/gpt-oss-20b` |
 | `meta/llama-3.2-11b-vision-instruct` |
 | `meta/muse-glimmer-30b` |

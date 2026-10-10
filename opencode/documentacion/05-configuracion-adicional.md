@@ -326,6 +326,16 @@ Mismo patrón: **a diario a las 10:00** ejecuta `check-timeline-fix.sh` para vig
 
 Mismo patrón: los **días 1 y 16 de cada mes** a las 10:00 (con retardo aleatorio de 30 min) ejecuta `check-nvidia-whitelist.sh` para verificar/actualizar el whitelist de modelos NVIDIA.
 
+### `check-mega-pr.timer` (10/10/2026)
+
+**Archivos:**
+- `~/.config/systemd/user/check-mega-pr.service`
+- `~/.config/systemd/user/check-mega-pr.timer`
+
+Mismo patrón: **a diario a las 10:00** (retardo aleatorio de 10 min) ejecuta `check-mega-pr.sh`, que vigila el **Pull Request #1174** del proyecto oficial de MEGA (`meganz/MEGAsync`, fix de los iconos de estado de MEGAsync en Nautilus 51+). Avisa (log + notificación) si el PR se **mergea**, se **cierra** o hay **comentarios/reviews nuevos**.
+
+> 💡 No es una utilidad de OpenCode en sí, pero vive en `~/.config/opencode/` y forma parte del backup. El parche y su documentación completa están en `~/.local/share/mega-nautilus-fix/LEEME.md`.
+
 ### Gestión de servicios
 
 ```bash
@@ -335,6 +345,7 @@ systemctl --user status opencode-sync.timer
 systemctl --user status sync-obsidian.path
 systemctl --user status check-opencode-fix.timer
 systemctl --user status check-timeline-fix.timer
+systemctl --user status check-mega-pr.timer
 
 # Activar
 systemctl --user enable init-opencode.service
@@ -347,6 +358,7 @@ systemctl --user disable opencode-sync.timer
 # Ejecutar manualmente
 systemctl --user start init-opencode.service
 systemctl --user start check-opencode-fix.service
+systemctl --user start check-mega-pr.service
 systemctl --user start sync-obsidian.service
 ```
 
@@ -374,7 +386,7 @@ El `.sh` es un wrapper fino que delega en `hardware-query.py` (motor Python robu
 python3 ~/.config/opencode/hardware-query.py scan
 ```
 
-Recolecta 14 secciones (OS, CPU, RAM, placa base, GPU NVIDIA/AMD, monitores, almacenamiento, red, sensores, USB, audio, kernel/boot) y reescribe `data/hardware/index.json`. `meta.generated` y `meta.source` llevan la **fecha real** (dinámicos desde el 22/09/2026; antes `source` estaba fijado a `16/08/2026` por error).
+Recolecta 13 secciones (más `meta`): OS, CPU, RAM, placa base, GPU NVIDIA/AMD, monitores, almacenamiento, red, sensores, USB, audio y kernel/boot; y reescribe `data/hardware/index.json`. `meta.generated` y `meta.source` llevan la **fecha real** (dinámicos desde el 22/09/2026; antes `source` estaba fijado a `16/08/2026` por error).
 
 > ⚠️ **`pkexec` y sesión gráfica:** el escaneo usa `dmidecode` vía `pkexec` (ventana de contraseña). Si lo lanza el **agente**, el proceso no hereda la sesión gráfica y `pkexec` falla en silencio, dejando **RAM (DIMMs) y placa base incompletas**. Hay que exportar antes el entorno de GNOME:
 > ```bash
@@ -405,10 +417,10 @@ Vigila el **PR #26861** de OpenCode (fix del timeline TUI). Se ejecuta automáti
 
 - `bash -n` (sintaxis)
 - `shellcheck` (sin errores reales; SC2016 en heredocs = OK)
-- **44 heredocs embebidos** comparados uno a uno contra los archivos activos
+- **47 heredocs embebidos** comparados uno a uno contra los archivos activos
   (incluye `timeline-completo` y `speak` de `~/.local/bin/`, los plugins de
-  `plugins/`, los **6** servicios/timers systemd —incl. `sync-obsidian.service`
-  y `sync-obsidian.path`— y los manuales de hardware
+  `plugins/`, los **8** servicios/timers systemd —incl. `sync-obsidian.service`,
+  `sync-obsidian.path` y `check-mega-pr.service`/`.timer`— y los manuales de hardware
   `documentacion/hardware-info.md` y `documentacion/README-hardware.md`)
 - Estructura completa de pasos (1-19 + sub-pasos `4b`, `14b`, `15b`)
 - Comandos necesarios presentes en el sistema
@@ -429,6 +441,15 @@ Verifica el whitelist del proveedor NVIDIA aplicando la metodología completa:
 - **Log:** `data/nvidia-whitelist.log` · **Estado:** `data/nvidia-whitelist-state.json`
 - **API key:** se lee de `~/.local/share/opencode/auth.json` (clave `nvidia.key`), no está hardcodeada.
 - Ejecutar manualmente: `bash ~/.config/opencode/check-nvidia-whitelist.sh`
+
+### `check-mega-pr.sh` (10/10/2026)
+
+**Archivo:** `~/.config/opencode/check-mega-pr.sh` · **Timer:** `check-mega-pr.timer` (a diario, 10:00 + retardo aleatorio 10 min)
+
+Vigila el **PR #1174** de `meganz/MEGAsync` (fix de los iconos de estado de MEGAsync en Nautilus 51+). Consulta su estado a diario y avisa (log + notificación) si el PR se **mergea**, se **cierra** o hay **comentarios/reviews nuevos**.
+
+- **Log:** `data/mega-pr.log` · **Estado:** `data/mega-pr-state.json`
+- Ejecutar manualmente: `bash ~/.config/opencode/check-mega-pr.sh`
 
 ### `sync-obsidian.sh` (10/10/2026)
 
@@ -599,7 +620,8 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── mcp-fetch-fix.js           # Proxy del MCP fetch (quita la capability resources)
 ├── init-opencode.sh           # Inicialización completa
 ├── start-opencode.sh          # Lanzador interactivo
-├── start-lmstudio.sh          # Arranque rápido LM Studio
+├── start-lmstudio.sh          # Arranque rápido LM Studio (servidor + modelo + proxy)
+├── start-lmstudio-server.sh   # Solo servidor LM Studio + proxy (sin cargar modelo)
 ├── setup-lmstudio-models.sh   # Verificar modelos
 ├── start-opencode-server.sh    # Lanzador OpenCode/OCV (carga LM Studio salvo SKIP_LMSTUDIO)
 ├── sync-opencode.sh           # Sincronización
@@ -608,6 +630,7 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── check-fix.sh               # Verificar issue #39164
 ├── check-timeline-fix.sh      # Vigilar PR #26861 (fix timeline)
 ├── check-nvidia-whitelist.sh  # Verificar/actualizar whitelist NVIDIA
+├── check-mega-pr.sh           # Vigilar el PR #1174 de MEGAsync (Nautilus 51+)
 ├── check-setup-completo.sh    # Verificar setup antes de cada backup
 ├── hardware-query.sh          # Consulta hardware (wrapper)
 ├── hardware-query.py          # Consulta hardware (motor Python)
@@ -671,6 +694,8 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
     ├── setup-check.log       # Log de verificación del setup
     ├── nvidia-whitelist.log  # Log del check NVIDIA
     ├── nvidia-whitelist-state.json  # Estado del check NVIDIA
+    ├── mega-pr.log           # Log del vigilante del PR #1174 de MEGAsync
+    ├── mega-pr-state.json    # Estado del vigilante del PR #1174 de MEGAsync
     ├── rotate-service-password.sh   # 🔐 Rota la password del servicio local V2 (10/10/2026)
     └── rotate-service-password.log  # Log de la rotación (solo hashes, nunca la password)
 ```

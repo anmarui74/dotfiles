@@ -1,0 +1,29 @@
+# Miembros del grupo dinámico (LDM) de Windows: no se montan sueltos.
+#
+# Los discos de un grupo dinámico (aquí el espejo TOSHIBA: sdb + sdc) llevan un plexo cada
+# uno del MISMO volumen NTFS: comparten etiqueta y UUID. Montarlos por separado
+# desincronizaría el espejo (el mapeo ldmtool no replica escritura), así que el volumen se
+# monta una sola vez con ldmtool, en /mnt/toshiba (entrada en /etc/fstab).
+#
+# Sin esta regla, udisks2 ofrece esos plexos sueltos en Nautilus («TOSHIBA», dos veces) y al
+# intentar montarlos falla, porque el mismo sistema de archivos ya está montado.
+#
+# UDISKS_IGNORE hace que udisks2 y, con él, Nautilus y el resto de GNOME, no los ofrezcan.
+# Se selecciona por TIPO de partición (GUID), no por nombre de disco, de modo que vale para
+# cualquier miembro de cualquier grupo dinámico:
+#   5808c8aa-7e8f-42e0-85d2-e1e90434cfb3  Microsoft LDM metadata
+#   af9b60a0-1431-4f62-bc68-3311714a69ad  Microsoft LDM data     (el que usa este equipo)
+#   e6d6d379-f507-44c2-a23c-238f2a3df928  Microsoft LDM data     (variante)
+
+SUBSYSTEM=="block", ENV{ID_PART_ENTRY_TYPE}=="5808c8aa-7e8f-42e0-85d2-e1e90434cfb3", ENV{UDISKS_IGNORE}="1"
+SUBSYSTEM=="block", ENV{ID_PART_ENTRY_TYPE}=="af9b60a0-1431-4f62-bc68-3311714a69ad", ENV{UDISKS_IGNORE}="1"
+SUBSYSTEM=="block", ENV{ID_PART_ENTRY_TYPE}=="e6d6d379-f507-44c2-a23c-238f2a3df928", ENV{UDISKS_IGNORE}="1"
+
+# Y el disco entero de un miembro tampoco debe ofrecerse (si no, Nautilus muestra la
+# unidad vacía en «Otros lugares»). Se reconoce por su modelo de disco.
+SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ENV{ID_MODEL}=="TOSHIBA_HDWE140", ENV{UDISKS_IGNORE}="1"
+
+# Los dispositivos intermedios que crea el mapeo de ldmtool (un plexo por disco,
+# `ldm_part_<grupo>_DiskN-01`) tampoco son para montar: son la vista de un solo plexo del
+# mismo volumen. El bueno es `ldm_vol_<grupo>_VolumeN`, que es el que va en /etc/fstab.
+SUBSYSTEM=="block", ENV{DM_NAME}=="ldm_part_*", ENV{UDISKS_IGNORE}="1"

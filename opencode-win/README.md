@@ -44,7 +44,7 @@ Configuración activa de OpenCode en Windows: agentes, perfiles, proveedores, MC
 | `scripts\` | 🛠️ Utilidades portadas: `timeline-completo`, `hardware-query`, `check-nvidia-whitelist`, `sync-opencode`, `backup-opencode`, `setup-voz` |
 | `voice\` | 🎤 Voz: `stt.ps1` (whisper.cpp **CUDA**), `speak.ps1` (TTS), `kokoro-tts.py` (Kokoro GPU modo frío), `kokoro-server.py` (**servidor TTS persistente**, puerto 4210), `tts-server.ps1` (gestión) |
 | `opencode-voice-modified\` | 🗣️ Plugin de voz de OpenCode (portado a Windows), registrado en `cli.json` |
-| `lsp` (en los perfiles) | ⚠️ `"lsp": {}` — **OpenCode V2 no ejecuta LSP**. El campo se acepta y se conserva, pero no arranca servidores de lenguaje |
+| `lsp` (en los perfiles) | ✅ **11 servidores LSP** (`npx -y`): Python `basedpyright`, TypeScript, JSON, YAML, Bash/Zsh, Markdown, Go, Rust, C/C++. **OpenCode V2 sí los ejecuta** (2.0.26) |
 | `data\memory\memory.jsonl` | 🧠 Grafo de memoria persistente del MCP `memory` (`MEMORY_FILE_PATH`) |
 | `data\metrics.json` | 📊 Métricas del proxy local (últimas 500 peticiones + media de tokens/s) |
 | `AGENTS.md` · `README.md` | 📚 Reglas e índice (este documento) |
@@ -106,7 +106,7 @@ hw_query gpu                    # consulta la GPU
 | Proxy local | `http://localhost:4001` | Métricas tokens/s (`lmstudio-proxy.py`) |
 | Servidor TTS | `http://127.0.0.1:4210` | Kokoro persistente (`kokoro-server.py`) |
 | OpenCode Go | `https://opencode.ai` | Agentes `cloud` y `build` (`deepseek-v4.1-flash`) |
-| NVIDIA NIM | `https://integrate.api.nvidia.com/v1` | Agente `nvidia` (whitelist de 8 modelos) |
+| NVIDIA NIM | `https://integrate.api.nvidia.com/v1` | Agente `nvidia` (whitelist de 7 modelos) |
 
 ---
 
@@ -190,21 +190,31 @@ En `cli.json` se **desactivan** los bloques nativos `opencode.sidebar.context` y
 > que duplicaba los bloques y rompía el aspecto respecto a Linux. Se dejó solo el
 > auto-descubierto y se saneó `tui.json`.
 
-### ⚠️ LSP en OpenCode V2
+### ✅ LSP en OpenCode V2
 
-> 🔴 **OpenCode V2 NO ejecuta servidores LSP.** Según la documentación oficial de V2
-> (*«V2 accepts and preserves `lsp` configuration, but it does not run language servers,
-> expose LSP tools, or produce LSP diagnostics»*), el bloque `lsp` se acepta y conserva,
-> pero **no arranca ningún language server**.
->
-> Por eso en los tres perfiles se deja `"lsp": {}` (neutral): no hace nada en V2, pero
-> queda listo si en el futuro V2 los soporta. Los antiguos comandos `npx`
-> (`gopls`, `rust-analyzer`, `clangd`, `vscode-markdown-language-server`, etc.) eran de
-> **V1** y además estaban rotos (paquetes inexistentes en npm, `basedpyright` sin
-> comillas → **JSON inválido**), así que se han retirado.
->
-> **Alternativa para diagnóstico en V2:** ejecutar lint/typecheck/compilador por CLI
-> (p. ej. `pylint`, `tsc --noEmit`, `cargo check`) e indicarlo en `AGENTS.md`.
+> ✅ **OpenCode V2 (2.0.26) sí ejecuta servidores LSP** a través del bloque `lsp`. Se
+> lanzan con `npx -y` (bajo demanda, sin instalación global) y corren en segundo plano:
+> **no aparecen** en la barra lateral MiMo y se activan al abrir archivos de la extensión
+> correspondiente.
+
+Los **tres perfiles** (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json`) declaran los **mismos 11 servidores**:
+
+| Servidor | Comando | Extensiones |
+|----------|---------|-------------|
+| `python` | `npx -y basedpyright --stdio` | `.py`, `.pyw` |
+| `typescript` | `npx -y typescript-language-server --stdio` | `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs` |
+| `json` | `npx -y vscode-json-languageserver --stdio` | `.json`, `.jsonc` |
+| `yaml` | `npx -y yaml-language-server --stdio` | `.yaml`, `.yml` |
+| `bash` | `npx -y bash-language-server start` | `.sh`, `.bash` |
+| `zsh` | `npx -y bash-language-server start` | `.zsh`, `.zshrc` |
+| `markdown` | `npx -y vscode-markdown-language-server --stdio` | `.md`, `.markdown` |
+| `go` | `npx -y gopls` | `.go` |
+| `rust` | `npx -y rust-analyzer` | `.rs` |
+| `c` | `npx -y clangd` | `.c`, `.h` |
+| `cpp` | `npx -y clangd` | `.cpp`, `.hpp`, `.cc`, `.cxx` |
+
+> ⚠️ El servidor Python es **`basedpyright`** (paquete npm real). El nombre `@basedpyright/language-server` **no existe** (404 en npm).
+> 📖 Detalle completo: manual `04-perfiles-opencode-json.md` → sección «LSP».
 
 ---
 
@@ -217,7 +227,7 @@ Toda la documentación está en **`D:\Linux\Config\opencode-win\documentacion\`*
 | [README.md](../documentacion/README.md) | 📚 Índice general de manuales |
 | 01 · 02 · 03 | Ollama (en desuso) · **LM Studio + proxy** · **Voz (✅ implementada, GPU)** |
 | 04 · 05 · 06 | Perfiles · Configuración adicional · AGENTS.md al detalle |
-| 07 | Playbook de recuperación |
+| 07 · 08 · 09 | Playbook de recuperación · Incidencia GPU Xid 79 · Informe del sistema |
 | hardware · notas | Hardware · OpenCode Go · issue MCP memory |
 
 ---
@@ -229,6 +239,7 @@ Toda la documentación está en **`D:\Linux\Config\opencode-win\documentacion\`*
 | 🔄 Sincronizar config → backup | `powershell -File "D:\Linux\Config\opencode-win\scripts\sync-opencode.ps1"` |
 | 💾 Backup grafo + config | `powershell -File "D:\Linux\Config\opencode-win\scripts\backup-opencode.ps1"` |
 | 🚀 Instalar desde cero | `powershell -File "D:\Linux\Config\opencode-win\instalar-opencode-win.ps1"` |
+| 🗂️ Espejar manuales a Obsidian | `powershell -File "D:\Linux\Config\opencode-win\scripts\sync-obsidian.ps1"` |
 
 El instalador instala Node.js, Python, LM Studio, OpenCode, despliega esta configuración,
 el perfil, el proxy y el modelo, y verifica todo (probado: 9/9 OK).

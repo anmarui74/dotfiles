@@ -331,8 +331,8 @@ foreach ($f in @('config.yaml', '.env', 'auth.json', 'SOUL.md')) {
     $o = Join-Path $HermesHome $f
     if (Test-Path $o) { Copy-Item $o (Join-Path $SesionDir $f) -Force }
 }
-foreach ($s in @('AGENTS-WIN.md', 'backup-hermes.ps1', 'sync-hermes.ps1', 'check-setup-win.ps1',
-                 'restaurar-hermes.ps1', 'bootstrap-hermes.ps1', 'registrar-tareas.ps1',
+foreach ($s in @('AGENTS-WIN.md', 'SISTEMA-WINDOWS.md', 'backup-hermes.ps1', 'sync-hermes.ps1', 'check-setup-win.ps1',
+                 'restaurar-hermes.ps1', 'bootstrap-hermes.ps1', 'registrar-tareas.ps1', 'hermes-auditoria-manual.ps1',
                  'instalar-desde-cero.ps1', 'hook-backup-hermes.sh', 'commit-parche.txt', '.gitignore')) {
     $o = Join-Path $Base $s
     if (Test-Path $o) { Copy-Item $o (Join-Path $SesionDir $s) -Force }
@@ -341,6 +341,29 @@ foreach ($f in @('.env', 'auth.json')) {
     $p = Join-Path $SesionDir $f
     if (Test-Path $p) { Set-AclPrivada $p -Fichero }
 }
+
+# Los scripts propios (extras\bin: voz y atajos) van también al respaldo canónico.
+# Los binarios (whisper.cpp, ffmpeg) y los modelos quedan fuera a propósito.
+$extras = Join-Path $Base 'extras'
+if (Test-Path -LiteralPath $extras) {
+    [void](Invoke-Robocopy -Origen $extras -Destino (Join-Path $SesionDir 'extras') -Extra @('/XD', '__pycache__'))
+    Escribir-Log '   ✅ extras\bin copiado a sesion-hermes\extras\bin'
+}
+
+# ── 1b. Documentación de configuración (documentos\) ────────────────────────────────────
+# Copia de respaldo de los markdown de configuración del esquema, igual que en Linux
+# (~/Config/hermes/documentos/).  NO va en el ZIP; sí en la copia saneada de dotfiles.
+Escribir-Log '📚 Refrescando documentos\ (copia de los markdown de configuración)...'
+$DocumentosDir = Join-Path $Base 'documentos'
+New-Item -ItemType Directory -Force -Path $DocumentosDir | Out-Null
+$docsCopiados = 0
+foreach ($s in @('AGENTS-WIN.md', 'SISTEMA-WINDOWS.md')) {
+    $o = Join-Path $Base $s
+    if (Test-Path $o) { Copy-Item $o (Join-Path $DocumentosDir $s) -Force; $docsCopiados++ }
+}
+$oSoul = Join-Path $HermesHome 'SOUL.md'
+if (Test-Path $oSoul) { Copy-Item $oSoul (Join-Path $DocumentosDir 'SOUL.md') -Force; $docsCopiados++ }
+Escribir-Log "   ✅ $docsCopiados documento(s) en documentos\"
 
 # ── 2. Archivos sueltos de configuración ───────────────────────────────────────────────
 Escribir-Log "📦 Copiando configuración desde $HermesHome\..."
@@ -574,6 +597,8 @@ if (Test-Path -LiteralPath (Join-Path $ComunDir '.hermes-sync')) {
     try {
     $publicables = @{
         (Join-Path $Base 'AGENTS-WIN.md')                    = 'AGENTS-WIN.md'
+        (Join-Path $Base 'SISTEMA-WINDOWS.md')               = 'SISTEMA-WINDOWS.md'
+        (Join-Path $Base 'hermes-auditoria-manual.ps1')      = 'hermes-auditoria-manual.ps1'
         (Join-Path $Base 'backup-hermes.ps1')                = 'backup-hermes.ps1'
         (Join-Path $Base 'sync-hermes.ps1')                  = 'sync-hermes.ps1'
         (Join-Path $Base 'check-setup-win.ps1')              = 'check-setup-win.ps1'
@@ -585,6 +610,15 @@ if (Test-Path -LiteralPath (Join-Path $ComunDir '.hermes-sync')) {
         (Join-Path $Base 'commit-parche.txt')                = 'commit-parche.txt'
         (Join-Path $Base '.gitignore')                       = '.gitignore'
         (Join-Path $HermesHome 'agent-hooks\backup-hermes.sh') = 'agent-hooks\backup-hermes.sh'
+    }
+    # Scripts propios (extras\bin: voz y atajos): se publican como referencia para Linux, igual que
+    # van a la copia canónica.  Los binarios (whisper.cpp, ffmpeg) y los modelos NO: pesan cientos
+    # de MB y se reponen aparte (ver AGENTS-WIN.md, «Requisitos externos»).
+    $extrasBin = Join-Path $Base 'extras\bin'
+    if (Test-Path -LiteralPath $extrasBin) {
+        foreach ($fPub in (Get-ChildItem -LiteralPath $extrasBin -File -Force | Sort-Object Name)) {
+            $publicables[$fPub.FullName] = "extras\bin\$($fPub.Name)"
+        }
     }
     $nPublicados = 0
     foreach ($origen in $publicables.Keys) {

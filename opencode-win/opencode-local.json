@@ -182,5 +182,18 @@
         ".cxx"
       ]
     }
+  },
+  "agents": {
+    "nvidia": {
+      "description": "Agente NVIDIA - NVIDIA Nemotron 3 Ultra 550B (A55B): tool calling nativo, gratis vía NIM. Predeterminado del agente nvidia desde el 10/10/2026 (antes Nemotron 3 Super 120B). Usable como primario (Shift+Tab) y como subagente delegado por DeepSeek",
+      "mode": "all",
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
+    },
+    "multimodal": {
+      "description": "Agente multimodal - MiMo-V2.6-Flash (OpenCode Go): omnimodal, contexto largo. Usable como primario (Shift+Tab) y como subagente delegado",
+      "mode": "all",
+      "model": "opencode-go/mimo-v2.6-flash",
+      "system": "Eres un asistente multimodal experto. Analiza imágenes, screenshots y documentos junto con el texto. Para contextos largos, resume, extrae key points y responde con referencias precisas."
+    }
   }
 }

@@ -152,6 +152,15 @@ if (Test-Path $scriptsSrc) {
 }
 
 Write-Output ''
+Write-Output '🗂️  Vault de Obsidian (manuales → OpenCode-win):'
+$obsScript = Join-Path $scriptsDst 'sync-obsidian.ps1'
+if (Test-Path -LiteralPath $obsScript) {
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $obsScript -Quiet
+} else {
+  Write-Output '   ⏭️  Omitido (no existe): sync-obsidian.ps1'
+}
+
+Write-Output ''
 Write-Output '🐚 Perfil de PowerShell:'
 Copy-Fichero $PERFIL_ORIGEN (Join-Path $PERFIL_DESTINO 'Microsoft.PowerShell_profile.ps1')
 

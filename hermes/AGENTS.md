@@ -28,6 +28,7 @@
 16. [Encargos automáticos del dual boot](#encargos-automáticos-del-dual-boot-gatewaystartup)
 17. [Inventario del equipo](#inventario-del-equipo-sistema-cachyosmd)
 18. [Documentación de configuración](#documentación-de-configuración-documentos)
+19. [Traspaso de información entre Linux y Windows](#traspaso-de-información-entre-linux-y-windows)
 
 ---
 
@@ -50,7 +51,9 @@
 ├── dual-boot/                    # estado compartido Linux ↔ Windows (ver sección propia)
 │   ├── hermes-dual-sync.sh       # motor de sincronización (Linux); enlace en ~/.local/bin
 │   ├── windows/                  # material para el Hermes de Windows (lo publica el export)
-│   └── instalar-montaje.sh       # montaje permanente del disco compartido (pkexec)
+│   ├── instalar-montaje.sh       # montaje permanente del disco compartido (pkexec)
+│   ├── instalar-volumen-ldm.sh   # volumen LDM de Windows (espejo TOSHIBA) + regla udev (pkexec)
+│   └── 90-ocultar-miembros-ldm.rules  # oculta los plexos del grupo dinámico a udisks/GNOME
 ├── units/                        # unidades systemd de usuario propias (backup, LM Studio, alias NVIDIA, aviso de arranque)
 ├── parches/                      # parches locales del CLI (Ctrl+Q corta la locución sin interrumpir el turno)
 ├── hermes-parche-ctrlq.sh        # estado / aplicar / revertir el parche del CLI
@@ -344,6 +347,24 @@ whitelist de OpenCode, por dos piezas que se mantienen solas:
   `cp ~/Config/hermes/units/hermes-nvidia-aliases.* ~/.config/systemd/user/ && systemctl --user daemon-reload && systemctl --user enable --now hermes-nvidia-aliases.path`.
 - Si algún día la caché de catálogos está vacía, la primera apertura de `/model` puede mostrar la
   lista curada del repo hasta que el refresco en segundo plano llega; `/model --refresh` lo fuerza.
+
+### Plugins instalados
+
+En `~/.hermes/plugins/` *(instantánea 10/10/2026)*:
+
+| Plugin | Estado | Qué aporta |
+|---|---|---|
+| `model-providers/nvidia` | activo | sustituye el perfil del proveedor NVIDIA y filtra su catálogo con el whitelist de OpenCode (ver arriba) |
+| `homeassistant` | **deshabilitado** (10/10/2026) | del catálogo oficial (v2.0.1, pin `ba30cb0cf8`): adaptador de plataforma del gateway (eventos de HA por WebSocket; `cron deliver=homeassistant`) y el toolset `homeassistant` (`ha_list_entities`, `ha_get_state`, `ha_list_services`, `ha_call_service`) |
+
+- Los dos entran en el tarball (`plugins/` está en la lista de respaldados).
+- `homeassistant` quedó **deshabilitado el 10/10/2026** (`hermes plugins disable homeassistant`;
+  `plugins.enabled` vacío y `plugins.disabled: [homeassistant]`). Estaba instalado y habilitado pero
+  **sin credenciales** (`HASS_TOKEN` no estaba en el `.env`) y sin ninguna instancia de HA en la red
+  (`homeassistant.local:8123` no responde). **No se ha desinstalado**: sigue en `plugins/` para
+  cuando se monte Home Assistant. Para reactivarlo: crear un token de larga duración en HA,
+  ponerlo en `~/.hermes/.env` (`HASS_TOKEN`, y `HASS_URL` si no es `http://homeassistant.local:8123`)
+  y `hermes plugins enable homeassistant`. El cambio entra **al reiniciar la sesión**.
 
 ### LM Studio: la app y el servicio headless no caben a la vez
 
@@ -745,3 +766,38 @@ manuales del dual boot (`dual-boot/*.md`).
 ---
 
 > 📁 `~/.hermes/` · `~/Config/hermes/` · `~/Documentos/dotfiles/hermes/`
+
+
+---
+
+## Traspaso de información entre Linux y Windows (dual boot)
+
+Los dos sistemas comparten la carpeta `HermesSync/` del disco SEAGATE (letra variable;
+se localiza por la marca `.hermes-sync`). El estado de Hermes viaja solo por `estado/`
+(memorias, skills, conversaciones, kanban). Para lo que hay que **hacer** o **leer**
+hay dos canales explícitos, y los dos son automáticos:
+
+| Dirección | Tareas de una sola vez | Notas | Quién las ejecuta |
+|---|---|---|---|
+| Windows → Linux | `HermesSync/linux/encargos/*.sh` | `HermesSync/NOTA-PARA-LINUX.md` | hook `encargos-linux` (evento `gateway:startup`) |
+| Linux → Windows | `HermesSync/windows/encargos/*.ps1` | `HermesSync/NOTA-PARA-WINDOWS.md` | hook `encargos-windows` (evento `gateway:startup`) |
+
+Reglas de un encargo: se ejecuta **una sola vez** (su nombre queda en
+`~/.hermes/state/encargos-hechos.json`), **sin argumentos** y **sin interacción**, y si
+falla (salida ≠ 0) se reintenta en el siguiente arranque. Debe ser **idempotente** y
+**sin secretos** (el disco es compartido y no cifra).
+
+Dónde queda la salida:
+
+- Linux: `~/Config/hermes/logs/encargos-linux.log`
+- Windows: `HermesSync/logs/encargos-windows.log` (y `%LOCALAPPDATA%\hermes\logs\encargos-windows.log`)
+
+Comprobación rápida y lanzado a mano, sin reiniciar el gateway:
+
+```bash
+tail -20 /mnt/seagate/HermesSync/logs/encargos-linux.log
+bash /mnt/seagate/HermesSync/linux/encargos/<nombre>.sh   # (no lo marca como hecho)
+```
+
+Para dejar algo dicho al otro lado **siempre** vale la nota correspondiente: el canal de
+encargos es para lo que se puede automatizar; la nota, para lo que hay que leer.

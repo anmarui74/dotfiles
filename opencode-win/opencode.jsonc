@@ -43,7 +43,7 @@
       "model": "local/qwen3.8-9b"
     },
     "cloud": {
-      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash v\u00eda OpenCode Go: pipeline diario de c\u00f3digo y agentic coding",
+      "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash vía OpenCode Go: pipeline diario de código y agentic coding",
       "mode": "primary",
       "model": "opencode-go/deepseek-v4.1-flash",
       "permissions": [
@@ -55,15 +55,15 @@
       ]
     },
     "nvidia": {
-      "description": "Agente NVIDIA - NVIDIA Nemotron 3 Super 120B (A12B): ~74 tok/s medida, tool calling nativo, gratis v\u00eda NIM. Predeterminado del agente nvidia desde el 17/09/2026 (antes Muse Glimmer 30B). Usable como primario (Shift+Tab) y como subagente delegado por DeepSeek",
+      "description": "Agente NVIDIA - NVIDIA Nemotron 3 Ultra 550B (A55B): tool calling nativo, gratis vía NIM. Predeterminado del agente nvidia desde el 10/10/2026 (antes Nemotron 3 Super 120B). Usable como primario (Shift+Tab) y como subagente delegado por DeepSeek",
       "mode": "all",
-      "model": "nvidia/nvidia/nemotron-3-super-120b-a12b"
+      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
     },
     "multimodal": {
-      "description": "Agente multimodal - MiMo V2.5 (Xiaomi, 311B MoE, 1M contexto, omnimodal). Usable como primario (Shift+Tab) y como subagente delegado",
+      "description": "Agente multimodal - MiMo-V2.6-Flash (OpenCode Go): omnimodal, contexto largo. Usable como primario (Shift+Tab) y como subagente delegado",
       "mode": "all",
-      "model": "opencode-go/mimo-v2.5",
-      "system": "Eres un asistente multimodal experto. Analiza imagenes, screenshots y documentos junto con el texto. Para contextos largos, resume, extrae key points y responde con referencias precisas."
+      "model": "opencode-go/mimo-v2.6-flash",
+      "system": "Eres un asistente multimodal experto. Analiza imágenes, screenshots y documentos junto con el texto. Para contextos largos, resume, extrae key points y responde con referencias precisas."
     }
   },
   "providers": {

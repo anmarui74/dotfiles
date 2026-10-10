@@ -7,7 +7,7 @@
 # Schema version of this file. The installers copy it to seed config.yaml, and
 # `hermes update` uses it to know which one-time migrations the file already
 # has. Hermes manages it: do not copy it into another config.
-_config_version: 49
+_config_version: 50
 
 # =============================================================================
 # Database Configuration
@@ -69,9 +69,9 @@ plugins:
 # =============================================================================
 # Model Configuration
 # =============================================================================
-  enabled:
+  enabled: []
+  disabled:
     - homeassistant
-  disabled: []
 model:
   # Default model to use (can be overridden with --model flag)
   # Both "default" and "model" work as the key name here.
@@ -1886,6 +1886,7 @@ telemetry:
 # =============================================================================
 # Login Policy (credentials themselves live in auth.json / .env)
 # =============================================================================
+    offer_version: 2
 auth:
   # Borrow and refresh the Codex CLI (~/.codex/auth.json) and Claude Code logins when Hermes has
   # no usable login of its own. Their refresh tokens are single-use, so two programs on one login

@@ -164,9 +164,9 @@
 
 ## 🛠️ Cómo consultar el hardware
 
-> ⚠️ **No aplica en Windows:** el script `hardware-query.py` y la función de shell
-> `hw_query` del proyecto Linux **no están portados todavía** a Windows (pendiente).
-> Usar los cmdlets de PowerShell equivalentes:
+> ✅ **Portado a Windows:** el `hardware-query.py` / función `hw_query` de Linux tiene su
+> equivalente en `scripts\hardware-query.ps1` (comando `hw_query` del perfil). Úsalo para el
+> resumen rápido; para el detalle completo usa los cmdlets de PowerShell equivalentes:
 
 | Comando | Descripción |
 |---|---|
@@ -180,5 +180,6 @@
 | `Get-NetAdapter` | Adaptadores de red |
 | `Get-CimInstance Win32_BaseBoard` / `Win32_BIOS` | Placa base y BIOS |
 
-> 📁 Índice de hardware (cuando se porte el script): `C:\Users\evo01\.config\opencode\data\hardware\index.json`
+> 📁 El índice `data\hardware\index.json` que existe en Linux **no se genera** en Windows;
+> el equivalente es el volcado de `scripts\sysinfo.ps1` (ver [09-informe-sistema.md](09-informe-sistema.md)).
 

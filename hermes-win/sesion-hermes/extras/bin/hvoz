@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# hvoz - lanza Hermes con el modo voz ya activo (equivalente Windows del hvoz de Linux).
+#
+# Desde Windows Terminal / PowerShell / cmd comparte la consola actual.
+# Desde mintty (Git Bash con ventana propia) no hay consola Win32, asi que Hermes
+# se abre en una consola nueva.
+#
+# Uso:  hvoz [--cmd "hermes ..."] [--wait N] [--text "/voice on"]
+# Log:  ~/.local/logs/hvoz.log
+set -euo pipefail
+
+PY="/c/Python314/python.exe"
+[ -x "$PY" ] || PY="$(command -v python)"
+
+exec "$PY" "$HOME/.local/bin/hermes-voz.py" "$@"

@@ -1,9 +1,9 @@
-# 📋 Los Perfiles de OpenCode en Windows
+﻿# 📋 Los Perfiles de OpenCode en Windows
 Perfiles global, local y cloud, agentes, MCPs y proveedores en OpenCode V2
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo (V2 · 3 perfiles) | 10/09/2026 · rev. 03/10/2026 | Antonio |
+| ✅ Activo (V2 · 3 perfiles · LSP npx) | 10/09/2026 · rev. 10/10/2026 | Antonio |
 
 > Config activa en `C:\Users\evo01\.config\opencode\`. Los perfiles usan la **sintaxis canónica V2** (`agents`, `providers`, `permissions`, `mcp.servers`) y se activan por lanzador.
 
@@ -76,14 +76,13 @@ Cada perfil se activa con **su propia función de PowerShell** vía `OPENCODE_CO
     "local":    { "description": "Agente local - Qwen 3.8 Q6_K optimizado (80k contexto)", "mode": "primary", "model": "local/qwen3.8-9b" },
     "cloud":    { "description": "Agente cloud predeterminado - DeepSeek V4.1 Flash vía OpenCode Go", "mode": "primary", "model": "opencode-go/deepseek-v4.1-flash",
                   "permissions": [ { "action": "subagent", "resource": "*", "effect": "allow" } ] },
-    "nvidia":   { "description": "Agente NVIDIA - Nemotron 3 Super 120B (A12B)", "mode": "all", "model": "nvidia/nvidia/nemotron-3-super-120b-a12b" },
-    "multimodal": { "description": "Agente multimodal - MiMo V2.5 (Xiaomi)", "mode": "all", "model": "opencode-go/mimo-v2.5",
+    "nvidia":   { "description": "Agente NVIDIA - Nemotron 3 Ultra 550B (A55B)", "mode": "all", "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b" },
+    "multimodal": { "description": "Agente multimodal - MiMo-V2.6-Flash (OpenCode Go)", "mode": "all", "model": "opencode-go/mimo-v2.6-flash",
                     "system": "Eres un asistente multimodal experto. Analiza imagenes, screenshots y documentos junto con el texto." }
   },
   "providers": {
     "nvidia": {
       "whitelist": [
-        "minimaxai/minimax-m3",
         "meta/muse-glimmer-30b",
         "meta/llama-3.2-11b-vision-instruct",
         "openai/gpt-oss-20b",
@@ -119,7 +118,19 @@ Cada perfil se activa con **su propia función de PowerShell** vía `OPENCODE_CO
       "sequential_thinking": { "type": "local", "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"] }
     }
   },
-  "lsp": {}
+  "lsp": {
+    "python":     { "command": ["npx", "-y", "basedpyright", "--stdio"],              "extensions": [".py", ".pyw"] },
+    "typescript": { "command": ["npx", "-y", "typescript-language-server", "--stdio"], "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"] },
+    "json":       { "command": ["npx", "-y", "vscode-json-languageserver", "--stdio"], "extensions": [".json", ".jsonc"] },
+    "yaml":       { "command": ["npx", "-y", "yaml-language-server", "--stdio"],       "extensions": [".yaml", ".yml"] },
+    "bash":       { "command": ["npx", "-y", "bash-language-server", "start"],         "extensions": [".sh", ".bash"] },
+    "zsh":        { "command": ["npx", "-y", "bash-language-server", "start"],         "extensions": [".zsh", ".zshrc"] },
+    "markdown":   { "command": ["npx", "-y", "vscode-markdown-language-server", "--stdio"], "extensions": [".md", ".markdown"] },
+    "go":         { "command": ["npx", "-y", "gopls"],                                 "extensions": [".go"] },
+    "rust":       { "command": ["npx", "-y", "rust-analyzer"],                         "extensions": [".rs"] },
+    "c":          { "command": ["npx", "-y", "clangd"],                                "extensions": [".c", ".h"] },
+    "cpp":        { "command": ["npx", "-y", "clangd"],                                "extensions": [".cpp", ".hpp", ".cc", ".cxx"] }
+  }
 }
 ```
 
@@ -146,6 +157,19 @@ Perfil para `ocv` / `ocv-local`. Solo contiene **lo que difiere** de la base: el
                                "environment": { "MEMORY_FILE_PATH": "C:/Users/evo01/.config/opencode/data/memory/memory.jsonl" } },
       "fetch":               { "type": "local", "command": ["npx", "-y", "mcp-fetch-server"] }
     }
+  },
+  "lsp": {
+    "python":     { "command": ["npx", "-y", "basedpyright", "--stdio"],              "extensions": [".py", ".pyw"] },
+    "typescript": { "command": ["npx", "-y", "typescript-language-server", "--stdio"], "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"] },
+    "json":       { "command": ["npx", "-y", "vscode-json-languageserver", "--stdio"], "extensions": [".json", ".jsonc"] },
+    "yaml":       { "command": ["npx", "-y", "yaml-language-server", "--stdio"],       "extensions": [".yaml", ".yml"] },
+    "bash":       { "command": ["npx", "-y", "bash-language-server", "start"],         "extensions": [".sh", ".bash"] },
+    "zsh":        { "command": ["npx", "-y", "bash-language-server", "start"],         "extensions": [".zsh", ".zshrc"] },
+    "markdown":   { "command": ["npx", "-y", "vscode-markdown-language-server", "--stdio"], "extensions": [".md", ".markdown"] },
+    "go":         { "command": ["npx", "-y", "gopls"],                                 "extensions": [".go"] },
+    "rust":       { "command": ["npx", "-y", "rust-analyzer"],                         "extensions": [".rs"] },
+    "c":          { "command": ["npx", "-y", "clangd"],                                "extensions": [".c", ".h"] },
+    "cpp":        { "command": ["npx", "-y", "clangd"],                                "extensions": [".cpp", ".hpp", ".cc", ".cxx"] }
   }
 }
 ```
@@ -174,6 +198,19 @@ Perfil para `ocv-cloud`. Bloquea los providers locales y desactiva el agente loc
   "agents": {
     "title": { "model": "opencode-go/deepseek-v4.1-flash" },
     "local": { "description": "Agente local desactivado en perfil cloud", "disabled": true }
+  },
+  "lsp": {
+    "python":     { "command": ["npx", "-y", "basedpyright", "--stdio"],              "extensions": [".py", ".pyw"] },
+    "typescript": { "command": ["npx", "-y", "typescript-language-server", "--stdio"], "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"] },
+    "json":       { "command": ["npx", "-y", "vscode-json-languageserver", "--stdio"], "extensions": [".json", ".jsonc"] },
+    "yaml":       { "command": ["npx", "-y", "yaml-language-server", "--stdio"],       "extensions": [".yaml", ".yml"] },
+    "bash":       { "command": ["npx", "-y", "bash-language-server", "start"],         "extensions": [".sh", ".bash"] },
+    "zsh":        { "command": ["npx", "-y", "bash-language-server", "start"],         "extensions": [".zsh", ".zshrc"] },
+    "markdown":   { "command": ["npx", "-y", "vscode-markdown-language-server", "--stdio"], "extensions": [".md", ".markdown"] },
+    "go":         { "command": ["npx", "-y", "gopls"],                                 "extensions": [".go"] },
+    "rust":       { "command": ["npx", "-y", "rust-analyzer"],                         "extensions": [".rs"] },
+    "c":          { "command": ["npx", "-y", "clangd"],                                "extensions": [".c", ".h"] },
+    "cpp":        { "command": ["npx", "-y", "clangd"],                                "extensions": [".cpp", ".hpp", ".cc", ".cxx"] }
   }
 }
 ```
@@ -258,8 +295,8 @@ function ocv {
 | `plan` | `opencode-go/deepseek-v4.1-flash` | primary | Planificación; lee `prompts/read-agents.txt` |
 | `local` | `local/qwen3.8-9b` | primary | Qwen 3.8 Q6_K en LM Studio (proxy 4001) |
 | `cloud` | `opencode-go/deepseek-v4.1-flash` | primary | Predeterminado; delegación a subagentes permitida |
-| `nvidia` | `nvidia/nvidia/nemotron-3-super-120b-a12b` | all | NVIDIA Nemotron 3 Super 120B (A12B), ~74 tok/s |
-| `multimodal` | `opencode-go/mimo-v2.5` | all | MiMo V2.5 (Xiaomi), omnimodal |
+| `nvidia` | `nvidia/nvidia/nemotron-3-ultra-550b-a55b` | all | NVIDIA Nemotron 3 Ultra 550B (A55B), tool calling nativo vía NIM |
+| `multimodal` | `opencode-go/mimo-v2.6-flash` | all | MiMo-V2.6-Flash (OpenCode Go), omnimodal |
 
 - `mode: "all"` → usable como **primario** (ciclo de agente) y como **subagente** delegado.
 - Se cambia de agente primario con **Shift+Tab** (V2); `Ctrl+X` → `A` abre la lista.
@@ -272,7 +309,7 @@ function ocv {
 
 ## Proveedores
 
-- **nvidia** — `https://integrate.api.nvidia.com/v1` · API key `nvapi-*` en `auth.json`. Whitelist manual de 8 modelos (ver más abajo).
+- **nvidia** — `https://integrate.api.nvidia.com/v1` · API key `nvapi-*` en `auth.json`. Whitelist manual de 7 modelos (ver más abajo).
 - **local** — LM Studio a través del proxy `http://localhost:4001/v1` · paquete `@opencode/ai/providers/openai-compatible` · modelo `qwen3.8-9b`.
 
 > 💡 En V2 el id `lmstudio` no resuelve (choca con el builtin); se usa un provider propio llamado `local`.
@@ -291,18 +328,19 @@ function ocv {
 4. **Tool calling (obligatorio):** petición con `tools: [get_current_time]` + `tool_choice: auto`; exigir `tool_calls` reales.
 5. **Reintentos:** los 429/500/503/timeout se reintentan con más margen antes de decidir.
 
-**Whitelist actual (8 modelos):**
+**Whitelist actual (7 modelos):**
 
 | # | Modelo |
 |---|--------|
-| 1 | `minimaxai/minimax-m3` |
-| 2 | `meta/muse-glimmer-30b` |
-| 3 | `meta/llama-3.2-11b-vision-instruct` |
-| 4 | `openai/gpt-oss-20b` |
-| 5 | `nvidia/nemotron-3-ultra-550b-a55b` |
-| 6 | `nvidia/nemotron-3-super-120b-a12b` |
-| 7 | `nvidia/nemotron-3.5-lightning-30b-a3b` |
-| 8 | `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` |
+| 1 | `meta/muse-glimmer-30b` |
+| 2 | `meta/llama-3.2-11b-vision-instruct` |
+| 3 | `openai/gpt-oss-20b` |
+| 4 | `nvidia/nemotron-3-ultra-550b-a55b` |
+| 5 | `nvidia/nemotron-3-super-120b-a12b` |
+| 6 | `nvidia/nemotron-3.5-lightning-30b-a3b` |
+| 7 | `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` |
+
+> 🔴 Retirado del whitelist: `minimaxai/minimax-m3` (**HTTP 410 Gone**, end of life el 09/09/2026; verificado el 10/10/2026).
 
 > 🔎 El detalle del ranking (velocidades, descartados, retirados 410) está en la sección homónima del manual de Linux y en el grafo de memoria (entidad «Proveedor NVIDIA en OpenCode»).
 
@@ -344,11 +382,28 @@ Configurados bajo `mcp.servers` (sintaxis V2). En Windows hay **5 MCPs**:
 
 ## LSP
 
-> 🔴 **OpenCode V2 NO ejecuta servidores LSP.** Acepta y conserva el bloque `lsp`, pero no arranca language servers ni produce diagnósticos.
+> ✅ **OpenCode V2 2.0.26 sí ejecuta servidores LSP** a través del bloque `lsp` de la configuración.
 
-En `opencode.jsonc` se deja `"lsp": {}` (neutral), preparado por si una versión futura lo soporta.
+Los tres perfiles (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json`) declaran **11 servidores LSP** lanzados con `npx -y` (bajo demanda, sin instalación global):
 
-> 💡 **Alternativa:** ejecutar por CLI las herramientas del proyecto (`pylint`, `tsc --noEmit`, `cargo check`, `go vet`…) y documentarlas en `AGENTS.md`.
+| Servidor | Comando | Extensiones |
+|----------|---------|-------------|
+| `python` | `npx -y basedpyright --stdio` | `.py`, `.pyw` |
+| `typescript` | `npx -y typescript-language-server --stdio` | `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs` |
+| `json` | `npx -y vscode-json-languageserver --stdio` | `.json`, `.jsonc` |
+| `yaml` | `npx -y yaml-language-server --stdio` | `.yaml`, `.yml` |
+| `bash` | `npx -y bash-language-server start` | `.sh`, `.bash` |
+| `zsh` | `npx -y bash-language-server start` | `.zsh`, `.zshrc` |
+| `markdown` | `npx -y vscode-markdown-language-server --stdio` | `.md`, `.markdown` |
+| `go` | `npx -y gopls` | `.go` |
+| `rust` | `npx -y rust-analyzer` | `.rs` |
+| `c` | `npx -y clangd` | `.c`, `.h` |
+| `cpp` | `npx -y clangd` | `.cpp`, `.hpp`, `.cc`, `.cxx` |
+
+> ⚠️ El servidor Python es **`basedpyright`** (paquete npm real). El nombre `@basedpyright/language-server` **no existe** y devuelve error 404 en npm.
+
+> 🧪 Verificados: `basedpyright 1.40.1` y `typescript-language-server 6.0.0` arrancan correctamente.
+> Los LSP corren en segundo plano y **no aparecen** en la barra lateral MiMo; se activan al abrir archivos de la extensión correspondiente.
 
 ---
 
@@ -359,14 +414,14 @@ En `opencode.jsonc` se deja `"lsp": {}` (neutral), preparado por si una versión
 ```json
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.18.30"
+    "@opencode-ai/plugin": "^1.18.32"
   }
 }
 ```
 
 | Paquete | Versión | Propósito |
 |---------|---------|-----------|
-| `@opencode-ai/plugin` | 1.18.30 | SDK para desarrollar plugins de OpenCode |
+| `@opencode-ai/plugin` | `^1.18.32` | SDK para desarrollar plugins de OpenCode |
 
 > 📍 Solo contiene el SDK de plugins. Los SDK de AI los resuelve el binario de OpenCode y los plugins TUI/CLI se registran en `cli.json` (V2).
 

@@ -195,7 +195,7 @@ Register-ScheduledTask -TaskName "OpenCode-Backup" -Action $action -Trigger $tri
 
 ### Verificación automática del whitelist NVIDIA
 
-> ⚠️ **No aplica en Windows todavía.** En Linux el whitelist NVIDIA se verificaba cada 15 días con el script `check-nvidia-whitelist.sh` vía timer systemd. En Windows **no está implementado**: el whitelist de 8 modelos se mantiene manualmente en los 2 perfiles (`opencode.jsonc` y `opencode-local.json`). Puede reproducirse creando una tarea programada en el Programador de tareas con el equivalente `.ps1`.
+> ✅ **Implementado en Windows:** el script `scripts\check-nvidia-whitelist.ps1` aplica la misma metodología (HTTP 200 real + tool calling) y **elimina los retirados (410 Gone)**. El whitelist actual (**7 modelos**) vive en `opencode.jsonc`. La ejecución automática sería una **tarea programada** (`check-nvidia-whitelist.ps1`), pendiente de registrar.
 
 ### Gestión de tareas programadas
 
@@ -300,6 +300,8 @@ Scripts PowerShell desplegados en `scripts\`:
 | `sync-opencode.ps1` | Sincroniza la config activa con el respaldo |
 | `setup-voz.ps1` | Instala el stack de voz (STT + TTS) |
 | `ocv-status.ps1` | Estado de los componentes |
+| `sysinfo.ps1` | Volcado completo del sistema para el informe de hardware (ver `09-informe-sistema.md`) |
+| `sync-obsidian.ps1` | Espeja los manuales al vault de Obsidian (carpeta `OpenCode-win`), equivalente de `sync-obsidian.sh` en Linux |
 
 ---
 
