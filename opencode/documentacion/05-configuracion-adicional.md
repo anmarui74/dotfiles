@@ -407,7 +407,7 @@ Verifica el estado del **issue #39164** de OpenCode (un bug que afecta al sistem
 
 **Archivo:** `~/.config/opencode/check-timeline-fix.sh`
 
-Vigila el **PR #26861** de OpenCode (fix del timeline TUI). Se ejecuta automáticamente **a diario a las 10:00** vía el timer systemd `check-timeline-fix.timer` y registra el resultado en `data/timeline-fix.log`. Si el PR se mergea, avisa para retirar el script `timeline-completo`.
+Vigila el **PR #26861** de OpenCode (fix del timeline TUI). Se ejecuta automáticamente **a diario a las 10:00** vía el timer systemd `check-timeline-fix.timer` y registra el resultado en `data/timeline-fix.log`. Si el PR se mergea, avisa para retirar el script `timeline-completo`; si se **cierra sin mergear** (ocurrió el **11/10/2026**), lo registra y se mantiene `timeline-completo`.
 
 ### `check-setup-completo.sh` (10/08/2026)
 

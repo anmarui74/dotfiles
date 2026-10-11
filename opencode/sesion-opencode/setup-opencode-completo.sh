@@ -2620,7 +2620,8 @@ Mismo formato para `memory_create_relations`: cada relación necesita `from`, `t
 
 ## 🕐 Timeline completo de sesiones (script timeline-completo)
 El timeline de la TUI de OpenCode (Ctrl+X G) SOLO muestra las últimas ~6 peticiones
-(límite hardcodeado; el PR #26861 que lo arregla sigue abierto, sin mergear).
+(límite hardcodeado; se propuso el PR #26861 para arreglarlo, pero se CERRÓ sin mergear
+el 11/10/2026, así que `timeline-completo` sigue siendo necesario).
 Para ver el historial COMPLETO de cualquier sesión, usar el script:
 ```
 ~/.local/bin/timeline-completo
@@ -2635,17 +2636,19 @@ Cuando Antonio pregunte por su historial/timeline de peticiones, usa este script
 
 ## 👁️ Vigilancia del fix del timeline (timer systemd)
 El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861
-de OpenCode (fix del timeline) se ha mergeado. Se ejecuta automáticamente cada
-3 días vía el timer systemd `check-timeline-fix.timer` y registra el resultado
-en `~/.config/opencode/data/timeline-fix.log`.
+de OpenCode (fix del timeline) se ha mergeado. Se ejecuta automáticamente a
+diario a las 10:00 vía el timer systemd `check-timeline-fix.timer` y registra el
+resultado en `~/.config/opencode/data/timeline-fix.log`.
 - Si el PR se mergea: se avisa (log + notificación) para retirar timeline-completo.
+- Si el PR se cierra sin mergear (ocurrió el 11/10/2026): se registra y se mantiene
+  `timeline-completo`.
 - Consultar el log si Antonio pregunta por el estado del fix.
 
 ## 🐞 Vigilancia del issue #39164 (timer systemd)
 El script `~/.config/opencode/check-fix.sh` comprueba si el issue #39164 de
-OpenCode (bug de tools locales) se ha cerrado. Se ejecuta automáticamente cada
-3 días vía el timer systemd `check-opencode-fix.timer` y guarda el estado en
-`~/.config/opencode/data/issue_status.txt`.
+OpenCode (bug de tools locales) se ha cerrado. Se ejecuta automáticamente a
+diario a las 10:00 vía el timer systemd `check-opencode-fix.timer` y guarda el
+estado en `~/.config/opencode/data/issue_status.txt`.
 - Si el issue se cierra: se avisa (log + notificación) para retirar check-fix.sh.
 - Detalle completo en `documentacion/05-configuracion-adicional.md`.
 
