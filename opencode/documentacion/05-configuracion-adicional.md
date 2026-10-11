@@ -640,8 +640,6 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── settings.lmstudio.json     # Settings de LM Studio
 │
 ├── service.json               # 🔐 Password del servicio local V2 (SECRETO: no va a dotfiles ni a informes)
-├── qwen-qwen3.5-9b.json       # Resto del experimento de modelo local (31/07/2026; no se usa)
-├── models/                    # Resto: Qwen3.5-9B-Q6_K.gguf (7,45 GB, duplicado del de LM Studio; excluido del backup)
 │
 ├── opencode-voice-modified/   # Plugin de voz
 │   ├── index.js               # Punto de entrada (V1)
@@ -739,10 +737,10 @@ Config/opencode/
 > `~/Config/opencode/` (el `backup-opencode.sh` además lo excluye del volcado a dotfiles y el
 > `.gitignore` del repo incluye `**/service.json`), así que no llega al repo.
 
-> 🗄️ **Restos del experimento de modelo local (31/07/2026), CONSERVADOS**: `models/Qwen3.5-9B-Q6_K.gguf`
-> —**7,45 GB**, duplicado del que ya sirve LM Studio desde `~/.lmstudio/models/Qwen/`— y
-> `qwen-qwen3.5-9b.json`, el preset que apunta a ese fichero. Hoy no los usa nada (`models/` está
-> excluido del backup) y **se mantienen a propósito por decisión de Antonio (10/10/2026): no borrarlos**.
+> 🗑️ **Restos del experimento de modelo local — ELIMINADOS (11/10/2026)**: `models/Qwen3.5-9B-Q6_K.gguf`
+> (**7,45 GB**, duplicado del que sirve LM Studio desde `~/.lmstudio/models/Qwen/`) y
+> `qwen-qwen3.5-9b.json`. El 10/10/2026 se decidió conservarlos; el **11/10/2026** Antonio autorizó
+> su borrado para liberar espacio (los Qwen siguen disponibles en LM Studio y en `~/modelos_ia`).
 
 ### 🔄 Rotación de la contraseña del servicio V2 (10/10/2026)
 
