@@ -7,7 +7,7 @@ Referencia histórica del antiguo proveedor Ollama + LiteLLM — **EN DESUSO**.
 
 > ⚠️ **EN DESUSO.** Antonio migró de Ollama a **LM Studio** (ver `02-configuracion-lmstudio.md`).
 > Este manual se conserva solo como referencia histórica: no describe la configuración activa.
-> El puerto 11434 y los modelos `llama3.1`, `gemma4`, `deepseek-r1` y `qwen3.5` ya no se usan.
+> El puerto 11434 y los modelos `llama3.1`, `gemma4`, `deepseek-r1` y `qwen3.5` **ya no se usan desde OpenCode** (este usa LM Studio). ⚠️ Ollama **sigue instalado** y su servicio (`ollama.service`) continúa **activo**, escuchando en el puerto 11434.
 
 ---
 
@@ -90,9 +90,11 @@ OLLAMA_PROXY_PORT=4000
 
 ## Configuración LiteLLM
 
-### Archivo: `~/.config/opencode/litellm-config.yaml`
+### Archivo: `~/.config/opencode/litellm-config.yaml` (eliminado)
 
-LiteLLM sirve como **capa de abstracción** para usar modelos de Ollama con interfaz OpenAI-compatible. Define 5 modelos:
+> ⚠️ Este archivo **ya no existe** en el sistema (se retiró al abandonar Ollama). Se documenta aquí solo como referencia histórica.
+
+LiteLLM servía como **capa de abstracción** para usar modelos de Ollama con interfaz OpenAI-compatible. Definía 5 modelos:
 
 ```yaml
 model_list:

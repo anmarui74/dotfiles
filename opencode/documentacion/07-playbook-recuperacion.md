@@ -60,6 +60,7 @@ pkill -f "opencode" 2>/dev/null
 | **Dotfiles con `--delete-excluded`** | Con solo `--delete`, lo que está en la lista de exclusión **no se purga** del destino |
 | **Grafo de memoria** | **No se excluye** de dotfiles, pero va en **UNA sola copia** (`data/memory/memory.jsonl`). Las 179 copias fechadas de `backups/` se dejaron de versionar |
 | **`backups/` excluido** | Se excluye **todo** el directorio `backups/` del volcado a dotfiles (desde el 22/09/2026), no solo `backups/opencode/` |
+| **Logs excluidos** | El tarball **no** incluye `data/*.log` (logs de ejecución volátiles); la copia de dotfiles tampoco (rev. 11/10/2026) |
 | **Saneado del instalador** | En dotfiles se sustituyen las claves por `TU_CLAVE_AQUI`. **Nunca** sanear el canónico de `sesion-opencode/` |
 
 Verificar antes de commitear:
@@ -83,7 +84,7 @@ ls -t ~/Config/opencode/backups/mcp-memory-backup-*.jsonl | head -1
 ```
 
 Guarda la ruta resultante, por ejemplo:
-`/home/antonio/Config/opencode/backups/mcp-memory-backup-20260905_0042.jsonl`
+`/home/antonio/Config/opencode/backups/mcp-memory-backup-20261011-111242.jsonl`
 
 ### Paso 2 — Hacer copia del grafo actual (por seguridad)
 

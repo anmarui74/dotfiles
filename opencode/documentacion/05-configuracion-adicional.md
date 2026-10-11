@@ -771,6 +771,7 @@ bash ~/.config/opencode/data/rotate-service-password.sh
 | **Retención** | Tarballs con más de 30 días (`LOG_RETENTION_DAYS`) se borran automáticamente |
 | **Poda diaria** | Solo se conserva el **último** tarball de cada día (`sort | tail -1`). Desde el 10/10/2026 el sync regenera el backup cada 30 min, así que sin poda se acumularían decenas al día |
 | **Total esperado** | ~30 tarballs (~50 MB) en estado estable |
+| **Logs excluidos** | El tarball **no** incluye `data/*.log` (logs de ejecución volátiles); la copia de dotfiles tampoco (rev. 11/10/2026) |
 | **Carpeta** | `~/Config/opencode/backups/opencode/` |
 
 ### 🔐 Claves de API y copia en dotfiles (rev. 10/10/2026)

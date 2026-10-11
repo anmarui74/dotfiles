@@ -35,7 +35,7 @@ OpenCode → http://localhost:4001/v1 (proxy) → http://localhost:1234/v1 (LM S
 ```
 
 - **Puerto LM Studio (1234):** API directa del servidor
-- **Puerto Proxy (4001):** Proxy Python que gestiona carga/descarga automática de modelos
+- **Puerto Proxy (4001):** Proxy Python de reenvío con métricas (tokens/s) y workaround de Qwen 3.8
 - **Provider en OpenCode (V2):** `local/qwen3.8-9b` (id de provider `local`) con baseURL `http://localhost:4001/v1`. En V1 era `lmstudio/qwen3.8-9b`, pero en V2 el id `lmstudio` choca con el provider builtin y no resuelve; por eso se usa un provider propio `local` con el paquete nativo `@opencode/ai/providers/openai-compatible`.
 
 ---
@@ -46,56 +46,37 @@ OpenCode → http://localhost:4001/v1 (proxy) → http://localhost:1234/v1 (LM S
 
 ### ¿Qué hace?
 
-Proxy HTTP entre OpenCode y LM Studio con **cambio automático de modelo**:
+Proxy HTTP **de reenvío** entre OpenCode y LM Studio. **No** carga ni descarga modelos
+(eso lo hace `start-lmstudio.sh` al arrancar OpenCode, ver más abajo):
 
-1. Recibe peticiones de OpenCode en el puerto `4001`
-2. Si el modelo solicitado **no está cargado**, lo descarga automáticamente y carga el nuevo
-3. Si el modelo **ya está cargado**, reenvía la petición directamente
-4. Aplica un **workaround para Qwen 3.8**: si no hay mensaje con `role: 'user'`, añade uno de continuación
-5. Maneja timeouts largos (600 segundos) para generaciones extensas
+1. Recibe las peticiones de OpenCode en el puerto `4001` y las reenvía a `http://localhost:1234`
+2. Registra **métricas por petición** (modelo, tokens, tiempo, tok/s) en `data/metrics.json`
+   (`ENABLE_METRICS=true` + `METRICS_EXPORT_PATH` del `.env`); conserva las últimas 500
+3. Inyecta `stats.tokens_per_second` en las respuestas **no-streaming** (barra lateral de la TUI)
+4. Con streaming (SSE) estima los tokens del buffer (`chars / 4` si LM Studio no reporta `usage`)
+5. Aplica un **workaround para Qwen 3.8**: si falta un mensaje con `role: 'user'`, añade uno `'(cont.)'`
+6. Quita el prefijo `lmstudio/` del nombre de modelo si llegara con él
+7. Usa un **timeout de 300 s** para generaciones largas (no 600)
 
-### Código completo comentado
+> ⚠️ El proxy **no** gestiona carga/descarga de modelos ni devuelve `503`.
 
-```python
-LM = "http://localhost:1234"  # LM Studio API
-PORT = 4001                    # Puerto del proxy
-LMS = "/home/antonio/.lmstudio/bin/lms"  # CLI de LM Studio
-
-_loading = False  # Estado de carga del modelo
-_load_lock = threading.Lock()  # Evita cargas concurrentes
-```
-
-### Función `_do_switch(target)` - Cambio de modelo
+### Código (extracto real)
 
 ```python
-# 1. Descarga cualquier modelo que no sea el target (excepto embeddings)
-for m in _get_loaded():
-    if m != target and "embedding" not in m.lower():
-        subprocess.run([LMS, "unload", m], ...)
+LM   = "http://localhost:1234"   # LM Studio API
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 4001
+METRICS_LOCK = threading.Lock()
+MAX_RECORDS  = 500
 
-# 2. Carga el modelo solicitado
-r = subprocess.run([LMS, "load", target, "-y"], capture_output=True, timeout=180)
+# Reenvío con timeout de 300 s
+r = urllib.request.urlopen(urllib.request.Request(
+    f"{LM}{self.path}", data=json.dumps(body).encode(),
+    headers={"Content-Type": "application/json"}), timeout=300)
+
+# Workaround Qwen 3.8 (solo si falta un mensaje de usuario)
+if not any(m.get('role') == 'user' for m in body.get('messages', [])):
+    body['messages'].append({'role': 'user', 'content': '(cont.)'})
 ```
-
-### Workaround para Qwen 3.8
-
-```python
-# Qwen 3.8 rechaza peticiones sin mensaje con role='user'
-msgs = body.get('messages', [])
-if not any(m.get('role') == 'user' for m in msgs):
-    body['messages'].append({
-        'role': 'user',
-        'content': '(continuación)'
-    })
-```
-
-### Respuesta 503 durante la carga
-
-Si el modelo no está cargado, el proxy responde con `503` y un mensaje como:
-```json
-{"error": "Cargando qwen3.8-9b... (intento 1)"}
-```
-OpenCode reintenta automáticamente.
 
 ---
 

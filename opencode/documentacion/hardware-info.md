@@ -5,7 +5,7 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 |-----------|----------|------------|
 | ✅ Activo | 16/08/2026 · rev. 10/10/2026 | Antonio |
 
-> 🕐 **Re-verificado el 10/10/2026** con volcado privilegiado completo (`pkexec`): CPU, RAM, placa, GPU, discos/SMART, red y sensores. El índice `data/hardware/index.json` aún data del **22/09/2026**. Volcado completo: `hardware-query.py scan` (pide `pkexec`).
+> 🕐 **Re-verificado el 10/10/2026** con volcado privilegiado completo (`pkexec`): CPU, RAM, placa, GPU, discos/SMART, red y sensores. El índice `data/hardware/index.json` está actualizado al **10/10/2026**. Volcado completo: `hardware-query.py scan` (pide `pkexec`).
 
 | 🖥️ Sistema | 🐧 Kernel | 📐 Arquitectura |
 |------------|----------|-----------------|
@@ -109,8 +109,8 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 | Chipset | Qualcomm WCN785x Wi-Fi 7 (802.11be), 320 MHz, 2×2 · FastConnect 7800 |
 | Driver | ath12k_wifi7_pci · kernel module ath12k_wifi7 |
 | Red conectada | ZIPE (BSSID 64:64:4a:bc:af:70) · canal 36 · 5180 MHz · ancho 160 MHz |
-| Velocidades | RX 2401,9 Mbps · TX 2401,9 Mbps (HE-MCS 11, NSS 2) |
-| Señal | −36 dBm (excelente) |
+| Velocidades | RX 2161,3 Mbps · TX 1921,5 Mbps (HE-MCS 11, NSS 2) |
+| Señal | −35 dBm (excelente) |
 | IP | 192.168.31.112/24 · MAC d8:b3:2f:2d:ff:09 · modo managed |
 
 ### 🔌 Ethernet y Bluetooth

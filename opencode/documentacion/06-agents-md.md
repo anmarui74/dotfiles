@@ -172,7 +172,7 @@ Razón: AEMET es la fuente oficial española. El `api_key` se carga del `.env`
 ISO-8859-15 (hay que convertir con `iconv -f ISO-8859-15 -t UTF-8`). Si AEMET no responde,
 se usa wttr.in como respaldo.
 
-### 💻 Consultar hardware (líneas 94-123) — IMPORTANTE
+### 💻 Consultar hardware (líneas 94-130) — IMPORTANTE
 
 ```
 Cuando Antonio pregunte sobre su hardware, LEE el archivo:
@@ -194,7 +194,7 @@ Consulta rápida desde terminal:
 source ~/.config/opencode/hardware-query.sh && hw_query <campo>
 ```
 
-### 🔧 Uso de herramientas (líneas 125-132) — OBLIGATORIO
+### 🔧 Uso de herramientas (líneas 131-139) — OBLIGATORIO
 
 ```
 Cuando tengas que hacer una tarea que requiera una herramienta, USA LA HERRAMIENTA directamente.
@@ -236,7 +236,7 @@ AGENTS.md documenta la migración de V1 (1.18.x) a **V2 (2.0.x)**:
 - LSP: V2 **no ejecuta** servidores LSP (bloque retirado; usar `basedpyright`, `tsc --noEmit`, `shellcheck`… por terminal).
 - `instructions` retirado (V2 no carga sus entradas); `AGENTS.md` se **autodescubre**.
 
-### Sincronización con Config/opencode (líneas 253-353) — OBLIGATORIO
+### Sincronización con Config/opencode (líneas 259-364) — OBLIGATORIO
 
 Explica el **sistema de dos directorios**:
 
@@ -263,7 +263,7 @@ Explica el **sistema de dos directorios**:
 detecta** (busca formas de API key, no contraseñas sueltas): la comprobación aparte es
 `find ~/Documentos/dotfiles -name 'service.json*'`, que debe salir **vacío**.
 
-### Atención a setup-opencode-completo.sh (líneas 355-403) — IMPORTANTE
+### Atención a setup-opencode-completo.sh (líneas 365-416) — IMPORTANTE
 
 Este script es el **instalador completo embebido**. Contiene toda la configuración dentro de sí mismo (es un script autocontenido).
 
@@ -271,13 +271,13 @@ Este script es el **instalador completo embebido**. Contiene toda la configuraci
 
 - Cada cambio en `~/.config/opencode/` debe reflejarse en `setup-opencode-completo.sh`
 - Antes de un backup, hay que **revisar** que el script incluya TODOS los archivos actuales
-- Copiar a: `~/Config/opencode/sesion-opencode/` (tanto raíz como `scripts/`)
+- **Única copia en disco**: `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh` (ni en la raíz de `~/.config/opencode/` ni en `sesion-opencode/scripts/`)
 
 ---
 
 ## Sección 3: PERSISTENCIA DE DATOS Y RECUPERACIÓN
 
-### Variables de entorno (líneas 407-411)
+### Variables de entorno (líneas 417-422)
 
 ```bash
 set -a; source /home/antonio/.config/opencode/.env; set +a
@@ -286,7 +286,7 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 - Usa `set -a` para exportar automáticamente todas las variables
 - El `.env` contiene credenciales y rutas sensibles
 
-### Inicialización tras reinicio (líneas 413-425)
+### Inicialización tras reinicio (líneas 423-436)
 
 ```bash
 bash /home/antonio/.config/opencode/init-opencode.sh
@@ -299,7 +299,7 @@ Verifica:
 4. **PWAs** en el Escritorio
 5. **Variables de entorno** (.env)
 
-### Backup del grafo de memoria (líneas 427-443)
+### Backup del grafo de memoria (líneas 437-454)
 
 ```
 Directorio: /home/antonio/Config/opencode/backups/
@@ -309,7 +309,7 @@ Retención:  30 días
 
 El grafo de memoria es un archivo **JSONL** (una línea JSON por entidad) que contiene todas las entidades, observaciones y relaciones que el asistente ha aprendido.
 
-### Recuperación del grafo (líneas 445-459)
+### Recuperación del grafo (líneas 455-470)
 
 Si el grafo se pierde o corrompe:
 
@@ -322,7 +322,7 @@ cp /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl \
    /home/antonio/.config/opencode/data/memory/memory.jsonl
 ```
 
-### Recordatorio MCP memory (líneas 461-470) — IMPORTANTE
+### Recordatorio MCP memory (líneas 471-481) — IMPORTANTE
 
 Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observación**
 del array DEBE incluir el campo `entityName` junto a `contents`. Si falta `entityName`,
@@ -338,10 +338,11 @@ el MCP devuelve error `-32602` (Input validation error). Formato correcto:
 > de omitir `entityName` al usar las herramientas de memoria. Mismo formato para
 > `memory_create_relations` (cada relación necesita `from`, `to`, `relationType`).
 
-### Timeline completo (líneas 472-485)
+### Timeline completo (líneas 482-497)
 
 La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado;
-el PR #26861 que lo arregla sigue abierto, sin mergear). Para ver el historial completo:
+el PR #26861 se cerró sin mergear el 11/10/2026, así que `timeline-completo` sigue siendo
+necesario). Para ver el historial completo:
 
 ```bash
 ~/.local/bin/timeline-completo                # Sesión actual
@@ -353,13 +354,13 @@ el PR #26861 que lo arregla sigue abierto, sin mergear). Para ver el historial c
 Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3). Todas las peticiones
 de Antonio están guardadas ahí aunque la TUI no las muestre.
 
-### Vigilancia del fix del timeline (líneas 487-493)
+### Vigilancia del fix del timeline (líneas 498-507)
 
 El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861 se ha mergeado.
 Se ejecuta **a diario a las 10:00** vía el timer systemd `check-timeline-fix.timer` y registra en
-`~/.config/opencode/data/timeline-fix.log`. Si se mergea, avisa para retirar `timeline-completo`.
+`~/.config/opencode/data/timeline-fix.log`. Si se mergea, avisa para retirar `timeline-completo`; si se cierra sin mergear (ocurrió el 11/10/2026), lo registra y lo mantiene.
 
-### Directorios de datos (líneas 520-527)
+### Directorios de datos (líneas 533-543)
 
 | Directorio | Contenido |
 |------------|-----------|
@@ -374,7 +375,7 @@ Se ejecuta **a diario a las 10:00** vía el timer systemd `check-timeline-fix.ti
 
 Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otros modelos que puedan necesitar instrucciones más detalladas para tareas específicas.
 
-### PWAs - Abrir (líneas 531-534)
+### PWAs - Abrir (líneas 544-548)
 
 ```
 1. Leer /home/antonio/Escritorio
@@ -384,7 +385,7 @@ Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otr
 
 Las PWAs (Progressive Web Apps) se instalan como accesos directos en el Escritorio con nombres como `chrome-<app-id>-Profile_2.desktop`. La línea `Exec=` contiene el comando completo para lanzarlas.
 
-### PWAs - Cerrar (líneas 536-538)
+### PWAs - Cerrar (líneas 549-552)
 
 ```bash
 # Cerrar una PWA específica
@@ -396,7 +397,7 @@ pkill -f "chrome.*remote-debugging-port"
 
 Usa el puerto de depuración remota (9222) para comunicarse con Chrome.
 
-### Chrome debug (líneas 540-541)
+### Chrome debug (líneas 553-555)
 
 ```bash
 nohup /opt/google/chrome/google-chrome \
@@ -409,7 +410,7 @@ nohup /opt/google/chrome/google-chrome \
 
 Lanza Chrome en modo depuración con un perfil temporal, necesario para controlar PWAs remotamente.
 
-### Carga automática al abrir opencode/ocv (líneas 543-557)
+### Carga automática al abrir opencode/ocv (líneas 556-571)
 
 Al ejecutar `opencode` u `ocv`, el lanzador `start-opencode-server.sh` carga automáticamente:
 
@@ -421,7 +422,7 @@ El servicio systemd `init-opencode.service` está **DESHABILITADO** (no carga el
 
 > 📌 **Perfil cloud:** `ocv-cloud`/`opencode-cloud` exporta `SKIP_LMSTUDIO=1`, por lo que `start-opencode-server.sh` NO carga el modelo local en VRAM.
 
-### Perfiles por lanzador (líneas 559-581)
+### Perfiles por lanzador (líneas 572-595)
 
 Cada comando usa **SU archivo de config** vía `OPENCODE_CONFIG`. Nada se copia nunca sobre `opencode.json`:
 
@@ -440,14 +441,14 @@ catálogo real vía `GET /v1/models` (el catálogo `models.dev` está desactuali
 → velocidad (≥ 10 tok/s) → **tool calling obligatorio** → reintentos de 429/500/503. Detalle
 completo en [04-perfiles-opencode-json.md](04-perfiles-opencode-json.md) y en el grafo de memoria.
 
-### Iniciar LM Studio manualmente (líneas 619-623)
+### Iniciar LM Studio manualmente (líneas 632-637)
 
 ```bash
 bash /home/antonio/.config/opencode/start-lmstudio.sh      # servidor + modelo + proxy
 bash /home/antonio/.config/opencode/start-lmstudio-server.sh  # solo servidor + proxy
 ```
 
-### Liberar VRAM (líneas 625-629)
+### Liberar VRAM (líneas 638-643)
 
 Si el modelo se satura, usar:
 

@@ -70,7 +70,7 @@ Flujo de **voz → texto → IA → respuesta**:
 |----------|----------|-----|
 | **LM Studio** | `http://localhost:1234` | Modelo local `qwen3.8-9b` (80K contexto) |
 | **Proxy OpenCode ↔ LM Studio** | `http://localhost:4001` | Intermediario con métricas (tokens/s) |
-| **OpenCode Go (cloud)** | `https://opencode.ai` | Agentes `cloud` + `build`: `deepseek-v4.1-flash` |
+| **OpenCode Go (cloud)** | `https://opencode.ai` | Agentes `cloud` + `build` + `plan`: `deepseek-v4.1-flash`; `multimodal`: `mimo-v2.5` |
 | **NVIDIA NIM (cloud)** | `https://integrate.api.nvidia.com/v1` | Agente `nvidia`: Nemotron 3 Ultra 550B A55B (~74,5 tok/s, 1M contexto) |
 | **Ollama** _(en desuso)_ | `http://localhost:11434` | Modelos `llama3.1`, `gemma4`, `deepseek-r1`, `qwen3.5` (LiteLLM) |
 
@@ -155,8 +155,8 @@ set -a; source ~/.config/opencode/.env; set +a
 
 ## Notas importantes
 
-> 🕐 **Timeline:** la TUI solo muestra las últimas ~6 peticiones (PR #26861 sin
-> mergear). `timeline-completo` lee todas desde `opencode.db`. Un timer systemd
+> 🕐 **Timeline:** la TUI solo muestra las últimas ~6 peticiones (el PR #26861 se
+> cerró sin mergear el 11/10/2026). `timeline-completo` lee todas desde `opencode.db`. Un timer systemd
 > (`check-timeline-fix.timer`, a diario a las 10:00) vigila el PR.
 >
 > 💾 **Backup:** el automático (`opencode-sync.timer`, cada 30 min) hace exactamente

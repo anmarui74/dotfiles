@@ -49,10 +49,8 @@ rsync -ah --delete \
   --exclude='__pycache__/' \
   --exclude='*.pyc' \
   --exclude='data/memory/' \
+  --exclude='data/*.log' \
   --exclude='data/dmi/' \
-  --exclude='data/init.log' \
-  --exclude='data/sync.log' \
-  --exclude='data/common-cmds.log' \
   --exclude='models/' \
   --exclude='build/' \
   --exclude='.git/' \

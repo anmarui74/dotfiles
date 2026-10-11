@@ -41,10 +41,10 @@ Resultado esperado: `AMD Ryzen 9 7900 12-Core Processor`
 ### Memoria
 
 ```bash
-awk '/MemTotal/{printf "%.2f GB", $2/1024/1024}' /proc/meminfo
+awk '/MemTotal/{printf "%.2f GB", $2/1000/1000}' /proc/meminfo
 ```
 
-Resultado: 64,85 GB total.
+Resultado: 64,86 GB total (61,85 GiB).
 
 ### Placa base
 
