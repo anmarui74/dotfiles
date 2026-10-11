@@ -28,7 +28,8 @@
 16. [Encargos automáticos del dual boot](#encargos-automáticos-del-dual-boot-gatewaystartup)
 17. [Inventario del equipo](#inventario-del-equipo-sistema-cachyosmd)
 18. [Documentación de configuración](#documentación-de-configuración-documentos)
-19. [Traspaso de información entre Linux y Windows](#traspaso-de-información-entre-linux-y-windows)
+19. [Espejo en Obsidian (automático)](#espejo-en-obsidian-automático)
+20. [Traspaso de información entre Linux y Windows](#traspaso-de-información-entre-linux-y-windows)
 
 ---
 
@@ -240,6 +241,18 @@ Antonio quiere saber cuándo queda disponible Hermes al encender o reiniciar el 
   `DRY_RUN=1 ~/.local/bin/hermes-ready-notify.sh` (lo imprime sin enviarlo). **Nunca reiniciar
   `hermes-gateway` desde una sesión propia del gateway**: el drain espera al turno en curso y acaba
   en SIGTERM a los 70 s.
+- **El aviso lleva además el mantenimiento del arranque** (por eso se revisa siempre al empezar a
+  trabajar y no hay que preguntarlo):
+  - `🔄 Update`: resultado de `hermes update --check` (solo lectura: un `git fetch`, no toca nada).
+    «al día (canal stable)» o «⬆️ HAY ACTUALIZACIÓN — N commits behind…». **No actualiza solo**:
+    Antonio elige el momento porque el update reinicia el gateway.
+  - `🤝 Dual boot`: última importación (`~/.hermes/.dual-sync/estado.json`), si
+    `HermesSync/NOTA-PARA-LINUX.md` ha crecido desde el arranque anterior (marca en
+    `~/.hermes/state/arranque-nota.size`; la nota se acepta como vista al avisarla) y cuántos
+    encargos de `HermesSync/linux/encargos/` siguen sin estar en
+    `~/.hermes/state/encargos-hechos.json`.
+  - Queda registrado en `~/Config/hermes/logs/arranque-linux.log`, que es lo primero que se mira al
+    empezar sesión. Es registro local: `logs/` no viaja en el tarball.
 - Detalle completo: skill `hermes-gateway-startup-alert`.
 
 ---
@@ -530,16 +543,21 @@ la vez, así que la regla es **el último que publica manda**, con historial y c
 |---|---|---|
 | Directorio activo | `~/.hermes` | `%LOCALAPPDATA%\hermes` |
 | Motor | `~/Config/hermes/dual-boot/hermes-dual-sync.sh` (atajo `hermes-dual-sync`) | `D:\HermesSync\windows\hermes-dual-sync.ps1` |
-| Publica | hook `on_session_end` + timer cada 10 min + al apagar | tarea `HermesSync-Publicar` cada 5 min |
-| Importa | unidad de usuario al arrancar (antes del gateway) | tarea `HermesSync-Importar` al iniciar sesión |
+| Publica | hooks `on_session_end` y `on_session_finalize` + timer cada 10 min + al apagar | tarea `HermesSync-Publicar` cada 5 min + hooks `on_session_end` y `on_session_finalize` (encargo 11, se aplica al arrancar) |
+| Importa | unidad de usuario al arrancar (antes del gateway) | lanzador de la carpeta Inicio (`Inicio\Hermes_Gateway.vbs` → `dual-boot\arranque-hermes.vbs`), antes del gateway — **no** hay tarea programada de import |
 | Config | `~/.config/hermes-dual-sync.conf` | parámetro `-Comun` / autodetección |
 
 - Montaje del disco compartido: `/etc/fstab` → `UUID=A472BB2A72BB005A /mnt/seagate ntfs3 …nofail,x-systemd.automount`
   (instalado con `pkexec bash ~/Config/hermes/dual-boot/instalar-montaje.sh`).
 - Unidades: `~/.config/systemd/user/hermes-dual-sync-{import,export,apagado}.service` y `hermes-dual-sync.timer`.
   El timer lleva `Unit=hermes-dual-sync-export.service` porque el servicio no comparte nombre base con él.
-- El hook vive en `~/.hermes/agent-hooks/dual-sync-publicar.sh` y está anotado en
-  `~/.hermes/shell-hooks-allowlist.json` (si se edita el script hay que volver a aprobarlo).
+- El hook vive en `~/.hermes/agent-hooks/dual-sync-publicar.sh` y está declarado en
+  `~/.hermes/config.yaml` en **dos** eventos: `hooks.on_session_end` (al terminar cada turno) y
+  `hooks.on_session_finalize` (**al cerrar la sesión**: app de escritorio, TUI o CLI — añadido el
+  10/10/2026, tras perderse una conversación de Windows por apagar antes de que publicara la tarea
+  de 5 min). Los dos pares están aprobados en `~/.hermes/shell-hooks-allowlist.json`: si se edita el
+  script hay que volver a aprobarlos (la aprobación guarda su `mtime`).
+  El script publica con `--solo-si-cambia`, así que un disparo de más no cuesta nada.
 - Documento de usuario para Windows: `HermesSync/LEEME.md`.
 - **Nota de traspaso al Hermes de Windows**: `HermesSync/PARA-WINDOWS-backup.md` (copia en
   `windows/`) le encarga montar su propio
@@ -617,6 +635,14 @@ Pitfalls que ya han mordido:
   publicación desde Linux no revierte los arreglos hechos en Windows — pero conviene mantener
   la copia de `~/Config/hermes/dual-boot/windows/` igual que la común (el `rsync -au` del
   export solo actualiza lo que es más nuevo en origen).
+- **Update automático del lado Windows** (10/10/2026, encargo 12): al iniciar sesión, el lanzador
+  `Hermes_Update.vbs` de la carpeta Inicio ejecuta
+  `%LOCALAPPDATA%\hermes\dual-boot\update-hermes-arranque.ps1`, que actualiza Hermes **solo** (CLI y
+  app de escritorio) cuando hay algo nuevo o quedó un update a medias, espera a que la app de
+  escritorio se cierre (hasta 1 h) y deja el informe en `NOTA-PARA-LINUX.md` y un aviso por Telegram.
+  Las piezas las monta el encargo `windows/encargos/12-update-hermes-arranque.ps1`, que además lanza la
+  primera pasada con una tarea de una sola pasada (el propio trabajador la borra al terminar). El
+  detalle completo está en `AGENTS-WIN.md`, del lado Windows.
 
 ---
 
@@ -637,10 +663,12 @@ Todo lo que se montó a mano vive en la raíz de `~/Config/hermes/` y entra en l
 | Dual boot | `dual-boot/*.sh` | `hermes-dual-sync` |
 | Stack de voz (Kokoro/whisper) | `sesion-hermes/extras/bin/` (y `extras/bin/` del tarball) | `kokoro-tts`, `whisper-stt`, `whisper-cli`, `hermes-voz` |
 | Aviso de arranque | `units/hermes-ready-notify.service` | `hermes-ready-notify.sh` |
+| Espejo del vault (Obsidian) | `espejo-vault.{sh,py}` | `espejo-vault` |
 
 - El instalador desde limpio (`setup-hermes-completo.sh`, PASO 5b) repone los atajos, copia las
   unidades, habilita los servicios (`hermes-sync.timer`, `hermes-ready-notify.service`,
-  `lm-studio-app.service`, `lm-studio-watchdog.timer`, `hermes-nvidia-aliases.path`) y aplica el
+  `lm-studio-app.service`, `lm-studio-watchdog.timer`, `hermes-nvidia-aliases.path`,
+  `hermes-espejo-vault.path`) y aplica el
   parche del CLI. El `restore.sh` del tarball hace lo mismo a partir de `esquema/`.
 - `check-setup-completo.sh` comprueba que existan los ficheros, las unidades y los atajos, y
   **avisa** (sin abortar el backup) si el parche del CLI está pendiente de aplicar.
@@ -762,6 +790,31 @@ manuales del dual boot (`dual-boot/*.md`).
   números de serie, UUID y Machine ID del equipo y ese repositorio es público. Vive en local y en el
   espejo de Obsidian.
 - Lectura cómoda: el espejo del vault (skill `obsidian-espejo-config`).
+
+---
+
+## Espejo en Obsidian (automático)
+
+Los markdown de configuración se leen cómodamente en el vault
+(`~/MEGA/Obsidian/Obsidian/armarui74/`): `Hermes/` para este equipo y `Hermes-win/` para el
+esquema de Windows. **Se refresca solo**: no hay que acordarse de copiarlos.
+
+| Pieza | Qué es |
+|---|---|
+| `espejo-vault.py` (+ `.sh`) | Espeja 10 notas: `AGENTS.md`, `SISTEMA-CACHYOS.md`, `SOUL.md`, los 5 markdown del dual boot (`dual-boot/windows/*.md`) y los 2 del esquema de Windows (`~/Config/Hermes-Win/*.md`) |
+| `units/hermes-espejo-vault.path` | Vigila esos 10 orígenes (y sus carpetas, para altas y bajas) |
+| `units/hermes-espejo-vault.service` | Dispara el espejado al detectar un cambio |
+| `~/.local/bin/espejo-vault` | Atajo para lanzarlo a mano |
+| `logs/espejo-vault.log` | Qué refrescó y cuándo (solo escribe cuando algo cambia) |
+
+- La nota es el origen **verbatim** con una línea en blanco delante; el mapa origen → nota es
+  explícito en el script (nunca se inventan nombres ni se publica un fichero sin nota).
+- Antes de escribir, el script busca claves de API (`sk-…`, `nvapi-…`, `oc_sk_…`, `API_KEY=…`):
+  si aparece algo, se salta ese fichero y lo anota en el log.
+- OpenCode y MiMoCode **no** pasan por aquí: su espejo necesita reescritura de enlaces y lo cubren
+  el cron semanal «Espejo Obsidian al dia» y sus `check-setup` (skill `obsidian-espejo-config`).
+- Comprobarlo vivo: `systemctl --user list-units 'hermes-espejo*'` y `espejo-vault` (dice
+  «todas al dia» cuando no hay nada que refrescar).
 
 ---
 

@@ -2150,6 +2150,9 @@ hooks:
   on_session_end:
     - command: /home/antonio/.hermes/agent-hooks/dual-sync-publicar.sh
       timeout: 30
+  on_session_finalize:
+    - command: /home/antonio/.hermes/agent-hooks/dual-sync-publicar.sh
+      timeout: 30
 desktop:
   manage_launcher_entry: false
 approvals:

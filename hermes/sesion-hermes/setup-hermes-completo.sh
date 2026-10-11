@@ -297,7 +297,8 @@ for par in "hermes-dual-sync:dual-boot/hermes-dual-sync.sh" \
            "hermes-parche-ctrlq:hermes-parche-ctrlq.sh" \
            "lm-studio-watchdog:lm-studio-watchdog.sh" \
            "lm-studio-gui:lm-studio-gui.sh" \
-           "lm-studio-gui-run:lm-studio-gui-run.sh"; do
+           "lm-studio-gui-run:lm-studio-gui-run.sh" \
+           "espejo-vault:espejo-vault.sh"; do
     enlace="${par%%:*}"; destino="${par#*:}"
     if [ -f "${BACKUP_BASE}/${destino}" ]; then
         ln -sfn "${BACKUP_BASE}/${destino}" "$LOCAL_BIN/${enlace}"
@@ -311,14 +312,15 @@ else
 fi
 
 # Unidades systemd de usuario propias: backup periódico, LM Studio (app + vigilante),
-# alias NVIDIA y aviso de arranque por Telegram.
+# alias NVIDIA, aviso de arranque por Telegram y espejo del vault de Obsidian.
 if [ -d "${BACKUP_BASE}/units" ]; then
     mkdir -p "$HOME/.config/systemd/user"
     cp -f "${BACKUP_BASE}/units/"*.service "${BACKUP_BASE}/units/"*.timer \
           "${BACKUP_BASE}/units/"*.path "$HOME/.config/systemd/user/" 2>/dev/null || true
     systemctl --user daemon-reload 2>/dev/null || true
     for u in hermes-sync.timer hermes-ready-notify.service lm-studio-app.service \
-             lm-studio-watchdog.timer hermes-nvidia-aliases.path; do
+             lm-studio-watchdog.timer hermes-nvidia-aliases.path \
+             hermes-espejo-vault.path; do
         if systemctl --user enable --now "$u" >/dev/null 2>&1; then
             ok "unidad habilitada: $u"
         else

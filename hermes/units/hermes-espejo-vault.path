@@ -1,0 +1,23 @@
+[Unit]
+Description=Espeja al vault de Obsidian los markdown de configuracion de Hermes al cambiar
+Documentation=file:%h/Config/hermes/AGENTS.md
+
+[Path]
+# Origenes (fijar los ficheros, no solo las carpetas: editar un fichero NO cambia el mtime
+# de su directorio). El directorio se vigila ademas para detectar altas y bajas.
+PathChanged=%h/Config/hermes/AGENTS.md
+PathChanged=%h/Config/hermes/SISTEMA-CACHYOS.md
+PathChanged=%h/Config/hermes/sesion-hermes/SOUL.md
+PathChanged=%h/Config/hermes/dual-boot/windows/PARA-WINDOWS-ajustes-linux.md
+PathChanged=%h/Config/hermes/dual-boot/windows/PARA-WINDOWS-backup.md
+PathChanged=%h/Config/hermes/dual-boot/windows/PARA-WINDOWS-motor-fusion.md
+PathChanged=%h/Config/hermes/dual-boot/windows/LEEME-comun.md
+PathChanged=%h/Config/hermes/dual-boot/windows/LEEME-WINDOWS.md
+PathChanged=%h/Config/Hermes-Win/AGENTS-WIN.md
+PathChanged=%h/Config/Hermes-Win/SISTEMA-WINDOWS.md
+PathModified=%h/Config/hermes/dual-boot/windows
+PathModified=%h/Config/Hermes-Win
+Unit=hermes-espejo-vault.service
+
+[Install]
+WantedBy=paths.target

@@ -111,17 +111,20 @@ pueden cambiar entre arranques. Se localizan por **etiqueta** o por marca, nunca
 
 ---
 
-## 6. Incidencias detectadas *(10/10/2026 · revisado 19:45)*
+## 6. Incidencias detectadas *(10/10/2026 · revisado 23:55)*
 
 1. **Tarea `HermesBackup-Win` intermitente**: falló a las 15:53 y a las 17:27 con
    `0x800710E0` (*ERROR_NO_SUCH_DEVICE*), y funcionó a las 16:11, 17:35 y 17:41 (resultado 0). El
    lanzador vive en el disco SEAGATE (`D:`), así que la causa probable es que la unidad no
    respondiera en ese instante (giro en reposo o disco recién despertado). **Hoy está en 0**; si
    vuelve a fallar, ver `sync.log` y el resultado de la tarea.
-2. **Update: aplicado el 10/10/2026 a las 18:50** (`v0.21.5+7252` →
-   `v0.21.6+521.gf86276d.dirty`, `main` @ `f86276d2eb`), con el parche Ctrl+Q regenerado y
-   aplicando limpio; `hermes --version` dice «Up to date». Esta captura es anterior
-   (17:20–17:45) y lo daba por pendiente.
+2. **Update: cerrado el 10/10/2026 a las 23:41.** El update de las 18:50 (`v0.21.5+7252` →
+   `v0.21.6+521.gf86276d.dirty`, `main` @ `f86276d2eb`) dejó la cola sin terminar
+   (`source-completion-pending`: dependencias sí, builds y reempaquetado de la app no). Lo cerró el
+   **update automático al iniciar sesión** (encargo 12): `hermes update --yes` rc=0, app de escritorio
+   reempaquetada, parche Ctrl+Q validado y regenerado (corregida su codificación), `hermes doctor` rc=1
+   solo por avisos de npm/claves, respaldo rc=0 y aviso por Telegram. El marcador ya no existe y
+   `aplicar-ajustes-linux.ps1` dice `[ok] parche Ctrl+Q: aplicado`.
 3. **Inicio rápido**: estaba **activado** (`HiberbootEnabled=1`) hasta el 10/10/2026 a las 17:18,
    cuando el encargo 06 lo desactivó (con UAC) tras el NTFS sucio del SEAGATE. Ya en **0**.
 4. **`documentos\` no existía** en el esquema de Windows (el de Linux sí lo tiene): añadido el

@@ -2140,7 +2140,12 @@ voice:
   record_key: ctrl+b
   silence_duration: 86400
 hooks:
+  on_session_finalize:
+    - command: C:\Users\evo01\AppData\Local\hermes\agent-hooks\dual-sync-publicar.sh
+      timeout: 120
   on_session_end:
+    - command: C:\Users\evo01\AppData\Local\hermes\agent-hooks\dual-sync-publicar.sh
+      timeout: 120
     - command: C:/Users/evo01/AppData/Local/hermes/agent-hooks/backup-hermes.sh
       timeout: 120
 _left_core_scoped:

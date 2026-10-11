@@ -330,6 +330,8 @@ Las tres tareas y el hook, tal como están registrados en este equipo *(verifica
 | `HermesBackup-Diario` | **diaria a las 21:00** (`DailyTrigger`) **+ al iniciar sesión** (retraso 5 min) | `%LOCALAPPDATA%\hermes\backup\backup-hermes.ps1 -ConConversaciones` (respaldo rápido, ver «Respaldo rápido») | 0 |
 | `HermesSync-Publicar` | **cada 5 min** (`TimeTrigger`, repetición `PT5M`) | `dual-boot\lanzar-oculto.vbs` → `publicar.cmd` (estado al disco compartido) | 0 |
 | Hook `on_session_end` | al cerrar sesión de Hermes | `agent-hooks\backup-hermes.sh` (allowlist de shell; declarado en `config.yaml` → `hooks.on_session_end`, `timeout: 120`) | — |
+| Hook `on_session_end` (2.o) | **al terminar cada turno** de Hermes | `agent-hooks\dual-sync-publicar.sh` (publica el estado; `config.yaml` -> `hooks.on_session_end`, `timeout: 120`) | - |
+| Hook `on_session_finalize` | **al cerrar la sesion** (app de escritorio, TUI o CLI) | `agent-hooks\dual-sync-publicar.sh` (publica el estado; `hooks.on_session_finalize`) | - |
 
 Cada una de esas ejecuciones refresca también la réplica en la home de Linux (F:) descrita arriba,
 así que lo que viaja al disco de Linux va dentro del mismo backup verificado.
@@ -345,6 +347,35 @@ schtasks /run   /tn HermesBackup-Win
 
 Retención: 30 días + poda de duplicados del mismo día (se conserva el último ZIP del día).
 
+### Update automático de Hermes al iniciar sesión (encargo 12)
+
+Antonio lo pidió así: al entrar en Windows, Hermes se actualiza **solo**, tanto el CLI/terminal como la
+app de escritorio (un solo `hermes update` hace las dos cosas: dependencias, TUI/web y reempaquetado de
+`apps\desktop\release\win-unpacked`).
+
+| Pieza | Dónde vive | Qué hace |
+|---|---|---|
+| Encargo `12-update-hermes-arranque.ps1` | `D:\HermesSync\windows\encargos\` (canal Linux → Windows) | al arrancar el gateway escribe el trabajador, deja el lanzador del Inicio y crea + lanza una tarea de una sola pasada |
+| Trabajador `update-hermes-arranque.ps1` (+ `.cmd`) | `%LOCALAPPDATA%\hermes\dual-boot\` | espera a que arranque el gateway, actualiza, reaplica los ajustes de Linux, comprueba y respalda |
+| Lanzador `Hermes_Update.vbs` | carpeta Inicio (`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\`) | lo relanza en **cada** inicio de sesión; borrar ese fichero desactiva la actualización automática |
+| Tarea `HermesUpdate-Ahora` | Programador de tareas | **transitoria**: la crea el encargo para que el update corra fuera del árbol del hook, y el propio trabajador la borra al terminar |
+
+Secuencia del trabajador *(probada el 10/10/2026, cierre de un update a medias)*: candado por PID (una
+sola instancia) → espera 180 s → si la app de escritorio está abierta **espera a que se cierre** (hasta
+1 h; si no, aplaza al siguiente arranque y avisa por Telegram) → `hermes update --check`: si no hay nada
+nuevo y no quedó un update a medias (`%LOCALAPPDATA%\hermes\installs\*\source-completion-pending`),
+sale sin tocar nada → guarda el diff del parche vivo → `hermes update --yes` (si la guarda de venv lo
+bloquea, para esos procesos y reintenta **una** vez; nunca `--force-venv`) → reaplica
+`aplicar-ajustes-linux.ps1` → revalida y regenera el parche Ctrl+Q (sin forzarlo) + `commit-parche.txt`
+→ `hermes doctor`, `hermes hooks doctor`, sello de la app (`install-stamp.json` y `win-unpacked\Hermes.exe`)
+→ respaldo rápido → informe en `NOTA-PARA-LINUX.md` y aviso por Telegram.
+
+- Logs: `D:\HermesSync\logs\update-hermes-windows.log` y `%LOCALAPPDATA%\hermes\logs\update-arranque.log`.
+- ⚠️ Si el parche Ctrl+Q no aplica limpio, **no lo fuerza**: lo anota y se reconcilia desde Linux.
+- ⚠️ Los diffs se capturan con `[Console]::OutputEncoding` en UTF-8 y se escriben en LF: PowerShell 5.1
+  decodifica la salida de `git` con la página OEM y `Out-String` devuelve CRLF, así que sin eso el
+  parche regenerado sale con los acentos rotos y `git apply` lo rechaza (pasó el 10/10/2026).
+
 ### Trabajos de cron de Hermes
 
 Además de las tareas de Windows, el propio Hermes lleva sus trabajos en
@@ -354,6 +385,7 @@ Además de las tareas de Windows, el propio Hermes lleva sus trabajos en
 |---|---|---|---|
 | «Espejo Obsidian al dia (Hermes/OpenCode/MiMoCode)» (`6e92f0fa9876`) | lunes 09:00 (`0 9 * * 1`) | activo · entrega por Telegram | audita los manuales de los tres programas contra el sistema vivo y refresca el espejo del vault |
 | «Pendientes del lado Windows (10/10)» (`0252363db327`) | una sola vez (10/10 18:52) | **deshabilitado** (ya ejecutado) | aviso puntual que se programó el Hermes de Windows |
+| «Recordatorio: update de Hermes a medias (Windows)» (`6fc67c9d443d`) | diario 20:00 (`0 20 * * *`), con recuperación al arrancar (`cron.catch_up_missed`) | activo (entrega por Telegram); **se borra solo** cuando confirma que el update ya no está a medias | recuerda el procedimiento del manual mientras quede un update a medias. El de 10/10 se cerró a las 23:41, así que desaparecerá en su próxima pasada |
 
 Los trabajos de una sola vez (`once`) quedan deshabilitados al ejecutarse: siguen en `jobs.json` pero
 no vuelven a correr. El del espejo es el **mismo en los dos sistemas** (viaja por el estado compartido
@@ -543,7 +575,7 @@ sigue interrumpiendo).
 | `lanzar-oculto.vbs` + `backup-tarea.cmd` | Lanzadores sin ventana de las tareas |
 | `hook-backup-hermes.sh` → `agent-hooks\backup-hermes.sh` | Hook de shell aprobado para `on_session_end`: regenera el backup al cerrar sesión |
 | `gateway-service\hermes-ready-notify.ps1` (+ `arranque-ready-notify.vbs`) | Aviso por Telegram cuando el gateway queda listo; log en `logs\ready-notify.log` |
-| `dual-boot\` | Motor local del dual boot (`hermes-dual-sync.ps1`, `copiar-state.py`, `publicar.cmd`, `lanzar-oculto.vbs`) |
+| `dual-boot\` | Motor local del dual boot (`hermes-dual-sync.ps1`, `copiar-state.py`, `publicar.cmd`, `lanzar-oculto.vbs`, `update-hermes-arranque.ps1` + `.cmd`) |
 | `hooks\encargos-windows\` | Hook de gateway que ejecuta los encargos de Linux |
 | `extras\bin\` | Scripts propios de voz (`hermes-kokoro-tts.py`, `hermes-whisper-stt.py`, `hermes-voz.py`, `hvoz`, `hvoz.cmd`): se copian al respaldo canónico, a la copia saneada de dotfiles y a la copia publicada (`esquema-windows\extras\bin`) |
 | `hermes-auditoria-manual.ps1` | **Auditoría del manual**: lo contrasta con la configuración viva (inventario, tareas, alias, voz, plugins, skills, hooks, cron, parche, copias, espejo y credenciales) |

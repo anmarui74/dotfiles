@@ -173,6 +173,7 @@ for s in backup-hermes.sh sync-hermes.sh check-setup-completo.sh bootstrap-herme
          hermes-parche-ctrlq.sh lm-studio-watchdog.sh hermes-nvidia-aliases.sh \
          hermes-nvidia-aliases.py hermes-modelos-viables.sh hermes-modelos-viables.py \
          hermes-auditoria-manual.sh hermes-auditoria-manual.py \
+         espejo-vault.sh espejo-vault.py \
          lm-studio-gui.sh lm-studio-gui-run.sh instalar-stack-voz.sh \
          AGENTS.md; do
     if [ -f "${BACKUP_BASE}/${s}" ]; then
@@ -252,7 +253,7 @@ fi
 
 # Herramientas del esquema (esquema/ del tarball): parche local del CLI, unidades systemd
 # de usuario y atajos. Sin esto, la restauración dejaría Hermes sin Ctrl+Q y sin sus
-# servicios propios (LM Studio, alias NVIDIA, backup, aviso de arranque).
+# servicios propios (LM Studio, alias NVIDIA, backup, aviso de arranque, espejo del vault).
 BASE_ESQUEMA="$HOME/Config/hermes"
 if [ -d "${SOURCE_DIR}/esquema" ]; then
     mkdir -p "$BASE_ESQUEMA" "$LOCAL_BIN"
@@ -266,6 +267,7 @@ if [ -d "${SOURCE_DIR}/esquema" ]; then
     ln -sfn "$BASE_ESQUEMA/lm-studio-watchdog.sh" "$LOCAL_BIN/lm-studio-watchdog"
     ln -sfn "$BASE_ESQUEMA/lm-studio-gui.sh" "$LOCAL_BIN/lm-studio-gui"
     ln -sfn "$BASE_ESQUEMA/lm-studio-gui-run.sh" "$LOCAL_BIN/lm-studio-gui-run"
+    ln -sfn "$BASE_ESQUEMA/espejo-vault.sh" "$LOCAL_BIN/espejo-vault"
     echo "✅ Esquema restaurado en $BASE_ESQUEMA (atajos en $LOCAL_BIN)"
 
     if [ -d "${BASE_ESQUEMA}/units" ]; then
@@ -312,7 +314,7 @@ if [ "$FALTA" -eq 0 ]; then
     echo "   1. 'hermes doctor' para validar el entorno."
     echo "   2. Reinicia Hermes: el parche de Ctrl+Q no entra en sesiones ya abiertas."
     echo "   3. Habilita los servicios que necesites:"
-    echo "      systemctl --user enable --now hermes-sync.timer lm-studio-watchdog.timer hermes-nvidia-aliases.path"
+    echo "      systemctl --user enable --now hermes-sync.timer lm-studio-watchdog.timer hermes-nvidia-aliases.path hermes-espejo-vault.path"
 else
     echo "⚠️  Restauración incompleta: revisa los avisos de arriba."
 fi
