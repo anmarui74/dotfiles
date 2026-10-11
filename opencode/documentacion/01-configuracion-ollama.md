@@ -3,11 +3,11 @@ Referencia histórica del antiguo proveedor Ollama + LiteLLM — **EN DESUSO**.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ⚠️ **EN DESUSO** (retirado, se usa LM Studio) | 26/07/2026 · rev. 22/09/2026 | Antonio |
+| ⚠️ **EN DESUSO** (retirado, se usa LM Studio) | 26/07/2026 · rev. 11/10/2026 | Antonio |
 
 > ⚠️ **EN DESUSO.** Antonio migró de Ollama a **LM Studio** (ver `02-configuracion-lmstudio.md`).
 > Este manual se conserva solo como referencia histórica: no describe la configuración activa.
-> El puerto 11434 y los modelos `llama3.1`, `gemma4`, `deepseek-r1` y `qwen3.5` **ya no se usan desde OpenCode** (este usa LM Studio). ⚠️ Ollama **sigue instalado** y su servicio (`ollama.service`) continúa **activo**, escuchando en el puerto 11434.
+> El puerto 11434 y los modelos `llama3.1`, `gemma4`, `deepseek-r1` y `qwen3.5` **ya no se usan desde OpenCode** (este usa LM Studio). ⚠️ Ollama **sigue instalado** pero su servicio (`ollama.service`) está **parado y deshabilitado** desde el **11/10/2026**, así que el puerto 11434 ya no escucha.
 
 ---
 
@@ -26,7 +26,7 @@ Referencia histórica del antiguo proveedor Ollama + LiteLLM — **EN DESUSO**.
 
 ## Descripción general
 
-Ollama es el **servidor de inferencia local** que se usó inicialmente antes de migrar a LM Studio. Actualmente **no está activo como provider principal** en OpenCode, pero los modelos siguen disponibles en el sistema vía Ollama (puerto `11434`).
+Ollama es el **servidor de inferencia local** que se usó inicialmente antes de migrar a LM Studio. Actualmente **no está activo como provider principal** en OpenCode y su servicio está **parado y deshabilitado** (11/10/2026); los modelos siguen **instalados en disco**, pero para usarlos habría que volver a arrancar Ollama.
 
 El proxy de Ollama (`ollama-proxy.py`) estaba diseñado para **sortear el bug #34892** del SDK `@ai-sdk/openai-compatible`, que serializa `function.name` como `undefined` en las tool calls.
 
