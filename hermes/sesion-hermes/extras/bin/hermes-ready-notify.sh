@@ -97,14 +97,25 @@ canal=""
 if [ -x "$hermes_bin" ]; then
   chk=$(timeout 150 "$hermes_bin" update --check 2>&1 || true)
   canal=$(printf '%s\n' "$chk" | sed -n 's/.*Update channel: *//p' | tail -1)
+  # Los textos de `update --check` cambian entre versiones: hay que reconocer TODOS los
+  # veredictos. Un canal fijado a release (stable) imprime «Selected release available»
+  # cuando SÍ hay actualización; si no se reconoce, cae en ⚠️ y miente diciendo que no se
+  # pudo comprobar (falso negativo visto el 11 y el 12/10/2026).
   case "$chk" in
-    *"No newer release"*|*"up to date"*)
+    *"No newer release"*|*"Up to date with"*|*"Already up to date"*|*"up to date"*)
       update_line="✅ al día${canal:+ (canal $canal)}" ;;
-    *"Update available"*|*"behind"*)
-      update_line="⬆️ HAY ACTUALIZACIÓN — $(printf '%s\n' "$chk" | grep -m1 -E 'Update available|commits behind|behind origin' | sed 's/^[[:space:]]*//')" ;;
+    *"Selected release available"*|*"Update available"*|*"behind"*)
+      detalle=$(printf '%s\n' "$chk" \
+        | grep -m1 -E 'Selected release available|Update available|behind' \
+        | sed -e 's/^[[:space:]]*//' -e 's/^[^[:alnum:]]*//' \
+              -e 's/^Selected release available: *//' -e 's/^Update available: *//' \
+              -e 's/\.$//')
+      update_line="⬆️ HAY ACTUALIZACIÓN — ${detalle:-ver «hermes update --check»}" ;;
     *)
       update_line="⚠️ no he podido comprobar si hay actualización" ;;
   esac
+  # Salida cruda al journal: si vuelve a salir ⚠️, se ve el motivo sin adivinar.
+  log "update --check: $(printf '%s' "$chk" | tr '\n' '|' | head -c 300)"
 fi
 
 # --- Canal del dual boot: qué ha dejado Windows ---------------------------

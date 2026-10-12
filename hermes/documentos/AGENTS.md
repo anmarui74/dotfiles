@@ -271,6 +271,13 @@ Todo local y en CUDA, sin nube (skill `hermes-voz-local-gpu`):
   `speak-kokoro*`) viajan en `extras/bin/` del tarball y de `sesion-hermes/`. **El modelo y el
   binario de whisper.cpp no** (viven en `~/.local/share/whisper-cpp/`): una instalación desde limpio
   repone los scripts, pero hay que volver a descargar el modelo.
+- **Ruta del modelo de whisper**: `whisper-stt` busca
+  `~/.local/share/whisper-cpp/models/ggml-large-v3-turbo-q5_0.bin`; el bootstrap de OpenCode
+  (`~/.config/opencode/bootstrap-ocv.sh`) lo descarga en la **raíz** de `whisper-cpp/`. El wrapper
+  acepta las dos rutas (fallback a la raíz si no está en `models/`) y aquí hay un enlace duro en
+  `models/` para que también lo vea `check-setup-completo.sh`. Si el STT dice
+  `whisper-stt: falta el modelo …`, es esto: comprobar con
+  `bash ~/Config/hermes/instalar-stack-voz.sh --comprobar`.
 - La locución se corta con `ctrl+q` (solo calla la voz) o `ctrl+c` (corta e interrumpe el turno):
   ver «Parches locales del CLI».
 
@@ -505,7 +512,9 @@ barge-in llamaban a `stop_playback()`), así que el audio seguía sonando. Se ar
 - El diff vive en `~/Config/hermes/parches/ctrl-q-corta-audio.patch` y se aplica/revierte con
   `hermes-parche-ctrlq [estado|aplicar|revertir]` (atajo en `~/.local/bin`; log en
   `~/Config/hermes/logs/parches.log`). Es idempotente y sale con 0/1/2 según esté aplicado, sin
-  aplicar o en conflicto.
+  aplicar o en conflicto. En `parches/` se conservan además las versiones históricas: la anterior al
+  re-porte (`ctrl-q-corta-audio-6590f13.patch`) y el resto del autostash del update del 07/10/2026
+  (`ctrl-q-corta-audio-autostash-20261007.patch`), que se descartó de git por estar ya superado.
 - **El cambio no entra en una sesión ya abierta**: el módulo está importado en el proceso en marcha.
   Hay que reiniciar Hermes para que la tecla se comporte así.
 - Prueba funcional del reparto de teclas: `scripts/test-ctrlq-solo-tts.py` de la skill

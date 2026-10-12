@@ -14,6 +14,13 @@
 set -euo pipefail
 
 MODELO="${STT_WHISPER_MODEL:-$HOME/.local/share/whisper-cpp/models/ggml-large-v3-turbo-q5_0.bin}"
+# Dos instaladores escriben este modelo en sitios distintos: el bootstrap de OpenCode lo deja en
+# la raíz de whisper-cpp y este wrapper (con instalar-stack-voz.sh) lo busca en models/. Se aceptan
+# las dos rutas para que la transcripcion no se caiga segun cual de los dos haya corrido.
+if [ -z "${STT_WHISPER_MODEL:-}" ] && [ ! -r "$MODELO" ]; then
+  _alt="$HOME/.local/share/whisper-cpp/ggml-large-v3-turbo-q5_0.bin"
+  [ -r "$_alt" ] && MODELO="$_alt"
+fi
 IDIOMA="${STT_WHISPER_LANG:-es}"
 WHISPER_CLI="${STT_WHISPER_CLI:-$HOME/.local/share/whisper-cpp/bin/whisper-cli}"
 LIBDIR="$(dirname "$WHISPER_CLI")"

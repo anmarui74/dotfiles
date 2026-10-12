@@ -370,6 +370,21 @@ bloquea, para esos procesos y reintenta **una** vez; nunca `--force-venv`) → r
 → `hermes doctor`, `hermes hooks doctor`, sello de la app (`install-stamp.json` y `win-unpacked\Hermes.exe`)
 → respaldo rápido → informe en `NOTA-PARA-LINUX.md` y aviso por Telegram.
 
+- **Los patrones de `hermes update --check` caducan: revisarlos al tocar esto** (mordió el 12/10/2026).
+  La detección solo miraba `Update available`, `commits behind` y `behind origin`; con el canal fijado a
+  release, un canal `stable` imprime **`Selected release available: stable vX.Y.Z`** cuando SÍ hay
+  actualización, así que el trabajador la descartaba y decía «no hay actualizacion disponible: nada que
+  hacer». Síntoma: el log muestra el `Selected release available` justo antes del «nada que hacer».
+  Los veredictos que hay que reconocer: al día → `No newer release`, `Up to date with`, `Already up to
+  date`; hay update → `Selected release available`, `Update available`, `behind`. Ante la duda,
+  comprobar el veredicto en vivo con `hermes update --check` y evaluar los dos patrones antes de tocar.
+  (El mismo fallo tenía el aviso de arranque de Linux, ya corregido.)
+- **Copia histórica del parche**: tras regenerar el parche vivo, el trabajador deja además
+  `parches\ctrl-q-<commit>.patch` (en el esquema y en `D:\HermesSync\windows\parches\`) **sin pisar**
+  una que ya exista. La auditoría la exige (`no encuentro el parche histórico del commit …`) y sin
+  ella el esquema queda desfasado justo después de cada update automático — pasó el 12/10/2026 con el
+  salto a `71d34bad10`, que hubo que rellenar a mano.
+
 - Logs: `D:\HermesSync\logs\update-hermes-windows.log` y `%LOCALAPPDATA%\hermes\logs\update-arranque.log`.
 - ⚠️ Si el parche Ctrl+Q no aplica limpio, **no lo fuerza**: lo anota y se reconcilia desde Linux.
 - ⚠️ Los diffs se capturan con `[Console]::OutputEncoding` en UTF-8 y se escriben en LF: PowerShell 5.1

@@ -1,4 +1,4 @@
-# 📚 Documentación de Configuración de OpenCode (Windows)
+﻿# 📚 Documentación de Configuración de OpenCode (Windows)
 Guía completa del sistema de voz, modelos y herramientas en Windows.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
@@ -66,8 +66,8 @@ Todos en **esquema V2** (`permissions`, `agents`, `providers`, `mcp`, `lsp`):
 | `ocv-cloud` | `opencode-cloud.json` | ❌ No carga |
 | `ocv-status` | — | Estado de componentes |
 
-> 🖥️ **App de escritorio V2** (2.0.26): instalada desde `opencode.ai/download` (NSIS) en `%LOCALAPPDATA%\Programs\@opencodedesktop`.
-> La V1 de `winget` fue desinstalada. El CLI V2 (`@opencode/cli`) está en **2.0.26**.
+> 🖥️ **App de escritorio V2** (2.0.27): instalada desde `opencode.ai/download` (NSIS) en `%LOCALAPPDATA%\Programs\@opencodedesktop`.
+> La V1 de `winget` fue desinstalada. El CLI V2 (`@opencode/cli`) está en **2.0.27**.
 > Los LSP se lanzan con `npx -y` (Python vía `basedpyright`) y **no** aparecen en la barra lateral: corren en segundo plano.
 
 ---

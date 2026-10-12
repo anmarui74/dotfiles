@@ -382,7 +382,7 @@ Configurados bajo `mcp.servers` (sintaxis V2). En Windows hay **5 MCPs**:
 
 ## LSP
 
-> ✅ **OpenCode V2 2.0.26 sí ejecuta servidores LSP** a través del bloque `lsp` de la configuración.
+> ✅ **OpenCode V2 2.0.27 sí ejecuta servidores LSP** a través del bloque `lsp` de la configuración.
 
 Los tres perfiles (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json`) declaran **11 servidores LSP** lanzados con `npx -y` (bajo demanda, sin instalación global):
 
