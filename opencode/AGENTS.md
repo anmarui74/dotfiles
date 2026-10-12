@@ -392,7 +392,7 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
         (opencode.json, opencode-local.json, opencode-cloud.json, cli.json,
         AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
-        hardware-query, check-fix, check-timeline-fix, check-nvidia-whitelist,
+        hardware-query, check-timeline-fix, check-nvidia-whitelist,
         hardware-query.py, lmstudio-proxy.py, backup-opencode, bootstrap-ocv,
         timeline-completo)
         — no solo los JSON
@@ -505,13 +505,12 @@ resultado en `~/.config/opencode/data/timeline-fix.log`.
   `timeline-completo`.
 - Consultar el log si Antonio pregunta por el estado del fix.
 
-## 🐞 Vigilancia del issue #39164 (timer systemd)
-El script `~/.config/opencode/check-fix.sh` comprueba si el issue #39164 de
-OpenCode (bug de tools locales) se ha cerrado. Se ejecuta automáticamente a
-diario a las 10:00 vía el timer systemd `check-opencode-fix.timer` y guarda el
-estado en `~/.config/opencode/data/issue_status.txt`.
-- Si el issue se cierra: se avisa (log + notificación) para retirar check-fix.sh.
-- Detalle completo en `documentacion/05-configuracion-adicional.md`.
+## 🐞 Vigilancia del issue #39164 — RETIRADA (12/10/2026)
+El vigilante `check-fix.sh` + su timer `check-opencode-fix.timer` se **retiraron el 12/10/2026**.
+El issue [#39164](https://github.com/anomalyco/opencode/issues/39164) ("MCP tools not sent to local
+OpenAI-compatible models") quedó **CERRADO el 11/10/2026**, pero como **"not_planned"**: fue un cierre
+masivo de issues de la **V1** al salir la V2, **no** porque se arreglara. El bug era de OpenCode 1.x;
+en V2 el tool calling local funciona. No hay nada más que vigilar.
 
 ## ⌨️ Tecla `l` tragada en la TUI V2 — RESUELTO (16/09/2026)
 **La causa NO era un bug de OpenCode, era local:** el plugin `opencode-voice-modified/tui.js`

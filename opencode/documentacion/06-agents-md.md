@@ -69,7 +69,7 @@ El archivo se organiza en **5 bloques** (el contenido ha crecido con la migraci�
    ├── Backup y recuperación del grafo de memoria
    ├── Recordatorio MCP memory (entityName)
    ├── Timeline completo (timeline-completo) + vigilancia del PR #26861
-   ├── Vigilancia del issue #39164 (check-fix.sh)
+   ├── Vigilancia del issue #39164 — RETIRADA (12/10/2026)
    ├── Tecla `l` tragada en la TUI V2 (resuelto)
    └── Directorios de datos
 

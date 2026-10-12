@@ -280,35 +280,13 @@ Unit=opencode-sync.service
 
 **Propósito:** Ejecuta la sincronización cada 30 minutos (cambiado de 2 min a 30 min el 10/08/2026).
 
-### `check-opencode-fix.timer`
+### `check-opencode-fix.timer` — RETIRADO (12/10/2026)
 
-**Archivos:**
-- `~/.config/systemd/user/check-opencode-fix.service`
-- `~/.config/systemd/user/check-opencode-fix.timer`
-
-```ini
-# check-opencode-fix.service
-[Unit]
-Description=Check OpenCode issue #39164 status
-
-[Service]
-Type=oneshot
-ExecStart=/home/antonio/.config/opencode/check-fix.sh
-
-# check-opencode-fix.timer
-[Timer]
-OnCalendar=*-*-* 10:00:00
-OnUnitActiveSec=3d
-RandomizedDelaySec=30m
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-```
-
-**Propósito:** Ejecuta `check-fix.sh` **a diario a las 10:00** (`OnCalendar=*-*-* 10:00:00`, con `RandomizedDelaySec=30m`) para comprobar si el **issue #39164** de OpenCode (bug de tools locales) se ha cerrado. Si está cerrado, muestra una notificación de escritorio.
-
-> 🕐 El unit lleva además `OnUnitActiveSec=3d`, pero **no añade nada**: con varias cláusulas `On*`, systemd dispara con la primera que venza, y el `OnCalendar` diario siempre vence antes. La cadencia real es **diaria a las 10:00** (verificado el 10/10/2026). Se deja el `OnCalendar` tal cual por decisión de Antonio; el texto de este manual es el que se ajusta a la realidad.
+> 🗑️ El vigilante `check-fix.sh` + `check-opencode-fix.service`/`.timer` se **retiraron el 12/10/2026**.
+> El issue [#39164](https://github.com/anomalyco/opencode/issues/39164) (tools vacías en modelos locales
+> OpenAI-compatible) quedó **CERRADO el 11/10/2026**, pero como **"not_planned"**: fue un cierre masivo de
+> issues de la **V1** al salir la V2, **no** porque se arreglara. El bug era de OpenCode 1.x; en V2 el
+> tool calling local funciona. No queda nada que vigilar.
 
 ### `check-timeline-fix.timer`
 
@@ -336,6 +314,41 @@ Mismo patrón: **a diario a las 10:00** (retardo aleatorio de 10 min) ejecuta `c
 
 > 💡 No es una utilidad de OpenCode en sí, pero vive en `~/.config/opencode/` y forma parte del backup. El parche y su documentación completa están en `~/.local/share/mega-nautilus-fix/LEEME.md`.
 
+### `btrfs-scrub.timer` (11/10/2026) — unidad de **SISTEMA** (root)
+
+**Archivos (root):** `/etc/systemd/system/btrfs-scrub.service` · `/etc/systemd/system/btrfs-scrub.timer`
+
+Verificación **mensual de integridad** del btrfs raíz (scrub). A diferencia de los demás, es una **unidad de sistema** (no de usuario), porque el scrub necesita privilegios de root.
+
+```ini
+# btrfs-scrub.service
+[Unit]
+Description=btrfs scrub de la raiz (verificacion de integridad)
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/btrfs scrub start -B /
+Nice=19
+IOSchedulingClass=idle
+StandardOutput=append:/home/antonio/.config/opencode/data/btrfs-scrub.log
+StandardError=append:/home/antonio/.config/opencode/data/btrfs-scrub.log
+```
+
+```ini
+# btrfs-scrub.timer
+[Timer]
+OnCalendar=*-*-1 04:00:00
+RandomizedDelaySec=30m
+Persistent=true
+```
+
+- **Cadencia:** día **1 de cada mes a las 04:00** (+ retardo aleatorio 30 min). `Persistent=true` lo recupera si el equipo estaba apagado.
+- **Log:** `data/btrfs-scrub.log` (propiedad de root; legible). Estado en vivo: `sudo btrfs scrub status /`.
+- **Primer scrub:** manual el **11/10/2026** (386,83 GiB, 1 m 31 s, 4,25 GiB/s, **sin errores**).
+- Instalar/reinstalar (root): escribir ambos ficheros en `/etc/systemd/system/` y `sudo systemctl enable --now btrfs-scrub.timer`.
+- ⚠️ **No** va embebida en `setup-opencode-completo.sh` (que solo gestiona la config de usuario y `~/.config/systemd/user/`); se recrea con los dos ficheros de arriba.
+
 ### Gestión de servicios
 
 ```bash
@@ -343,7 +356,6 @@ Mismo patrón: **a diario a las 10:00** (retardo aleatorio de 10 min) ejecuta `c
 systemctl --user status init-opencode.service
 systemctl --user status opencode-sync.timer
 systemctl --user status sync-obsidian.path
-systemctl --user status check-opencode-fix.timer
 systemctl --user status check-timeline-fix.timer
 systemctl --user status check-mega-pr.timer
 
@@ -357,10 +369,16 @@ systemctl --user disable opencode-sync.timer
 
 # Ejecutar manualmente
 systemctl --user start init-opencode.service
-systemctl --user start check-opencode-fix.service
 systemctl --user start check-mega-pr.service
 systemctl --user start sync-obsidian.service
 ```
+
+> 🔧 La unidad **`btrfs-scrub`** es de **sistema** (root), no de usuario:
+> ```bash
+> systemctl list-timers btrfs-scrub.timer
+> sudo systemctl start btrfs-scrub.service       # prueba manual
+> sudo journalctl -u btrfs-scrub.service -n 20   # o ver data/btrfs-scrub.log
+> ```
 
 ---
 
@@ -397,11 +415,9 @@ Recolecta 13 secciones (más `meta`): OS, CPU, RAM, placa base, GPU NVIDIA/AMD, 
 
 > **Nota (16/08/2026):** `web-search.sh` fue **eliminado** — no estaba registrado como MCP en ningún perfil y la búsqueda web la cubren el MCP `fetch` y la herramienta integrada de OpenCode.
 
-### `check-fix.sh`
+### `check-fix.sh` — RETIRADO (12/10/2026)
 
-**Archivo:** `~/.config/opencode/check-fix.sh`
-
-Verifica el estado del **issue #39164** de OpenCode (un bug que afecta al sistema).
+> 🗑️ Eliminado el 12/10/2026 junto con su timer (issue #39164 cerrado como *"not_planned"*; ver la sección de `check-opencode-fix.timer`).
 
 ### `check-timeline-fix.sh` (10/08/2026)
 
@@ -627,7 +643,6 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── sync-opencode.sh           # Sincronización
 ├── sync-obsidian.sh           # Espejo de los manuales en el vault de Obsidian
 ├── bootstrap-ocv.sh           # Instalador completo desde limpio
-├── check-fix.sh               # Verificar issue #39164
 ├── check-timeline-fix.sh      # Vigilar PR #26861 (fix timeline)
 ├── check-nvidia-whitelist.sh  # Verificar/actualizar whitelist NVIDIA
 ├── check-mega-pr.sh           # Vigilar el PR #1174 de MEGAsync (Nautilus 51+)
@@ -687,7 +702,6 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
     ├── available_models.txt  # Modelos disponibles
     ├── inxi-summary.txt      # Volcado resumen de `inxi`
     ├── memory_status.txt     # Estado del grafo de memoria
-    ├── issue_status.txt      # Estado del issue #39164
     ├── timeline-fix.log      # Estado del PR #26861
     ├── setup-check.log       # Log de verificación del setup
     ├── nvidia-whitelist.log  # Log del check NVIDIA

@@ -1835,7 +1835,7 @@ archivos = {
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
     'hardware-query.py': 'HARDWARE-QUERY_PYEOF',
-    'check-fix.sh': 'CHECK-FIX_SHEOF', 'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
+    'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
     'check-nvidia-whitelist.sh': 'NVIDIA-WL_SHEOF',
     'check-mega-pr.sh': 'MEGA-PR_SHEOF',
     'lmstudio-proxy.py': 'LMPROXYEOF', 'lmstudio-metrics-server.py': 'METRICSSRVEOF',
@@ -1859,8 +1859,6 @@ extra_archivos = [
     ('plugin voz lib/llm-client.js', 'LLMCLIENTJS', '/home/antonio/.config/opencode/opencode-voice-modified/lib/llm-client.js'),
     ('plugin sidebar mimocode tui.tsx', 'SIDEBARMMEOF', '/home/antonio/.config/opencode/plugins/sidebar-mimo/tui.tsx'),
     ('plugin nvidia-filter index.ts', 'NVPLUGINEOF', '/home/antonio/.config/opencode/plugins/nvidia-filter/index.ts'),
-    ('systemd check-opencode-fix.service', 'CHKFIXSERVEOF', '/home/antonio/.config/systemd/user/check-opencode-fix.service'),
-    ('systemd check-opencode-fix.timer', 'CHKFIXTIMEREOF', '/home/antonio/.config/systemd/user/check-opencode-fix.timer'),
     ('systemd check-nvidia-whitelist.service', 'NVIDIAWL-SERVEOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.service'),
     ('systemd check-nvidia-whitelist.timer', 'NVIDIAWL-TIMEREOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.timer'),
     ('systemd check-mega-pr.service', 'CHECKMEGAPR-SERVEOF', '/home/antonio/.config/systemd/user/check-mega-pr.service'),
@@ -2041,32 +2039,6 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 TLTIMEREOF
-cat > "$HOME/.config/systemd/user/check-opencode-fix.service" << 'CHKFIXSERVEOF'
-[Unit]
-Description=Check OpenCode issue #39164 status
-
-[Service]
-Type=oneshot
-ExecStart=/home/antonio/.config/opencode/check-fix.sh
-CHKFIXSERVEOF
-
-cat > "$HOME/.config/systemd/user/check-opencode-fix.timer" << 'CHKFIXTIMEREOF'
-[Unit]
-Description=Check OpenCode fix every 3 days
-
-[Timer]
-# Primera ejecución: mañana a las 10:00
-OnCalendar=*-*-* 10:00:00
-# Repetir cada 3 días después de la última ejecución
-OnUnitActiveSec=3d
-# Pequeño retardo aleatorio para evitar picos
-RandomizedDelaySec=30m
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-CHKFIXTIMEREOF
-
 cat > "$HOME/.config/systemd/user/check-nvidia-whitelist.service" << 'NVIDIAWL-SERVEOF'
 [Unit]
 Description=Check NVIDIA whitelist status (models 410 Gone / new candidates)
@@ -2125,10 +2097,9 @@ systemctl --user enable opencode-sync.timer 2>/dev/null || true
 systemctl --user start opencode-sync.timer 2>/dev/null || true
 systemctl --user enable --now sync-obsidian.path 2>/dev/null || true
 systemctl --user enable --now check-timeline-fix.timer 2>/dev/null || true
-systemctl --user enable --now check-opencode-fix.timer 2>/dev/null || true
 systemctl --user enable --now check-nvidia-whitelist.timer 2>/dev/null || true
 systemctl --user enable --now check-mega-pr.timer 2>/dev/null || true
-info "Servicios systemd: sync activado, init deshabilitado, check-timeline-fix, check-opencode-fix, check-nvidia-whitelist y check-mega-pr activados"
+info "Servicios systemd: sync activado, init deshabilitado, check-timeline-fix, check-nvidia-whitelist y check-mega-pr activados"
 echo ""
 
 # ═══════════════════════════════════════════════════════════
@@ -2531,7 +2502,7 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
         (opencode.json, opencode-local.json, opencode-cloud.json, cli.json,
         AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
-        hardware-query, check-fix, check-timeline-fix, check-nvidia-whitelist,
+        hardware-query, check-timeline-fix, check-nvidia-whitelist,
         hardware-query.py, lmstudio-proxy.py, backup-opencode, bootstrap-ocv,
         timeline-completo)
         — no solo los JSON
@@ -2644,13 +2615,12 @@ resultado en `~/.config/opencode/data/timeline-fix.log`.
   `timeline-completo`.
 - Consultar el log si Antonio pregunta por el estado del fix.
 
-## 🐞 Vigilancia del issue #39164 (timer systemd)
-El script `~/.config/opencode/check-fix.sh` comprueba si el issue #39164 de
-OpenCode (bug de tools locales) se ha cerrado. Se ejecuta automáticamente a
-diario a las 10:00 vía el timer systemd `check-opencode-fix.timer` y guarda el
-estado en `~/.config/opencode/data/issue_status.txt`.
-- Si el issue se cierra: se avisa (log + notificación) para retirar check-fix.sh.
-- Detalle completo en `documentacion/05-configuracion-adicional.md`.
+## 🐞 Vigilancia del issue #39164 — RETIRADA (12/10/2026)
+El vigilante `check-fix.sh` + su timer `check-opencode-fix.timer` se **retiraron el 12/10/2026**.
+El issue [#39164](https://github.com/anomalyco/opencode/issues/39164) ("MCP tools not sent to local
+OpenAI-compatible models") quedó **CERRADO el 11/10/2026**, pero como **"not_planned"**: fue un cierre
+masivo de issues de la **V1** al salir la V2, **no** porque se arreglara. El bug era de OpenCode 1.x;
+en V2 el tool calling local funciona. No hay nada más que vigilar.
 
 ## ⌨️ Tecla `l` tragada en la TUI V2 — RESUELTO (16/09/2026)
 **La causa NO era un bug de OpenCode, era local:** el plugin `opencode-voice-modified/tui.js`
@@ -4561,35 +4531,6 @@ if __name__ == "__main__":
 HARDWARE-QUERY_PYEOF
 chmod +x "$DIR_CONFIG/hardware-query.py"
 info "hardware-query.py creado (motor Python)"
-
-cat > "$DIR_CONFIG/check-fix.sh" << 'CHECK-FIX_SHEOF'
-#!/bin/bash
-# Comprueba el estado del issue #39164 de OpenCode
-# Muestra notificación si está cerrado (arreglado)
-
-ISSUE_URL="https://api.github.com/repos/anomalyco/opencode/issues/39164"
-CACHE_FILE="/home/antonio/.config/opencode/data/issue_status.txt"
-
-RESP=$(curl -s "$ISSUE_URL" 2>/dev/null)
-STATE=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('state','unknown'))" 2>/dev/null)
-
-echo "$STATE" > "$CACHE_FILE"
-
-if [ "$STATE" = "closed" ]; then
-    MSG="🎉 ¡El issue #39164 está CERRADO! El fix de tools locales ya está disponible."
-    echo "$MSG"
-    # Notificación desktop
-    notify-send -u critical "OpenCode Fix Disponible" "$MSG" 2>/dev/null || true
-elif [ "$STATE" = "open" ]; then
-    echo "🔴 Issue #39164: ABIERTO - El bug de tools locales sigue pendiente."
-    echo "   https://github.com/anomalyco/opencode/issues/39164"
-else
-    echo "⚠️ No se pudo verificar el estado del issue."
-fi
-CHECK-FIX_SHEOF
-chmod +x "$DIR_CONFIG/check-fix.sh"
-info "check-fix.sh creado"
-
 
 # ─── timeline-completo: historial completo de sesiones (lee opencode.db) ───
 mkdir -p "$LOCAL_BIN"
