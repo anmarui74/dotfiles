@@ -68,7 +68,7 @@ El archivo se organiza en **5 bloques** (el contenido ha crecido con la migraci�
    ├── Variables de entorno · Inicialización
    ├── Backup y recuperación del grafo de memoria
    ├── Recordatorio MCP memory (entityName)
-   ├── Timeline completo (timeline-completo) + vigilancia del PR #26861
+   ├── Timeline completo (timeline-completo) · vigilancia PR #26861 RETIRADA
    ├── Vigilancia del issue #39164 — RETIRADA (12/10/2026)
    ├── Tecla `l` tragada en la TUI V2 (resuelto)
    └── Directorios de datos
@@ -341,7 +341,7 @@ el MCP devuelve error `-32602` (Input validation error). Formato correcto:
 ### Timeline completo (líneas 482-497)
 
 La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado;
-el PR #26861 se cerró sin mergear el 11/10/2026, así que `timeline-completo` sigue siendo
+el PR #26861 se cerró sin mergear el 10/10/2026, así que `timeline-completo` sigue siendo
 necesario). Para ver el historial completo:
 
 ```bash
@@ -354,11 +354,9 @@ necesario). Para ver el historial completo:
 Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3). Todas las peticiones
 de Antonio están guardadas ahí aunque la TUI no las muestre.
 
-### Vigilancia del fix del timeline (líneas 498-507)
+### Vigilancia del fix del timeline — RETIRADA (12/10/2026)
 
-El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861 se ha mergeado.
-Se ejecuta **a diario a las 10:00** vía el timer systemd `check-timeline-fix.timer` y registra en
-`~/.config/opencode/data/timeline-fix.log`. Si se mergea, avisa para retirar `timeline-completo`; si se cierra sin mergear (ocurrió el 11/10/2026), lo registra y lo mantiene.
+El vigilante `check-timeline-fix.sh` + su timer se **retiraron el 12/10/2026**: el PR #26861 quedó cerrado sin mergear el **10/10/2026**. `timeline-completo` sigue siendo necesario.
 
 ### Directorios de datos (líneas 533-543)
 

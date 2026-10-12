@@ -288,13 +288,11 @@ Unit=opencode-sync.service
 > issues de la **V1** al salir la V2, **no** porque se arreglara. El bug era de OpenCode 1.x; en V2 el
 > tool calling local funciona. No queda nada que vigilar.
 
-### `check-timeline-fix.timer`
+### `check-timeline-fix.timer` — RETIRADO (12/10/2026)
 
-**Archivos:**
-- `~/.config/systemd/user/check-timeline-fix.service`
-- `~/.config/systemd/user/check-timeline-fix.timer`
-
-Mismo patrón: **a diario a las 10:00** ejecuta `check-timeline-fix.sh` para vigilar el PR #26861 (fix del timeline TUI).
+> 🗑️ El vigilante `check-timeline-fix.sh` + `check-timeline-fix.service`/`.timer` se **retiraron el 12/10/2026**.
+> El PR #26861 (fix del timeline TUI) quedó **cerrado sin mergear el 10/10/2026** → no hay nada que vigilar.
+> `timeline-completo` sigue siendo necesario.
 
 ### `check-nvidia-whitelist.timer`
 
@@ -356,7 +354,6 @@ Persistent=true
 systemctl --user status init-opencode.service
 systemctl --user status opencode-sync.timer
 systemctl --user status sync-obsidian.path
-systemctl --user status check-timeline-fix.timer
 systemctl --user status check-mega-pr.timer
 
 # Activar
@@ -419,11 +416,9 @@ Recolecta 13 secciones (más `meta`): OS, CPU, RAM, placa base, GPU NVIDIA/AMD, 
 
 > 🗑️ Eliminado el 12/10/2026 junto con su timer (issue #39164 cerrado como *"not_planned"*; ver la sección de `check-opencode-fix.timer`).
 
-### `check-timeline-fix.sh` (10/08/2026)
+### `check-timeline-fix.sh` — RETIRADO (12/10/2026)
 
-**Archivo:** `~/.config/opencode/check-timeline-fix.sh`
-
-Vigila el **PR #26861** de OpenCode (fix del timeline TUI). Se ejecuta automáticamente **a diario a las 10:00** vía el timer systemd `check-timeline-fix.timer` y registra el resultado en `data/timeline-fix.log`. Si el PR se mergea, avisa para retirar el script `timeline-completo`; si se **cierra sin mergear** (ocurrió el **11/10/2026**), lo registra y se mantiene `timeline-completo`.
+> 🗑️ Eliminado el 12/10/2026 junto con su timer (el PR #26861 se cerró sin mergear el 10/10/2026). Ver la sección de `check-timeline-fix.timer`.
 
 ### `check-setup-completo.sh` (10/08/2026)
 
@@ -532,7 +527,7 @@ aparece en «Directorio de trabajo»).
 
 ## Timeline completo (`timeline-completo`, 10/08/2026)
 
-El timeline de la TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado; el PR #26861 sigue abierto). El script **`~/.local/bin/timeline-completo`** lee el historial completo directamente de `opencode.db` (sqlite3):
+El timeline de la TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado; el PR #26861 se cerró sin mergear el 10/10/2026). El script **`~/.local/bin/timeline-completo`** lee el historial completo directamente de `opencode.db` (sqlite3):
 
 ```bash
 timeline-completo                # Historial completo de la sesión actual
@@ -643,7 +638,6 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── sync-opencode.sh           # Sincronización
 ├── sync-obsidian.sh           # Espejo de los manuales en el vault de Obsidian
 ├── bootstrap-ocv.sh           # Instalador completo desde limpio
-├── check-timeline-fix.sh      # Vigilar PR #26861 (fix timeline)
 ├── check-nvidia-whitelist.sh  # Verificar/actualizar whitelist NVIDIA
 ├── check-mega-pr.sh           # Vigilar el PR #1174 de MEGAsync (Nautilus 51+)
 ├── check-setup-completo.sh    # Verificar setup antes de cada backup
@@ -702,7 +696,6 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
     ├── available_models.txt  # Modelos disponibles
     ├── inxi-summary.txt      # Volcado resumen de `inxi`
     ├── memory_status.txt     # Estado del grafo de memoria
-    ├── timeline-fix.log      # Estado del PR #26861
     ├── setup-check.log       # Log de verificación del setup
     ├── nvidia-whitelist.log  # Log del check NVIDIA
     ├── nvidia-whitelist-state.json  # Estado del check NVIDIA

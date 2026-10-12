@@ -392,7 +392,7 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
         (opencode.json, opencode-local.json, opencode-cloud.json, cli.json,
         AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
-        hardware-query, check-timeline-fix, check-nvidia-whitelist,
+        hardware-query, check-nvidia-whitelist,
         hardware-query.py, lmstudio-proxy.py, backup-opencode, bootstrap-ocv,
         timeline-completo)
         — no solo los JSON
@@ -482,7 +482,7 @@ Mismo formato para `memory_create_relations`: cada relación necesita `from`, `t
 ## 🕐 Timeline completo de sesiones (script timeline-completo)
 El timeline de la TUI de OpenCode (Ctrl+X G) SOLO muestra las últimas ~6 peticiones
 (límite hardcodeado; se propuso el PR #26861 para arreglarlo, pero se CERRÓ sin mergear
-el 11/10/2026, así que `timeline-completo` sigue siendo necesario).
+el 10/10/2026, así que `timeline-completo` sigue siendo necesario).
 Para ver el historial COMPLETO de cualquier sesión, usar el script:
 ```
 ~/.local/bin/timeline-completo
@@ -495,15 +495,10 @@ Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3).
 TODAS las peticiones de Antonio están guardadas ahí aunque la TUI no las muestre.
 Cuando Antonio pregunte por su historial/timeline de peticiones, usa este script.
 
-## 👁️ Vigilancia del fix del timeline (timer systemd)
-El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861
-de OpenCode (fix del timeline) se ha mergeado. Se ejecuta automáticamente a
-diario a las 10:00 vía el timer systemd `check-timeline-fix.timer` y registra el
-resultado en `~/.config/opencode/data/timeline-fix.log`.
-- Si el PR se mergea: se avisa (log + notificación) para retirar timeline-completo.
-- Si el PR se cierra sin mergear (ocurrió el 11/10/2026): se registra y se mantiene
-  `timeline-completo`.
-- Consultar el log si Antonio pregunta por el estado del fix.
+## 👁️ Vigilancia del fix del timeline — RETIRADA (12/10/2026)
+El vigilante `check-timeline-fix.sh` + su timer `check-timeline-fix.timer` se **retiraron el 12/10/2026**:
+el PR #26861 (fix del timeline) quedó **cerrado sin mergear el 10/10/2026** y no hay nada más que vigilar.
+`timeline-completo` **sigue siendo necesario** (el límite de ~6 peticiones de la TUI no se ha arreglado).
 
 ## 🐞 Vigilancia del issue #39164 — RETIRADA (12/10/2026)
 El vigilante `check-fix.sh` + su timer `check-opencode-fix.timer` se **retiraron el 12/10/2026**.

@@ -1,6 +1,0 @@
-[Unit]
-Description=Check OpenCode PR #26861 (timeline fix) status
-
-[Service]
-Type=oneshot
-ExecStart=/home/antonio/.config/opencode/check-timeline-fix.sh

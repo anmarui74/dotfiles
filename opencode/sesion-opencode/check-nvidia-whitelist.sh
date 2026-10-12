@@ -132,7 +132,7 @@ except Exception:
 # ------------------------------------------------------------
 full_test_new_model() {
     local model="$1"
-    local payload result code ct seconds tc toks
+    local payload result code ct seconds toks
     local tool_payload tool_result tool_code tool_tc
 
     # Paso A: velocidad — generación real de texto SIN tools
@@ -149,7 +149,6 @@ full_test_new_model() {
     ct="${rest%%|*}"
     rest="${rest#*|}"
     seconds="${rest%%|*}"
-    tc="${rest##*|}"
 
     if [ "$code" != "200" ]; then
         case "$code" in

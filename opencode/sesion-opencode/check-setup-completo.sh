@@ -95,7 +95,6 @@ archivos = {
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
     'hardware-query.py': 'HARDWARE-QUERY_PYEOF',
-    'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
     'check-nvidia-whitelist.sh': 'NVIDIA-WL_SHEOF',
     'check-mega-pr.sh': 'MEGA-PR_SHEOF',
     'lmstudio-proxy.py': 'LMPROXYEOF', 'lmstudio-metrics-server.py': 'METRICSSRVEOF',

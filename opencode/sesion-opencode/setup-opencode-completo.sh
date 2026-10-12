@@ -1157,73 +1157,6 @@ StandardError=append:/home/antonio/.config/opencode/data/init.log
 WantedBy=default.target
 INITSEOF
 
-# ─── Vigilancia del fix del timeline (PR #26861) ───
-cat > "$DIR_CONFIG/check-timeline-fix.sh" << 'TIMELINE-FIX_SHEOF'
-#!/usr/bin/env bash
-# ============================================================
-# check-timeline-fix.sh — Vigila el PR #26861 de OpenCode
-# (fix del timeline: historial completo en la TUI)
-#
-# Consulta el estado del PR en GitHub. Si está MERGEADO,
-# avisa para que podamos retirar el script timeline-completo.
-# Se ejecuta automáticamente vía systemd timer.
-# ============================================================
-
-LOG_FILE="$HOME/.config/opencode/data/timeline-fix.log"
-PR_URL="https://api.github.com/repos/anomalyco/opencode/pulls/26861"
-
-log() {
-    echo "[$(date '+%d/%m/%Y %H:%M:%S')] $*" >> "$LOG_FILE"
-}
-
-# Consultar el estado del PR
-STATUS=$(curl -s --max-time 10 "$PR_URL" 2>/dev/null | python3 -c "
-import json,sys
-try:
-    d = json.load(sys.stdin)
-    state = d.get('state', 'unknown')
-    merged = d.get('merged_at')
-    title = d.get('title', '')
-    if merged:
-        print(f'MERGEADO|{merged}|{title}')
-    else:
-        print(f'{state}|-|{title}')
-except Exception:
-    print('ERROR|-|-')
-" 2>/dev/null)
-
-if [ -z "$STATUS" ] || [ "$STATUS" = "ERROR|-|-" ]; then
-    log "⚠️ No se pudo consultar GitHub (sin conexión o API caída)"
-    exit 0
-fi
-
-STATE="${STATUS%%|*}"
-REST="${STATUS#*|}"
-MERGED="${REST%%|*}"
-
-case "$STATE" in
-    MERGEADO)
-        log "🎉 ¡EL PR #26861 SE HA MERGEADO! Fecha: $MERGED"
-        log "👉 Ya se puede retirar el script timeline-completo."
-        log "👉 Comprobar si la nueva versión de OpenCode incluye el fix."
-        # Notificación de escritorio (opcional, si hay notify-send)
-        if command -v notify-send >/dev/null 2>&1; then
-            notify-send -u normal "OpenCode: fix del timeline mergeado" \
-                "El PR #26861 se ha mergeado ($MERGED). Ya puedes dejar de usar timeline-completo." 2>/dev/null || true
-        fi
-        ;;
-    open)
-        log "🔍 PR #26861 sigue ABIERTO (sin mergear). Se mantiene timeline-completo."
-        ;;
-    closed)
-        log "ℹ️ PR #26861 CERRADO sin mergear. Se mantiene timeline-completo."
-        ;;
-    *)
-        log "⚠️ Estado desconocido del PR: $STATE"
-        ;;
-esac
-TIMELINE-FIX_SHEOF
-chmod +x "$DIR_CONFIG/check-timeline-fix.sh"
 # ─── Verificación automática del whitelist NVIDIA (cada 15 días) ───
 cat > "$DIR_CONFIG/check-nvidia-whitelist.sh" << 'NVIDIA-WL_SHEOF'
 #!/usr/bin/env bash
@@ -1360,7 +1293,7 @@ except Exception:
 # ------------------------------------------------------------
 full_test_new_model() {
     local model="$1"
-    local payload result code ct seconds tc toks
+    local payload result code ct seconds toks
     local tool_payload tool_result tool_code tool_tc
 
     # Paso A: velocidad — generación real de texto SIN tools
@@ -1377,7 +1310,6 @@ full_test_new_model() {
     ct="${rest%%|*}"
     rest="${rest#*|}"
     seconds="${rest%%|*}"
-    tc="${rest##*|}"
 
     if [ "$code" != "200" ]; then
         case "$code" in
@@ -1835,7 +1767,6 @@ archivos = {
     'start-lmstudio.sh': 'LMSEOF', 'start-opencode-server.sh': 'STARTEOF',
     'start-opencode.sh': 'OPENCODEEOF', 'hardware-query.sh': 'HARDWARE-QUERY_SHEOF',
     'hardware-query.py': 'HARDWARE-QUERY_PYEOF',
-    'check-timeline-fix.sh': 'TIMELINE-FIX_SHEOF',
     'check-nvidia-whitelist.sh': 'NVIDIA-WL_SHEOF',
     'check-mega-pr.sh': 'MEGA-PR_SHEOF',
     'lmstudio-proxy.py': 'LMPROXYEOF', 'lmstudio-metrics-server.py': 'METRICSSRVEOF',
@@ -1953,7 +1884,6 @@ fi
 CHECK-SETUP_SHEOF
 chmod +x "$DIR_CONFIG/check-setup-completo.sh"
 info "check-setup-completo.sh creado (verifica el setup antes de cada backup)"
-info "check-timeline-fix.sh creado (vigila PR #26861)"
 
 # ─── Proxy MCP fetch: elimina la capability "resources" no implementada ───
 cat > "$DIR_CONFIG/mcp-fetch-fix.js" << 'MCPFIXEOF'
@@ -2017,28 +1947,6 @@ MCPFIXEOF
 chmod +x "$DIR_CONFIG/mcp-fetch-fix.js"
 info "mcp-fetch-fix.js creado (proxy del MCP fetch)"
 
-cat > "$HOME/.config/systemd/user/check-timeline-fix.service" << 'TLSERVEOF'
-[Unit]
-Description=Check OpenCode PR #26861 (timeline fix) status
-
-[Service]
-Type=oneshot
-ExecStart=/home/antonio/.config/opencode/check-timeline-fix.sh
-TLSERVEOF
-
-cat > "$HOME/.config/systemd/user/check-timeline-fix.timer" << 'TLTIMEREOF'
-[Unit]
-Description=Check OpenCode timeline fix (PR #26861) every 3 days
-
-[Timer]
-OnCalendar=*-*-* 10:00:00
-OnUnitActiveSec=3d
-RandomizedDelaySec=30m
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-TLTIMEREOF
 cat > "$HOME/.config/systemd/user/check-nvidia-whitelist.service" << 'NVIDIAWL-SERVEOF'
 [Unit]
 Description=Check NVIDIA whitelist status (models 410 Gone / new candidates)
@@ -2096,10 +2004,9 @@ systemctl --user disable init-opencode.service 2>/dev/null || true
 systemctl --user enable opencode-sync.timer 2>/dev/null || true
 systemctl --user start opencode-sync.timer 2>/dev/null || true
 systemctl --user enable --now sync-obsidian.path 2>/dev/null || true
-systemctl --user enable --now check-timeline-fix.timer 2>/dev/null || true
 systemctl --user enable --now check-nvidia-whitelist.timer 2>/dev/null || true
 systemctl --user enable --now check-mega-pr.timer 2>/dev/null || true
-info "Servicios systemd: sync activado, init deshabilitado, check-timeline-fix, check-nvidia-whitelist y check-mega-pr activados"
+info "Servicios systemd: sync activado, init deshabilitado, check-nvidia-whitelist y check-mega-pr activados"
 echo ""
 
 # ═══════════════════════════════════════════════════════════
@@ -2502,7 +2409,7 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
         (opencode.json, opencode-local.json, opencode-cloud.json, cli.json,
         AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
-        hardware-query, check-timeline-fix, check-nvidia-whitelist,
+        hardware-query, check-nvidia-whitelist,
         hardware-query.py, lmstudio-proxy.py, backup-opencode, bootstrap-ocv,
         timeline-completo)
         — no solo los JSON
@@ -2592,7 +2499,7 @@ Mismo formato para `memory_create_relations`: cada relación necesita `from`, `t
 ## 🕐 Timeline completo de sesiones (script timeline-completo)
 El timeline de la TUI de OpenCode (Ctrl+X G) SOLO muestra las últimas ~6 peticiones
 (límite hardcodeado; se propuso el PR #26861 para arreglarlo, pero se CERRÓ sin mergear
-el 11/10/2026, así que `timeline-completo` sigue siendo necesario).
+el 10/10/2026, así que `timeline-completo` sigue siendo necesario).
 Para ver el historial COMPLETO de cualquier sesión, usar el script:
 ```
 ~/.local/bin/timeline-completo
@@ -2605,15 +2512,10 @@ Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3).
 TODAS las peticiones de Antonio están guardadas ahí aunque la TUI no las muestre.
 Cuando Antonio pregunte por su historial/timeline de peticiones, usa este script.
 
-## 👁️ Vigilancia del fix del timeline (timer systemd)
-El script `~/.config/opencode/check-timeline-fix.sh` comprueba si el PR #26861
-de OpenCode (fix del timeline) se ha mergeado. Se ejecuta automáticamente a
-diario a las 10:00 vía el timer systemd `check-timeline-fix.timer` y registra el
-resultado en `~/.config/opencode/data/timeline-fix.log`.
-- Si el PR se mergea: se avisa (log + notificación) para retirar timeline-completo.
-- Si el PR se cierra sin mergear (ocurrió el 11/10/2026): se registra y se mantiene
-  `timeline-completo`.
-- Consultar el log si Antonio pregunta por el estado del fix.
+## 👁️ Vigilancia del fix del timeline — RETIRADA (12/10/2026)
+El vigilante `check-timeline-fix.sh` + su timer `check-timeline-fix.timer` se **retiraron el 12/10/2026**:
+el PR #26861 (fix del timeline) quedó **cerrado sin mergear el 10/10/2026** y no hay nada más que vigilar.
+`timeline-completo` **sigue siendo necesario** (el límite de ~6 peticiones de la TUI no se ha arreglado).
 
 ## 🐞 Vigilancia del issue #39164 — RETIRADA (12/10/2026)
 El vigilante `check-fix.sh` + su timer `check-opencode-fix.timer` se **retiraron el 12/10/2026**.
