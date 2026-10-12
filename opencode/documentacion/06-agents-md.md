@@ -61,7 +61,7 @@ El archivo se organiza en **5 bloques** (el contenido ha crecido con la migraci�
 
 2. PROCEDIMIENTOS TÉCNICOS
    ├── OpenCode V2 (2.0.x): cambios importantes (config, plugins TUI, voz, sintaxis, LSP…)
-   ├── Sincronización con Config/opencode (estructura ordenada)
+   ├── Sincronización con Config/opencode (estructura + fidelidad de manuales)
    └── Atención a setup-opencode-completo.sh
 
 3. PERSISTENCIA DE DATOS Y RECUPERACIÓN
@@ -236,7 +236,7 @@ AGENTS.md documenta la migración de V1 (1.18.x) a **V2 (2.0.x)**:
 - LSP: V2 **no ejecuta** servidores LSP (bloque retirado; usar `basedpyright`, `tsc --noEmit`, `shellcheck`… por terminal).
 - `instructions` retirado (V2 no carga sus entradas); `AGENTS.md` se **autodescubre**.
 
-### Sincronización con Config/opencode (líneas 259-364) — OBLIGATORIO
+### Sincronización con Config/opencode (líneas 259-377) — OBLIGATORIO
 
 Explica el **sistema de dos directorios**:
 
@@ -263,7 +263,13 @@ Explica el **sistema de dos directorios**:
 detecta** (busca formas de API key, no contraseñas sueltas): la comprobación aparte es
 `find ~/Documentos/dotfiles -name 'service.json*'`, que debe salir **vacío**.
 
-### Atención a setup-opencode-completo.sh (líneas 365-416) — IMPORTANTE
+#### 📝 Fidelidad de los manuales y espejo en Obsidian (líneas 365-377)
+
+- **Espejo en Obsidian (automático):** `sync-opencode.sh` ejecuta `sync-obsidian.sh` en cada ciclo (30 min) y la unidad `sync-obsidian.path` al guardar un manual → cualquier cambio en `documentacion/*.md` llega solo al vault.
+- **Revisión de fidelidad (manual/recomendada):** comprobar que los manuales reflejen la config actual (versión, puertos, modelos/agentes, rutas, unidades systemd, estados de PR/issues, claves).
+- **El backup solo verifica los heredocs embebidos** (`AGENTS.md`, `documentacion/hardware-info.md`, `documentacion/README-hardware.md`); el resto de manuales no se revisan solos.
+
+### Atención a setup-opencode-completo.sh (líneas 378-429) — IMPORTANTE
 
 Este script es el **instalador completo embebido**. Contiene toda la configuración dentro de sí mismo (es un script autocontenido).
 
@@ -277,7 +283,7 @@ Este script es el **instalador completo embebido**. Contiene toda la configuraci
 
 ## Sección 3: PERSISTENCIA DE DATOS Y RECUPERACIÓN
 
-### Variables de entorno (líneas 417-422)
+### Variables de entorno (líneas 430-435)
 
 ```bash
 set -a; source /home/antonio/.config/opencode/.env; set +a
@@ -286,7 +292,7 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 - Usa `set -a` para exportar automáticamente todas las variables
 - El `.env` contiene credenciales y rutas sensibles
 
-### Inicialización tras reinicio (líneas 423-436)
+### Inicialización tras reinicio (líneas 436-449)
 
 ```bash
 bash /home/antonio/.config/opencode/init-opencode.sh
@@ -299,7 +305,7 @@ Verifica:
 4. **PWAs** en el Escritorio
 5. **Variables de entorno** (.env)
 
-### Backup del grafo de memoria (líneas 437-454)
+### Backup del grafo de memoria (líneas 450-467)
 
 ```
 Directorio: /home/antonio/Config/opencode/backups/
@@ -309,7 +315,7 @@ Retención:  30 días
 
 El grafo de memoria es un archivo **JSONL** (una línea JSON por entidad) que contiene todas las entidades, observaciones y relaciones que el asistente ha aprendido.
 
-### Recuperación del grafo (líneas 455-470)
+### Recuperación del grafo (líneas 468-483)
 
 Si el grafo se pierde o corrompe:
 
@@ -322,7 +328,7 @@ cp /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl \
    /home/antonio/.config/opencode/data/memory/memory.jsonl
 ```
 
-### Recordatorio MCP memory (líneas 471-481) — IMPORTANTE
+### Recordatorio MCP memory (líneas 484-494) — IMPORTANTE
 
 Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observación**
 del array DEBE incluir el campo `entityName` junto a `contents`. Si falta `entityName`,
@@ -338,7 +344,7 @@ el MCP devuelve error `-32602` (Input validation error). Formato correcto:
 > de omitir `entityName` al usar las herramientas de memoria. Mismo formato para
 > `memory_create_relations` (cada relación necesita `from`, `to`, `relationType`).
 
-### Timeline completo (líneas 482-497)
+### Timeline completo (líneas 495-510)
 
 La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado;
 el PR #26861 se cerró sin mergear el 10/10/2026, así que `timeline-completo` sigue siendo
@@ -358,7 +364,7 @@ de Antonio están guardadas ahí aunque la TUI no las muestre.
 
 El vigilante `check-timeline-fix.sh` + su timer se **retiraron el 12/10/2026**: el PR #26861 quedó cerrado sin mergear el **10/10/2026**. `timeline-completo` sigue siendo necesario.
 
-### Directorios de datos (líneas 533-543)
+### Directorios de datos (líneas 540-550)
 
 | Directorio | Contenido |
 |------------|-----------|
@@ -373,7 +379,7 @@ El vigilante `check-timeline-fix.sh` + su timer se **retiraron el 12/10/2026**: 
 
 Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otros modelos que puedan necesitar instrucciones más detalladas para tareas específicas.
 
-### PWAs - Abrir (líneas 544-548)
+### PWAs - Abrir (líneas 551-555)
 
 ```
 1. Leer /home/antonio/Escritorio
@@ -383,7 +389,7 @@ Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otr
 
 Las PWAs (Progressive Web Apps) se instalan como accesos directos en el Escritorio con nombres como `chrome-<app-id>-Profile_2.desktop`. La línea `Exec=` contiene el comando completo para lanzarlas.
 
-### PWAs - Cerrar (líneas 549-552)
+### PWAs - Cerrar (líneas 556-559)
 
 ```bash
 # Cerrar una PWA específica
@@ -395,7 +401,7 @@ pkill -f "chrome.*remote-debugging-port"
 
 Usa el puerto de depuración remota (9222) para comunicarse con Chrome.
 
-### Chrome debug (líneas 553-555)
+### Chrome debug (líneas 560-562)
 
 ```bash
 nohup /opt/google/chrome/google-chrome \
@@ -408,7 +414,7 @@ nohup /opt/google/chrome/google-chrome \
 
 Lanza Chrome en modo depuración con un perfil temporal, necesario para controlar PWAs remotamente.
 
-### Carga automática al abrir opencode/ocv (líneas 556-571)
+### Carga automática al abrir opencode/ocv (líneas 563-578)
 
 Al ejecutar `opencode` u `ocv`, el lanzador `start-opencode-server.sh` carga automáticamente:
 
@@ -420,7 +426,7 @@ El servicio systemd `init-opencode.service` está **DESHABILITADO** (no carga el
 
 > 📌 **Perfil cloud:** `ocv-cloud`/`opencode-cloud` exporta `SKIP_LMSTUDIO=1`, por lo que `start-opencode-server.sh` NO carga el modelo local en VRAM.
 
-### Perfiles por lanzador (líneas 572-595)
+### Perfiles por lanzador (líneas 579-602)
 
 Cada comando usa **SU archivo de config** vía `OPENCODE_CONFIG`. Nada se copia nunca sobre `opencode.json`:
 
@@ -439,14 +445,14 @@ catálogo real vía `GET /v1/models` (el catálogo `models.dev` está desactuali
 → velocidad (≥ 10 tok/s) → **tool calling obligatorio** → reintentos de 429/500/503. Detalle
 completo en [04-perfiles-opencode-json.md](04-perfiles-opencode-json.md) y en el grafo de memoria.
 
-### Iniciar LM Studio manualmente (líneas 632-637)
+### Iniciar LM Studio manualmente (líneas 639-644)
 
 ```bash
 bash /home/antonio/.config/opencode/start-lmstudio.sh      # servidor + modelo + proxy
 bash /home/antonio/.config/opencode/start-lmstudio-server.sh  # solo servidor + proxy
 ```
 
-### Liberar VRAM (líneas 638-643)
+### Liberar VRAM (líneas 645-650)
 
 Si el modelo se satura, usar:
 

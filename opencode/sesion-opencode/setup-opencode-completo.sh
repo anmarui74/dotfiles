@@ -2379,6 +2379,19 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
      `check-setup-completo.sh` compara su heredoc `.env` con el `.env` activo y fallaría.
      Solo se sanea la **copia de dotfiles**. Verificar con el paso 2 antes de commitear.
 
+### 📝 Fidelidad de los manuales y espejo en Obsidian (OBLIGATORIO)
+- **Espejo en Obsidian (AUTOMÁTICO):** `sync-opencode.sh` ejecuta `sync-obsidian.sh` en cada ciclo
+  (cada 30 min, y con él el backup), y la unidad `sync-obsidian.path` lo lanza al guardar un manual.
+  Así que **cualquier cambio en `documentacion/*.md` se refleja solo en el vault**; no hay que lanzarlo a mano.
+- **Revisión de fidelidad (recomendada en cada backup "grande" o cambio relevante):** comprobar que los
+  manuales de `documentacion/` **reflejen la configuración actual** (versión de OpenCode y paquetes,
+  puertos, modelos/agentes, rutas, unidades systemd, timers, estados de PR/issues, listas de claves).
+  Si algo está desfasado, corregirlo (respetando la plantilla de manuales) y el espejo lo propagará.
+- **Qué verifica el backup solo y qué NO:** `check-setup-completo.sh` (que corre en cada backup) compara
+  únicamente los **heredocs embebidos == archivos activos**; de documentación solo embebe/compara
+  `AGENTS.md`, `documentacion/hardware-info.md` y `documentacion/README-hardware.md`. El **resto de manuales
+  NO se revisan solos** → su fidelidad depende de la revisión anterior.
+
 ## Atención al script setup-opencode-completo.sh (IMPORTANTE)
 El script `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh` es el
 INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por tanto:
