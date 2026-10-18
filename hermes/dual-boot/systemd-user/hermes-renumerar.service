@@ -1,0 +1,8 @@
+[Unit]
+Description=Renumera el orden de las sesiones de Hermes (display_order) para el dual boot
+# El script vive en el disco compartido: sin esto el timer puede dispararse antes de que el NTFS
+# esté montado y la pasada falla en silencio (mismo caso que la unidad de import, 29/09/2026).
+RequiresMountsFor=/mnt/seagate
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /mnt/seagate/HermesSync/scripts/fusionar-mensajes.py --aplicar --sin-orientacion

@@ -1,0 +1,63 @@
+# WhatsApp de Hermes — perfil dedicado y compartido (Linux + Windows)
+
+Este directorio guarda las herramientas del **dispositivo dedicado de Hermes para
+WhatsApp Web**. No tiene nada que ver con el perfil de Chrome de Antonio: es un perfil
+propio, vacío, creado solo para esto, y vinculado UNA vez escaneando un QR.
+
+## Dónde vive la sesión
+
+En el disco compartido del dual boot, para que los dos sistemas usen la MISMA sesión
+(no gasta dos huecos de los cuatro dispositivos vinculados):
+
+```
+Linux:    /mnt/seagate/HermesSync/whatsapp-perfil
+Windows:  <letra>:\HermesSync\whatsapp-perfil      (la letra cambia: localizar por la
+                                                    etiqueta SEAGATE o por el marcador
+                                                    HermesSync\.hermes-sync)
+```
+
+Nunca deben usarlo los dos sistemas a la vez (no están encendidos a la vez, así que no
+pasa); y solo uno de ellos debe tener el navegador abierto sobre el perfil en cada momento.
+
+## Cómo se usa
+
+**Norma de uso:** se abre **oculto** (sin ventana) y se cierra al terminar. Antonio usa su
+propio WhatsApp Web en su Chrome; este perfil solo se levanta cuando Hermes necesita leer
+algo. La ventana visible es solo para vincular o desvincular con un QR.
+
+**Linux:**
+
+```bash
+whatsapp-hermes                # oculto (--headless=new), para leer por CDP
+whatsapp-hermes --visible      # con ventana (solo para escanear el QR)
+python3 ~/Config/hermes/dual-boot/windows/whatsapp/wa-leer.py            # lista de chats
+python3 .../wa-leer.py --abrir Papa -n 20                                # últimos mensajes
+# cerrar: python3 -c "import json,urllib.request,websocket; ..." o simplemente
+#         pkill -f 'whatsapp-perfil'
+```
+
+**Windows:**
+
+```powershell
+# oculto (por defecto): para que el agente lea por CDP
+powershell -ExecutionPolicy Bypass -File whatsapp-hermes.ps1
+# con ventana: solo para escanear el QR
+powershell -ExecutionPolicy Bypass -File whatsapp-hermes.ps1 -Visible
+python wa-leer.py            # lista de chats
+python wa-leer.py --abrir Papa -n 20
+```
+
+La depuración (CDP) queda en `http://127.0.0.1:9222` mientras el navegador está abierto,
+solo en local, y desaparece al cerrarlo. `wa-leer.py` necesita `websocket-client`
+(`pip install --user websocket-client`); usa el python de Hermes si el del sistema no lo tiene.
+
+## Reglas
+
+- Si WhatsApp pide **QR** en el perfil compartido, NO escanearlo sin avisar: si se vincula
+  desde el otro sistema se crea un dispositivo distinto y se mezclan dos identidades en el
+  mismo perfil. Avisar y decidir antes.
+- Leer mensajes desde aquí **marca como leídos** y deja de avisar en el móvil.
+- Automatizar WhatsApp Web va contra sus condiciones de uso: riesgo bajo pero real
+  (posible bloqueo de la cuenta). Usarlo para lecturas puntuales.
+- Antes de copiar el perfil a otro sitio, cerrar el navegador: los LevelDB del perfil
+  (IndexedDB/Local Storage) no se deben copiar en caliente.

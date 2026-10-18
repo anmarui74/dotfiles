@@ -209,6 +209,7 @@ Unidades de usuario del esquema (copia en `~/Config/hermes/units/`; las del dual
 | `hermes-nvidia-aliases.path` + `.service` | recompone los alias NVIDIA cuando cambia el whitelist de OpenCode |
 | `hermes-ready-notify.service` | aviso por Telegram cuando el gateway está listo (sección propia más abajo) |
 | `hermes-dual-sync-{import,export,apagado}.service` + `.timer` | estado compartido con Windows (ver «Dual boot») |
+| `hermes-renumerar.service` + `hermes-renumerar.timer` | renumera el orden de las sesiones cada minuto (`display_order`) para que la app no «corte» la conversación (ver «Dual boot») |
 | `hermes-gateway.service` | **del propio Hermes**, no del esquema: la recrea `hermes gateway install` |
 
 ```bash
@@ -524,13 +525,18 @@ barge-in llamaban a `stop_playback()`), así que el audio seguía sonando. Se ar
   reintentó, 2 = no llegó a sonar).
 - **Después de cada `hermes update`**: el actualizador autostashea los cambios locales y los
   restaura, pero un conflicto puede dejarlos aparcados. Comprobar con `hermes-parche-ctrlq estado`.
-- **Re-porte tras un salto grande de versión** (07/10/2026, salto a `main 0e219331`): el parche
-  guardado puede dejar de aplicar en `cli_tui_mixin.py` (lo rompe el refactor
-  `from agent.interrupt_compat import request_hard_interrupt`; `voice_mode.py` aplica con
-  desplazamiento). El válido para el código nuevo es el que ya portó Windows:
-  `HermesSync/windows/parches/ctrl-q-80309111b4.patch` (sha256 `8994c93c…`), copiado sobre
-  `parches/ctrl-q-corta-audio.patch`; el anterior queda como
-  `parches/ctrl-q-corta-audio-6590f13.patch`. Comprobar antes en un `git worktree` de prueba.
+- **Re-porte tras un salto grande de versión**: el parche guardado puede dejar de aplicar en
+  `cli_tui_mixin.py` (lo rompen los refactors de esa zona; `voice_mode.py` aplica con
+  desplazamiento). Hay dos re-portes documentados:
+  - **07/10/2026** (salto a `main 0e219331`, refactor
+    `from agent.interrupt_compat import request_hard_interrupt`): el válido lo portó Windows,
+    `HermesSync/windows/parches/ctrl-q-80309111b4.patch` (sha256 `8994c93c…`); el anterior quedó
+    como `parches/ctrl-q-corta-audio-6590f13.patch`.
+  - **14/10/2026** (tras el update a 0.22.2): el vigente pasó a ser
+    `parches/ctrl-q-corta-audio.patch` (sha256 `5303bfcb…`), con copia histórica en
+    `parches/ctrl-q-corta-audio-e06df9c.patch`. Se publicó a Windows como
+    `HermesSync/windows/parches/ctrl-q-d923a5eb48.patch` (mismo sha; `commit-parche.txt` =
+    `d923a5eb48`). Comprobar antes en un `git worktree` de prueba.
 - Si algún día el arreglo entra aguas arriba, se revierte el parche y este apartado se borra.
 - **Arreglo propuesto aguas arriba**: PR **abierto** en `NousResearch/hermes-agent` (#128385, rama
   `fix/cli-interrupt-cuts-tts`), que corta la locución en Ctrl+C y Ctrl+Q y hace que un corte
@@ -547,6 +553,10 @@ cron, kanban) a través de la carpeta `HermesSync/` del disco SEAGATE
 (`/mnt/seagate/HermesSync` en Linux, `D:\HermesSync` en Windows — la letra puede cambiar entre
 sesiones: **identificar el volumen por su marca `SEAGATE`**). Nunca están encendidos a
 la vez, así que la regla es **el último que publica manda**, con historial y copia previa.
+
+- **Definición original del encargo**: `definicion-encargo-dual-boot.html` (la pega de Antonio del
+  13/10/2026, con los tres objetivos: saber en qué sistema se está antes de leer nada, no perder
+  conversaciones al reiniciar y que cada Hermes toque solo su propio sistema).
 
 | Pieza | Linux | Windows |
 |---|---|---|
@@ -655,6 +665,91 @@ Pitfalls que ya han mordido:
 
 ---
 
+### Lo que cambió el 14/10/2026
+
+Cuatro fallos con la misma forma —«se creía que estaba bien y nadie lo veía»—, corregidos en los dos
+motores y con prueba en `dual-boot/pruebas/` (montan laboratorios en scratch y ejecutan el motor real):
+
+- **El import ya no sustituye `state.db`, lo integra**: fusiona con `scripts/fusionar-mensajes.py
+  --aplicar`, así que lo escrito aquí que aún no había viajado se conserva. Antes copiaba la base en
+  bloque y lo local se perdía en silencio (el fusionador del arranque solo puede traer lo del otro;
+  nunca devuelve lo borrado). Prueba: `prueba-import.sh`.
+- **El `SOUL.md` del otro ya no se pisa**: si difiere (comparando sin contar CRLF/LF) se archiva como
+  `SOUL.md.de-<equipo>` en el backup previo del import y se avisa. Norma: en `SOUL.md` solo reglas
+  comunes y neutras; lo local, fuera de ahí. Sigue viajando porque es el único fichero que Hermes
+  carga en **cada** sesión.
+- **La publicación ya no sale corta en silencio**: si la copia de `state.db` lleva menos mensajes que
+  la base viva se reintenta y, si sigue corta, el motor **aborta** (antes publicaba igual con un
+  aviso). Así viajó una vez un estado 2 mensajes corto: el `MANIFEST` se calcula sobre la propia
+  copia, de modo que cuadraba consigo mismo. Prueba: `prueba-copia-corta.sh`.
+- **Veredicto automático**: `orientar.py --veredicto` (código 0/1) sobre disco compartido, estado del
+  otro sin integrar, motor propio sin publicar desde hace más de 30 min y salud del perfil. El aviso
+  de arranque solo escribe la línea en Telegram **cuando hay algo mal** (y siempre en
+  `logs/arranque-linux.log`).
+
+### Poda del historial del dual boot
+
+`historial/<equipo>/` guarda la publicación del otro sistema antes de cada importación; cada
+publicación son varios ficheros del mismo instante (`<epoch>-state.db`, `-state.db.gz`,
+`-resto.zip`, `-resto.tar.gz`).
+
+**Regla (13/10/2026, idéntica en los dos motores):** se conservan **15 publicaciones** por equipo
+(`RETENCION=15`) y **nunca se borra nada con menos de 7 días** (`DIAS_MIN_PODA=7`); se borra la
+publicación **completa** (media copia no restaura) y la **última nunca se toca**. Se aplica en cada
+publicación del motor, y a mano con `podar-historico.sh` (admite `--simular`).
+
+Tres fallos corregidos el 14/10/2026 (el mecanismo se creía correcto en los tres casos):
+
+- `~/.config/hermes-dual-sync.conf` (de septiembre) traía **`RETENCION=5`** y **sobrescribía** el 15
+  del script: la poda conservaba 5 publicaciones, no 15. El `.conf` manda: mirarlo antes que el script.
+- El motor de Windows no aplicaba esta regla (borraba patrón a patrón con `-Skip 5` y sin mínimo de
+  días) y dejaba **medias publicaciones**; ahora aplica la misma regla que Linux.
+- `rm -f` **no borra directorios** (un `resto` descomprimido sobrevive siempre) y Windows ni los veía:
+  ahora `rm -rf` y `Remove-Item -Recurse -Force`.
+
+Prueba: `dual-boot/pruebas/prueba-poda.sh` (historial sintético de 21 publicaciones) → 21 → 15, nada
+de menos de 7 días tocado, la última intacta y el directorio borrado. Y lo que **no** hay que
+«arreglar»: las publicaciones que siguen en `historial/` no están por un formato que la poda no
+entienda (borra por prefijo de epoch, mire la extensión) sino porque cumplen la regla de los 7 días.
+
+### Fusión de conversaciones del dual boot (13/10/2026)
+
+Antonio lo pidió así: «siempre que se inicie Hermes comprueba que todas las conversaciones estén al
+día». Lo hace un **hook propio** (`~/.hermes/hooks/fusionar-mensajes/`, evento `gateway:startup`),
+**no** un encargo: los encargos se ejecutan una sola vez (quedan en `encargos-hechos.json`) y esto
+tiene que correr en cada arranque. El hook lanza, **en un hilo aparte**, el fusionador
+(`/mnt/seagate/HermesSync/scripts/fusionar-mensajes.py --aplicar`): el arranque nunca se bloquea.
+
+Qué hace, por sesión: **crea las sesiones que falten** enteras · añade los mensajes que falten
+**comparando por contenido** (rol + texto, 1 s de tolerancia: así es imposible duplicar) · borra las
+**copias repetidas** (mismo rol, texto e instante) · renumera el orden por fecha. Copia previa,
+`integrity_check` y *rollback* si falla; idempotente (si está al día, no toca nada).
+
+- **El renumerado corre también cada minuto**, no solo al arrancar: `hermes-renumerar.service` +
+  `hermes-renumerar.timer` (`OnBootSec=1min`, `OnUnitActiveSec=1min`, copia en
+  `dual-boot/systemd-user/`) ejecutan el fusionador con `--aplicar --sin-orientacion`. Sin esto el
+  descuadre se rehace con cada mensaje nuevo y la conversación vuelve a verse cortada en la app a los
+  pocos minutos.
+- **Comprobar SIEMPRE en qué sistema se está corriendo** antes de usar rutas o lanzar comandos
+  (`uname -s`, `$HOME`). Antonio lo señaló el 13/10/2026: asumirlo rompe justo lo que pide — «no leer
+  la información que deja la contraparte» — y pasó en las dos sesiones (un `powershell.exe` desde
+  Linux y rutas `/mnt/...` desde Windows). El import automático sí funciona: el log del motor dice
+  el host y la hora (`Importando estado de 'PC-ANTONIO' publicado el ...` → `✅ Importado`); si algo
+  no se ha leído, mirar ahí antes de sospechar del otro sistema.
+- **Primer paso de cada sesión**: `python /mnt/seagate/HermesSync/scripts/orientar.py` (en Windows:
+  `python D:\HermesSync\scripts\orientar.py`). Imprime en un tirón el sistema, las rutas válidas de
+  este lado, quién publicó y cuándo, la última importación y el último resultado del hook de
+  conversaciones. Es lo que evita trabajar con las rutas del sistema equivocado.
+- Por qué existe: el import trae sesiones que falten, pero **no** los mensajes nuevos de una sesión
+  que ya existe en los dos lados, y las filas insertadas a mano volvían al otro sistema como copias
+  (**456 copias en 8 sesiones** desde el 28/09, que Antonio veía como «faltan cosas de las
+  conversaciones»). Comparar por (instante, rol) no basta.
+- ⚠️ Al escribir desde Windows en la partición de Linux (`F:\@home\...`), los ficheros quedan con
+  dueño `nobody` y hay que devolverlos a `antonio` con `pkexec chown` antes de que Linux los lea.
+- Log: `~/Config/hermes/logs/fusionar-mensajes.log`. A mano:
+  `/mnt/seagate/HermesSync/scripts/fusionar-mensajes.py` (simulación) o `--aplicar`.
+- Detalle completo: `HermesSync/NOTA-FUSION-CONVERSACIONES.md`.
+
 ## Herramientas propias: parche del CLI, unidades systemd y atajos
 
 Todo lo que se montó a mano vive en la raíz de `~/Config/hermes/` y entra en los dos destinos
@@ -718,7 +813,8 @@ Las skills viven en `~/.hermes/skills/` (entran en el backup). Las de autoría l
 `hermes-voz-local-gpu`, `hermes-local-surfaces`, `hermes-gateway-startup-alert`,
 `hermes-upstream-pr`, `hermes-auditoria-sesiones`, `hermes-event-hooks` (hooks de evento y
 arranque), `hermes-diagnostico-arranque` (errores y avisos al arrancar Hermes),
-`hermes-actualizaciones` (actualizar Hermes y depurar su arranque) y `modelos-locales-dimensionado`.
+`hermes-actualizaciones` (actualizar Hermes y depurar su arranque), `hermes-perfil-real-navegador`
+(cuando una web pide sesión en el navegador real) y `modelos-locales-dimensionado`.
 Son la memoria operativa del esquema: ante una
 tarea de Hermes se carga la skill correspondiente antes de improvisar.
 

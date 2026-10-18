@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 📜 Reglas del sistema | 10/09/2026 · rev. 10/09/2026 | Antonio |
+| 📜 Reglas del sistema | 10/09/2026 · rev. 18/10/2026 | Antonio |
 
 > Instrucciones del sistema que OpenCode carga al inicio de cada sesión.
 > Esta versión documenta el **equivalente en Windows** (PowerShell 5.1) del
@@ -629,10 +629,14 @@ Es una **auto-verificación** que el asistente debe repasar mentalmente antes de
 
 Si quieres modificar AGENTS.md en Windows:
 
-1. Edita `C:\Users\evo01\.config\opencode\AGENTS.md`
-2. **Copia** a `D:\Linux\Config\opencode-win\AGENTS.md` (sincronización)
-3. **Actualiza** el instalador `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1` para que incluya los cambios
-4. **Regenera** la copia de seguridad con `Copy-Item` / `Compress-Archive`
+1. Edita `C:\Users\evo01\.config\opencode\AGENTS.md` (el activo: es el único que se toca a mano).
+2. **Sincroniza** con `scripts\sync-opencode.ps1` (o con el backup completo, que lo llama). Deja el fichero
+   en los **dos** destinos del esquema: `config\AGENTS.md` (el desplegable, el que usa el instalador) y
+   `AGENTS.md` en la raíz (espejo plano, lo exige `check-setup-completo.ps1`). **Ya no hay que copiar a mano.**
+3. **Actualiza**, si el cambio afecta a la instalación, `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1`
+   (despliega desde `config\`).
+4. **Regenera** la copia de seguridad con `scripts\backup-opencode.ps1`: verifica el setup, sincroniza,
+   rehace los dotfiles sin claves, refresca el vault y publica en `F:`.
 
 > ⚠️ **No aplica en Windows:** el paso original "regenerar backup con
 > `bash ~/Config/opencode/backup-opencode.sh`" es de Linux.
@@ -651,6 +655,7 @@ Es una **nota para Antonio** (no para el asistente). Le indica que puede usar em
 ---
 
 > 📁 Activo: `C:\Users\evo01\.config\opencode\AGENTS.md` ·
-> Copia: `D:\Linux\Config\opencode-win\AGENTS.md` ·
+> Copia desplegable: `D:\Linux\Config\opencode-win\config\AGENTS.md` ·
+> Copia (espejo plano): `D:\Linux\Config\opencode-win\AGENTS.md` ·
 > Manual: `D:\Linux\Config\opencode-win\documentacion\06-agents-md.md`
 

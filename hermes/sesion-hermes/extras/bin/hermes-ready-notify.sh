@@ -146,6 +146,22 @@ if [ -d "$COMUN" ]; then
   dual_line="última importación: ${imp} · ${nota_txt} · encargos pendientes de Windows: ${pend}"
 fi
 
+# --- Veredicto del dual boot ------------------------------------------------
+# Le pregunta a orientar.py --veredicto (disco, integración, publicación, perfil). Si todo está
+# bien NO se dice nada en Telegram: el aviso solo aparece cuando hay algo que mirar. Todo queda
+# igualmente en el registro de arranque.
+veredicto_line=""
+orientar="$COMUN/scripts/orientar.py"
+if [ -f "$orientar" ]; then
+  v=$(timeout 60 python3 "$orientar" --veredicto 2>&1 || true)
+  case "$v" in
+    "VEREDICTO: OK"*) : ;;                                  # todo bien: silencio
+    "")               veredicto_line="⚠️ no pude comprobar el estado del dual boot" ;;
+    *)                veredicto_line="⚠️ ${v#VEREDICTO: }" ;;
+  esac
+fi
+log "veredicto del dual boot: ${veredicto_line:-OK}"
+
 # --- Espera a que el gateway este realmente listo -------------------------
 # "Listo" = servicio active Y adaptador de Telegram conectado despues de
 # arrancar el servicio (no basta con que el proceso exista).
@@ -180,14 +196,18 @@ _registrar() {
     printf '%s  arranque: gateway listo\n' "$(date '+%F %T')"
     printf '%s  arranque: update -> %s\n' "$(date '+%F %T')" "$update_line"
     printf '%s  arranque: dual boot -> %s\n' "$(date '+%F %T')" "$dual_line"
+    [ -n "${veredicto_line:-}" ] && printf '%s  arranque: veredicto -> %s\n' "$(date '+%F %T')" "$veredicto_line"
   } >> "$LOG_ARRANQUE" 2>/dev/null || true
 }
 
 if [ "$ready" = "1" ]; then
   _registrar
+  extra=""
+  [ -n "$veredicto_line" ] && extra="
+${veredicto_line}"
   _send "✅ Hermes activo — gateway listo y Telegram conectado (arranque $(date +%H:%M)). Ya puedes escribirme.
 🔄 Update: ${update_line}
-🤝 Dual boot: ${dual_line}"
+🤝 Dual boot: ${dual_line}${extra}"
   exit $?
 fi
 

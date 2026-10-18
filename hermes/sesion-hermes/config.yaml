@@ -476,7 +476,6 @@ compression:
   # A positive integer stays absolute and only clamps downward when needed so
   # the server compacts first. Invalid values use this automatic behavior. If
   # the local trigger is unavailable, automatic mode uses 200000.
-  codex_responses_compact_threshold:
 
   # Number of non-system messages to protect at the head of the transcript, in
   # ADDITION to the system prompt (which is always implicitly protected).
@@ -739,7 +738,6 @@ memory:
 # top-level key takes precedence over gateway.max_concurrent_sessions. The cap
 # is a best-effort single-host/profile runtime guard; Hermes fails open if the
 # local runtime lease registry cannot be read or locked.
-max_concurrent_sessions:
 
 # When true, group/channel chats use one session per participant when the platform
 # provides a user ID. This is the secure default and prevents users in the same
@@ -1881,6 +1879,7 @@ display:
 #     shared-metrics directory resets it.
 # See docs/observability/relay-shared-metrics.md (Appendix A) for the full
 # consent, identity, retention, and deletion decisions.
+  language: es
 telemetry:
   shared_metrics:
     enabled: true
@@ -2082,6 +2081,7 @@ onboarding:
     openclaw_residue_cleanup: true
     busy_input_prompt: true
     tool_progress_prompt: true
+    profile_build_offered: true
 fallback_providers:
   - provider: nvidia
     model: nvidia/nemotron-3-ultra-550b-a55b

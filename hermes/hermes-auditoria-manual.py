@@ -161,7 +161,7 @@ if os.path.isfile(parche) and os.path.isdir(f"{HERMES}/hermes-agent/.git"):
         aviso("parche Ctrl+Q en conflicto (revisa 'hermes-parche-ctrlq estado')")
 sha = sh(f"sha256sum {BASE}/parches/ctrl-q-corta-audio.patch 2>/dev/null").split()
 if sha:
-    check(sha[0].startswith("8994c93c"), f"sha256 del parche distinto: {sha[0][:12]}")
+    check(sha[0].startswith("5303bfcb"), f"sha256 del parche distinto al documentado: {sha[0][:12]}")
 
 settings = f"{HOME}/.lmstudio/settings.json"
 if os.path.isfile(settings):

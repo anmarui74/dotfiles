@@ -1,0 +1,7 @@
+[Unit]
+Description=Renumera el orden de las sesiones de Hermes cada minuto (display_order)
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+[Install]
+WantedBy=timers.target

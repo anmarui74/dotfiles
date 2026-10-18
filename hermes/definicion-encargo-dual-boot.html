@@ -1,0 +1,82 @@
+<div style="font-family:inherit;color:var(--foreground);max-width:56rem;line-height:1.55">
+
+  <div style="border-left:3px solid var(--accent);padding-left:0.9rem;margin-bottom:1.4rem">
+    <div style="font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-foreground)">Definición original del encargo</div>
+    <div style="font-size:1.35rem;font-weight:600;margin-top:0.2rem">Dual boot: que Hermes sea fiable entre Linux y Windows</div>
+    <div style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.25rem">Antonio · 13/10/2026 21:53 · sesión <code>20261013_091101_b3cf38</code></div>
+  </div>
+
+  <blockquote style="margin:0 0 1.5rem 0;padding:0.9rem 1rem;border-left:2px solid var(--border);background:color-mix(in srgb,var(--accent) 7%,transparent);border-radius:0 6px 6px 0;font-style:italic;color:var(--muted-foreground)">
+    «Si quiero que lo investigues y que le prestes atención a que, al tener un dual boot, tienes que estar seguro cuando
+    arrancas de en qué sistema operativo estás antes de leer lo que te ha comentado tu contraparte y poder hacer lo que se
+    te solicita. Además de lo importante que es tener toda la información de todas las sesiones en el reinicio para no
+    tener que estar explicando las cosas por varias veces o leyendo las memorias de los otros sistemas operativos. Y sobre
+    todo creo que es importante que las modificaciones que tenga que hacer cada Hermes en su sistema operativo las haga el
+    Hermes en su sistema operativo, no el Hermes del otro sistema operativo.»
+  </blockquote>
+
+  <div style="font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-foreground);margin-bottom:0.7rem">Los tres principios, y cómo están</div>
+
+  <div style="display:grid;gap:0.7rem">
+
+    <div style="border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem">
+      <div style="display:flex;gap:0.6rem;align-items:baseline">
+        <span style="font-weight:700;color:var(--accent)">1</span>
+        <span style="font-weight:600">Saber en qué SO estás al arrancar — antes de leer nada del otro</span>
+      </div>
+      <div style="margin-top:0.35rem;color:var(--muted-foreground);font-size:0.92rem">
+        <b style="color:var(--foreground)">Montado:</b> <code>orientar.py</code> en cada arranque (hook) y la comprobación
+        <b>al principio de <code>SOUL.md</code></b> («SISTEMA ACTUAL: compruébalo ANTES de nada»), con <code>uname -s</code>,
+        <code>$HOME</code> y las rutas de cada sistema. <code>orientar.py</code> comprueba además la <b>salud del perfil</b>
+        (dueño y escritura de la base).
+      </div>
+      <div style="margin-top:0.45rem;font-size:0.85rem">
+        <span style="color:#d97706">⚠️ Pendiente de probar</span> · hoy el aviso no evitó cuatro confusiones de sistema: entra en vigor
+        en la <b>próxima sesión</b> (el prompt se construye al iniciarla). El intento anterior (<code>AGENTS.md</code> del home)
+        <b>no se carga</b>: comprobado que no aparece en el prompt.
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem">
+      <div style="display:flex;gap:0.6rem;align-items:baseline">
+        <span style="font-weight:700;color:var(--accent)">2</span>
+        <span style="font-weight:600">Toda la información de todas las sesiones al reiniciar</span>
+      </div>
+      <div style="margin-top:0.35rem;color:var(--muted-foreground);font-size:0.92rem">
+        <b style="color:var(--foreground)">Montado:</b> hook <code>fusionar-mensajes</code> en el arranque (orienta, fusiona
+        por <b>contenido</b> y renumera), motor de importación/ publicación cada 5 min, y recuperación desde las
+        publicaciones archivadas del otro equipo.
+      </div>
+      <div style="margin-top:0.45rem;font-size:0.85rem">
+        <span style="color:#d97706">⚠️ Pendiente</span> · el import deja mensajes fuera y hay que recuperarlos:
+        hoy faltaban <b>2</b> de la conversación de Windows y se recuperaron montando su partición <b>en solo lectura</b> y
+        fusionando desde una copia. Los <b>contadores engañan</b>: hay que comparar por contenido.
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem">
+      <div style="display:flex;gap:0.6rem;align-items:baseline">
+        <span style="font-weight:700;color:var(--accent)">3</span>
+        <span style="font-weight:600">Cada Hermes hace sus cambios en SU sistema, no en el del otro</span>
+      </div>
+      <div style="margin-top:0.35rem;color:var(--muted-foreground);font-size:0.92rem">
+        <b style="color:var(--foreground)">Montado:</b> regla nº1 del <code>SKILL.md</code> de dual boot y sección propia en
+        <code>SOUL.md</code>. Lo que toca al otro lado se deja por escrito en el canal
+        (<code>NOTA-PARA-WINDOWS.md</code> / <code>NOTA-PARA-LINUX.md</code>) y lo hace su Hermes. Nunca abrir la base del
+        otro en su sitio (crea <code>-wal</code>/<code>-shm</code> con dueño ajeno y se pierden turnos).
+      </div>
+      <div style="margin-top:0.45rem;font-size:0.85rem">
+        <span style="color:#dc2626">❌ Sin cerrar</span> · el <code>SOUL.md</code> <b>viaja</b> en la publicación y se copia
+        sobre el del otro equipo: eso <b>es pisar</b> el fichero del otro. Falta decidir: que no viaje, o que cada uno
+        guarde ahí solo su parte local. <b>Decisión de Antonio</b>.
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:1.3rem;padding-top:0.8rem;border-top:1px solid var(--border);font-size:0.85rem;color:var(--muted-foreground)">
+    Punto de partida para la sesión nueva · los detalles están en <code>~/.hermes/SOUL.md</code>,
+    la skill <code>hermes-dual-boot-sync</code> y las notas del canal en <code>D:\HermesSync</code>.
+  </div>
+
+</div>

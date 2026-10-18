@@ -68,6 +68,15 @@ foreach ($src in $map.Keys) {
 # README.md -> manual de documentacion (no el de la config)
 $linkMap['README.md'] = $map[(Join-Path $DocDir 'README.md')]
 
+# Los manuales se citan tambien con ruta relativa desde config\ (p. ej.
+# ../documentacion/README.md). El mapa de arriba indexa solo por nombre de fichero, asi que
+# esa forma no se reescribia y el enlace quedaba roto en el vault: se mapea tambien.
+foreach ($src in $map.Keys) {
+    if ($src.StartsWith($DocDir, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $linkMap['../documentacion/' + (Split-Path $src -Leaf)] = $map[$src]
+    }
+}
+
 function Convert-Texto([string]$txt) {
     $transformado = [regex]::Replace($txt, '\]\(([^)]*\.md)\)', {
         param($m)

@@ -165,7 +165,13 @@ Write-Output '🐚 Perfil de PowerShell:'
 Copy-Fichero $PERFIL_ORIGEN (Join-Path $PERFIL_DESTINO 'Microsoft.PowerShell_profile.ps1')
 
 Write-Output ''
-Write-Output "== 📋 Resumen: $($copiados.Count) archivos copiados a $DESTINO =="
+Write-Output '📌 Espejo plano en la raíz del esquema (lo exige check-setup-completo.ps1):'
+$ESQUEMA_RAIZ = Split-Path -Parent $DESTINO
+Copy-Fichero (Join-Path $ORIGEN 'AGENTS.md') (Join-Path $ESQUEMA_RAIZ 'AGENTS.md')
+Copy-Fichero (Join-Path $ORIGEN 'README.md') (Join-Path $ESQUEMA_RAIZ 'README.md')
+
+Write-Output ''
+Write-Output "== 📋 Resumen: $($copiados.Count) archivos sincronizados (config\ y raíz del esquema) =="
 if ($copiados.Count -eq 0) {
     Write-Output '   (no se copio nada)'
 }

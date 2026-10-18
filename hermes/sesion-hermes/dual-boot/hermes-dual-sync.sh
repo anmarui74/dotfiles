@@ -32,7 +32,8 @@ COMUN_MONTADO="${COMUN_MONTADO:-}"          # p.ej. /mnt/seagate si ya está mon
 PUNTO_MONTAJE="/mnt/seagate"                # destino fstab del disco compartido
 UUID_DISCO="A472BB2A72BB005A"               # disco SEAGATE (NTFS)
 SUBDIR="HermesSync"                         # carpeta dentro del disco
-RETENCION=5                                 # copias históricas por host
+RETENCION=15                                # copias históricas por host (indicación de Antonio, 13/10/2026)
+DIAS_MIN_PODA=7                             # nunca se poda nada con menos de estos días (misma regla en Windows)
 DIAS_BACKUP_LOCAL=10                        # días de backups locales previos al import
 
 # shellcheck disable=SC1090
@@ -196,12 +197,57 @@ hacer_export() {
     fi
 
     # 2) state.db: copia consistente (incluye el WAL)
+    #    ⚠️ El `.backup` del CLI sqlite3 puede no arrastrar lo que está SOLO en el WAL, así que
+    #    (a) se fuerza un checkpoint antes de copiar y (b) se comprueba que la copia publicada no
+    #    lleve menos mensajes que la base viva; si lleva menos (o si el `mv` falla), se repite.
+    #    13/10/2026: se publicaron copias 76 mensajes por detrás de la base viva y el otro sistema
+    #    importó un estado incompleto; el aviso no se veía porque el MANIFEST se calcula sobre la
+    #    copia publicada (quedaba coherente consigo misma).
     tmp="$COMUN/estado/state.db.tmp"
-    rm -f "$tmp"
-    sqlite3 "$HERMES_HOME_DIR/state.db" ".backup '$tmp'" || morir "no pude copiar state.db"
+    intento=0
+    while :; do
+        intento=$((intento+1))
+        sqlite3 "$HERMES_HOME_DIR/state.db" 'PRAGMA wal_checkpoint(TRUNCATE);' >/dev/null 2>&1 || true
+        viva="$(sqlite3 "$HERMES_HOME_DIR/state.db" 'SELECT COUNT(*) FROM messages;' 2>/dev/null || echo 0)"
+        rm -f "$tmp" "$tmp-wal" "$tmp-shm"
+        sqlite3 "$HERMES_HOME_DIR/state.db" ".backup '$tmp'" || morir "no pude copiar state.db"
+        copiados="$(sqlite3 "$tmp" 'SELECT COUNT(*) FROM messages;' 2>/dev/null || echo '')"
+        [ -n "$copiados" ] && [ "$copiados" -ge "$viva" ] 2>/dev/null && break
+        if [ "$intento" -ge 3 ]; then
+            # 14/10/2026: antes, tras agotar los intentos, se publicaba igual y solo se avisaba; así
+            # viajó un estado 2 mensajes corto (los del último turno) que nadie notó, porque el
+            # MANIFEST se calcula sobre la propia copia y queda coherente consigo mismo. Mejor no
+            # publicar que publicar incompleto: lo que ya hay publicado sigue siendo válido y el
+            # import por fusión conserva lo de cada equipo.
+            rm -f "$tmp"
+            morir "la copia de state.db sale corta (${copiados:-?} mensajes frente a $viva de la base viva) tras $intento intentos: NO publico un estado incompleto"
+        fi
+        log "⚠️  la copia lleva ${copiados:-?} mensajes y la base viva $viva: repito la copia"
+    done
     verifica="$(sqlite3 "$tmp" 'PRAGMA integrity_check;' 2>/dev/null | head -1)"
+    # 13/10/2026: una copia salió con un indice desincronizado ("row N missing from index
+    # idx_sessions_effective_activity") y paso la publicacion; al importarla, el lado Windows la
+    # rechazaba entera ("la base importada no queda sana") y tenia que caer al import por fusion.
+    # Los indices se reconstruyen sin tocar los datos: repararlo aqui evita publicar una copia que
+    # el otro sistema no puede importar.
+    case "$verifica" in
+        *"missing from index"*|*"wrong # of entries in index"*|*"row "*)
+            log "⚠️  la copia tiene un indice desincronizado ($verifica); reconstruyendo indices…"
+            sqlite3 "$tmp" 'REINDEX;' 2>/dev/null || true
+            verifica="$(sqlite3 "$tmp" 'PRAGMA integrity_check;' 2>/dev/null | head -1)"
+            ;;
+    esac
+    if [ "$verifica" != "ok" ]; then
+        # ultimo recurso documentado: VACUUM reconstruye el fichero entero sin perder datos
+        sqlite3 "$tmp" 'VACUUM;' 2>/dev/null || true
+        verifica="$(sqlite3 "$tmp" 'PRAGMA integrity_check;' 2>/dev/null | head -1)"
+    fi
     [ "$verifica" = "ok" ] || { rm -f "$tmp"; morir "la copia de state.db no pasa integrity_check ($verifica)"; }
-    mv -f "$tmp" "$COMUN/estado/state.db"
+    mv -f "$tmp" "$COMUN/estado/state.db" || morir "no pude publicar la copia de state.db (¿ocupada o disco en solo lectura?)"
+    publicados="$(sqlite3 "$COMUN/estado/state.db" 'SELECT COUNT(*) FROM messages;' 2>/dev/null || echo '')"
+    if [ -n "$publicados" ] && [ "$publicados" -lt "${viva:-0}" ] 2>/dev/null; then
+        avisar "⚠️  la copia publicada lleva $publicados mensajes y la base viva $viva: puede faltar contenido (revisa el WAL)"
+    fi
 
     # 3) Árboles y ficheros sueltos
     for d in "${ARBOLES[@]}"; do
@@ -267,9 +313,25 @@ with open(tmp, 'w', encoding='utf-8') as fh:
 os.replace(tmp, ruta)
 PY
 
-    # 6) Podar historial antiguo por host
+    # 6) Podar historial por host (indicación de Antonio, 13/10/2026):
+    #    - se conservan las RETENCION publicaciones más recientes;
+    #    - NUNCA se borra nada con menos de DIAS_MIN_PODA días, aunque se pase del número;
+    #    - se borra la publicación COMPLETA (state.* + resto.*): media copia no restaura nada
+    #      (la versión anterior solo borraba los '*-state.db.gz' y dejaba los '-resto' huérfanos,
+    #      de ahí que el historial creciera sin control);
+    #    - la última publicación nunca se toca.
+    #    El motor de Windows aplica la MISMA regla (sección equivalente del .ps1).
+    limite=$(( $(date +%s) - DIAS_MIN_PODA * 86400 ))
     for h in $(ls -1 "$COMUN/historial" 2>/dev/null); do
-        ls -1t "$COMUN/historial/$h"/*-state.db.gz 2>/dev/null | tail -n +$((RETENCION+1)) | while read -r viejo; do rm -f "$viejo"; done
+        [ -d "$COMUN/historial/$h" ] || continue
+        ls -1 "$COMUN/historial/$h" 2>/dev/null \
+            | grep -oE '^[0-9]{9,}' | sort -unr | tail -n +$((RETENCION+1)) \
+            | while read -r ep; do
+                  [ "$ep" -lt "$limite" ] || continue     # reciente: no se toca
+                  # -r: un 'resto' descomprimido es un DIRECTORIO y `rm -f` no lo borraría nunca
+                  # (la publicación quedaría a medias para siempre). 14/10/2026.
+                  rm -rf "$COMUN/historial/$h/$ep"-* 2>/dev/null || true
+              done
     done
 
     log "✅ Publicado: $sesiones sesiones / $mensajes mensajes (sha256 ${sha:0:12}…)"
@@ -337,9 +399,33 @@ hacer_import() {
     [ -f "$HERMES_HOME_DIR/kanban.db" ] && cp -f "$HERMES_HOME_DIR/kanban.db" "$BACKUPS_LOCALES/$r_epoch/kanban.db" 2>/dev/null
     find "$BACKUPS_LOCALES" -maxdepth 1 -type d -mtime +"$DIAS_BACKUP_LOCAL" -exec rm -rf {} + 2>/dev/null || true
 
-    # Sustituir state.db (y limpiar WAL/SHM del anterior)
-    rm -f "$HERMES_HOME_DIR/state.db-wal" "$HERMES_HOME_DIR/state.db-shm"
-    cp -f "$COMUN/estado/state.db" "$HERMES_HOME_DIR/state.db" || morir "no pude escribir state.db"
+    # INTEGRAR, no sustituir (decisión de Antonio, 14/10/2026). El `cp -f` de antes borraba los
+    # turnos escritos en este equipo que aún no habían viajado y no dejaba nada que fusionar
+    # después: el fusionador del arranque solo podía traer lo del otro, nunca devolver lo perdido.
+    # Ahora se fusiona con el script común (añade sesiones y mensajes que falten, quita duplicados
+    # y cuadra el display_order). La base local no está en uso (comprobado arriba) y el backup
+    # local previo ya está hecho. El copiado clásico queda solo como último recurso.
+    FUSIONADOR="$COMUN/scripts/fusionar-mensajes.py"
+    integrado="no"
+    mensajes_local_previo="$(sqlite3 "$HERMES_HOME_DIR/state.db" 'SELECT COUNT(*) FROM messages;' 2>/dev/null || echo '')"
+    if [ -f "$FUSIONADOR" ] && command -v python3 >/dev/null 2>&1; then
+        log "🔀 Integrando el estado de '$r_host' en la base local (fusión, sin sustituirla)…"
+        if python3 "$FUSIONADOR" --origen "$COMUN/estado/state.db" \
+                --local "$HERMES_HOME_DIR/state.db" --aplicar --sin-orientacion >> "$LOG_FILE" 2>&1; then
+            integrado="si"
+            mensajes_tras="$(sqlite3 "$HERMES_HOME_DIR/state.db" 'SELECT COUNT(*) FROM messages;' 2>/dev/null || echo '')"
+            log "🔀 Fusión hecha (base local: ${mensajes_tras:-?} mensajes)."
+            if [ -n "$mensajes_local_previo" ] && [ -n "$mensajes_tras" ] && [ "$mensajes_tras" -lt "$mensajes_local_previo" ] 2>/dev/null; then
+                avisar "⚠️  tras fusionar hay menos mensajes que antes ($mensajes_local_previo → $mensajes_tras): revisa $LOG_FILE"
+            fi
+        else
+            avisar "⚠️  la fusión falló: uso el copiado clásico de state.db."
+        fi
+    fi
+    if [ "$integrado" = "no" ]; then
+        rm -f "$HERMES_HOME_DIR/state.db-wal" "$HERMES_HOME_DIR/state.db-shm"
+        cp -f "$COMUN/estado/state.db" "$HERMES_HOME_DIR/state.db" || morir "no pude escribir state.db"
+    fi
     chmod 600 "$HERMES_HOME_DIR/state.db" 2>/dev/null || true
 
     # Traer los árboles y ficheros sueltos
@@ -350,9 +436,23 @@ hacer_import() {
                   "$COMUN/estado/$d/" "$HERMES_HOME_DIR/$d/" || avisar "⚠️  rsync falló en $d"
         fi
     done
-    for f in kanban.db SOUL.md; do
-        [ -f "$COMUN/estado/$f" ] && cp -f "$COMUN/estado/$f" "$HERMES_HOME_DIR/$f"
-    done
+    [ -f "$COMUN/estado/kanban.db" ] && cp -f "$COMUN/estado/kanban.db" "$HERMES_HOME_DIR/kanban.db"
+
+    # SOUL.md: es COMÚN y viaja (lleva la regla del SO, que tiene que cargarse en CADA sesión),
+    # pero NO se pisa a ciegas: es el fichero de identidad de cada Hermes y pisarlo destruye
+    # cualquier añadido local sin que nadie llegue a verlo. Decisión de Antonio, 14/10/2026 (opción A):
+    # si difiere, se archiva el del otro y se avisa; el local se queda como está.
+    if [ -f "$COMUN/estado/SOUL.md" ]; then
+        if [ ! -f "$HERMES_HOME_DIR/SOUL.md" ]; then
+            cp -f "$COMUN/estado/SOUL.md" "$HERMES_HOME_DIR/SOUL.md"
+            log "🪞 SOUL.md recibido de '$r_host' (no había uno local)"
+        elif ! diff -q <(tr -d '\r' < "$COMUN/estado/SOUL.md") <(tr -d '\r' < "$HERMES_HOME_DIR/SOUL.md") >/dev/null 2>&1; then
+            cp -f "$COMUN/estado/SOUL.md" "$BACKUPS_LOCALES/$r_epoch/SOUL.md.de-$r_host" 2>/dev/null || true
+            log "⚠️  SOUL.md: el de '$r_host' DIFIERE del local. NO lo piso."
+            log "    Su versión queda en $BACKUPS_LOCALES/$r_epoch/SOUL.md.de-$r_host"
+            log "    Regla: en SOUL.md solo reglas comunes y neutras; lo local, fuera de ahí."
+        fi
+    fi
     # NTFS no guarda el bit de ejecución: devolvérselo a los scripts de skills
     find "$HERMES_HOME_DIR/skills" -type f \( -name '*.sh' -o -name '*.py' \) -exec chmod u+x {} + 2>/dev/null || true
 

@@ -54,9 +54,11 @@ D:\Linux\Config\Hermes-Win\
 ├── instalar-desde-cero.ps1  # instalación completa en un equipo recién instalado (8 pasos)
 ├── registrar-tareas.ps1     # registra las tareas programadas y los lanzadores del Inicio
 ├── hermes-auditoria-manual.ps1  # auditoría del manual contra la configuración viva
+├── vigilar-gpu.ps1          # vigía de GPU: registro de temperatura/potencia (§7)
 ├── commit-parche.txt        # commit de referencia del parche Ctrl+Q
 ├── hook-backup-hermes.sh    # copia del hook on_session_end (agent-hooks\backup-hermes.sh)
 ├── lanzar-oculto.vbs        # lanzador sin ventana de las tareas programadas
+├── Hermes_VigilarGPU.vbs    # lanzador del vigía de GPU en la carpeta Inicio
 ├── backup-tarea.cmd         # envoltorio del .vbs para el Programador de tareas
 ├── documentos\              # copia de respaldo de los markdown de configuración (ver §16)
 ├── extras\bin\              # scripts propios de voz (hermes-kokoro-tts.py, hvoz, …)
@@ -361,7 +363,8 @@ app de escritorio (un solo `hermes update` hace las dos cosas: dependencias, TUI
 | Tarea `HermesUpdate-Ahora` | Programador de tareas | **transitoria**: la crea el encargo para que el update corra fuera del árbol del hook, y el propio trabajador la borra al terminar |
 
 Secuencia del trabajador *(probada el 10/10/2026, cierre de un update a medias)*: candado por PID (una
-sola instancia) → espera 180 s → si la app de escritorio está abierta **espera a que se cierre** (hasta
+sola instancia) → **espera activa** a que el gateway esté levantado (~30 s; tope 180 s, ver más abajo)
+→ si la app de escritorio está abierta **espera a que se cierre** (hasta
 1 h; si no, aplaza al siguiente arranque y avisa por Telegram) → `hermes update --check`: si no hay nada
 nuevo y no quedó un update a medias (`%LOCALAPPDATA%\hermes\installs\*\source-completion-pending`),
 sale sin tocar nada → guarda el diff del parche vivo → `hermes update --yes` (si la guarda de venv lo
@@ -385,11 +388,52 @@ bloquea, para esos procesos y reintenta **una** vez; nunca `--force-venv`) → r
   ella el esquema queda desfasado justo después de cada update automático — pasó el 12/10/2026 con el
   salto a `71d34bad10`, que hubo que rellenar a mano.
 
+- **La espera del arranque es ACTIVA, no fija** (13/10/2026). Antes el trabajador hacía
+  `Start-Sleep -Seconds 180` a ciegas antes de mirar si había actualización (que tarda 5 s);
+  Antonio lo describía como «¿por qué tardas 3 minutos en revisar la información, comprobar
+  updates?». Ahora `EsperarGateway` vuelve en cuanto detecta el gateway levantado (proceso
+  `python*` cuyo `CommandLine` casa `serve\s+--host`) más 30 s de prudencia, con tope en
+  `-RetrasoSegundos`. Medido: **~35 s en vez de 3 min 7 s**.
+  ⚠️ El trabajador vive en **dos sitios** y hay que tocar los dos: el fichero real
+  (`%LOCALAPPDATA%\hermes\dual-boot\update-hermes-arranque.ps1`, que es el que relanza el lanzador
+  de Inicio) y el **here-string embebido** en `windows\encargos\12-update-hermes-arranque.ps1`
+  (el encargo solo se ejecuta una vez, así que por sí solo no actualiza nada).
+  Validar con `[System.Management.Automation.Language.Parser]::ParseFile` y medir
+  `EsperarGateway` antes de darlo por bueno.
 - Logs: `D:\HermesSync\logs\update-hermes-windows.log` y `%LOCALAPPDATA%\hermes\logs\update-arranque.log`.
 - ⚠️ Si el parche Ctrl+Q no aplica limpio, **no lo fuerza**: lo anota y se reconcilia desde Linux.
 - ⚠️ Los diffs se capturan con `[Console]::OutputEncoding` en UTF-8 y se escriben en LF: PowerShell 5.1
   decodifica la salida de `git` con la página OEM y `Out-String` devuelve CRLF, así que sin eso el
   parche regenerado sale con los acentos rotos y `git apply` lo rechaza (pasó el 10/10/2026).
+
+### Vigía de GPU al iniciar sesión (diagnóstico de cuelgues)
+
+Este equipo acumula desde junio de 2025 más de un centenar de volcados **WATCHDOG** en
+`C:\Windows\LiveKernelReports`: son timeouts del subsistema gráfico que, en el peor caso, acaban en un
+reinicio no limpio — así se quedó un `hermes update` a medias el 18/10/2026. Para tener los datos del
+momento exacto del fallo, al iniciar sesión arranca un registrador propio:
+
+| Pieza | Dónde vive | Qué hace |
+|---|---|---|
+| `vigilar-gpu.ps1` | copia operativa en `%LOCALAPPDATA%\hermes\diagnostico\`; canónica en el esquema | bucle cada 15 s: `nvidia-smi` → temperatura, potencia (y límite), uso, VRAM, clocks, `pstate` y motivo de *throttling*; escribe una línea CSV por muestra |
+| `Hermes_VigilarGPU.vbs` | carpeta Inicio (+ canónico en el esquema) | lo lanza **oculto** en cada inicio de sesión (`wscript`, ventana 0; no pide UAC ni abre consola) |
+
+- Salida: `%LOCALAPPDATA%\hermes\diagnostico\gpu-AAAAMMDD.csv` (retención de 10 días; unos 0,7 MB al
+  día). Cada línea se vuelca a disco al escribirla, de modo que en un cuelgue se conserva lo último.
+- Última columna (`volcado_nuevo`): marca los instantes en que apareció un volcado nuevo en
+  `LiveKernelReports`, que es la correlación directa entre el fallo y los valores de ese momento.
+- Una guarda interna impide que se acumulen instancias si se entra y sale de sesión varias veces.
+- Se desactiva borrando `Hermes_VigilarGPU.vbs` de la carpeta Inicio.
+- **MPO desactivado** (18/10/2026): `HKLM\SOFTWARE\Microsoft\Windows\Dwm\OverlayTestMode = 5`, como
+  medida contra las pantallas negras del driver de vídeo. Se revierte borrando ese valor.
+- **Test de VRAM**: `C:\Users\evo01\diagnostico-gpu\memtest_vulkan.exe` (memtest_vulkan v0.5.0, sin
+  instalación): ejecutarlo y esperar unos 6 minutos; si muestra errores, la VRAM está dañada.
+- **BIOS actualizada el 18/10/2026**: 1.A70 (02/12/2025) → **1.A93** (03/09/2026, AGESA
+  PI-1.3.0.1d). Tras el flash se comprobó el perfil **EXPO** de la memoria (2×32 GB Corsair a
+  6000 MT/s configurados), MPO desactivado, inicio rápido desactivado y el vigía arrancando y
+  registrando. Arranque limpio (sin Kernel-Power 41 ni volcados nuevos).
+- Siguiente medida si vuelve a caer: **desactivar la suspensión y la hibernación** (hay 38 volcados
+  pegados a un ciclo suspender/reanudar: el 04/01/2026 se encadenaron 30 en 20 minutos).
 
 ### Trabajos de cron de Hermes
 
@@ -431,7 +475,25 @@ corrompe, así que el motor **fusiona** (`copiar-state.py --fusionar`): añade l
 falten con sus mensajes, prompts y datos de uso, sin borrar nada local, y copia `sessions\`,
 `memories\`, `skills\`, `cron\` y `SOUL.md`. `kanban.db` se deja para el primer import con Hermes
 cerrado y queda anotado en `.dual-sync\estado.json` (`"parcial": true`, `"pendientes":
-["kanban.db"]`). Con Hermes cerrado el import hace la sustitución completa de siempre.
+["kanban.db"]`).
+
+**Con Hermes cerrado el import también FUSIONA (14/10/2026).** Antes hacía la sustitución completa
+de `state.db` (`Copy-Item` en bloque) y eso borraba los turnos escritos aquí que aún no habían
+viajado: el fusionador del arranque solo puede traer lo del otro, nunca devolver lo borrado. Ahora
+las dos ramas fusionan y el copiado clásico queda solo como último recurso (si la fusión falla, se
+avisa en el log).
+
+**Copia publicada verificada y guarda del WAL (14/10/2026).** El export copia a `estado/state.db.tmp`,
+cuenta los mensajes de la copia y los de la base **viva** y, si la copia sale corta, reintenta hasta
+3 veces; si sigue corta **no publica** (`Stop-ConError`) en vez de publicar un estado incompleto. El
+`MANIFEST` se calcula sobre la propia copia, así que una copia corta quedaba coherente consigo misma
+y nadie la veía: así viajó una vez un estado **2 mensajes corto** y hubo que recuperarlos a mano.
+Además `copiar-state.py` fuerza ahora `PRAGMA wal_checkpoint(TRUNCATE)` antes de copiar (best-effort)
+y sigue usando la API `.backup`, que arrastra el WAL.
+
+**El `SOUL.md` del otro no se pisa (14/10/2026).** Si el publicado difiere del local (comparando sin
+contar CRLF/LF) se archiva como `SOUL.md.del-otro` en el backup previo del import y se avisa; la
+versión local se queda. Norma: en `SOUL.md` solo reglas comunes y neutras.
 
 **Atajo `-SoloSiCambia` (corregido el 05/10/2026).** La lista de ficheros vigilados se montaba
 como `@(Join-Ruta $HermesHome 'state.db', (Join-Ruta …), …)`: por precedencia del operador coma
@@ -452,6 +514,63 @@ abortando si el `sha256` no coincide o si la copia no tiene tabla de sesiones. C
 publicó nada del 07/10 17:46 al 10/10 08:20 (`LastTaskResult = 1` en `HermesSync-Publicar`).
 
 ---
+
+### Poda del historial (13/10/2026)
+
+`historial/<equipo>/` conserva las publicaciones del otro sistema. **Este motor también poda al
+publicar**, con la MISMA regla que el motor de Linux (acordada con Antonio):
+
+- se conservan **15 publicaciones por equipo** (`$Retencion = 15`);
+- **nunca se borra nada con menos de 7 días** (`$DiasMinPoda = 7`), aunque se pase del número;
+- se borra la publicación **completa** (todos los ficheros de ese instante: `-state.db`,
+  `-state.db.gz`, `-resto.zip`, `-resto.tar.gz`): media copia no sirve para restaurar;
+- la **última publicación nunca se toca**.
+
+Antes solo podaba `*-state.db` y `*-resto.zip` con `-Skip 5`, así que los ficheros que crea Linux
+(`-state.db.gz`, `-resto.tar.gz`) se acumulaban sin límite y las parejas quedaban desalineadas.
+Mientras la copia local del motor no esté actualizada, el **encargo 17**
+(`windows/encargos/17-motor-poda-historial.ps1`) la pone al día, valida la sintaxis con el parser y
+revierte el anterior si el nuevo no compila.
+
+### Fusión de conversaciones entre los dos sistemas (13/10/2026)
+
+Antonio lo pidió así: «siempre que se inicie Hermes comprueba que todas las conversaciones estén al
+día». Lo hace un **hook propio**, no un encargo, porque los encargos se ejecutan **una sola vez**
+(quedan apuntados en `encargos-hechos.json`) y esto tiene que correr en **cada** arranque.
+
+| Pieza | Dónde vive | Qué hace |
+|---|---|---|
+| Hook `fusionar-mensajes` | `%LOCALAPPDATA%\hermes\hooks\fusionar-mensajes\` (`HOOK.yaml` + `handler.py`) | en `gateway:startup` lanza, **en un hilo aparte**, el fusionador con `--aplicar`; el arranque nunca se bloquea |
+| Fusionador | `D:\HermesSync\scripts\fusionar-mensajes.py` (uno para los dos sistemas, stdlib puro) | fusiona, quita copias y reordena (ver abajo) |
+| Encargo `18-fusionar-mensajes.ps1` | `windows\encargos\` | **instala** el hook (copiándolo desde `windows\hooks\`) y lanza una fusión en segundo plano; ya ejecutado el 13/10/2026 |
+| Aviso | `D:\HermesSync\NOTA-FUSION-CONVERSACIONES.md` | el detalle, escrito desde Linux |
+
+Qué hace el fusionador, por sesión: **crea las sesiones que falten** enteras (fila de `sessions` +
+mensajes) · añade los mensajes que falten **comparando por contenido** (rol + texto, 1 s de
+tolerancia: así es imposible duplicar) · borra las **copias repetidas** (mismo rol, texto e instante)
+conservando la visible · renumera el orden por fecha agrupando por `display_identity`. Copia previa
+de la base, `integrity_check` al final y *rollback* si falla. Idempotente: si está al día no toca
+nada.
+
+- ⚠️ **Comprobar SIEMPRE en qué sistema se está corriendo** antes de usar rutas o lanzar comandos
+  (`uname -s`, `$HOME`): asumirlo rompe justo lo que Antonio pide — «no leer la información que deja
+  la contraparte». Pasó el 13/10/2026 en las dos sesiones: un `powershell.exe` desde Linux y rutas
+  `/mnt/...` desde Windows.
+- **Primer paso de cada sesión**: `python D:\HermesSync\scripts\orientar.py` (en Linux:
+  `python3 /mnt/seagate/HermesSync/scripts/orientar.py`). Imprime en un tirón el sistema, las rutas
+  válidas de este lado, quién publicó y cuándo, la última importación y el último resultado del hook
+  de conversaciones. Es lo que evita trabajar con las rutas del sistema equivocado.
+- ⚠️ **Por qué existe**: el import del dual boot trae sesiones que falten, pero **no** los mensajes
+  nuevos de una sesión que ya existe en los dos lados, y las filas insertadas a mano volvían al otro
+  sistema como copias (se midieron **456 copias en 8 sesiones** desde el 28/09, que Antonio veía como
+  «faltan cosas de las conversaciones»). Comparar por (instante, rol) no basta: dos mensajes
+  distintos pueden compartir ese par.
+- ⚠️ **Un encargo no debe ser síncrono**: si el trabajo tarda, bloquea el bucle del gateway y el
+  watchdog lo reinicia (`missed 3 consecutive liveness probes`, exit 75). De ahí el hilo y el
+  `Start-Process` sin esperar.
+- Logs: `D:\HermesSync\logs\fusionar-mensajes.log` (hook) y
+  `D:\HermesSync\logs\fusionar-encargo18-*.log` (la pasada del encargo).
+- A mano: `python D:\HermesSync\scripts\fusionar-mensajes.py` (simulación) o `--aplicar`.
 
 ## Traspaso de información con Linux (canal de encargos)
 
@@ -594,6 +713,7 @@ sigue interrumpiendo).
 | `hooks\encargos-windows\` | Hook de gateway que ejecuta los encargos de Linux |
 | `extras\bin\` | Scripts propios de voz (`hermes-kokoro-tts.py`, `hermes-whisper-stt.py`, `hermes-voz.py`, `hvoz`, `hvoz.cmd`): se copian al respaldo canónico, a la copia saneada de dotfiles y a la copia publicada (`esquema-windows\extras\bin`) |
 | `hermes-auditoria-manual.ps1` | **Auditoría del manual**: lo contrasta con la configuración viva (inventario, tareas, alias, voz, plugins, skills, hooks, cron, parche, copias, espejo y credenciales) |
+| `vigilar-gpu.ps1` | **Vigía de GPU**: registra cada 15 s temperatura, potencia, clocks, VRAM y motivos de *throttling* en `%LOCALAPPDATA%\hermes\diagnostico\gpu-AAAAMMDD.csv`, y marca los instantes en que aparece un volcado nuevo en `LiveKernelReports` (ver §7) |
 | Atajos en `%USERPROFILE%\.local\bin` | `hermes-backup`, `hermes-auditoria-win`, `hvoz`, `ocv` / `ocv-local` / `ocv-cloud` / `ocv-status`, `timeline-completo`, `hw_query` |
 
 ### Auditoría del manual: `hermes-auditoria-manual`

@@ -48,6 +48,9 @@ MAPA = [
      "Config/hermes/dual-boot/windows/PARA-WINDOWS-motor-fusion.md"),
     ("Hermes/💻 Dual boot — Windows · LEEME-WINDOWS.md",
      "Config/hermes/dual-boot/windows/LEEME-WINDOWS.md"),
+    # fusión de conversaciones (hook `fusionar-mensajes`, 13/10/2026)
+    ("Hermes/💻 Dual boot — Fusión de conversaciones · NOTA-FUSION-CONVERSACIONES.md",
+     "Config/hermes/NOTA-FUSION-CONVERSACIONES.md"),
     # --- Hermes en Windows (esquema replicado en ~/Config/Hermes-Win) ---
     ("Hermes-win/💻 Manual de Hermes en Windows — AGENTS-WIN.md",
      "Config/Hermes-Win/AGENTS-WIN.md"),

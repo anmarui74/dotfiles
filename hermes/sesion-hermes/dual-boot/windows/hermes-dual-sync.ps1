@@ -49,6 +49,15 @@ $CopiadorPy = Join-Ruta $ScriptDir 'copiar-state.py'
 
 $Arboles = @('sessions', 'memories', 'skills', 'cron')
 $Ficheros = @('state.db', 'kanban.db', 'SOUL.md')
+
+# Poda del historial: MISMA regla que el motor de Linux (indicacion de Antonio, 13/10/2026):
+#   - se conservan las $Retencion publicaciones mas recientes de cada equipo;
+#   - NUNCA se borra nada con menos de $DiasMinPoda dias, aunque se pase del numero;
+#   - se borra la publicacion COMPLETA (todos los ficheros de ese instante: '-state.db',
+#     '-state.db.gz', '-resto.zip', '-resto.tar.gz', sidecars y restos descomprimidos).
+#   - la ultima publicacion nunca se toca.
+$Retencion = 15
+$DiasMinPoda = 7
 $ComunRaiz = $null
 
 
@@ -192,7 +201,43 @@ function Invoke-Export {
         Compress-Archive -Path (Join-Ruta $Comun 'estado/*') -DestinationPath (Join-Ruta $dirHist ("{0}-resto.zip" -f $remoto.publicado_epoch)) -Force
     }
 
-    Copy-Sqlite (Join-Ruta $HermesHome 'state.db') (Join-Ruta $Comun 'estado/state.db')
+    # Copia de state.db VERIFICADA (14/10/2026): a un temporal, contando los mensajes de la copia y
+    # los de la base viva; si la copia sale corta (el ultimo turno puede estar aun en el WAL), se
+    # repite. Si tras 3 intentos sigue corta NO se publica: asi viajo una vez un estado 2 mensajes
+    # corto que nadie noto, porque el MANIFEST se calcula sobre la propia copia y queda coherente
+    # consigo mismo (y el otro equipo importaba ese estado incompleto sin enterarse).
+    $dbViva = Join-Ruta $HermesHome 'state.db'
+    $dbTmp = Join-Ruta $Comun 'estado/state.db.tmp'
+    $mensajesVivos = 0
+    $mensajesCopia = 0
+    $copiado = $false
+    for ($intentoCopia = 1; $intentoCopia -le 3; $intentoCopia++) {
+        if ($script:Python) {
+            $eapCopia = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            $vivos = @(& $script:Python $CopiadorPy --contar-mensajes $dbViva 2>$null)
+            $ErrorActionPreference = $eapCopia
+            if ($LASTEXITCODE -eq 0 -and $vivos.Count -gt 0) { $mensajesVivos = [int]$vivos[0] }
+        }
+        Remove-Item $dbTmp -Force -ErrorAction SilentlyContinue
+        Copy-Sqlite $dbViva $dbTmp
+        $mensajesCopia = 0
+        if ($script:Python) {
+            $eapCopia = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            $copia = @(& $script:Python $CopiadorPy --contar-mensajes $dbTmp 2>$null)
+            $ErrorActionPreference = $eapCopia
+            if ($LASTEXITCODE -eq 0 -and $copia.Count -gt 0) { $mensajesCopia = [int]$copia[0] }
+        }
+        if (-not $script:Python) { $copiado = $true; break }   # sin Python no se puede contar: copia directa
+        if ($mensajesCopia -ge $mensajesVivos) { $copiado = $true; break }
+        Write-Log "AVISO: la copia lleva $mensajesCopia mensajes y la base viva ${mensajesVivos}: repito la copia (intento $intentoCopia)"
+    }
+    if (-not $copiado) {
+        Remove-Item $dbTmp -Force -ErrorAction SilentlyContinue
+        Stop-ConError "la copia de state.db sale corta ($mensajesCopia mensajes frente a $mensajesVivos de la base viva) tras 3 intentos: NO publico un estado incompleto"
+    }
+    Move-Item -Force $dbTmp (Join-Ruta $Comun 'estado/state.db')
     foreach ($d in $Arboles) { Invoke-Robocopy (Join-Ruta $HermesHome $d) (Join-Ruta $Comun "estado/$d") }
     foreach ($f in $Ficheros) {
         $o = Join-Ruta $HermesHome $f
@@ -246,11 +291,21 @@ function Invoke-Export {
     }
     $datos | ConvertTo-Json -Depth 6 | Set-Content -Path $manifiesto -Encoding UTF8
 
-    foreach ($patron in @('*-state.db', '*-resto.zip')) {
-        Get-ChildItem -Path (Join-Ruta $Comun 'historial') -Recurse -Filter $patron -ErrorAction SilentlyContinue |
-            Group-Object DirectoryName | ForEach-Object {
-                $_.Group | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force -ErrorAction SilentlyContinue
+    # El bloque anterior (un patron cada vez, con -Skip 5 y sin minimo de dias) era el error
+    # antiguo: borraba media publicacion (dejaba los '-resto' sin su 'state.db'), no respetaba ni
+    # la retencion ni los dias y no veia los restos descomprimidos. 14/10/2026.
+    $limitePoda = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - ($DiasMinPoda * 86400)
+    foreach ($carpetaHist in (Get-ChildItem -Path (Join-Ruta $Comun 'historial') -Directory -ErrorAction SilentlyContinue)) {
+        $epochsHist = @(Get-ChildItem -Path $carpetaHist.FullName -Force -ErrorAction SilentlyContinue |
+                        ForEach-Object { if ($_.Name -match '^(\d{9,})-') { [int64]$matches[1] } } |
+                        Sort-Object -Unique -Descending)
+        $epochsHist | Select-Object -Skip $Retencion | ForEach-Object {
+            $ep = $_
+            if ($ep -lt $limitePoda) {
+                Get-ChildItem -Path $carpetaHist.FullName -Filter ($ep.ToString() + '-*') -Force -ErrorAction SilentlyContinue |
+                    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
             }
+        }
     }
 
     New-Item -ItemType File -Force -Path $MarcaPublicacion | Out-Null
@@ -279,6 +334,35 @@ function Write-EstadoImport {
 }
 
 # ------------------------------------------------- import con Hermes en marcha
+# SOUL.md: fichero COMUN que viaja (lleva la regla del SO, que tiene que cargarse en CADA sesion),
+# pero NO se pisa a ciegas: es la identidad de cada Hermes y pisarlo destruye cualquier anadido
+# local sin que nadie llegue a verlo. Decision de Antonio, 14/10/2026 (opcion A): si difiere, se
+# archiva la version del otro y se avisa; la local se queda como esta.
+function Import-Soul {
+    param([string]$DestinoBackup)
+    $origen = Join-Ruta $Comun 'estado/SOUL.md'
+    $local = Join-Ruta $HermesHome 'SOUL.md'
+    if (-not (Test-Path -LiteralPath $origen)) { return }
+    if (-not (Test-Path -LiteralPath $local)) {
+        Copy-Item $origen $local -Force
+        Write-Log "SOUL.md recibido del otro equipo (no habia uno local)"
+        return
+    }
+    # Comparar normalizando el fin de linea: el mismo texto puede venir en CRLF o en LF.
+    $tOrigen = ([IO.File]::ReadAllText($origen)) -replace "`r`n", "`n"
+    $tLocal = ([IO.File]::ReadAllText($local)) -replace "`r`n", "`n"
+    if ($tOrigen -ne $tLocal) {
+        if ($DestinoBackup) {
+            $archivoOtro = Join-Ruta $DestinoBackup 'SOUL.md.del-otro'
+            Copy-Item $origen $archivoOtro -Force
+            Write-Log "AVISO: SOUL.md del otro equipo DIFIERE del local. NO lo piso; su version queda en $archivoOtro"
+        } else {
+            Write-Log "AVISO: SOUL.md del otro equipo DIFIERE del local. NO lo piso."
+        }
+        Write-Log "       Regla: en SOUL.md solo reglas comunes y neutras; lo local, fuera de ahi."
+    }
+}
+
 function Invoke-ImportParcial {
     # sustituir state.db con Hermes en marcha la corrompe, pero ESO no impide traer
     # lo del otro equipo: se fusionan las sesiones que falten (la base local es un
@@ -334,8 +418,7 @@ function Invoke-ImportParcial {
     }
 
     foreach ($d in $Arboles) { Invoke-Robocopy (Join-Ruta $Comun "estado/$d") (Join-Ruta $HermesHome $d) }
-    $soulComun = Join-Ruta $Comun 'estado/SOUL.md'
-    if (Test-Path $soulComun) { Copy-Item $soulComun (Join-Ruta $HermesHome 'SOUL.md') -Force }
+    Import-Soul -DestinoBackup $destinoBackup
 
     Write-EstadoImport -Epoch $Epoch -Pendientes @('kanban.db')
     Write-Log "Importado por fusión. Copia de seguridad previa en $destinoBackup"
@@ -398,7 +481,28 @@ function Invoke-Import {
         return
     }
 
-    Copy-Item $dbComun (Join-Ruta $HermesHome 'state.db') -Force
+    # INTEGRAR, no sustituir (decision de Antonio, 14/10/2026): el copiado en bloque borraba los
+    # turnos escritos en ESTE equipo que aun no habian viajado y no dejaba nada que fusionar
+    # despues. Se fusiona con el copiador comun (anade sesiones y mensajes que falten, quita
+    # duplicados y cuadra el display_order), igual que la rama de "Hermes en marcha".
+    # El copiado clasico queda solo como ultimo recurso.
+    $integrado = $false
+    if ($script:Python) {
+        $eapFusion = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        Write-Log "Integrando el estado de '$($remoto.host)' en la base local (fusion, sin sustituirla)..."
+        $salidaFus = @(& $script:Python $CopiadorPy --fusionar $dbComun (Join-Ruta $HermesHome 'state.db') 2>&1)
+        $rcFus = $LASTEXITCODE
+        $ErrorActionPreference = $eapFusion
+        foreach ($lineaFus in $salidaFus) { if ("$lineaFus".Trim() -ne '') { Write-Log "   $($lineaFus.ToString().Trim())" -SoloLog } }
+        if ($rcFus -eq 0) {
+            $integrado = $true
+            Write-Log "Fusion hecha: la base local conserva lo suyo y recibe lo del otro."
+        } else {
+            Write-Log "AVISO: la fusion fallo ($rcFus): uso el copiado clasico de state.db."
+        }
+    }
+    if (-not $integrado) { Copy-Item $dbComun (Join-Ruta $HermesHome 'state.db') -Force }
 
     # Y verificación inmediata: si la base local no queda sana, se restaura la
     # copia previa en lugar de dejar el equipo sin historial de sesiones.
@@ -419,10 +523,9 @@ function Invoke-Import {
     }
 
     foreach ($d in $Arboles) { Invoke-Robocopy (Join-Ruta $Comun "estado/$d") (Join-Ruta $HermesHome $d) }
-    foreach ($f in @('kanban.db', 'SOUL.md')) {
-        $o = Join-Ruta $Comun "estado/$f"
-        if (Test-Path $o) { Copy-Item $o (Join-Ruta $HermesHome $f) -Force }
-    }
+    $kanbanComun = Join-Ruta $Comun 'estado/kanban.db'
+    if (Test-Path $kanbanComun) { Copy-Item $kanbanComun (Join-Ruta $HermesHome 'kanban.db') -Force }
+    Import-Soul -DestinoBackup $destinoBackup
 
     Write-EstadoImport -Epoch $epoch
     Write-Log "Importado. Copia de seguridad previa en $destinoBackup"

@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🛟 Recuperación | 10/09/2026 · rev. 10/09/2026 | Antonio |
+| 🛟 Recuperación | 10/09/2026 · rev. 18/10/2026 | Antonio |
 
 > Procedimiento paso a paso para restaurar OpenCode desde un backup o una
 > reinstalación desde limpio, recuperar el grafo de memoria y re-sincronizar
@@ -234,8 +234,11 @@ ocv-status
 # 3. Arrancar de nuevo la tarea programada de sincronización
 Start-ScheduledTask -TaskName "opencode-sync" -ErrorAction SilentlyContinue
 
-# 4. Regenerar la copia de seguridad
-Copy-Item "C:\Users\evo01\.config\opencode\AGENTS.md" "D:\Linux\Config\opencode-win\AGENTS.md" -Force
+# 4. Regenerar la copia de seguridad (verifica, sincroniza config\ + raíz y publica en F:)
+powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\opencode-win\scripts\backup-opencode.ps1"
+
+# Alternativa mínima (solo los ficheros de la raíz del esquema; ya los mantiene el sync):
+# Copy-Item "C:\Users\evo01\.config\opencode\AGENTS.md" "D:\Linux\Config\opencode-win\AGENTS.md" -Force
 ```
 
 > ⚠️ **No aplica en Windows:** los pasos originales usaban
