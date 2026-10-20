@@ -1007,7 +1007,7 @@ M = {
     "notas-opencode-go.md": "💻 Notas OpenCode Go.md",
     "seguimiento-issue-memory.md": "💻 Seguimiento Issue MCP memory.md",
     "README.md": "💻 README.md",
-    "../data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md": "💻 ONLYOFFICE AI + OpenCode.md",
+    "~/Config/opencode/data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md": "💻 ONLYOFFICE AI + OpenCode.md",
 }
 
 def _link(m):
@@ -1019,7 +1019,9 @@ def transform(txt):
 
 ok, cambiados, faltan = [], [], []
 for cfg, vname in M.items():
-    cpath = os.path.join(cfg_dir, cfg)
+    cpath = os.path.expanduser(cfg)
+    if not os.path.isabs(cpath):
+        cpath = os.path.join(cfg_dir, cfg)
     if not os.path.exists(cpath):
         continue
     vpath = os.path.join(vault, vname)
