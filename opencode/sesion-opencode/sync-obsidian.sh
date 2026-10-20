@@ -67,7 +67,7 @@ M = {
     "notas-opencode-go.md": "💻 Notas OpenCode Go.md",
     "seguimiento-issue-memory.md": "💻 Seguimiento Issue MCP memory.md",
     "README.md": "💻 README.md",
-    "~/Config/opencode/data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md": "💻 ONLYOFFICE AI + OpenCode.md",
+    "../data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md": "💻 ONLYOFFICE AI + OpenCode.md",
 }
 
 def _link(m):
