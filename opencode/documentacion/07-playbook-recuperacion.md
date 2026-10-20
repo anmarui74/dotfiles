@@ -4,7 +4,9 @@
 |-----------|----------|------------|
 | 🛟 Recuperación | 05/09/2026 · rev. 10/10/2026 | Antonio |
 
-> Procedimiento paso a paso para restaurar OpenCode desde un backup o una > reinstalación desde limpio, recuperar el grafo de memoria y re-sincronizar > todo el sistema.
+> Procedimiento paso a paso para restaurar OpenCode desde un backup o una
+> reinstalación desde limpio, recuperar el grafo de memoria y re-sincronizar
+> todo el sistema.
 
 ---
 
@@ -45,7 +47,8 @@ pkill -f "lmstudio-proxy" 2>/dev/null
 pkill -f "opencode" 2>/dev/null
 ```
 
-> ⚠️ Detener el timer evita que el sync automático (cada 30 min) interfiera > mientras restauras archivos. Al terminar, vuelve a arrancarlo.
+> ⚠️ Detener el timer evita que el sync automático (cada 30 min) interfiera
+> mientras restauras archivos. Al terminar, vuelve a arrancarlo.
 
 ### 🔐 Claves y permisos (rev. 22/09/2026)
 
@@ -71,7 +74,8 @@ git grep -nIP '(nvapi-|oc_sk_)[A-Za-z0-9_-]{15,}|(^|[^A-Za-z0-9])sk-[A-Za-z0-9]{
 
 ## Escenario A: restaurar el grafo de memoria
 
-Para cuando el grafo se pierde o corrompe (el servidor MCP memory no carga, errores de entidades vacías, archivo dañado, etc.).
+Para cuando el grafo se pierde o corrompe (el servidor MCP memory no carga,
+errores de entidades vacías, archivo dañado, etc.).
 
 ### Paso 1 — Localizar el backup más reciente
 
@@ -79,7 +83,8 @@ Para cuando el grafo se pierde o corrompe (el servidor MCP memory no carga, erro
 ls -t ~/Config/opencode/backups/mcp-memory-backup-*.jsonl | head -1
 ```
 
-Guarda la ruta resultante, por ejemplo: `/home/antonio/Config/opencode/backups/mcp-memory-backup-20261011-111242.jsonl`
+Guarda la ruta resultante, por ejemplo:
+`/home/antonio/Config/opencode/backups/mcp-memory-backup-20261011-111242.jsonl`
 
 ### Paso 2 — Hacer copia del grafo actual (por seguridad)
 
@@ -102,7 +107,9 @@ python3 -c "import json; [json.loads(l) for l in open('/home/antonio/.config/ope
 
 ### Paso 5 — Reiniciar OpenCode
 
-El servidor MCP memory lee `MEMORY_FILE_PATH` (vía `environment` en el bloque `mcp.memory` de los 3 perfiles JSON). Al abrir `opencode`/`ocv` se recarga el grafo automáticamente.
+El servidor MCP memory lee `MEMORY_FILE_PATH` (vía `environment` en el bloque
+`mcp.memory` de los 3 perfiles JSON). Al abrir `opencode`/`ocv` se recarga el
+grafo automáticamente.
 
 ---
 
@@ -136,9 +143,14 @@ tar xzf ~/Config/opencode/backups/opencode/opencode-backup-XXXX.tar.gz -C /tmp/o
 ls /tmp/opencode-restore   # debe contener setup-opencode-completo.sh + restore.sh
 ```
 
-> 📌 El instalador `setup-opencode-completo.sh` (con todos los heredocs > embebidos) reinstala configuración, scripts, perfiles, skills, voz y MCPs. > El `restore.sh` coloca el setup en `~/Config/opencode/sesion-opencode/`.
+> 📌 El instalador `setup-opencode-completo.sh` (con todos los heredocs
+> embebidos) reinstala configuración, scripts, perfiles, skills, voz y MCPs.
+> El `restore.sh` coloca el setup en `~/Config/opencode/sesion-opencode/`.
 
-> 🔑 El `restore.sh` restaura también `auth.json` (credenciales de NVIDIA > `nvapi-*` y OpenCode GO `sk-*`) a `~/.local/share/opencode/auth.json` > desde `credenciales/auth.json` del tarball. Sin este paso, los agentes > en la nube no funcionan tras reinstalar.
+> 🔑 El `restore.sh` restaura también `auth.json` (credenciales de NVIDIA
+> `nvapi-*` y OpenCode GO `sk-*`) a `~/.local/share/opencode/auth.json`
+> desde `credenciales/auth.json` del tarball. Sin este paso, los agentes
+> en la nube no funcionan tras reinstalar.
 
 Ejecuta el instalador:
 
@@ -146,15 +158,19 @@ Ejecuta el instalador:
 bash /tmp/opencode-restore/setup-opencode-completo.sh
 ```
 
-> ⚠️ Si aparece una ventana de `pkexec`, introduce tu contraseña (el script la > usa para instalar paquetes con privilegios).
+> ⚠️ Si aparece una ventana de `pkexec`, introduce tu contraseña (el script la
+> usa para instalar paquetes con privilegios).
 
 ### Paso 4 — Restaurar el grafo de memoria
 
-Siguiendo el [Escenario A](#escenario-a-restaurar-el-grafo-de-memoria), copia el backup del grafo a la ruta activa.
+Siguiendo el [Escenario A](#escenario-a-restaurar-el-grafo-de-memoria), copia
+el backup del grafo a la ruta activa.
 
 ### Paso 5 — Base de datos de sesiones (NO incluida en el tarball)
 
-⚠️ El tarball de backup **no incluye** `~/.local/share/opencode/opencode.db`: cubre `~/.config/opencode/`, más `auth.json` (credenciales) y el grafo de memoria. Para no perder el historial de sesiones/peticiones, haz una copia aparte **antes** de reinstalar:
+⚠️ El tarball de backup **no incluye** `~/.local/share/opencode/opencode.db`: cubre
+`~/.config/opencode/`, más `auth.json` (credenciales) y el grafo de memoria. Para no perder
+el historial de sesiones/peticiones, haz una copia aparte **antes** de reinstalar:
 
 ```bash
 cp ~/.local/share/opencode/opencode.db ~/Config/opencode/backups/opencode.db.$(date +%Y%m%d)
@@ -250,4 +266,6 @@ bash ~/Config/opencode/backup-opencode.sh
 
 ---
 
-> 📁 Este playbook vive en `~/.config/opencode/documentacion/07-playbook-recuperacion.md` > (activo) y `~/Config/opencode/documentacion/07-playbook-recuperacion.md` (backup, lo copia > `sync-opencode.sh`). **No** va embebido en el instalador.
+> 📁 Este playbook vive en `~/.config/opencode/documentacion/07-playbook-recuperacion.md`
+> (activo) y `~/Config/opencode/documentacion/07-playbook-recuperacion.md` (backup, lo copia
+> `sync-opencode.sh`). **No** va embebido en el instalador.

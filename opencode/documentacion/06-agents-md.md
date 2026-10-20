@@ -28,7 +28,9 @@
 
 ### ¿Cómo se carga?
 
-OpenCode **descubre `AGENTS.md` automáticamente** en la raíz de su configuración (`~/.config/opencode/AGENTS.md`). La clave `instructions` se **retiró** de `opencode.json` el 19/09/2026: V2 la acepta pero **no carga sus entradas** (era inerte).
+OpenCode **descubre `AGENTS.md` automáticamente** en la raíz de su configuración
+(`~/.config/opencode/AGENTS.md`). La clave `instructions` se **retiró** de `opencode.json`
+el 19/09/2026: V2 la acepta pero **no carga sus entradas** (era inerte).
 
 ### ¿Por qué es importante?
 
@@ -81,7 +83,8 @@ El archivo se organiza en **5 bloques** (el contenido ha crecido con la migraci�
 5. CHECKLIST ANTES DE RESPONDER
 ```
 
-> 📌 Las referencias a números de línea de las secciones siguientes son **orientativas**: > el archivo ha crecido con las actualizaciones y la numeración cambia con frecuencia.
+> 📌 Las referencias a números de línea de las secciones siguientes son **orientativas**:
+> el archivo ha crecido con las actualizaciones y la numeración cambia con frecuencia.
 
 ### Estructura de `~/Config/opencode/` (desde 09/08/2026)
 
@@ -164,7 +167,10 @@ ID de Pechina: 04074 · api_key en $AEMET_API_KEY (.env)
 ⚠️ Respaldo si AEMET falla: https://wttr.in/{ciudad}?format=j1&m&lang=es
 ```
 
-Razón: AEMET es la fuente oficial española. El `api_key` se carga del `.env` (`set -a; source ~/.config/opencode/.env; set +a`). La respuesta de AEMET viene en ISO-8859-15 (hay que convertir con `iconv -f ISO-8859-15 -t UTF-8`). Si AEMET no responde, se usa wttr.in como respaldo.
+Razón: AEMET es la fuente oficial española. El `api_key` se carga del `.env`
+(`set -a; source ~/.config/opencode/.env; set +a`). La respuesta de AEMET viene en
+ISO-8859-15 (hay que convertir con `iconv -f ISO-8859-15 -t UTF-8`). Si AEMET no responde,
+se usa wttr.in como respaldo.
 
 ### 💻 Consultar hardware (líneas 94-130) — IMPORTANTE
 
@@ -178,7 +184,10 @@ Para consultas puntuales NO hace falta ejecutar comandos de detección
 
 Razón: ejecutar `inxi`/`lspci` en cada consulta es lento y consume recursos; el `index.json` ya contiene **toda** la información del sistema (generada una sola vez). Contiene **13 secciones** (más `meta`) con datos de OS, CPU, RAM, placa base, GPU NVIDIA/AMD, monitores, almacenamiento, red, sensores, USB, audio y kernel/boot.
 
-> ⚠️ Esa prohibición **NO contradice** el uso de `inxi`: es precisamente lo que **genera** el > JSON. El **escaneo** (`hardware-query.py scan`) y el **informe del sistema** > (`documentacion/09-informe-sistema.md`) **sí** usan `inxi`, `lspci`, `dmidecode`, `smartctl`, > `nvidia-smi` y `sensors`. La regla solo aplica a las **consultas sueltas**.
+> ⚠️ Esa prohibición **NO contradice** el uso de `inxi`: es precisamente lo que **genera** el
+> JSON. El **escaneo** (`hardware-query.py scan`) y el **informe del sistema**
+> (`documentacion/09-informe-sistema.md`) **sí** usan `inxi`, `lspci`, `dmidecode`, `smartctl`,
+> `nvidia-smi` y `sensors`. La regla solo aplica a las **consultas sueltas**.
 
 Consulta rápida desde terminal:
 ```bash
@@ -248,7 +257,11 @@ Explica el **sistema de dos directorios**:
 4. Ejecuta: bash ~/Config/opencode/backup-opencode.sh
 ```
 
-🔐 **Secretos (NUNCA en `~/Documentos/dotfiles/`)**: `.env` y `*.env`, `auth.json`, el directorio `credenciales/`, los tarballs `*.tar.gz` y **`service.json`** — la password del servicio local V2 (su copia viva es `~/.local/state/opencode/service.json`). ⚠️ El `git grep` de claves **no la detecta** (busca formas de API key, no contraseñas sueltas): la comprobación aparte es `find ~/Documentos/dotfiles -name 'service.json*'`, que debe salir **vacío**.
+🔐 **Secretos (NUNCA en `~/Documentos/dotfiles/`)**: `.env` y `*.env`, `auth.json`, el directorio
+`credenciales/`, los tarballs `*.tar.gz` y **`service.json`** — la password del servicio local V2
+(su copia viva es `~/.local/state/opencode/service.json`). ⚠️ El `git grep` de claves **no la
+detecta** (busca formas de API key, no contraseñas sueltas): la comprobación aparte es
+`find ~/Documentos/dotfiles -name 'service.json*'`, que debe salir **vacío**.
 
 #### 📝 Fidelidad de los manuales y espejo en Obsidian (líneas 365-377)
 
@@ -317,7 +330,9 @@ cp /home/antonio/Config/opencode/backups/mcp-memory-backup-*.jsonl \
 
 ### Recordatorio MCP memory (líneas 484-494) — IMPORTANTE
 
-Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observación** del array DEBE incluir el campo `entityName` junto a `contents`. Si falta `entityName`, el MCP devuelve error `-32602` (Input validation error). Formato correcto:
+Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observación**
+del array DEBE incluir el campo `entityName` junto a `contents`. Si falta `entityName`,
+el MCP devuelve error `-32602` (Input validation error). Formato correcto:
 
 ```json
 {"observations": [
@@ -325,11 +340,15 @@ Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observa
 ]}
 ```
 
-> 📌 Este recordatorio se añadió el **10/08/2026** porque el asistente repetía el error > de omitir `entityName` al usar las herramientas de memoria. Mismo formato para > `memory_create_relations` (cada relación necesita `from`, `to`, `relationType`).
+> 📌 Este recordatorio se añadió el **10/08/2026** porque el asistente repetía el error
+> de omitir `entityName` al usar las herramientas de memoria. Mismo formato para
+> `memory_create_relations` (cada relación necesita `from`, `to`, `relationType`).
 
 ### Timeline completo (líneas 495-510)
 
-La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado; el PR #26861 se cerró sin mergear el 10/10/2026, así que `timeline-completo` sigue siendo necesario). Para ver el historial completo:
+La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado;
+el PR #26861 se cerró sin mergear el 10/10/2026, así que `timeline-completo` sigue siendo
+necesario). Para ver el historial completo:
 
 ```bash
 ~/.local/bin/timeline-completo                # Sesión actual
@@ -338,7 +357,8 @@ La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite h
 ~/.local/bin/timeline-completo --buscar "txt" # Buscar en todas
 ```
 
-Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3). Todas las peticiones de Antonio están guardadas ahí aunque la TUI no las muestre.
+Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3). Todas las peticiones
+de Antonio están guardadas ahí aunque la TUI no las muestre.
 
 ### Vigilancia del fix del timeline — RETIRADA (12/10/2026)
 
@@ -420,7 +440,10 @@ En cloud: agente local desactivado (`agents.local.disabled`), el agente oculto `
 
 ### Proveedor NVIDIA: ranking y metodología
 
-AGENTS.md incluye la metodología (05/09/2026) para verificar/actualizar el whitelist NVIDIA: catálogo real vía `GET /v1/models` (el catálogo `models.dev` está desactualizado) → HTTP 200 real → velocidad (≥ 10 tok/s) → **tool calling obligatorio** → reintentos de 429/500/503. Detalle completo en [04-perfiles-opencode-json.md](04-perfiles-opencode-json.md) y en el grafo de memoria.
+AGENTS.md incluye la metodología (05/09/2026) para verificar/actualizar el whitelist NVIDIA:
+catálogo real vía `GET /v1/models` (el catálogo `models.dev` está desactualizado) → HTTP 200 real
+→ velocidad (≥ 10 tok/s) → **tool calling obligatorio** → reintentos de 429/500/503. Detalle
+completo en [04-perfiles-opencode-json.md](04-perfiles-opencode-json.md) y en el grafo de memoria.
 
 ### Iniciar LM Studio manualmente (líneas 639-644)
 
@@ -441,17 +464,23 @@ Si el modelo se satura, usar:
 
 #### En la TUI — barra lateral (`plugins/sidebar-mimo/tui.tsx`, V2, 16/09/2026)
 
-La barra lateral (Ctrl+X → B) muestra en el bloque **Context** el nº de tokens, el % usado, el límite del modelo, los t/s de la última respuesta y el coste; debajo, **Directorio de trabajo** e **Instrucciones**, y la **versión** al final. Funciona para TODOS los providers. (En `cli.json` se desactivan `-opencode.sidebar.context` y `-opencode.sidebar.footer`.)
+La barra lateral (Ctrl+X → B) muestra en el bloque **Context** el nº de tokens, el
+% usado, el límite del modelo, los t/s de la última respuesta y el coste; debajo,
+**Directorio de trabajo** e **Instrucciones**, y la **versión** al final. Funciona
+para TODOS los providers.
+(En `cli.json` se desactivan `-opencode.sidebar.context` y `-opencode.sidebar.footer`.)
 
 #### Proxy local (puerto 4001)
 
-El proxy `lmstudio-proxy.py` (versión con métricas, 05/09/2026) reenvía a LM Studio y además:
+El proxy `lmstudio-proxy.py` (versión con métricas, 05/09/2026) reenvía a LM
+Studio y además:
 - Registra métricas por request en `data/metrics.json` (`METRICS_EXPORT_PATH`).
 - Inyecta `stats.tokens_per_second` en respuestas no-streaming.
 
 #### Dashboard web (puerto 4200)
 
-`lmstudio-metrics-server.py` sirve en `http://localhost:4200` el histórico de velocidad, tokens y peticiones del proxy local. Datos crudos en `/api/metrics`.
+`lmstudio-metrics-server.py` sirve en `http://localhost:4200` el histórico de
+velocidad, tokens y peticiones del proxy local. Datos crudos en `/api/metrics`.
 
 Método rápido por terminal:
 

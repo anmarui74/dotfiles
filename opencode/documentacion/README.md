@@ -5,7 +5,8 @@ Guía completa del sistema de voz, modelos y herramientas.
 |-----------|----------|------------|
 | ✅ Índice de documentación | 26/07/2026 · rev. 10/10/2026 | Antonio |
 
-> 📁 Índice de todos los manuales de configuración de OpenCode > (`~/.config/opencode/documentacion/`).
+> 📁 Índice de todos los manuales de configuración de OpenCode
+> (`~/.config/opencode/documentacion/`).
 
 ---
 
@@ -154,7 +155,13 @@ set -a; source ~/.config/opencode/.env; set +a
 
 ## Notas importantes
 
-> 🕐 **Timeline:** la TUI solo muestra las últimas ~6 peticiones (el PR #26861 se > cerró sin mergear el 10/10/2026). `timeline-completo` lee todas desde `opencode.db`. > (El vigilante `check-timeline-fix.timer` se retiró el 12/10/2026.) > > 💾 **Backup:** el automático (`opencode-sync.timer`, cada 30 min) hace exactamente > lo mismo que el manual: ejecuta `backup-opencode.sh`, que verifica el setup > (`check-setup-completo.sh`) antes de generar el tarball.
+> 🕐 **Timeline:** la TUI solo muestra las últimas ~6 peticiones (el PR #26861 se
+> cerró sin mergear el 10/10/2026). `timeline-completo` lee todas desde `opencode.db`.
+> (El vigilante `check-timeline-fix.timer` se retiró el 12/10/2026.)
+>
+> 💾 **Backup:** el automático (`opencode-sync.timer`, cada 30 min) hace exactamente
+> lo mismo que el manual: ejecuta `backup-opencode.sh`, que verifica el setup
+> (`check-setup-completo.sh`) antes de generar el tarball.
 
 ---
 

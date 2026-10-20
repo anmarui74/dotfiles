@@ -30,7 +30,8 @@ Seguimiento del problema de compatibilidad de esquemas del servidor MCP memory.
 
 ## Problema
 
-Las herramientas del servidor MCP memory (`@modelcontextprotocol/server-memory`) no cargan en OpenCode 1.18.8:
+Las herramientas del servidor MCP memory (`@modelcontextprotocol/server-memory`)
+no cargan en OpenCode 1.18.8:
 
 ```
 Tool 'search_nodes' has an invalid outputSchema: JSON Schema declares an unsupported
@@ -38,7 +39,8 @@ dialect ("$schema": "http://json-schema.org/draft-07/schema#"). The default vali
 supports JSON Schema 2020-12 only; pass a pre-configured Ajv instance to AjvJs
 ```
 
-**Causa:** el servidor genera esquemas con draft-07 (`zod-to-json-schema` por defecto) y OpenCode solo valida 2020-12. El SDK oficial de MCP ya tiene el fix.
+**Causa:** el servidor genera esquemas con draft-07 (`zod-to-json-schema` por
+defecto) y OpenCode solo valida 2020-12. El SDK oficial de MCP ya tiene el fix.
 
 ---
 
@@ -52,7 +54,9 @@ supports JSON Schema 2020-12 only; pass a pre-configured Ajv instance to AjvJs
 | Cerrado | 🔒 **30/09/2026**, por el bot de GitHub y **sin arreglar** (`not_planned`): cierre automático a los 60 días sin actividad |
 | Verificado tras arreglo | ⬜ No aplica |
 
-> 🤖 El cierre es **administrativo, no un arreglo**. Mensaje del bot: «To stay organized issues are > automatically closed after 60 days of no activity. If the issue is still relevant please open a > new one.» El rechazo de `outputSchema` draft-07 **no consta como corregido** en OpenCode.
+> 🤖 El cierre es **administrativo, no un arreglo**. Mensaje del bot: «To stay organized issues are
+> automatically closed after 60 days of no activity. If the issue is still relevant please open a
+> new one.» El rechazo de `outputSchema` draft-07 **no consta como corregido** en OpenCode.
 
 ---
 
