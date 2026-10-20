@@ -137,6 +137,4 @@ El informe (`~/informe-sistema.md`) sigue este orden, todo en **tablas Markdown 
 
 ---
 
-> 📁 `~/.config/opencode/documentacion/09-informe-sistema.md` · `~/Config/opencode/documentacion/09-informe-sistema.md`
-> 🔧 Volcados de ejemplo: `/tmp/opencode/sysinfo-priv.sh` · `/tmp/opencode/sysinfo-privado.txt`
-> 📊 Hardware del equipo: [hardware-info.md](hardware-info.md)
+> 📁 `~/.config/opencode/documentacion/09-informe-sistema.md` · `~/Config/opencode/documentacion/09-informe-sistema.md` > 🔧 Volcados de ejemplo: `/tmp/opencode/sysinfo-priv.sh` · `/tmp/opencode/sysinfo-privado.txt` > 📊 Hardware del equipo: [hardware-info.md](hardware-info.md)

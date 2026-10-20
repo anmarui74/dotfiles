@@ -43,27 +43,14 @@ Los tres archivos están en `~/.config/opencode/`. Cada perfil se activa con **s
 
 ### 🧬 Herencia: el perfil activo es la base (11/09/2026)
 
-OpenCode **fusiona** todos los archivos de configuración (el global `opencode.json` y
-luego el `OPENCODE_CONFIG` del perfil). Por eso `opencode.json` actúa como **base común**:
+OpenCode **fusiona** todos los archivos de configuración (el global `opencode.json` y luego el `OPENCODE_CONFIG` del perfil). Por eso `opencode.json` actúa como **base común**:
 
-- `opencode.json` define TODO lo compartido: `shell`, `model`, `agents.title.model`,
-  `permissions`, `providers` (NVIDIA + LM Studio, incluida la `whitelist`), `mcp.servers`,
-  `agents` y las descripciones de los agentes. Usa la **sintaxis canónica de V2**.
-- `opencode-local.json` y `opencode-cloud.json` contienen **solo lo que difiere** de la
-  base; el resto se **hereda** automáticamente.
+- `opencode.json` define TODO lo compartido: `shell`, `model`, `agents.title.model`, `permissions`, `providers` (NVIDIA + LM Studio, incluida la `whitelist`), `mcp.servers`, `agents` y las descripciones de los agentes. Usa la **sintaxis canónica de V2**.
+- `opencode-local.json` y `opencode-cloud.json` contienen **solo lo que difiere** de la base; el resto se **hereda** automáticamente.
 
-Ventaja: cambiar los `permissions` o la `whitelist` de NVIDIA solo requiere tocar
-`opencode.json`. Antes estaban duplicados en los tres archivos (~330 líneas redundantes).
+Ventaja: cambiar los `permissions` o la `whitelist` de NVIDIA solo requiere tocar `opencode.json`. Antes estaban duplicados en los tres archivos (~330 líneas redundantes).
 
-> ⚠️ Los perfiles **no son autónomos**: se lanzan siempre junto al global
-> (`~/.config/opencode/opencode.json`). Si se copiara solo `opencode-local.json` a otro
-> sistema sin el global, faltarían `permissions`, `providers`, etc.
->
-> 📌 **Sintaxis V2 (19/09/2026):** los 3 perfiles usan las claves de la wiki V2
-> (`providers`, `agents`, `permissions`, `mcp.servers`, `system`, `disabled`). V2 también
-> acepta las claves V1 (`provider`, `agent`, `permission`, `mcp` plano…) y las migra
-> automáticamente, pero ya no se usan. ⚠️ El schema público `opencode.ai/config.json` aún
-> solo valida las claves V1: el editor puede marcar las V2 como desconocidas.
+> ⚠️ Los perfiles **no son autónomos**: se lanzan siempre junto al global > (`~/.config/opencode/opencode.json`). Si se copiara solo `opencode-local.json` a otro > sistema sin el global, faltarían `permissions`, `providers`, etc. > > 📌 **Sintaxis V2 (19/09/2026):** los 3 perfiles usan las claves de la wiki V2 > (`providers`, `agents`, `permissions`, `mcp.servers`, `system`, `disabled`). V2 también > acepta las claves V1 (`provider`, `agent`, `permission`, `mcp` plano…) y las migra > automáticamente, pero ya no se usan. ⚠️ El schema público `opencode.ai/config.json` aún > solo valida las claves V1: el editor puede marcar las V2 como desconocidas.
 
 ---
 
@@ -215,8 +202,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
 }
 ```
 
-> 📌 Para desactivar un servidor MCP en V2 hay que **repetir su definición completa** con
-> `"disabled": true` (un override parcial `{"disabled": true}` se descarta al fusionar).
+> 📌 Para desactivar un servidor MCP en V2 hay que **repetir su definición completa** con > `"disabled": true` (un override parcial `{"disabled": true}` se descarta al fusionar).
 
 ---
 
@@ -224,10 +210,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
 
 ### Archivo: `~/.config/opencode/opencode-cloud.json`
 
-Perfil para `ocv-cloud` / `opencode-cloud`. Tiene **todos los MCPs activos** y el agente
-local **desactivado** (`agents.local.disabled: true`). Como el modelo local no se va a
-usar, el agente oculto `title` apunta a la nube (`agents.title.model` =
-`opencode-go/deepseek-v4.1-flash`) y el lanzador no carga el modelo en VRAM (`SKIP_LMSTUDIO=1`).
+Perfil para `ocv-cloud` / `opencode-cloud`. Tiene **todos los MCPs activos** y el agente local **desactivado** (`agents.local.disabled: true`). Como el modelo local no se va a usar, el agente oculto `title` apunta a la nube (`agents.title.model` = `opencode-go/deepseek-v4.1-flash`) y el lanzador no carga el modelo en VRAM (`SKIP_LMSTUDIO=1`).
 
 Solo contiene lo que **difiere** de `opencode.json` (el resto se hereda):
 
@@ -254,9 +237,7 @@ Solo contiene lo que **difiere** de `opencode.json` (el resto se hereda):
 ```
 
 Diferencias respecto a `opencode.json` (por defecto):
-- `experimental.policies`: bloquea el provider LM Studio builtin (`lmstudio`) **y** el provider
-  propio `local` (el proxy del puerto 4001) con `action: provider.use` → `effect: deny`
-  (sustituye al antiguo `disabled_providers`, canonizado el 21/09/2026)
+- `experimental.policies`: bloquea el provider LM Studio builtin (`lmstudio`) **y** el provider propio `local` (el proxy del puerto 4001) con `action: provider.use` → `effect: deny` (sustituye al antiguo `disabled_providers`, canonizado el 21/09/2026)
 - `agents.title.model`: el agente oculto `title` apunta a la nube (en `opencode.json` usa `local/qwen3.8-9b`)
 - Agente `local`: `disabled: true` (en `opencode.json` es el agente activo)
 
@@ -305,9 +286,7 @@ Define el **shell** que usa OpenCode para ejecutar comandos bash. En este caso, 
 
 ### Lanzadores (desde el 18/08/2026)
 
-Cada perfil se activa con **su propio lanzador** (definidos en `~/.zshrc`). Usan la
-variable `OPENCODE_CONFIG` de OpenCode, que carga el archivo indicado **sin copiar
-nada sobre `opencode.json`**.
+Cada perfil se activa con **su propio lanzador** (definidos en `~/.zshrc`). Usan la variable `OPENCODE_CONFIG` de OpenCode, que carga el archivo indicado **sin copiar nada sobre `opencode.json`**.
 
 ```bash
 # Perfil por defecto
@@ -352,8 +331,7 @@ Modelo por defecto de la sesión: `opencode-go/deepseek-v4.1-flash` en base/clou
 Modelo del agente oculto `title`, usado para tareas **ligeras** (título de sesión, resúmenes rápidos, clasificaciones): `local/qwen3.8-9b` en `opencode.json` y en local; `opencode-go/deepseek-v4.1-flash` en cloud. Sustituye a la clave V1 `small_model` (canonizado el 21/09/2026).
 
 ### `instructions` — ❌ retirado
-V2 acepta el campo `instructions` pero **no carga sus entradas**; `AGENTS.md` se descubre
-automáticamente. Se retiró de `opencode.json` el **19/09/2026** por ser inerte.
+V2 acepta el campo `instructions` pero **no carga sus entradas**; `AGENTS.md` se descubre automáticamente. Se retiró de `opencode.json` el **19/09/2026** por ser inerte.
 
 ### `default_agent`
 Agente que se usa por defecto cuando no se especifica otro.
@@ -374,8 +352,7 @@ Lista **ordenada** de reglas `{action, resource, effect}`. Gana la **última** q
 - `resource`: comando, ruta o ID sobre el que se actúa.
 - `effect`: `allow`, `ask` o `deny`.
 
-> 📌 Esta sección vive solo en `opencode.json` (global); `opencode-local.json` y
-> `opencode-cloud.json` la **heredan** por fusión.
+> 📌 Esta sección vive solo en `opencode.json` (global); `opencode-local.json` y > `opencode-cloud.json` la **heredan** por fusión.
 
 ### `agents` (sintaxis V2; antes `agent`)
 Define agentes (personas/modos del asistente):
@@ -387,9 +364,7 @@ Define agentes (personas/modos del asistente):
 - **nvidia:** `mode: all` (primario y subagente), usa por defecto **NVIDIA Nemotron 3 Ultra 550B (A55B)** (`nvidia/nvidia/nemotron-3-ultra-550b-a55b`) desde el **24/09/2026** (antes Nemotron 3 Super 120B A12B, y antes Muse Glimmer 30B). Modelo mayor de la familia Nemotron 3, tool calling nativo. DeepSeek lo invoca automáticamente para código pesado
 - **multimodal:** `mode: all` (solo en `opencode.json`; heredado por fusión en local y cloud), usa **MiMo V2.5** (`opencode-go/mimo-v2.5`, Xiaomi, 311B MoE, 1M contexto, omnimodal) con prompt optimizado para imagen + texto y recuperación de contexto largo. (Antes usaba `opencode-go/deepseek-v4.1-flash#multimodal`.)
 
-Campos por agente: `system` para el prompt (antes `prompt`), `model`
-(`provider/model`, con `#variante` opcional), `permissions` (antes `permission`) y
-`mode` (`primary` / `subagent` / `all`).
+Campos por agente: `system` para el prompt (antes `prompt`), `model` (`provider/model`, con `#variante` opcional), `permissions` (antes `permission`) y `mode` (`primary` / `subagent` / `all`).
 
 ### `providers` (sintaxis V2; antes `provider`)
 Proveedores de modelos. Configurados:
@@ -487,16 +462,11 @@ Esto dejaba inutilizables casi todos los modelos NVIDIA (muse-glimmer, los 4 nem
 
 ### `lsp` — ❌ retirado (V2)
 
-**V2 no ejecuta servidores de lenguaje** (ni diagnósticos ni herramientas LSP). Por eso el bloque
-`lsp` se **retiró** de `opencode.json` el **16/09/2026**; queda copia en
-`~/Config/opencode/legacy/lsp-block-v1.json` por si una V2 futura lo recupera.
+**V2 no ejecuta servidores de lenguaje** (ni diagnósticos ni herramientas LSP). Por eso el bloque `lsp` se **retiró** de `opencode.json` el **16/09/2026**; queda copia en `~/Config/opencode/legacy/lsp-block-v1.json` por si una V2 futura lo recupera.
 
-Para tipos/lint en V2 se usan comandos de terminal: `basedpyright`, `tsc --noEmit`, `cargo clippy`,
-`go vet ./...`, `shellcheck`, `yamllint`, `jq empty`…
+Para tipos/lint en V2 se usan comandos de terminal: `basedpyright`, `tsc --noEmit`, `cargo clippy`, `go vet ./...`, `shellcheck`, `yamllint`, `jq empty`…
 
-> 📚 **Histórico (V1):** V1 sí lanzaba 11 servidores LSP (basedpyright, clangd, rust-analyzer,
-> typescript-language-server, gopls, vscode-json-language-server, yaml-language-server,
-> bash-language-server, marksman) definidos en `opencode.json` y heredados por local/cloud.
+> 📚 **Histórico (V1):** V1 sí lanzaba 11 servidores LSP (basedpyright, clangd, rust-analyzer, > typescript-language-server, gopls, vscode-json-language-server, yaml-language-server, > bash-language-server, marksman) definidos en `opencode.json` y heredados por local/cloud.
 
 ### `mcp.servers` (sintaxis V2; antes `mcp` plano)
 Servidores MCP (Model Context Protocol), bajo `mcp.servers`. Cada uno proporciona **herramientas** que el modelo puede usar:
@@ -515,27 +485,17 @@ Servidores MCP (Model Context Protocol), bajo `mcp.servers`. Cada uno proporcion
 
 ### Archivo: `~/.config/opencode/package.json`
 
-El `package.json` activo está **vacío** (solo `{}`): el binario de OpenCode ya
-resuelve sus propias dependencias y los plugins locales no necesitan paquetes npm
-en la config activa.
+El `package.json` activo está **vacío** (solo `{}`): el binario de OpenCode ya resuelve sus propias dependencias y los plugins locales no necesitan paquetes npm en la config activa.
 
 ```json
 {}
 ```
 
-`package-lock.json` es un **resto histórico**: nació cuando se instalaba el SDK
-`@opencode-ai/plugin` (última versión anotada, `1.18.8`) y **hoy está vacío** —
-`lockfileVersion 3` con `"packages": {}` (regenerado el 06/10/2026). **No es
-necesario**: el `package.json` activo está en `{}`, el binario de OpenCode resuelve
-sus propias dependencias y **ambos archivos se excluyen del backup**
-(`backup-opencode.sh` aplica `--exclude=package.json` y `--exclude=package-lock.json`).
-Se conserva solo como testimonio de aquella instalación; se puede borrar sin efectos.
+`package-lock.json` es un **resto histórico**: nació cuando se instalaba el SDK `@opencode-ai/plugin` (última versión anotada, `1.18.8`) y **hoy está vacío** — `lockfileVersion 3` con `"packages": {}` (regenerado el 06/10/2026). **No es necesario**: el `package.json` activo está en `{}`, el binario de OpenCode resuelve sus propias dependencias y **ambos archivos se excluyen del backup** (`backup-opencode.sh` aplica `--exclude=package.json` y `--exclude=package-lock.json`). Se conserva solo como testimonio de aquella instalación; se puede borrar sin efectos.
 
 | Archivo | Estado | Propósito |
 |---------|--------|-----------|
 | `package.json` | `{}` (vacío) | Sin dependencias npm en la config activa |
 | `package-lock.json` | **Vacío** (`lockfileVersion 3`, `"packages": {}`) | Resto histórico, no se usa ni se respalda |
 
-> 📌 El `package.json` no incluye `@ai-sdk/*` ni `@renjfk/opencode-voice`: los SDK de AI
-> los resuelve el propio binario de OpenCode, y el plugin de voz
-> `opencode-voice-modified` es una copia local (no se instala desde npm).
+> 📌 El `package.json` no incluye `@ai-sdk/*` ni `@renjfk/opencode-voice`: los SDK de AI > los resuelve el propio binario de OpenCode, y el plugin de voz > `opencode-voice-modified` es una copia local (no se instala desde npm).

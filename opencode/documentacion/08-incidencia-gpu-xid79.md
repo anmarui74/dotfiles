@@ -5,9 +5,7 @@ Registro del cuelgue del equipo del 22/09/2026 por caída de la GPU NVIDIA del b
 |-----------|----------|------------|
 | 🔴 Incidencia · pendiente revisión de hardware | 22/09/2026 · rev. 10/10/2026 | Antonio |
 
-> El equipo se quedó bloqueado (sesión gráfica muerta) durante una auditoría de
-> seguridad. El análisis de los logs demuestra que la causa fue la **GPU
-> (Xid 79, "GPU has fallen off the bus")**, no la auditoría ni falta de memoria.
+> El equipo se quedó bloqueado (sesión gráfica muerta) durante una auditoría de > seguridad. El análisis de los logs demuestra que la causa fue la **GPU > (Xid 79, "GPU has fallen off the bus")**, no la auditoría ni falta de memoria.
 
 ---
 
@@ -25,18 +23,14 @@ Registro del cuelgue del equipo del 22/09/2026 por caída de la GPU NVIDIA del b
 
 ## Resumen
 
-El **22/09/2026 a las 06:20:52**, mientras se ejecutaba una auditoría de seguridad
-(de solo lectura), la GPU **NVIDIA GeForce RTX 4070 Ti SUPER** (PCI `0000:01:00.0`)
-se cayó del bus PCIe y el kernel emitió:
+El **22/09/2026 a las 06:20:52**, mientras se ejecutaba una auditoría de seguridad (de solo lectura), la GPU **NVIDIA GeForce RTX 4070 Ti SUPER** (PCI `0000:01:00.0`) se cayó del bus PCIe y el kernel emitió:
 
 ```
 NVRM: Xid (PCI:0000:01:00): 79, pid=5344, name=gnome-shell, GPU has fallen off the bus.
 NVRM: GPU 0000:01:00.0: GPU has fallen off the bus.
 ```
 
-Al perderse la GPU, abortaron todos los procesos que usaban `libnvidia-eglcore`
-(`gnome-shell`, `Xwayland`, `kitty`) y el TTS `speak-kokoro-gpu` (ONNX Runtime CUDA).
-Sin servidor gráfico, la sesión quedó inutilizable → reinicio manual a las 06:21:59.
+Al perderse la GPU, abortaron todos los procesos que usaban `libnvidia-eglcore` (`gnome-shell`, `Xwayland`, `kitty`) y el TTS `speak-kokoro-gpu` (ONNX Runtime CUDA). Sin servidor gráfico, la sesión quedó inutilizable → reinicio manual a las 06:21:59.
 
 ---
 
@@ -52,8 +46,7 @@ Sin servidor gráfico, la sesión quedó inutilizable → reinicio manual a las 
 | 06:21:59 | 🔄 Reinicio manual → sistema operativo de nuevo |
 | 06:22:00+ | ✅ Sistema y GPU funcionando con normalidad |
 
-> 📌 En el journal del arranque afectado hay **5904 mensajes NVRM/Xid**, todos en
-> cascada del único evento Xid 79 inicial.
+> 📌 En el journal del arranque afectado hay **5904 mensajes NVRM/Xid**, todos en > cascada del único evento Xid 79 inicial.
 
 ---
 
@@ -80,8 +73,7 @@ kitty:            ... libEGL_nvidia.so.0 / libnvidia-eglcore.so.615.71.09 ... ab
 
 ## Causa raíz
 
-**Xid 79 = "GPU has fallen off the bus"**: error de nivel de bus PCIe / hardware /
-firmware. La GPU deja de responder y el driver no puede recuperarla.
+**Xid 79 = "GPU has fallen off the bus"**: error de nivel de bus PCIe / hardware / firmware. La GPU deja de responder y el driver no puede recuperarla.
 
 | Dato | Valor |
 |------|-------|
@@ -111,8 +103,7 @@ Causas probables, por orden de frecuencia:
 | Falta de memoria (OOM) | ❌ Descartada | Sin mensajes OOM; 61 GB de RAM con solo 7 GB usados. |
 | Bloqueo por I/O del `find`/`grep` | ❌ Descartada | No hubo `hung task` ni `blocked for more than`; Xid 79 es un fallo de bus, no de disco. |
 
-> ✅ Conclusión: el fallo es de **hardware/driver de la GPU**. La coincidencia
-> temporal con la auditoría es casual.
+> ✅ Conclusión: el fallo es de **hardware/driver de la GPU**. La coincidencia > temporal con la auditoría es casual.
 
 ---
 
@@ -173,6 +164,4 @@ cat /proc/driver/nvidia/params | grep -iE 'EnableGpuFirmware|PreserveVideoMemory
 
 ---
 
-> 📁 Este manual vive en `~/.config/opencode/documentacion/08-incidencia-gpu-xid79.md`
-> (activo) y `~/Config/opencode/documentacion/08-incidencia-gpu-xid79.md` (backup).
-> Se sincroniza automáticamente con `sync-opencode.sh`.
+> 📁 Este manual vive en `~/.config/opencode/documentacion/08-incidencia-gpu-xid79.md` > (activo) y `~/Config/opencode/documentacion/08-incidencia-gpu-xid79.md` (backup). > Se sincroniza automáticamente con `sync-opencode.sh`.

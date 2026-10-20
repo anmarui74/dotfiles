@@ -32,9 +32,7 @@ requires explicit opt in: https://opencode.ai/workspace/wrk_01KWNJZHA9QS258DM0M2
 
 ## Causa
 
-El modelo ha pasado a servirse desde la API oficial del proveedor en **China**
-(DeepSeek, Alibaba, etc.) en vez de desde los servidores de OpenCode en
-UE/EEUU/Singapur. OpenCode exige aceptarlo explícitamente por cumplimiento legal.
+El modelo ha pasado a servirse desde la API oficial del proveedor en **China** (DeepSeek, Alibaba, etc.) en vez de desde los servidores de OpenCode en UE/EEUU/Singapur. OpenCode exige aceptarlo explícitamente por cumplimiento legal.
 
 ---
 
@@ -48,8 +46,7 @@ UE/EEUU/Singapur. OpenCode exige aceptarlo explícitamente por cumplimiento lega
 
 ## Alternativa sin opt-in
 
-Si no se quiere aceptar el alojamiento en China (privacidad/GDPR), usar modelos
-alojados en infraestructura de OpenCode (UE/EEUU/Singapur):
+Si no se quiere aceptar el alojamiento en China (privacidad/GDPR), usar modelos alojados en infraestructura de OpenCode (UE/EEUU/Singapur):
 
 | Modelo | Notas |
 |--------|-------|

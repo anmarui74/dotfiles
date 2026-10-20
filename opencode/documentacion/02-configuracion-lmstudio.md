@@ -46,12 +46,10 @@ OpenCode → http://localhost:4001/v1 (proxy) → http://localhost:1234/v1 (LM S
 
 ### ¿Qué hace?
 
-Proxy HTTP **de reenvío** entre OpenCode y LM Studio. **No** carga ni descarga modelos
-(eso lo hace `start-lmstudio.sh` al arrancar OpenCode, ver más abajo):
+Proxy HTTP **de reenvío** entre OpenCode y LM Studio. **No** carga ni descarga modelos (eso lo hace `start-lmstudio.sh` al arrancar OpenCode, ver más abajo):
 
 1. Recibe las peticiones de OpenCode en el puerto `4001` y las reenvía a `http://localhost:1234`
-2. Registra **métricas por petición** (modelo, tokens, tiempo, tok/s) en `data/metrics.json`
-   (`ENABLE_METRICS=true` + `METRICS_EXPORT_PATH` del `.env`); conserva las últimas 500
+2. Registra **métricas por petición** (modelo, tokens, tiempo, tok/s) en `data/metrics.json` (`ENABLE_METRICS=true` + `METRICS_EXPORT_PATH` del `.env`); conserva las últimas 500
 3. Inyecta `stats.tokens_per_second` en las respuestas **no-streaming** (barra lateral de la TUI)
 4. Con streaming (SSE) estima los tokens del buffer (`chars / 4` si LM Studio no reporta `usage`)
 5. Aplica un **workaround para Qwen 3.8**: si falta un mensaje con `role: 'user'`, añade uno `'(cont.)'`
@@ -86,10 +84,7 @@ if not any(m.get('role') == 'user' for m in body.get('messages', [])):
 
 Script **completo** de inicialización y verificación (al iniciar sesión vía systemd). Realiza 5 pasos:
 
-> ⚠️ **Estado actual (18/08/2026): el servicio `init-opencode.service` está DESHABILITADO.**
-> La carga de LM Studio + modelo + proxy ocurre automáticamente al abrir `opencode` u `ocv`
-> (vía `start-opencode-server.sh`), no al iniciar sesión. `init-opencode.sh` se usa como
-> comprobación manual (`bash ~/.config/opencode/init-opencode.sh`).
+> ⚠️ **Estado actual (18/08/2026): el servicio `init-opencode.service` está DESHABILITADO.** > La carga de LM Studio + modelo + proxy ocurre automáticamente al abrir `opencode` u `ocv` > (vía `start-opencode-server.sh`), no al iniciar sesión. `init-opencode.sh` se usa como > comprobación manual (`bash ~/.config/opencode/init-opencode.sh`).
 
 ### Paso 1: Servidor LM Studio
 
@@ -107,8 +102,7 @@ fi
 $LMSTUDIO_BIN load "qwen3.8-9b" -c 81920 -y
 ```
 
-Verifica que el contexto aplicado sea `81920`. Si no, reintenta.
-Usa `lms ps` para comprobar el contexto actual.
+Verifica que el contexto aplicado sea `81920`. Si no, reintenta. Usa `lms ps` para comprobar el contexto actual.
 
 ### Paso 3: Iniciar proxy (puerto 4001)
 
@@ -160,8 +154,7 @@ pkill -f lmstudio-proxy
 setsid python3 lmstudio-proxy.py 4001 > /tmp/lms-proxy.log 2>&1 &
 ```
 
-> 💡 Si el modelo ya está en VRAM, `start-lmstudio.sh` **omite** `unload`/`load` para no
-> recargar ni abrir la GUI de LM Studio innecesariamente (verificado con `lms ps`).
+> 💡 Si el modelo ya está en VRAM, `start-lmstudio.sh` **omite** `unload`/`load` para no > recargar ni abrir la GUI de LM Studio innecesariamente (verificado con `lms ps`).
 
 ---
 
@@ -185,9 +178,7 @@ Script **lanzador real** que ejecuta `opencode`/`ocv` (el binario `~/.local/bin/
 
 ### Archivo: `~/.config/opencode/settings.lmstudio.json`
 
-Copia de respaldo de la configuración de la GUI de LM Studio. El archivo **vivo** que lee
-el servidor es `~/.lmstudio/settings.json` (ahí es donde se fija el contexto). Contenido
-real del respaldo:
+Copia de respaldo de la configuración de la GUI de LM Studio. El archivo **vivo** que lee el servidor es `~/.lmstudio/settings.json` (ahí es donde se fija el contexto). Contenido real del respaldo:
 
 | Parámetro | Valor |
 |-----------|-------|
@@ -198,10 +189,7 @@ real del respaldo:
 | `modelLoadingGuardrails.mode` | `high` |
 | `chat` / `developer` / `ui` / `sidebar` | Preferencias de la interfaz (chat, actualizaciones, barra lateral…) |
 
-El **contexto de 80K** no vive en este respaldo, sino en `~/.lmstudio/settings.json` del
-servidor, donde `defaultContextLength` es `{"type":"custom","value":"81920"}` (lo fija el
-PASO 2 de `init-opencode.sh`, verificado el 10/10/2026). Esa ventana permite que el modelo
-maneje conversaciones largas y archivos grandes sin perder el hilo.
+El **contexto de 80K** no vive en este respaldo, sino en `~/.lmstudio/settings.json` del servidor, donde `defaultContextLength` es `{"type":"custom","value":"81920"}` (lo fija el PASO 2 de `init-opencode.sh`, verificado el 10/10/2026). Esa ventana permite que el modelo maneje conversaciones largas y archivos grandes sin perder el hilo.
 
 ---
 
@@ -238,9 +226,7 @@ El provider en `opencode.json` (sintaxis V2, provider propio `local`):
 }
 ```
 
-> 📌 En V1 el provider se llamaba `lmstudio` y usaba `@ai-sdk/openai-compatible`. En V2 el id
-> `lmstudio` choca con el provider builtin y no resuelve, por eso se usa el provider propio
-> `local` con el paquete nativo `@opencode/ai/providers/openai-compatible`.
+> 📌 En V1 el provider se llamaba `lmstudio` y usaba `@ai-sdk/openai-compatible`. En V2 el id > `lmstudio` choca con el provider builtin y no resuelve, por eso se usa el provider propio > `local` con el paquete nativo `@opencode/ai/providers/openai-compatible`.
 
 ---
 
@@ -272,8 +258,7 @@ systemctl --user enable init-opencode.service
 systemctl --user start init-opencode.service
 ```
 
-> ⚠️ **Actualmente está DESHABILITADO** (`systemctl --user is-enabled` → `disabled`):
-> la carga se hace al abrir `opencode`/`ocv` vía `start-opencode-server.sh`.
+> ⚠️ **Actualmente está DESHABILITADO** (`systemctl --user is-enabled` → `disabled`): > la carga se hace al abrir `opencode`/`ocv` vía `start-opencode-server.sh`.
 
 ---
 
@@ -294,8 +279,7 @@ systemctl --user start init-opencode.service
 5. OpenCode → http://localhost:4001/v1 → Proxy → http://localhost:1234/v1 → Modelo
 ```
 
-> El servicio systemd `init-opencode.service` (arranque al iniciar sesión) está
-> **DESHABILITADO** desde el 18/08/2026: la carga ocurre al abrir OpenCode.
+> El servicio systemd `init-opencode.service` (arranque al iniciar sesión) está > **DESHABILITADO** desde el 18/08/2026: la carga ocurre al abrir OpenCode.
 
 ---
 
@@ -326,13 +310,7 @@ lms get empero-ai/Qwen3.8-9B-Distill-GGUF@Q6_K --yes
 lms get unsloth/Qwen3.5-9B-GGUF@Q6_K --yes
 ```
 
-> ⚠️ **Corregido el 22/09/2026:** el PASO 3 de `setup-opencode-completo.sh` usaba
-> `lms library list` y `lms download` — comandos que **no existen** (los correctos son
-> `lms ls` y `lms get`) — y el repo `qwen/qwen3.8-9b`, que tampoco es válido. Nunca habría
-> detectado ni descargado los modelos. Ahora usa el bucle correcto con estos 3 repos.
->
-> ⚠️ El repo `empero-ai/Qwen3.8-9B-Distill` (sin `-GGUF`) solo tiene **safetensors**, que
-> LM Studio no usa.
+> ⚠️ **Corregido el 22/09/2026:** el PASO 3 de `setup-opencode-completo.sh` usaba > `lms library list` y `lms download` — comandos que **no existen** (los correctos son > `lms ls` y `lms get`) — y el repo `qwen/qwen3.8-9b`, que tampoco es válido. Nunca habría > detectado ni descargado los modelos. Ahora usa el bucle correcto con estos 3 repos. > > ⚠️ El repo `empero-ai/Qwen3.8-9B-Distill` (sin `-GGUF`) solo tiene **safetensors**, que > LM Studio no usa.
 
 ---
 

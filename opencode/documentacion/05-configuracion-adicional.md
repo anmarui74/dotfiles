@@ -162,8 +162,7 @@ HARDWARE_INDEX_PATH=/home/antonio/.config/opencode/data/hardware/index.json
 AEMET_API_KEY=********   # clave real en el .env activo (no se documenta)
 ```
 
-> 📌 Las antiguas variables `OLLAMA_API_KEY` y `OLLAMA_PROXY_PORT` se **retiraron** del `.env`
-> al abandonar Ollama (sustituido por LM Studio).
+> 📌 Las antiguas variables `OLLAMA_API_KEY` y `OLLAMA_PROXY_PORT` se **retiraron** del `.env` > al abandonar Ollama (sustituido por LM Studio).
 
 ### Explicación de cada variable
 
@@ -209,11 +208,7 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 6. Sincroniza los **manuales** de `~/.config/opencode/documentacion/` → `~/Config/opencode/documentacion/` y `AGENTS.md` a la raíz de `~/Config/opencode/` (regla: los manuales viven SOLO en las carpetas `documentacion/` de la config activa y del backup; `sesion-opencode/` es solo configuración/scripts)
 7. **Regenera** el tarball de backup ejecutando `backup-opencode.sh`
 
-> 📌 El backup completo se genera en `~/Config/opencode/backups/opencode/` con retención de 30 días y poda de 1 tarball por día.
->
-> 🔑 Desde el **05/09/2026** el backup incluye además `auth.json` (credenciales de proveedores NVIDIA `nvapi-*` y OpenCode GO `sk-*`) en `credenciales/auth.json` dentro del tarball, y el `restore.sh` lo restaura a `~/.local/share/opencode/auth.json`. Sin él, los agentes en la nube no funcionan tras reinstalar.
->
-> 💡 **Nota (10/08/2026):** el backup automático hace **exactamente lo mismo** que el manual: al final ejecuta el mismo `backup-opencode.sh`, que incluye la **verificación automática del setup** (`check-setup-completo.sh`). Si el setup estuviera incorrecto, el backup se aborta (y se registra en `data/sync.log`).
+> 📌 El backup completo se genera en `~/Config/opencode/backups/opencode/` con retención de 30 días y poda de 1 tarball por día. > > 🔑 Desde el **05/09/2026** el backup incluye además `auth.json` (credenciales de proveedores NVIDIA `nvapi-*` y OpenCode GO `sk-*`) en `credenciales/auth.json` dentro del tarball, y el `restore.sh` lo restaura a `~/.local/share/opencode/auth.json`. Sin él, los agentes en la nube no funcionan tras reinstalar. > > 💡 **Nota (10/08/2026):** el backup automático hace **exactamente lo mismo** que el manual: al final ejecuta el mismo `backup-opencode.sh`, que incluye la **verificación automática del setup** (`check-setup-completo.sh`). Si el setup estuviera incorrecto, el backup se aborta (y se registra en `data/sync.log`).
 
 ### ¿Cuándo se ejecuta?
 
@@ -224,12 +219,7 @@ set -a; source /home/antonio/.config/opencode/.env; set +a
 
 Usa `/tmp/opencode-sync.lock` para evitar ejecuciones simultáneas.
 
-> ⚠️ **Consejo:** al hacer un backup manual, conviene parar el timer primero para evitar que el sync (cada 30 min) interfiera copiando archivos durante el proceso:
-> ```bash
-> systemctl --user stop opencode-sync.timer
-> bash ~/Config/opencode/backup-opencode.sh
-> systemctl --user start opencode-sync.timer
-> ```
+> ⚠️ **Consejo:** al hacer un backup manual, conviene parar el timer primero para evitar que el sync (cada 30 min) interfiera copiando archivos durante el proceso: > ```bash > systemctl --user stop opencode-sync.timer > bash ~/Config/opencode/backup-opencode.sh > systemctl --user start opencode-sync.timer > ```
 
 ---
 
@@ -282,17 +272,11 @@ Unit=opencode-sync.service
 
 ### `check-opencode-fix.timer` — RETIRADO (12/10/2026)
 
-> 🗑️ El vigilante `check-fix.sh` + `check-opencode-fix.service`/`.timer` se **retiraron el 12/10/2026**.
-> El issue [#39164](https://github.com/anomalyco/opencode/issues/39164) (tools vacías en modelos locales
-> OpenAI-compatible) quedó **CERRADO el 11/10/2026**, pero como **"not_planned"**: fue un cierre masivo de
-> issues de la **V1** al salir la V2, **no** porque se arreglara. El bug era de OpenCode 1.x; en V2 el
-> tool calling local funciona. No queda nada que vigilar.
+> 🗑️ El vigilante `check-fix.sh` + `check-opencode-fix.service`/`.timer` se **retiraron el 12/10/2026**. > El issue [#39164](https://github.com/anomalyco/opencode/issues/39164) (tools vacías en modelos locales > OpenAI-compatible) quedó **CERRADO el 11/10/2026**, pero como **"not_planned"**: fue un cierre masivo de > issues de la **V1** al salir la V2, **no** porque se arreglara. El bug era de OpenCode 1.x; en V2 el > tool calling local funciona. No queda nada que vigilar.
 
 ### `check-timeline-fix.timer` — RETIRADO (12/10/2026)
 
-> 🗑️ El vigilante `check-timeline-fix.sh` + `check-timeline-fix.service`/`.timer` se **retiraron el 12/10/2026**.
-> El PR #26861 (fix del timeline TUI) quedó **cerrado sin mergear el 10/10/2026** → no hay nada que vigilar.
-> `timeline-completo` sigue siendo necesario.
+> 🗑️ El vigilante `check-timeline-fix.sh` + `check-timeline-fix.service`/`.timer` se **retiraron el 12/10/2026**. > El PR #26861 (fix del timeline TUI) quedó **cerrado sin mergear el 10/10/2026** → no hay nada que vigilar. > `timeline-completo` sigue siendo necesario.
 
 ### `check-nvidia-whitelist.timer`
 
@@ -370,12 +354,7 @@ systemctl --user start check-mega-pr.service
 systemctl --user start sync-obsidian.service
 ```
 
-> 🔧 La unidad **`btrfs-scrub`** es de **sistema** (root), no de usuario:
-> ```bash
-> systemctl list-timers btrfs-scrub.timer
-> sudo systemctl start btrfs-scrub.service       # prueba manual
-> sudo journalctl -u btrfs-scrub.service -n 20   # o ver data/btrfs-scrub.log
-> ```
+> 🔧 La unidad **`btrfs-scrub`** es de **sistema** (root), no de usuario: > ```bash > systemctl list-timers btrfs-scrub.timer > sudo systemctl start btrfs-scrub.service       # prueba manual > sudo journalctl -u btrfs-scrub.service -n 20   # o ver data/btrfs-scrub.log > ```
 
 ---
 
@@ -403,12 +382,7 @@ python3 ~/.config/opencode/hardware-query.py scan
 
 Recolecta 13 secciones (más `meta`): OS, CPU, RAM, placa base, GPU NVIDIA/AMD, monitores, almacenamiento, red, sensores, USB, audio y kernel/boot; y reescribe `data/hardware/index.json`. `meta.generated` y `meta.source` llevan la **fecha real** (dinámicos desde el 22/09/2026; antes `source` estaba fijado a `16/08/2026` por error).
 
-> ⚠️ **`pkexec` y sesión gráfica:** el escaneo usa `dmidecode` vía `pkexec` (ventana de contraseña). Si lo lanza el **agente**, el proceso no hereda la sesión gráfica y `pkexec` falla en silencio, dejando **RAM (DIMMs) y placa base incompletas**. Hay que exportar antes el entorno de GNOME:
-> ```bash
-> export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus"
-> export XDG_RUNTIME_DIR="/run/user/1000"
-> python3 ~/.config/opencode/hardware-query.py scan
-> ```
+> ⚠️ **`pkexec` y sesión gráfica:** el escaneo usa `dmidecode` vía `pkexec` (ventana de contraseña). Si lo lanza el **agente**, el proceso no hereda la sesión gráfica y `pkexec` falla en silencio, dejando **RAM (DIMMs) y placa base incompletas**. Hay que exportar antes el entorno de GNOME: > ```bash > export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus" > export XDG_RUNTIME_DIR="/run/user/1000" > python3 ~/.config/opencode/hardware-query.py scan > ```
 
 > **Nota (16/08/2026):** `web-search.sh` fue **eliminado** — no estaba registrado como MCP en ningún perfil y la búsqueda web la cubren el MCP `fetch` y la herramienta integrada de OpenCode.
 
@@ -428,11 +402,7 @@ Recolecta 13 secciones (más `meta`): OS, CPU, RAM, placa base, GPU NVIDIA/AMD, 
 
 - `bash -n` (sintaxis)
 - `shellcheck` (sin errores reales; SC2016 en heredocs = OK)
-- **47 heredocs embebidos** comparados uno a uno contra los archivos activos
-  (incluye `timeline-completo` y `speak` de `~/.local/bin/`, los plugins de
-  `plugins/`, los **8** servicios/timers systemd —incl. `sync-obsidian.service`,
-  `sync-obsidian.path` y `check-mega-pr.service`/`.timer`— y los manuales de hardware
-  `documentacion/hardware-info.md` y `documentacion/README-hardware.md`)
+- **47 heredocs embebidos** comparados uno a uno contra los archivos activos (incluye `timeline-completo` y `speak` de `~/.local/bin/`, los plugins de `plugins/`, los **8** servicios/timers systemd —incl. `sync-obsidian.service`, `sync-obsidian.path` y `check-mega-pr.service`/`.timer`— y los manuales de hardware `documentacion/hardware-info.md` y `documentacion/README-hardware.md`)
 - Estructura completa de pasos (1-19 + sub-pasos `4b`, `14b`, `15b`)
 - Comandos necesarios presentes en el sistema
 
@@ -508,20 +478,11 @@ python3 ~/.config/opencode/lmstudio-metrics-server.py 4200
 
 ### Plugin TUI `opencode-sidebar-mimo` (V2, 16/09/2026)
 
-Plugin TUI propio (no npm) **auto-descubierto** en
-`~/.config/opencode/plugins/sidebar-mimo/tui.tsx` (formato V2: `Plugin.define({ id, setup })`
-importando `@opencode/plugin/tui`). Reproduce la barra lateral de **MiMoCode** en OpenCode:
-bloque **Context** (tokens, % usado, límite del modelo, t/s y coste),
-**Directorio de trabajo** e **Instrucciones** (AGENTS.md), y la **versión** al final.
+Plugin TUI propio (no npm) **auto-descubierto** en `~/.config/opencode/plugins/sidebar-mimo/tui.tsx` (formato V2: `Plugin.define({ id, setup })` importando `@opencode/plugin/tui`). Reproduce la barra lateral de **MiMoCode** en OpenCode: bloque **Context** (tokens, % usado, límite del modelo, t/s y coste), **Directorio de trabajo** e **Instrucciones** (AGENTS.md), y la **versión** al final.
 
-En `cli.json` (config TUI de V2) se desactivan los bloques nativos para no duplicar:
-`-opencode.sidebar.context` (Context propio) y `-opencode.sidebar.footer` (la ruta ya
-aparece en «Directorio de trabajo»).
+En `cli.json` (config TUI de V2) se desactivan los bloques nativos para no duplicar: `-opencode.sidebar.context` (Context propio) y `-opencode.sidebar.footer` (la ruta ya aparece en «Directorio de trabajo»).
 
-> ⚠️ En V2 la config TUI es `~/.config/opencode/cli.json`; el antiguo `tui.json` (V1) se
-> retiró el 16/09/2026 (archivado en `~/Config/opencode/legacy/`).
-> ⚠️ El antiguo plugin npm `opencode-throughput` se **eliminó** el 11/09/2026: su bloque
-> «Throughput / Recent» ya no es necesario porque el t/s aparece en el bloque Context.
+> ⚠️ En V2 la config TUI es `~/.config/opencode/cli.json`; el antiguo `tui.json` (V1) se > retiró el 16/09/2026 (archivado en `~/Config/opencode/legacy/`). > ⚠️ El antiguo plugin npm `opencode-throughput` se **eliminó** el 11/09/2026: su bloque > «Throughput / Recent» ya no es necesario porque el t/s aparece en el bloque Context.
 
 ---
 
@@ -570,9 +531,7 @@ Todas las peticiones de Antonio están guardadas en `~/.local/share/opencode/ope
 | `shellcheck` | `pacman -S shellcheck` | Linting de scripts bash |
 | `shfmt` | `pacman -S shfmt` | Formateo de scripts bash |
 
-> 📌 **Nota zsh:** no existe LSP zsh dedicado (parser tree-sitter-zsh abandonado). Se fuerza `bash-language-server` en `.zsh`/`.zshrc`: navegación y símbolos sí, diagnósticos no.
->
-> 📌 **Nota instalación:** el `setup-opencode-completo.sh` (PASO 4b) instala igualmente los binarios de esos servidores; en V2 no se usan como LSP, pero sirven como herramientas de terminal/lint.
+> 📌 **Nota zsh:** no existe LSP zsh dedicado (parser tree-sitter-zsh abandonado). Se fuerza `bash-language-server` en `.zsh`/`.zshrc`: navegación y símbolos sí, diagnósticos no. > > 📌 **Nota instalación:** el `setup-opencode-completo.sh` (PASO 4b) instala igualmente los binarios de esos servidores; en V2 no se usan como LSP, pero sirven como herramientas de terminal/lint.
 
 ---
 
@@ -737,37 +696,22 @@ Config/opencode/
 └── (respaldo-config/ fue eliminado el 09/08/2026 por obsoleto)
 ```
 
-> 🔐 **`service.json`** guarda la **contraseña del servicio local V2** de OpenCode (la copia viva es
-> `~/.local/state/opencode/service.json`). Es un **secreto**: nunca a `~/Documentos/dotfiles/` ni a
-> informes. ⚠️ Ojo: el **escáner de claves del backup no lo detecta**, porque su patrón busca formas
-> de API key y no una contraseña suelta. Desde el **10/10/2026** el `sync` **no lo propaga** a
-> `~/Config/opencode/` (el `backup-opencode.sh` además lo excluye del volcado a dotfiles y el
-> `.gitignore` del repo incluye `**/service.json`), así que no llega al repo.
+> 🔐 **`service.json`** guarda la **contraseña del servicio local V2** de OpenCode (la copia viva es > `~/.local/state/opencode/service.json`). Es un **secreto**: nunca a `~/Documentos/dotfiles/` ni a > informes. ⚠️ Ojo: el **escáner de claves del backup no lo detecta**, porque su patrón busca formas > de API key y no una contraseña suelta. Desde el **10/10/2026** el `sync` **no lo propaga** a > `~/Config/opencode/` (el `backup-opencode.sh` además lo excluye del volcado a dotfiles y el > `.gitignore` del repo incluye `**/service.json`), así que no llega al repo.
 
-> 🗑️ **Restos del experimento de modelo local — ELIMINADOS (11/10/2026)**: `models/Qwen3.5-9B-Q6_K.gguf`
-> (**7,45 GB**, duplicado del que sirve LM Studio desde `~/.lmstudio/models/Qwen/`) y
-> `qwen-qwen3.5-9b.json`. El 10/10/2026 se decidió conservarlos; el **11/10/2026** Antonio autorizó
-> su borrado para liberar espacio (los Qwen siguen disponibles en LM Studio y en `~/modelos_ia`).
+> 🗑️ **Restos del experimento de modelo local — ELIMINADOS (11/10/2026)**: `models/Qwen3.5-9B-Q6_K.gguf` > (**7,45 GB**, duplicado del que sirve LM Studio desde `~/.lmstudio/models/Qwen/`) y > `qwen-qwen3.5-9b.json`. El 10/10/2026 se decidió conservarlos; el **11/10/2026** Antonio autorizó > su borrado para liberar espacio (los Qwen siguen disponibles en LM Studio y en `~/modelos_ia`).
 
 ### 🔄 Rotación de la contraseña del servicio V2 (10/10/2026)
 
-El servicio local V2 se autentica con la password de `service.json`. Si se filtra (se pegó en un
-chat, en un informe o en el historial), se rota con:
+El servicio local V2 se autentica con la password de `service.json`. Si se filtra (se pegó en un chat, en un informe o en el historial), se rota con:
 
 ```bash
 bash ~/.config/opencode/data/rotate-service-password.sh
 ```
 
-- Está pensado para lanzarse **desacoplado** (`setsid`; lo hace el agente): `opencode service set
-  password …` **detiene el servicio**, así que el script arranca con un `sleep 8` de margen para que
-  el turno en curso termine de responder antes de tumbarlo.
-- Genera una password nueva de **43 caracteres** (`openssl rand -base64 64` filtrado a
-  alfanuméricos), la aplica (`service set password` + `service start`), consulta `service status` y
-  `/api/info`, y **verifica el cambio** comparando el hash de antes con el de después.
-- El log (`data/rotate-service-password.log`) guarda **solo hashes sha256 truncados**: nunca la
-  password en claro.
-- Tras rotarla, `sync-opencode.sh` mantiene `service.json` fuera de `~/Config/opencode/` y
-  `backup-opencode.sh` lo excluye del volcado a dotfiles (ver la tabla de claves de abajo).
+- Está pensado para lanzarse **desacoplado** (`setsid`; lo hace el agente): `opencode service set password …` **detiene el servicio**, así que el script arranca con un `sleep 8` de margen para que el turno en curso termine de responder antes de tumbarlo.
+- Genera una password nueva de **43 caracteres** (`openssl rand -base64 64` filtrado a alfanuméricos), la aplica (`service set password` + `service start`), consulta `service status` y `/api/info`, y **verifica el cambio** comparando el hash de antes con el de después.
+- El log (`data/rotate-service-password.log`) guarda **solo hashes sha256 truncados**: nunca la password en claro.
+- Tras rotarla, `sync-opencode.sh` mantiene `service.json` fuera de `~/Config/opencode/` y `backup-opencode.sh` lo excluye del volcado a dotfiles (ver la tabla de claves de abajo).
 
 ### Política de retención de backups
 

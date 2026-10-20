@@ -428,21 +428,7 @@ def speak_block(text):
 
 El plugin se carga como **plugin TUI de OpenCode V2** (config `cli.json`, array `plugins[]`); el directorio `opencode-voice-modified/` expone `tui.js` (puente V2 sobre `lib/`, con `Plugin.define({ id: "opencode-voice", setup })`).
 
-> ✅ **Normalización STT reactivada (22/09/2026):** el plugin se registra con **objeto de
-> opciones** en `cli.json` (`package` + `options.endpoint` + `options.model`), que es el
-> formato que valida el esquema V2 (`https://opencode.ai/v2/cli.json`). Así `lib/llm-client.js`
-> recibe `endpoint` y `model` y la **normalización STT por LLM vuelve a funcionar**.
->
-> Antes (al migrar de `tui.json` a `cli.json` el 16/09/2026) las opciones se perdieron y la
-> normalización quedaba desactivada (se usaba el texto crudo de whisper). Formato aplicado:
-> ```json
-> "plugins": [
->   { "package": "/home/antonio/.config/opencode/opencode-voice-modified",
->     "options": { "endpoint": "http://localhost:4001/v1", "model": "qwen3.8-9b" } },
->   "-opencode.sidebar.context",
->   "-opencode.sidebar.footer"
-> ]
-> ```
+> ✅ **Normalización STT reactivada (22/09/2026):** el plugin se registra con **objeto de > opciones** en `cli.json` (`package` + `options.endpoint` + `options.model`), que es el > formato que valida el esquema V2 (`https://opencode.ai/v2/cli.json`). Así `lib/llm-client.js` > recibe `endpoint` y `model` y la **normalización STT por LLM vuelve a funcionar**. > > Antes (al migrar de `tui.json` a `cli.json` el 16/09/2026) las opciones se perdieron y la > normalización quedaba desactivada (se usaba el texto crudo de whisper). Formato aplicado: > ```json > "plugins": [ >   { "package": "/home/antonio/.config/opencode/opencode-voice-modified", >     "options": { "endpoint": "http://localhost:4001/v1", "model": "qwen3.8-9b" } }, >   "-opencode.sidebar.context", >   "-opencode.sidebar.footer" > ] > ```
 
 Si quisieras pasar opciones adicionales (por ejemplo, para normalización externa), sería:
 

@@ -5,9 +5,7 @@ Referencia histórica del antiguo proveedor Ollama + LiteLLM — **EN DESUSO**.
 |-----------|----------|------------|
 | ⚠️ **EN DESUSO** (retirado, se usa LM Studio) | 26/07/2026 · rev. 11/10/2026 | Antonio |
 
-> ⚠️ **EN DESUSO.** Antonio migró de Ollama a **LM Studio** (ver `02-configuracion-lmstudio.md`).
-> Este manual se conserva solo como referencia histórica: no describe la configuración activa.
-> El puerto 11434 y los modelos `llama3.1`, `gemma4`, `deepseek-r1` y `qwen3.5` **ya no se usan desde OpenCode** (este usa LM Studio). ⚠️ Ollama **sigue instalado** pero su servicio (`ollama.service`) está **parado y deshabilitado** desde el **11/10/2026**, así que el puerto 11434 ya no escucha.
+> ⚠️ **EN DESUSO.** Antonio migró de Ollama a **LM Studio** (ver `02-configuracion-lmstudio.md`). > Este manual se conserva solo como referencia histórica: no describe la configuración activa. > El puerto 11434 y los modelos `llama3.1`, `gemma4`, `deepseek-r1` y `qwen3.5` **ya no se usan desde OpenCode** (este usa LM Studio). ⚠️ Ollama **sigue instalado** pero su servicio (`ollama.service`) está **parado y deshabilitado** desde el **11/10/2026**, así que el puerto 11434 ya no escucha.
 
 ---
 
@@ -83,8 +81,7 @@ OLLAMA_API_KEY=ollama        # (ya retiradas del .env actual)
 OLLAMA_PROXY_PORT=4000
 ```
 
-> ⚠️ Estas variables ya **no existen** en el `.env` activo (se retiraron al abandonar Ollama
-> y migrar a LM Studio). Se conservan aquí solo como referencia histórica.
+> ⚠️ Estas variables ya **no existen** en el `.env` activo (se retiraron al abandonar Ollama > y migrar a LM Studio). Se conservan aquí solo como referencia histórica.
 
 ---
 
