@@ -231,7 +231,7 @@ AGENTS.md documenta la migración de V1 (1.18.x) a **V2 (2.0.x)**:
 
 - Config TUI: `tui.json` → **`cli.json`**; los plugins TUI V1 no funcionan (los nuevos van en `plugins/<nombre>/tui.tsx`).
 - Ciclo de agentes primarios: **`Shift+Tab`** (ya no `Tab`); fallback `Ctrl+X → A`.
-- Sintaxis canónica V2 (`providers`, `agents`, `permissions`, `mcp.servers`, `system`, `disabled`); `small_model` → `agents.title.model` y `disabled_providers` → `experimental.policies`.
+- Sintaxis canónica V2 (`providers`, `agents`, `permissions`, `mcp.servers`, `system`, `disabled`); `small_model` → `agents.title.model` y `disabled_providers` → `policies` (`experimental.policies` quedó deprecada en V2).
 - NVIDIA: `providers.nvidia.whitelist` la aplica el plugin `nvidia-filter` (V2 ignora esa clave).
 - LSP: V2 **no ejecuta** servidores LSP (bloque retirado; usar `basedpyright`, `tsc --noEmit`, `shellcheck`… por terminal).
 - `instructions` retirado (V2 no carga sus entradas); `AGENTS.md` se **autodescubre**.
@@ -436,7 +436,7 @@ Cada comando usa **SU archivo de config** vía `OPENCODE_CONFIG`. Nada se copia 
 | `ocv-local`, `opencode-local` | `opencode-local.json` | ✅ Carga modelo (MCPs esenciales) |
 | `ocv-cloud`, `opencode-cloud` | `opencode-cloud.json` | ❌ NO carga modelo (`SKIP_LMSTUDIO=1`) |
 
-En cloud: agente local desactivado (`agents.local.disabled`), el agente oculto `title` apunta a la nube (`agents.title.model` = `opencode-go/deepseek-v4.1-flash`) y los providers LM Studio/local están bloqueados con `experimental.policies` (`action: provider.use` → `effect: deny`). El antiguo `switch-mcp-profile.sh` está **ELIMINADO** desde el 18/08/2026.
+En cloud: agente local desactivado (`agents.local.disabled`), el agente oculto `title` apunta a la nube (`agents.title.model` = `opencode-go/deepseek-v4.1-flash`) y los providers LM Studio/local están bloqueados con `policies` (`action: provider.use` → `effect: deny`). El antiguo `switch-mcp-profile.sh` está **ELIMINADO** desde el 18/08/2026.
 
 ### Proveedor NVIDIA: ranking y metodología
 

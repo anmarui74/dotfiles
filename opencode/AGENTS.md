@@ -223,10 +223,17 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
   valida las claves V1, así que el editor puede marcarlas como desconocidas (desajuste de la beta).
   - **Ampliación canónica (21/09/2026):** se pasaron a sintaxis nativa V2 las dos últimas claves V1
     que quedaban: `small_model` → **`agents.title.model`** (agente oculto `title`) y
-    `disabled_providers` → **`experimental.policies`** (`action: provider.use`, `effect: deny`).
+    `disabled_providers` → **`policies`** (`action: provider.use`, `effect: deny`).
+    ⚠️ **Actualización (22/10/2026, OpenCode 2.1.2):** la wiki V2 marca `experimental.policies` como
+    **deprecada**; la clave canónica es **`policies`** (nivel raíz). V2 sigue leyendo la antigua y la
+    fusiona, pero ya no se usa.
     V2 ya las normalizaba en silencio, pero ahora son explícitas. Se añadió además **`model`** raíz
     (`opencode-go/deepseek-v4.1-flash` en base/cloud, `local/qwen3.8-9b` en local) para fijar el
     modelo por defecto de sesión, y **`session.tps: true`** en `cli.json`.
+- **Actualizaciones (22/10/2026):** las gestiona **CachyOS/pacman** (`opencode` en
+  `cachyos-extra-znver4` y `opencode-desktop-bin` en `chaotic-aur`). El updater interno queda
+  **desactivado** con `"update": "disable"` en `opencode.json` para no competir con pacman ni
+  avisar de versiones aún no empaquetadas.
 - **NVIDIA whitelist:** la clave `providers.nvidia.whitelist` está **IGNORADA** por V2 (no tiene
   equivalente V2). La aplica el plugin de servidor `plugins/nvidia-filter/index.ts`
   (`ctx.model.transform`), que lee la lista de `opencode.json`. `check-nvidia-whitelist.sh`
@@ -595,7 +602,7 @@ nunca sobre `opencode.json`**, que es solo el perfil por defecto.
   tocar `opencode.json`. Detalle en `documentacion/04-perfiles-opencode-json.md`.
 - En cloud, el agente local está **desactivado** (`agents.local.disabled`) y el agente `title`
   apunta a la nube (`agents.title.model` = `opencode-go/deepseek-v4.1-flash`); los providers
-  **LM Studio** (`lmstudio`) y el local (`local`) están bloqueados con `experimental.policies`
+  **LM Studio** (`lmstudio`) y el local (`local`) están bloqueados con `policies`
   (`action: provider.use` → `effect: deny`).
 - El antiguo `switch-mcp-profile.sh` (copiaba local/cloud sobre `opencode.json`)
   está ELIMINADO desde el 18/08/2026.

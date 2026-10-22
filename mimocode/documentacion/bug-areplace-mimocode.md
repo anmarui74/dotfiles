@@ -56,8 +56,7 @@ Reiniciar sesión, forzar agente build, monitorear logs activos.
 ## Estado a 10/10/2026
 
 - La CLI está en **0.1.15** (`mimo --version`), que es la **última publicada** (v0.1.15, 22/09/2026).
-- El patrón `replace(/\n$/, "")` **sigue presente** en el bundle (`~/.mimocode/bin/mimo`), así que el
-  fallo no se puede dar por resuelto por cambio de versión.
+- El patrón `replace(/\n$/, "")` **sigue presente** en el bundle (`~/.mimocode/bin/mimo`), así que el fallo no se puede dar por resuelto por cambio de versión.
 - Sin cambios en el diagnóstico ni en la mitigación (forzar `build`, reiniciar sesión).
 
 ---

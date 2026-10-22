@@ -4,9 +4,7 @@
 |-----------|----------|------------|
 | ⚠️ en seguimiento | 10/09/2026 · rev. 10/09/2026 | Antonio |
 
-> 📋 Seguimiento del problema de compatibilidad de esquemas del servidor MCP memory.
-> El fallo es **independiente del sistema operativo**: se reproduce igual en
-> Windows (PowerShell 5.1) y en Linux.
+> 📋 Seguimiento del problema de compatibilidad de esquemas del servidor MCP memory. El fallo es **independiente del sistema operativo**: se reproduce igual en Windows (PowerShell 5.1) y en Linux.
 
 ---
 
@@ -22,8 +20,7 @@
 
 ## ⚠️ Problema
 
-Las herramientas del servidor MCP memory (`@modelcontextprotocol/server-memory`)
-no cargan en OpenCode 1.18.8:
+Las herramientas del servidor MCP memory (`@modelcontextprotocol/server-memory`) no cargan en OpenCode 1.18.8:
 
 ```
 Tool 'search_nodes' has an invalid outputSchema: JSON Schema declares an unsupported
@@ -31,8 +28,7 @@ dialect ("$schema": "http://json-schema.org/draft-07/schema#"). The default vali
 supports JSON Schema 2020-12 only; pass a pre-configured Ajv instance to AjvJs
 ```
 
-**Causa:** el servidor genera esquemas con draft-07 (`zod-to-json-schema` por
-defecto) y OpenCode solo valida 2020-12. El SDK oficial de MCP ya tiene el fix.
+**Causa:** el servidor genera esquemas con draft-07 (`zod-to-json-schema` por defecto) y OpenCode solo valida 2020-12. El SDK oficial de MCP ya tiene el fix.
 
 ## 🖥️ Comprobación en Windows
 
@@ -44,11 +40,7 @@ defecto) y OpenCode solo valida 2020-12. El SDK oficial de MCP ya tiene el fix.
 | Ver el grafo | `Get-Content C:\Users\evo01\.config\opencode\data\memory\memory.jsonl` |
 | Comprobar tamaño | `(Get-Item C:\Users\evo01\.config\opencode\data\memory\memory.jsonl).Length` |
 
-> ⚠️ **No aplica en Windows:** el comando `sqlite3` (usado en Linux para otras
-> comprobaciones) no está instalado. Usar el módulo `sqlite3` de Python:
-> ```powershell
-> python -c "import sqlite3; print(sqlite3.sqlite_version)"
-> ```
+> ⚠️ **No aplica en Windows:** el comando `sqlite3` (usado en Linux para otras comprobaciones) no está instalado. Usar el módulo `sqlite3` de Python: ```powershell python -c "import sqlite3; print(sqlite3.sqlite_version)" ```
 
 ## 📊 Estado
 

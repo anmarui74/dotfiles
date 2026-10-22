@@ -19,9 +19,7 @@ requires explicit opt in: https://opencode.ai/workspace/wrk_01KWNJZHA9QS258DM0M2
 
 ## ⚠️ Causa
 
-El modelo ha pasado a servirse desde la API oficial del proveedor en **China**
-(DeepSeek, Alibaba, etc.) en vez de desde los servidores de OpenCode en
-UE/EEUU/Singapur. OpenCode exige aceptarlo explícitamente por cumplimiento legal.
+El modelo ha pasado a servirse desde la API oficial del proveedor en **China** (DeepSeek, Alibaba, etc.) en vez de desde los servidores de OpenCode en UE/EEUU/Singapur. OpenCode exige aceptarlo explícitamente por cumplimiento legal.
 
 ## ✅ Solución
 
@@ -29,14 +27,11 @@ UE/EEUU/Singapur. OpenCode exige aceptarlo explícitamente por cumplimiento lega
 2. Entrar en el workspace: <https://opencode.ai/workspace/wrk_01KWNJZHA9QS258DM0M2KY8PNZ/go>
 3. Activar el toggle **"Enable models hosted in China"**
 
-> 🔑 **Credenciales en Windows:** la sesión de OpenCode Go se guarda en
-> `C:\Users\evo01\.local\share\opencode\auth.json`. El agente `cloud` usa el modelo
-> `opencode-go/deepseek-v4.1-flash` (configurado en `opencode.jsonc`).
+> 🔑 **Credenciales en Windows:** la sesión de OpenCode Go se guarda en `C:\Users\evo01\.local\share\opencode\auth.json`. El agente `cloud` usa el modelo `opencode-go/deepseek-v4.1-flash` (configurado en `opencode.jsonc`).
 
 ## 🛡️ Alternativa sin opt-in
 
-Si no se quiere aceptar el alojamiento en China (privacidad/GDPR), usar modelos
-alojados en infraestructura de OpenCode (UE/EEUU/Singapur):
+Si no se quiere aceptar el alojamiento en China (privacidad/GDPR), usar modelos alojados en infraestructura de OpenCode (UE/EEUU/Singapur):
 
 | Modelo | Notas |
 |--------|-------|
@@ -58,6 +53,5 @@ alojados en infraestructura de OpenCode (UE/EEUU/Singapur):
 | ID | `wrk_01KWNJZHA9QS258DM0M2KY8PNZ` |
 | Suscripción Go | ~5 € el primer mes, luego ~10 €/mes |
 
-> 📁 Config activa en Windows: `C:\Users\evo01\.config\opencode\`
-> (`opencode.jsonc` global/cloud y `opencode-local.json` para LM Studio).
+> 📁 Config activa en Windows: `C:\Users\evo01\.config\opencode\` (`opencode.jsonc` global/cloud y `opencode-local.json` para LM Studio).
 

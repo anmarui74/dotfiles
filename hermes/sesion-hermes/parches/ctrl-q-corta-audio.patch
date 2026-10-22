@@ -1,16 +1,16 @@
 diff --git a/hermes_cli/cli_tui_mixin.py b/hermes_cli/cli_tui_mixin.py
-index d311276124..246c68bd19 100644
+index 95a2f2b9e5..295511ef16 100644
 --- a/hermes_cli/cli_tui_mixin.py
 +++ b/hermes_cli/cli_tui_mixin.py
-@@ -954,6 +954,7 @@ class CLITuiMixin:
-         """Ctrl+C priority: cancel voice recording → cancel foreground UI/overlay prompt →
-         clear a typed draft, even mid-run (a correction must never kill the turn) → interrupt
-         the running agent → force exit (second press within 2s) → when idle and empty, exit."""
+@@ -917,6 +917,7 @@ class CLITuiMixin:
+         """Ctrl+C priority: cancel voice recording → cancel foreground UI/overlay prompt or the wait for a
+         command on its own gateway socket (a plugin command, /cron) → clear a typed draft, even mid-run (a correction must never kill the turn)
+         → interrupt the running agent → force exit (second press within 2s) → when idle and empty, exit."""
 +        self._tui_cut_tts("Ctrl+C")            # parche local: Ctrl+C también calla la locución
          now = time.time()
          if self._tui_cancel_voice_recording(event):
              return
-@@ -977,22 +978,43 @@ class CLITuiMixin:
+@@ -940,22 +941,43 @@ class CLITuiMixin:
          else:
              self._tui_clear_or_exit(event)
  

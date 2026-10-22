@@ -6,8 +6,7 @@ Configuración activa de OpenCode en Windows: agentes, perfiles, proveedores, MC
 |-----------|----------|------------|
 | ✅ Activo | 10/09/2026 · rev. 24/09/2026 | Antonio |
 
-> 📁 Esta carpeta es la **configuración activa** que usa OpenCode: `C:\Users\evo01\.config\opencode\`.
-> El **backup** + **instalador** están en `D:\Linux\Config\opencode-win\` y la **documentación completa** en `D:\Linux\Config\opencode-win\documentacion\`.
+> 📁 Esta carpeta es la **configuración activa** que usa OpenCode: `C:\Users\evo01\.config\opencode\`. El **backup** + **instalador** están en `D:\Linux\Config\opencode-win\` y la **documentación completa** en `D:\Linux\Config\opencode-win\documentacion\`.
 
 ---
 
@@ -53,9 +52,7 @@ Configuración activa de OpenCode en Windows: agentes, perfiles, proveedores, MC
 
 ## Lanzadores y comandos
 
-Los lanzadores son **funciones del perfil de PowerShell**
-(`C:\Users\evo01\OneDrive\Documentos\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`).
-Se cargan al abrir una ventana de PowerShell.
+Los lanzadores son **funciones del perfil de PowerShell** (`C:\Users\evo01\OneDrive\Documentos\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`). Se cargan al abrir una ventana de PowerShell.
 
 | Comando | Qué hace |
 |---------|----------|
@@ -120,9 +117,7 @@ En Windows hay **tres** perfiles, y se seleccionan con la variable de entorno `O
 | **Local** | `opencode-local.json` | `fetch`, `filesystem`, `memory` | `local` (proxy 4001) | `local` | `ocv-local` |
 | **Cloud estricto** | `opencode-cloud.json` | Todos (5) | (bloqueado) | `cloud` | `ocv-cloud` |
 
-> `opencode.jsonc` es la **base común** (agentes, proveedores, MCPs); `opencode-local.json` y
-> `opencode-cloud.json` contienen **solo lo que difiere**. Estructura **idéntica a la de Linux**
-> (un perfil por lanzador).
+> `opencode.jsonc` es la **base común** (agentes, proveedores, MCPs); `opencode-local.json` y `opencode-cloud.json` contienen **solo lo que difiere**. Estructura **idéntica a la de Linux** (un perfil por lanzador).
 
 ---
 
@@ -164,8 +159,7 @@ En Windows hay **tres** perfiles, y se seleccionan con la variable de entorno `O
 
 ### 📊 Barra lateral (plugin MiMo)
 
-La barra lateral se replica de Linux con el plugin **`antonio.sidebar-mimo`**
-(`plugins\antonio.sidebar-mimo\tui.tsx`), auto-descubierto por OpenCode V2. Muestra:
+La barra lateral se replica de Linux con el plugin **`antonio.sidebar-mimo`** (`plugins\antonio.sidebar-mimo\tui.tsx`), auto-descubierto por OpenCode V2. Muestra:
 
 | Bloque | Contenido |
 |--------|-----------|
@@ -174,8 +168,7 @@ La barra lateral se replica de Linux con el plugin **`antonio.sidebar-mimo`**
 | **Instrucciones** | Ficheros de instrucciones (`AGENTS.md`) |
 | **Footer** | Versión de OpenCode (al final de la barra) |
 
-En `cli.json` se **desactivan** los bloques nativos `opencode.sidebar.context` y
-`opencode.sidebar.footer` para no duplicarlos:
+En `cli.json` se **desactivan** los bloques nativos `opencode.sidebar.context` y `opencode.sidebar.footer` para no duplicarlos:
 
 ```json
 "plugins": [
@@ -185,17 +178,11 @@ En `cli.json` se **desactivan** los bloques nativos `opencode.sidebar.context` y
 ]
 ```
 
-> ⚠️ **Corrección (24/09/2026):** antes había **dos** registros del sidebar (uno en
-> `tui.json` apuntando a `opencode-sidebar-mimo\index.tsx` y otro auto-descubierto), lo
-> que duplicaba los bloques y rompía el aspecto respecto a Linux. Se dejó solo el
-> auto-descubierto y se saneó `tui.json`.
+> ⚠️ **Corrección (24/09/2026):** antes había **dos** registros del sidebar (uno en `tui.json` apuntando a `opencode-sidebar-mimo\index.tsx` y otro auto-descubierto), lo que duplicaba los bloques y rompía el aspecto respecto a Linux. Se dejó solo el auto-descubierto y se saneó `tui.json`.
 
 ### ✅ LSP en OpenCode V2
 
-> ✅ **OpenCode V2 (2.0.26) sí ejecuta servidores LSP** a través del bloque `lsp`. Se
-> lanzan con `npx -y` (bajo demanda, sin instalación global) y corren en segundo plano:
-> **no aparecen** en la barra lateral MiMo y se activan al abrir archivos de la extensión
-> correspondiente.
+> ✅ **OpenCode V2 (2.0.26) sí ejecuta servidores LSP** a través del bloque `lsp`. Se lanzan con `npx -y` (bajo demanda, sin instalación global) y corren en segundo plano: **no aparecen** en la barra lateral MiMo y se activan al abrir archivos de la extensión correspondiente.
 
 Los **tres perfiles** (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json`) declaran los **mismos 11 servidores**:
 
@@ -213,8 +200,7 @@ Los **tres perfiles** (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.
 | `c` | `npx -y clangd` | `.c`, `.h` |
 | `cpp` | `npx -y clangd` | `.cpp`, `.hpp`, `.cc`, `.cxx` |
 
-> ⚠️ El servidor Python es **`basedpyright`** (paquete npm real). El nombre `@basedpyright/language-server` **no existe** (404 en npm).
-> 📖 Detalle completo: manual `04-perfiles-opencode-json.md` → sección «LSP».
+> ⚠️ El servidor Python es **`basedpyright`** (paquete npm real). El nombre `@basedpyright/language-server` **no existe** (404 en npm). 📖 Detalle completo: manual `04-perfiles-opencode-json.md` → sección «LSP».
 
 ---
 
@@ -241,21 +227,16 @@ Toda la documentación está en **`D:\Linux\Config\opencode-win\documentacion\`*
 | 🚀 Instalar desde cero | `powershell -File "D:\Linux\Config\opencode-win\instalar-opencode-win.ps1"` |
 | 🗂️ Espejar manuales a Obsidian | `powershell -File "D:\Linux\Config\opencode-win\scripts\sync-obsidian.ps1"` |
 
-El instalador instala Node.js, Python, LM Studio, OpenCode, despliega esta configuración,
-el perfil, el proxy y el modelo, y verifica todo (probado: 9/9 OK).
+El instalador instala Node.js, Python, LM Studio, OpenCode, despliega esta configuración, el perfil, el proxy y el modelo, y verifica todo (probado: 9/9 OK).
 
 ---
 
 ## Notas
 
 > 🎤 **Voz (STT/TTS):** implementada en Windows con **GPU** — STT `whisper.cpp` CUDA (`voice\stt.ps1`, ~0,8 s/audio) y TTS **Kokoro GPU** con **servidor persistente** (`voice\kokoro-server.py` en 4210, `speak.ps1`, `tts-server.ps1`; ~0,5-1,5 s/locución). Atajos: `Ctrl+R` (grabar), `Leader+R` (grabar+enviar), `Leader+S` (leer respuesta), `Leader+V` (TTS on/off), `Ctrl+Q` (parar).
->
 > 🎙️ **Micrófono:** el predeterminado es el **TONOR TD510 Air Mic**.
->
 > 🕐 **Timeline:** la TUI solo muestra ~6 peticiones (PR #26861 sin mergear); usa `timeline-completo`.
->
 > 🔐 **Política de ejecución:** `RemoteSigned` (CurrentUser) para poder cargar el perfil.
->
 > 🖥️ **Hardware:** AMD Ryzen 9 7900 · NVIDIA RTX 4070 Ti SUPER (16 GB) · 63,1 GB RAM.
 
 ---

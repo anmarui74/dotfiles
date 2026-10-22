@@ -98,9 +98,7 @@ opencode-voice-modified/
 
 ### `tui.js` — puente V1 → V2
 
-OpenCode V2 cambió la API de plugins. `tui.js` expone a `lib/stt.js` y `lib/tts.js`
-la misma superficie que esperaban de la V1 (`api.kv`, `api.ui`, `api.event`,
-`api.route`, `api.state.session`, `api.client`), sin tocar la lógica de `lib/`.
+OpenCode V2 cambió la API de plugins. `tui.js` expone a `lib/stt.js` y `lib/tts.js` la misma superficie que esperaban de la V1 (`api.kv`, `api.ui`, `api.event`, `api.route`, `api.state.session`, `api.client`), sin tocar la lógica de `lib/`.
 
 Adaptaciones específicas de V2 (verificadas con el binario 2.0.16):
 
@@ -112,19 +110,13 @@ Adaptaciones específicas de V2 (verificadas con el binario 2.0.16):
 | Preguntas | `question.asked` | `form.created` |
 | Formato de mensajes | `role` + `parts[]` | `type` + `content[]` |
 
-> ⚠️ Los eventos de texto en V2 son `session.text.*` **sin** el prefijo `next.` (el
-> binario muestra internamente `session.next.text.*`, pero el servidor emite sin `next.`).
+> ⚠️ Los eventos de texto en V2 son `session.text.*` **sin** el prefijo `next.` (el binario muestra internamente `session.next.text.*`, pero el servidor emite sin `next.`).
 
-> 🐛 **Fix 24/09/2026:** el plugin usaba los nombres/formatos V1, por lo que el TTS
-> automático no se disparaba (la respuesta se veía en pantalla pero no se locutaba).
-> La corrección se aplica íntegra en `tui.js` (mapeo de eventos + adaptador de mensajes).
+> 🐛 **Fix 24/09/2026:** el plugin usaba los nombres/formatos V1, por lo que el TTS automático no se disparaba (la respuesta se veía en pantalla pero no se locutaba). La corrección se aplica íntegra en `tui.js` (mapeo de eventos + adaptador de mensajes).
 
 ### `lib/stt.js` — corrección de audio
 
-> 🐛 **Fix 24/09/2026:** `checkAudioSilence()` fallaba en Windows por alineación del
-> búfer (`new Int16Array(buf.buffer, 44)`) y su `catch` asumía **silencio**, abortando
-> la transcripción en silencio. Ahora usa `buf.slice()` y, ante error, **no** asume
-> silencio (deja decidir a whisper).
+> 🐛 **Fix 24/09/2026:** `checkAudioSilence()` fallaba en Windows por alineación del búfer (`new Int16Array(buf.buffer, 44)`) y su `catch` asumía **silencio**, abortando la transcripción en silencio. Ahora usa `buf.slice()` y, ante error, **no** asume silencio (deja decidir a whisper).
 
 ---
 
@@ -173,8 +165,7 @@ OpenCode procesa la petición
 
 ### Whisper con GPU (CUDA)
 
-El build `whisper.cpp-cuda` usa la GPU **por defecto** (la flag para desactivarla es
-`-ng`/`--no-gpu`). Verificado con audio real:
+El build `whisper.cpp-cuda` usa la GPU **por defecto** (la flag para desactivarla es `-ng`/`--no-gpu`). Verificado con audio real:
 
 - Transcripción en GPU: **~0,8 s** por audio.
 - Transcripción en CPU (`--no-gpu`): **~10,5 s** → **12x más lento**.
@@ -224,8 +215,7 @@ ffplay reproduce el audio por los altavoces
 
 ### Reproducción
 
-`speak.ps1` reproduce con **ffplay** (`-nodisp -autoexit -loglevel quiet`). Antes de
-cada locución mata cualquier `ffplay` en curso, para no solapar voces.
+`speak.ps1` reproduce con **ffplay** (`-nodisp -autoexit -loglevel quiet`). Antes de cada locución mata cualquier `ffplay` en curso, para no solapar voces.
 
 ### Limpieza de markdown (`cleanMarkdown` / `cleanLine`)
 
@@ -261,9 +251,7 @@ speak.ps1 -Engine sapi -Text "Hola"
 
 ## 🚀 Servidor TTS persistente
 
-**Motivo:** `kokoro-tts.py` cargaba el modelo ONNX completo (**~2,1 s**) en **cada**
-locución. El servidor lo carga **una sola vez** y cada locución solo sintetiza
-(~0,2-0,5 s).
+**Motivo:** `kokoro-tts.py` cargaba el modelo ONNX completo (**~2,1 s**) en **cada** locución. El servidor lo carga **una sola vez** y cada locución solo sintetiza (~0,2-0,5 s).
 
 ### Archivo: `voice\kokoro-server.py`
 
@@ -294,24 +282,32 @@ tts-server restart
 
 ### Arranque automático
 
-- **Desde el plugin:** `speak.ps1` comprueba `/health`; si no responde, arranca el
-  servidor y espera (hasta 20 s). Solo la primera locución tras un arranque en frío
-  paga la carga.
-- **Desde el perfil:** `ocv`, `ocv-local` y `ocv-cloud` llaman a
-  `Start-TtsServerIfNeeded` (no bloqueante) al abrir OpenCode.
+- **Desde el plugin:** `speak.ps1` comprueba `/health`; si no responde, arranca el servidor y espera (hasta 20 s). Solo la primera locución tras un arranque en frío paga la carga.
+- **Desde el perfil:** `ocv`, `ocv-local` y `ocv-cloud` llaman a `Start-TtsServerIfNeeded` (no bloqueante) al abrir OpenCode.
 - **`ocv-status`** muestra el estado del servidor TTS.
 
 ### Fallback
 
-Si el servidor no está disponible, `speak.ps1` cae a `kokoro-tts.py` (carga en frío,
-~2,1 s). Si tampoco, usa el motor indicado (`edge` / `sapi`).
+Si el servidor no está disponible, `speak.ps1` cae a `kokoro-tts.py` (carga en frío, ~2,1 s). Si tampoco, usa el motor indicado (`edge` / `sapi`).
+
+### Robustez de la síntesis (22/10/2026)
+
+Dos entradas tumbaban la locución **entera** («TTS chunk N failed», «Falló la lectura en voz alta»), y estaban en las dos rutas: el servidor y el respaldo `kokoro-tts.py`.
+
+| Entrada | Error | Arreglo |
+|---|---|---|
+| Tabla Markdown | `synth failed: need at least one array to concatenate` — al quitar las barras el trozo quedaba sin fonemas | las filas `\| … \|` se descartan en `clean_tts_text`; un trozo sin fonemas se omite y, si no queda nada que leer, se devuelve un **silencio de 150 ms** en vez de un `400` (que el cliente interpretaba como fallo total) |
+| Frase larga (sin puntos) | `index 510 is out of bounds for axis 0 with size 510` — límite de 510 tokens del modelo | `_partir_largo()` trocea por palabras en fragmentos de ≤ 200 caracteres (`SPEAK_MAX_CHARS`) |
+
+- Respaldos: `voice\kokoro-server.py.bak-20261022-voz` y `voice\kokoro-tts.py.bak-20261022-voz`.
+- En `kokoro-tts.py`, cuando el texto queda vacío tras limpiar ya no termina **sin escribir fichero**: escribe el silencio (el wrapper lo leía como «0 bytes» y fallaba).
+- **Reiniciar el servidor** después de tocar ese código (`tts-server restart`); si no, sigue en memoria el código viejo.
 
 ---
 
 ## ⚙️ Configuración en `cli.json`
 
-En OpenCode V2 el plugin de voz se registra en **`cli.json`** (ya no en `tui.json`,
-que era de la V1):
+En OpenCode V2 el plugin de voz se registra en **`cli.json`** (ya no en `tui.json`, que era de la V1):
 
 ### Archivo: `C:\Users\evo01\.config\opencode\cli.json`
 
@@ -337,8 +333,7 @@ que era de la V1):
 | `endpoint` | `http://localhost:4001/v1` | Endpoint del proxy LM Studio para la **normalización STT** |
 | `model` | `qwen3.8-9b` | Modelo local usado en la normalización |
 
-> `cli.json` también configura el tema, keybinds (`session.rename` → `f8`), diffs y
-> la sesión (sidebar, thinking, tps).
+> `cli.json` también configura el tema, keybinds (`session.rename` → `f8`), diffs y la sesión (sidebar, thinking, tps).
 
 ---
 
@@ -346,8 +341,7 @@ que era de la V1):
 
 ### Archivo: `opencode-voice-modified/lib/llm-client.js`
 
-Cliente HTTP para cualquier endpoint compatible con OpenAI. Se configura desde las
-`options` del plugin (en `cli.json`):
+Cliente HTTP para cualquier endpoint compatible con OpenAI. Se configura desde las `options` del plugin (en `cli.json`):
 
 ```javascript
 const cfg = {
@@ -361,13 +355,11 @@ const cfg = {
 
 `complete()` hace `POST /chat/completions` con reintentos y backoff exponencial.
 
-> ⚠️ Si no se configura `endpoint`, la normalización STT **no se realiza** (se usa el
-> texto crudo de whisper).
+> ⚠️ Si no se configura `endpoint`, la normalización STT **no se realiza** (se usa el texto crudo de whisper).
 
 ### Prompt de normalización (resumen)
 
-El prompt (`STT_SYSTEM_PROMPT` en `lib/stt.js`) corrige puntuación, elimina muletillas
-y arregla homófonos típicos del reconocimiento de voz en contextos técnicos, p. ej.:
+El prompt (`STT_SYSTEM_PROMPT` en `lib/stt.js`) corrige puntuación, elimina muletillas y arregla homófonos típicos del reconocimiento de voz en contextos técnicos, p. ej.:
 
 | Se oye | Debe ser |
 |--------|----------|
@@ -496,9 +488,7 @@ Get-Content "$env:TEMP\opencode-voice-events.log" -Tail 30  # (si VOICE_DEBUG ac
 
 ### Diagnóstico de eventos V2 (opcional)
 
-Para depurar qué eventos recibe el plugin, crear el archivo flag
-`%TEMP%\voice-debug-on` y reiniciar OpenCode. El plugin escribirá en
-`%TEMP%\opencode-voice-events.log`. Al borrar el flag, el diagnóstico se desactiva.
+Para depurar qué eventos recibe el plugin, crear el archivo flag `%TEMP%\voice-debug-on` y reiniciar OpenCode. El plugin escribirá en `%TEMP%\opencode-voice-events.log`. Al borrar el flag, el diagnóstico se desactiva.
 
 ---
 

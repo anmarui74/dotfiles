@@ -99,6 +99,10 @@ foreach ($f in $old) {
 if (Test-Path -LiteralPath $SyncScript) {
   Write-Step "Sincronizando config activa con el backup..."
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $SyncScript
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warn2 "sync-opencode.ps1 devolvio errores -> BACKUP ABORTADO."
+    exit 1
+  }
 } else {
   Write-Warn2 "No se encontro sync-opencode.ps1 en $SyncScript"
 }

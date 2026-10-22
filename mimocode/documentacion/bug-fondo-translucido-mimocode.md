@@ -97,21 +97,13 @@ The symptom matches this report exactly:
 1. `packages/opencode/src/cli/cmd/tui/context/theme.tsx:484-486`
 
    ```js
-   createEffect(() => {
-     renderer.setBackgroundColor(values().background)
-   })
+   createEffect(() => { renderer.setBackgroundColor(values().background) })
    ```
 
 2. opentui `packages/core/src/renderer.ts:4062`
 
    ```js
-   public setBackgroundColor(color: ColorInput): void {
-     const parsedColor = parseColor(color)
-     this.lib.setBackgroundColor(this.rendererPtr, parsedColor as RGBA)
-     this.backgroundColor = parsedColor as RGBA
-     this.nextRenderBuffer.clear(parsedColor as RGBA)
-     this.requestRender()
-   }
+   public setBackgroundColor(color: ColorInput): void { const parsedColor = parseColor(color) this.lib.setBackgroundColor(this.rendererPtr, parsedColor as RGBA) this.backgroundColor = parsedColor as RGBA this.nextRenderBuffer.clear(parsedColor as RGBA) this.requestRender() }
    ```
 
 So the app publishes **the very color it paints** as the terminal's *default background*. kitty documents `background_opacity` as applying *"only … in cells that have the same background color as the default terminal background"* — and since they always match, every cell of the TUI falls into that case and gets composited at `background_opacity` (0.8).

@@ -36,7 +36,9 @@ def clean_tts_text(text: str) -> str:
     text = _ANSI_RE.sub("", text)
     text = _BOX_RE.sub("", text)
     text = _EMOJI_RE.sub("", text)
-    text = re.sub(r"[*_`~#>|]+", " ", text)
+    # Tablas markdown: sin las barras quedan fragmentos sin fonemas que rompen la sintesis.
+    text = re.sub(r"(?m)^\s*\|.*\|\s*$", "", text)
+    text = re.sub(r"[*_`~#>|]+\s?", " ", text)
     # IMPORTANTE: conservar los saltos de linea (pausas entre parrafos/lineas)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r" *\n *", "\n", text)
@@ -45,6 +47,22 @@ def clean_tts_text(text: str) -> str:
 
 
 # --- Hacer visibles las DLLs de CUDA/cuDNN instaladas por pip ---------------
+def _partir_largo(t: str, maximo: int) -> list[str]:
+    """Parte una frase larga en trozos de <= maximo (Kokoro falla por encima de ~510 tokens)."""
+    if len(t) <= maximo:
+        return [t]
+    trozos, actual = [], ""
+    for palabra in t.split():
+        if actual and len(actual) + len(palabra) + 1 > maximo:
+            trozos.append(actual)
+            actual = palabra
+        else:
+            actual = (actual + " " + palabra).strip()
+    if actual:
+        trozos.append(actual)
+    return trozos
+
+
 def _register_nvidia_dlls() -> list[str]:
     """Hace visibles todas las DLLs de CUDA/cuDNN instaladas por pip (nvidia-*).
 
@@ -145,7 +163,14 @@ def main() -> int:
     text = clean_tts_text(args.text)
     if not text:
         if not args.quiet:
-            print("[kokoro] texto vacio tras limpiar (solo emojis/simbolos)", file=sys.stderr)
+            print("[kokoro] texto vacio tras limpiar (solo emojis/simbolos): silencio corto", file=sys.stderr)
+        # Nada que locutar: un WAV de silencio, no un fichero ausente. Si no, el cliente
+        # (hermes-kokoro-tts.py) lo interpreta como fallo y tumba la locucion entera.
+        with wave.open(args.out, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(24000)
+            w.writeframes(np.zeros(int(24000 * 0.15), dtype=np.int16).tobytes())
         return 0
 
     # Separar en fragmentos (por parrafo y por puntuacion) y anadir silencios
@@ -155,6 +180,7 @@ def main() -> int:
     pause_para = float(os.environ.get("SPEAK_PAUSE", "0.8"))
     pause_sent = float(os.environ.get("SPEAK_PAUSE_SENT", "0.35"))
     pause_clause = float(os.environ.get("SPEAK_PAUSE_CLAUSE", "0.3"))
+    maximo = int(os.environ.get("SPEAK_MAX_CHARS", "200"))
 
     chunks = []  # lista de (texto, pausa_despues)
     for para in re.split(r"\n+", text):
@@ -173,15 +199,27 @@ def main() -> int:
                 pa = pause_clause
             else:
                 pa = 0.0
-            chunks.append((p, pa))
+            trozos = _partir_largo(p, maximo)
+            for k, trozo in enumerate(trozos):
+                chunks.append((trozo, pa if k == len(trozos) - 1 else 0.0))
 
     pieces = []
     sr = 24000
     for idx, (seg, pa) in enumerate(chunks):
-        s, sr = kokoro.create(seg, voice=args.voice, speed=args.speed, lang=args.lang)
+        # Un trozo sin fonemas (restos de tabla, solo simbolos) no debe tumbar la locucion.
+        try:
+            s, sr = kokoro.create(seg, voice=args.voice, speed=args.speed, lang=args.lang)
+        except Exception as exc:
+            if not args.quiet:
+                print(f"[kokoro] tramo {idx + 1} omitido ({exc})", file=sys.stderr)
+            continue
+        if s is None or len(s) == 0:
+            continue
         pieces.append(np.asarray(s, dtype=np.float32))
         if idx < len(chunks) - 1 and pa > 0:
             pieces.append(np.zeros(int(sr * pa), dtype=np.float32))
+    if not pieces:                       # nada locutable: silencio corto, no error
+        pieces.append(np.zeros(int(sr * 0.15), dtype=np.float32))
     samples = np.concatenate(pieces) if len(pieces) > 1 else pieces[0]
 
     samples = np.clip(np.asarray(samples, dtype=np.float32), -1.0, 1.0)

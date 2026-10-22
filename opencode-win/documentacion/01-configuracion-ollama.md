@@ -26,11 +26,7 @@ Referencia histórica del antiguo proveedor Ollama + LiteLLM en Windows (EN DESU
 Ollama es el **servidor de inferencia local** que se usó inicialmente antes de migrar a LM Studio. Actualmente **no está activo como provider principal** en OpenCode, pero los modelos siguen disponibles en el sistema vía Ollama (puerto `11434`).
 
 > ⚠️ **EN DESUSO también en Windows.** A diferencia de otros componentes, Ollama **sí tiene versión nativa para Windows** y podría instalarse con:
->
-> ```powershell
-> winget install Ollama.Ollama
-> ```
->
+> ```powershell winget install Ollama.Ollama ```
 > Pero en este setup Windows **no se usa**: el proveedor local es **LM Studio** (puerto `1234` + proxy `4001`). Se documenta aquí solo como referencia histórica y por si en el futuro se quisiera recuperar.
 
 El proxy de Ollama (`ollama-proxy.py`) estaba diseñado para **sortear el bug #34892** del SDK `@ai-sdk/openai-compatible`, que serializa `function.name` como `undefined` en las tool calls.

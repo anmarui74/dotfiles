@@ -77,6 +77,7 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/usr/bin/zsh",
+  "update": "disable",
   "model": "opencode-go/deepseek-v4.1-flash",
   "default_agent": "cloud",
   "permissions": [
@@ -187,9 +188,11 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
 }
 ```
 
----
+> 🔄 **Actualizaciones:** las gestiona **CachyOS/pacman** (`opencode` y `opencode-desktop-bin`).
+> `"update": "disable"` evita que el updater interno de OpenCode compita con pacman o avise de
+> versiones que aún no están empaquetadas.
 
-## Perfil local
+---
 
 ### Archivo: `~/.config/opencode/opencode-local.json`
 
@@ -235,12 +238,10 @@ Solo contiene lo que **difiere** de `opencode.json` (el resto se hereda):
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "cloud",
-  "experimental": {
-    "policies": [
-      { "action": "provider.use", "resource": "lmstudio", "effect": "deny" },
-      { "action": "provider.use", "resource": "local", "effect": "deny" }
-    ]
-  },
+  "policies": [
+    { "action": "provider.use", "resource": "lmstudio", "effect": "deny" },
+    { "action": "provider.use", "resource": "local", "effect": "deny" }
+  ],
   "agents": {
     "title": {
       "model": "opencode-go/deepseek-v4.1-flash"
@@ -254,9 +255,10 @@ Solo contiene lo que **difiere** de `opencode.json` (el resto se hereda):
 ```
 
 Diferencias respecto a `opencode.json` (por defecto):
-- `experimental.policies`: bloquea el provider LM Studio builtin (`lmstudio`) **y** el provider
+- `policies`: bloquea el provider LM Studio builtin (`lmstudio`) **y** el provider
   propio `local` (el proxy del puerto 4001) con `action: provider.use` → `effect: deny`
-  (sustituye al antiguo `disabled_providers`, canonizado el 21/09/2026)
+  (sustituye al antiguo `disabled_providers`; desde el 22/10/2026 usa la clave raíz `policies`,
+  porque la wiki V2 marca `experimental.policies` como deprecada)
 - `agents.title.model`: el agente oculto `title` apunta a la nube (en `opencode.json` usa `local/qwen3.8-9b`)
 - Agente `local`: `disabled: true` (en `opencode.json` es el agente activo)
 

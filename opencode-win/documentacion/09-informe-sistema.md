@@ -5,9 +5,7 @@ Cómo generar un informe completo del equipo (hardware, discos, red, GPU, sensor
 |-----------|----------|------------|
 | ✅ Activo | 10/10/2026 · rev. 10/10/2026 | Antonio |
 
-> Equivalente Windows del informe que en Linux se genera con `pkexec` + `inxi`
-> (ver manual 09 de Linux). En Windows la elevación es **UAC**, y las herramientas
-> nativas son **PowerShell 5.1 + CIM**.
+> Equivalente Windows del informe que en Linux se genera con `pkexec` + `inxi` (ver manual 09 de Linux). En Windows la elevación es **UAC**, y las herramientas nativas son **PowerShell 5.1 + CIM**.
 
 ---
 
@@ -34,16 +32,13 @@ Cómo generar un informe completo del equipo (hardware, discos, red, GPU, sensor
 | **`Get-CimInstance`** | PowerShell | BIOS, placa base, módulos de RAM, monitores |
 | **UAC** | Windows | Elevación de privilegios (agente → no interactivo) |
 
-> ⚠️ **En Windows no hay `pkexec` ni `sudo`.** La elevación es **UAC**: el agente usa
-> `Start-Process -Verb RunAs`; Antonio abre PowerShell **«como administrador»** para las
-> consultas privilegiadas (BIOS, discos, SMART).
+> ⚠️ **En Windows no hay `pkexec` ni `sudo`.** La elevación es **UAC**: el agente usa `Start-Process -Verb RunAs`; Antonio abre PowerShell **«como administrador»** para las consultas privilegiadas (BIOS, discos, SMART).
 
 ---
 
 ## Herramienta base: `hardware-query.ps1`
 
-El script `C:\Users\evo01\.config\opencode\scripts\hardware-query.ps1` (también accesible
-como `hw_query` desde el perfil) resume lo esencial sin privilegios:
+El script `C:\Users\evo01\.config\opencode\scripts\hardware-query.ps1` (también accesible como `hw_query` desde el perfil) resume lo esencial sin privilegios:
 
 ```powershell
 hw_query            # todo (CPU, GPU, RAM, discos, red)
@@ -51,16 +46,13 @@ hw_query gpu        # solo la GPU
 hw_query disco      # solo discos y volúmenes
 ```
 
-Salida en **tablas en español** con decimales en coma. Equivale al `hardware-query.sh`
-de Linux.
+Salida en **tablas en español** con decimales en coma. Equivale al `hardware-query.sh` de Linux.
 
 ---
 
 ## El script `sysinfo.ps1`
 
-El script ya está **desplegado** en `C:\Users\evo01\.config\opencode\scripts\sysinfo.ps1`
-(se copia también al respaldo con `sync-opencode.ps1`). Agrupa todos los bloques de abajo en
-**una sola** ejecución (solo lectura) y admite `-OutFile`. Ejemplo resumido de su contenido:
+El script ya está **desplegado** en `C:\Users\evo01\.config\opencode\scripts\sysinfo.ps1` (se copia también al respaldo con `sync-opencode.ps1`). Agrupa todos los bloques de abajo en **una sola** ejecución (solo lectura) y admite `-OutFile`. Ejemplo resumido de su contenido:
 
 ```powershell
 # sysinfo.ps1 — Volcado completo del sistema (Windows). Ejecutar como administrador.
@@ -99,8 +91,7 @@ Get-CimInstance Win32_VideoController | Select-Object Name,CurrentHorizontalReso
 
 ## Ejecución con UAC
 
-**Clave:** las secciones de BIOS, discos y SMART necesitan elevación. El agente no tiene
-terminal interactiva, así que se lanza pidiendo UAC:
+**Clave:** las secciones de BIOS, discos y SMART necesitan elevación. El agente no tiene terminal interactiva, así que se lanza pidiendo UAC:
 
 ```powershell
 # Desde el agente: elevar y volcar a un fichero
@@ -119,8 +110,7 @@ O bien Antonio abre **PowerShell como administrador** y ejecuta:
 - Aparece la **ventana de UAC** pidiendo confirmación.
 - El volcado completo queda en `C:\Users\evo01\informe-sistema-sysinfo.txt`.
 
-> 💡 Para SMART detallado de discos concretos hace falta **smartmontools para Windows**
-> (`smartctl -a /dev/sdX` o `smartctl -a -d nvme …`), que no viene de serie.
+> 💡 Para SMART detallado de discos concretos hace falta **smartmontools para Windows** (`smartctl -a /dev/sdX` o `smartctl -a -d nvme …`), que no viene de serie.
 
 ---
 
@@ -141,8 +131,7 @@ O bien Antonio abre **PowerShell como administrador** y ejecuta:
 
 ## Estructura del informe resultante
 
-El informe (`C:\Users\evo01\informe-sistema.md`) sigue este orden, todo en **tablas
-Markdown nativas**:
+El informe (`C:\Users\evo01\informe-sistema.md`) sigue este orden, todo en **tablas Markdown nativas**:
 
 1. **Resumen del equipo** · 2. **Sistema operativo y software** · 3. **CPU** · 4. **Memoria RAM** (módulos + pagefile) · 5. **Gráficas** (NVIDIA, iGPU, monitores) · 6. **Almacenamiento** (discos, particiones, salud) · 7. **Red** (WiFi/Ethernet/Bluetooth) · 8. **Audio** · 9. **Sensores** · 10. **Incidencias detectadas** · 11. **Recomendaciones** · **Anexo** con el método.
 
@@ -162,5 +151,4 @@ Markdown nativas**:
 
 ---
 
-> 📁 `D:\Linux\Config\opencode-win\documentacion\09-informe-sistema.md` · 🔧 Volcados: `C:\Users\evo01\informe-sistema-sysinfo.txt`
-> 📊 Hardware del equipo: [hardware-info.md](hardware-info.md) · 🔗 Comandos rápidos: [README-hardware.md](README-hardware.md)
+> 📁 `D:\Linux\Config\opencode-win\documentacion\09-informe-sistema.md` · 🔧 Volcados: `C:\Users\evo01\informe-sistema-sysinfo.txt` 📊 Hardware del equipo: [hardware-info.md](hardware-info.md) · 🔗 Comandos rápidos: [README-hardware.md](README-hardware.md)

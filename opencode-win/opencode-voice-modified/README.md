@@ -1,28 +1,16 @@
-[![CI](https://github.com/renjfk/opencode-voice/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/renjfk/opencode-voice/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![npm](https://img.shields.io/npm/v/@renjfk/opencode-voice)](https://www.npmjs.com/package/@renjfk/opencode-voice)
-[![Downloads](https://img.shields.io/npm/dm/@renjfk/opencode-voice)](https://www.npmjs.com/package/@renjfk/opencode-voice)
+[![CI](https://github.com/renjfk/opencode-voice/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/renjfk/opencode-voice/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![npm](https://img.shields.io/npm/v/@renjfk/opencode-voice)](https://www.npmjs.com/package/@renjfk/opencode-voice) [![Downloads](https://img.shields.io/npm/dm/@renjfk/opencode-voice)](https://www.npmjs.com/package/@renjfk/opencode-voice)
 
 # opencode-voice
 
 Speech-to-text and text-to-speech plugin for [OpenCode](https://opencode.ai/).
 
-Record voice prompts with local whisper transcription, hear assistant responses
-spoken aloud via Piper TTS. Both directions use an LLM to normalize text for
-natural speech (fixing homophones, splitting camelCase identifiers, summarizing
-code-heavy responses, etc.).
+Record voice prompts with local whisper transcription, hear assistant responses spoken aloud via Piper TTS. Both directions use an LLM to normalize text for natural speech (fixing homophones, splitting camelCase identifiers, summarizing code-heavy responses, etc.).
 
 ## Install
 
-Add to your `tui.json` (create at `~/.config/opencode/tui.json` if it doesn't
-exist). You must configure at least `endpoint` and `model`:
+Add to your `tui.json` (create at `~/.config/opencode/tui.json` if it doesn't exist). You must configure at least `endpoint` and `model`:
 
-> [!NOTE]
-> **Clobbering default keybinds.** This plugin uses `ctrl+r` for voice
-> recording, but OpenCode assigns it to session rename by default. Session
-> rename is not used frequently and is still accessible via `/rename`, so we
-> clobber the factory default to let the plugin use `ctrl+r` properly. See
-> the `keybinds` section in the config below.
+> [!NOTE] **Clobbering default keybinds.** This plugin uses `ctrl+r` for voice recording, but OpenCode assigns it to session rename by default. Session rename is not used frequently and is still accessible via `/rename`, so we clobber the factory default to let the plugin use `ctrl+r` properly. See the `keybinds` section in the config below.
 
 ```json
 {
@@ -45,8 +33,7 @@ exist). You must configure at least `endpoint` and `model`:
 
 ### Refresh cached plugin after updates
 
-If OpenCode keeps using an older published version of the plugin after an
-update, clear the cached package and restart OpenCode:
+If OpenCode keeps using an older published version of the plugin after an update, clear the cached package and restart OpenCode:
 
 ```bash
 rm -rf ~/.cache/opencode/packages/@renjfk/
@@ -96,14 +83,9 @@ curl -L -o ~/.local/share/piper-voices/en_US-ryan-high.onnx.json \
 
 ### LLM endpoint
 
-An OpenAI-compatible LLM endpoint is required for text normalization. For
-speech-to-text it cleans up whisper output (punctuation, filler words, software
-engineering homophones). For text-to-speech it converts markdown into natural
-spoken text.
+An OpenAI-compatible LLM endpoint is required for text normalization. For speech-to-text it cleans up whisper output (punctuation, filler words, software engineering homophones). For text-to-speech it converts markdown into natural spoken text.
 
-Configure your endpoint in `tui.json` via plugin options. Any OpenAI-compatible
-endpoint works (Anthropic, OpenAI, Ollama, vLLM, LM Studio, etc.). The `apiKeyEnv`
-option is optional - omit it for unauthenticated endpoints like Ollama.
+Configure your endpoint in `tui.json` via plugin options. Any OpenAI-compatible endpoint works (Anthropic, OpenAI, Ollama, vLLM, LM Studio, etc.). The `apiKeyEnv` option is optional - omit it for unauthenticated endpoints like Ollama.
 
 ```json
 {
@@ -148,14 +130,11 @@ For unauthenticated local endpoints (e.g. Ollama):
 
 The plugin writes diagnostics through OpenCode's structured app logger. If this plugin is not working with your setup, check the OpenCode log file and, optionally, enable debug mode. See the [OpenCode Docs](https://opencode.ai/docs/troubleshooting/#logs) for details.
 
-Routine plugin diagnostics use `debug`; recoverable issues use `warn`; failed
-child processes, API calls, or unexpected exceptions use `error`.
+Routine plugin diagnostics use `debug`; recoverable issues use `warn`; failed child processes, API calls, or unexpected exceptions use `error`.
 
 ### STT API transcription (optional)
 
-Instead of local `whisper-cli`, you can use an OpenAI-compatible speech-to-text
-API (e.g. serving a Whisper model). This is useful when you want to run the
-plugin on a machine without whisper-cpp installed.
+Instead of local `whisper-cli`, you can use an OpenAI-compatible speech-to-text API (e.g. serving a Whisper model). This is useful when you want to run the plugin on a machine without whisper-cpp installed.
 
 ```json
 {
@@ -180,9 +159,7 @@ OpenRouter note: when `sttEndpoint` points at `https://openrouter.ai/api/v1`, th
 
 ### Custom prompts
 
-The LLM system prompts used for normalization can be fully replaced by pointing
-to your own prompt files. This lets you fine-tune how transcriptions are cleaned
-up or how responses are spoken.
+The LLM system prompts used for normalization can be fully replaced by pointing to your own prompt files. This lets you fine-tune how transcriptions are cleaned up or how responses are spoken.
 
 ```json
 {
@@ -219,8 +196,7 @@ If a path is not set, the built-in default prompt is used.
 
 ### Text-to-speech
 
-The `leader` key in OpenCode is `ctrl+x`. So `leader+s` means press `ctrl+x`
-then `s`.
+The `leader` key in OpenCode is `ctrl+x`. So `leader+s` means press `ctrl+x` then `s`.
 
 | Command      | Keybind    | Description              |
 | ------------ | ---------- | ------------------------ |
@@ -234,22 +210,14 @@ then `s`.
 ### STT pipeline
 
 1. `sox` records audio from your microphone
-2. `whisper-cli` transcribes locally using a ggml model, or an OpenAI-compatible
-   API endpoint if `sttEndpoint` is configured
-3. LLM normalizes the transcription: fixes punctuation, removes filler words,
-   corrects software engineering homophones ("Jason" to "JSON", "bullion" to
-   "boolean", etc.)
-4. Cleaned text is appended to the OpenCode prompt, or submitted immediately
-   when `/stt-submit` is used. If normalization fails (e.g. LLM endpoint
-   unreachable), the raw transcription is used as a fallback so you never lose
-   your input
+2. `whisper-cli` transcribes locally using a ggml model, or an OpenAI-compatible API endpoint if `sttEndpoint` is configured
+3. LLM normalizes the transcription: fixes punctuation, removes filler words, corrects software engineering homophones ("Jason" to "JSON", "bullion" to "boolean", etc.)
+4. Cleaned text is appended to the OpenCode prompt, or submitted immediately when `/stt-submit` is used. If normalization fails (e.g. LLM endpoint unreachable), the raw transcription is used as a fallback so you never lose your input
 
 ### TTS pipeline
 
-1. When the assistant finishes responding (or on manual trigger), the response
-   text is sent to the LLM for speech normalization
-2. The LLM decides how to handle it: narrate simple answers, summarize
-   code-heavy responses, or briefly notify for confirmations
+1. When the assistant finishes responding (or on manual trigger), the response text is sent to the LLM for speech normalization
+2. The LLM decides how to handle it: narrate simple answers, summarize code-heavy responses, or briefly notify for confirmations
 3. Piper synthesizes speech locally, piped through sox for playback
 
 ### Auto TTS
@@ -286,8 +254,7 @@ npm run fmt:fix      # oxfmt --write
 
 ### Test local plugin in OpenCode
 
-To test unpublished changes in the OpenCode TUI, point `~/.config/opencode/tui.json`
-at the local repo path, not the npm package name:
+To test unpublished changes in the OpenCode TUI, point `~/.config/opencode/tui.json` at the local repo path, not the npm package name:
 
 ```json
 {
@@ -298,25 +265,19 @@ at the local repo path, not the npm package name:
 
 ### Optional macOS Hammerspoon integration
 
-If you use macOS, [Hammerspoon](https://www.hammerspoon.org/), and
-[Ghostty](https://ghostty.org/), see
-[`examples/hammerspoon/ghostty-fn.lua`](examples/hammerspoon/ghostty-fn.lua)
-for an optional global `Fn` key setup.
+If you use macOS, [Hammerspoon](https://www.hammerspoon.org/), and [Ghostty](https://ghostty.org/), see [`examples/hammerspoon/ghostty-fn.lua`](examples/hammerspoon/ghostty-fn.lua) for an optional global `Fn` key setup.
 
 Behavior:
 
 - Press `Fn` to send `ctrl+r` and start recording.
-- Hold `Fn` for at least 0.5 seconds and release to send `leader+r`, which
-  stops recording, normalizes, and submits the prompt.
+- Hold `Fn` for at least 0.5 seconds and release to send `leader+r`, which stops recording, normalizes, and submits the prompt.
 
 Notes:
 
 - It assumes OpenCode is using the default leader key, `ctrl+x`.
 - It assumes OpenCode is running in Ghostty terminal `1`.
-- It is best used as a push-to-talk flow: hold `Fn` while speaking, then
-  release to submit.
-- Adjust `APP_NAME`, `TARGET_TERMINAL`, and `LONG_PRESS_THRESHOLD_SECONDS` to
-  fit your setup.
+- It is best used as a push-to-talk flow: hold `Fn` while speaking, then release to submit.
+- Adjust `APP_NAME`, `TARGET_TERMINAL`, and `LONG_PRESS_THRESHOLD_SECONDS` to fit your setup.
 
 ### Release process
 

@@ -56,6 +56,15 @@ MAPA = [
      "Config/Hermes-Win/AGENTS-WIN.md"),
     ("Hermes-win/💻 Sistema — Inventario del equipo en Windows · SISTEMA-WINDOWS.md",
      "Config/Hermes-Win/SISTEMA-WINDOWS.md"),
+    # --- anadidos el 18/10/2026 (a peticion de Antonio) ---
+    ("Hermes/💻 Dual boot — Plan de convivencia · PLAN-convivencia-dual-boot.md",
+     "Config/hermes/dual-boot/PLAN-convivencia-dual-boot.md"),
+    ("Hermes/💻 Dual boot — Tareas NTFS en Windows · PARA-WINDOWS-tareas-ntfs.md",
+     "Config/hermes/dual-boot/windows/PARA-WINDOWS-tareas-ntfs.md"),
+    ("Hermes/💻 Dual boot — WhatsApp de Windows · whatsapp-LEEME.md",
+     "Config/hermes/dual-boot/windows/whatsapp/LEEME.md"),
+    ("Hermes/💻 Dual boot — Mensajes de Google en Windows · messages-LEEME.md",
+     "Config/hermes/dual-boot/windows/messages/LEEME.md"),
 ]
 
 # Frontera de credenciales (skill `obsidian-espejo-config`): si un origen contiene algo así,

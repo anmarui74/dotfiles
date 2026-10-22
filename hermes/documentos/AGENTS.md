@@ -4,8 +4,7 @@
 |-----------|----------|------------|
 | ✅ activo | 07/10/2026 · rev. 10/10/2026 | Antonio |
 
-> Esquema de backup de Hermes: respaldo canónico, tarball con `restore.sh` dentro,
-> credenciales en 0600, retención de 30 días y copia saneada en dotfiles.
+> Esquema de backup de Hermes: respaldo canónico, tarball con `restore.sh` dentro, credenciales en 0600, retención de 30 días y copia saneada en dotfiles.
 
 ---
 
@@ -71,8 +70,7 @@
 └── sync.log                      # histórico de sincronizaciones
 ```
 
-En `~/Documentos/dotfiles/hermes/` va la copia **SANEADA** (sin claves) que se versiona en el
-repo `anmarui74/dotfiles`. El commit/push lo hace Antonio a mano (el script solo deja la copia).
+En `~/Documentos/dotfiles/hermes/` va la copia **SANEADA** (sin claves) que se versiona en el repo `anmarui74/dotfiles`. El commit/push lo hace Antonio a mano (el script solo deja la copia).
 
 ---
 
@@ -94,11 +92,8 @@ El tarball resultante pesa unos pocos MB (frente a los ~3 GB del directorio comp
 
 ## Credenciales y claves de API
 
-- Las claves viven en `~/.hermes/.env` y los tokens OAuth de proveedores en `~/.hermes/auth.json`.
-  `~/.hermes/shared/nous_auth.json` guarda el token del Portal Nous (access + refresh).
-- **SÍ deben estar** dentro del tarball de `~/Config/hermes/backups/hermes/`: es la copia de
-  restauración y las necesita. Por eso el tarball se crea con `umask 077` + `chmod 600` y su
-  directorio con `chmod 700`.
+- Las claves viven en `~/.hermes/.env` y los tokens OAuth de proveedores en `~/.hermes/auth.json`. `~/.hermes/shared/nous_auth.json` guarda el token del Portal Nous (access + refresh).
+- **SÍ deben estar** dentro del tarball de `~/Config/hermes/backups/hermes/`: es la copia de restauración y las necesita. Por eso el tarball se crea con `umask 077` + `chmod 600` y su directorio con `chmod 700`.
 - **NUNCA** deben estar en `~/Documentos/dotfiles/`. Esa es la frontera real.
 - Antes de commitear la copia de dotfiles, verificar:
 
@@ -117,8 +112,7 @@ Si devuelve algo, NO hacer commit/push y borrar el fichero.
 ```bash
 bash ~/Config/hermes/backup-hermes.sh
 ```
-Antes de copiar nada ejecuta `check-setup-completo.sh`; si el esquema no está correcto,
-el backup se **aborta** para no guardar un setup defectuoso.
+Antes de copiar nada ejecuta `check-setup-completo.sh`; si el esquema no está correcto, el backup se **aborta** para no guardar un setup defectuoso.
 
 ### Sincronización + backup
 ```bash
@@ -132,19 +126,13 @@ bash ~/Config/hermes/setup-hermes-completo.sh                 # completo (voz + 
 bash ~/Config/hermes/setup-hermes-completo.sh --con-modelos    # además baja los ~21 GB de modelos
 bash ~/Config/hermes/setup-hermes-completo.sh --sin-externos   # solo config, datos y esquema
 ```
-Instala Hermes si falta, restaura el último tarball (o `sesion-hermes/`), recoloca los scripts
-de voz y verifica `config.yaml`, `.env`, `auth.json`, `SOUL.md`, `memories/` y `skills/`.
-Repone además lo que no cabe en el tarball: el stack de voz (PASO 5c), LM Studio con su ajuste de
-contexto y la entrada ancla del dock (PASO 5d) — ver [Requisitos externos](#requisitos-externos-no-viajan-en-el-tarball).
-Los modelos de LM Studio solo se descargan con `--con-modelos` o confirmándolo por teclado;
-`--sin-externos` omite los PASOS 5c y 5d (útil sin NVIDIA, sin red o para pruebas).
+Instala Hermes si falta, restaura el último tarball (o `sesion-hermes/`), recoloca los scripts de voz y verifica `config.yaml`, `.env`, `auth.json`, `SOUL.md`, `memories/` y `skills/`. Repone además lo que no cabe en el tarball: el stack de voz (PASO 5c), LM Studio con su ajuste de contexto y la entrada ancla del dock (PASO 5d) — ver [Requisitos externos](#requisitos-externos-no-viajan-en-el-tarball). Los modelos de LM Studio solo se descargan con `--con-modelos` o confirmándolo por teclado; `--sin-externos` omite los PASOS 5c y 5d (útil sin NVIDIA, sin red o para pruebas).
 
 ### Al modificar la configuración de Hermes
 1. Los cambios se hacen en `~/.hermes/` (activo) con `hermes config set` (nunca a mano en `config.yaml`).
 2. Ejecutar `bash ~/Config/hermes/sync-hermes.sh` → refresca `sesion-hermes/` y regenera el tarball.
 3. Si el cambio afecta a la restauración, actualizar `sesion-hermes/setup-hermes-completo.sh`.
-4. Si el cambio toca el esquema (un fichero, una unidad, un alias, una skill), actualizar este
-   documento y pasar `hermes-auditoria-manual` hasta que salga **sin desfases**.
+4. Si el cambio toca el esquema (un fichero, una unidad, un alias, una skill), actualizar este documento y pasar `hermes-auditoria-manual` hasta que salga **sin desfases**.
 
 ---
 
@@ -158,18 +146,13 @@ bash /tmp/restore-hermes/hermes-backup-*-restore.sh
 hermes doctor
 ```
 
-El `restore.sh` restaura la configuración y los datos en `~/.hermes/`, devuelve `.env` y
-`auth.json` a su sitio con permisos 600 y repone los scripts de voz en `~/.local/bin/`.
-El tarball incluye bajo `esquema/` el propio instalador, el parche del CLI, las unidades
-systemd (incluidas las del dual boot) y el esquema de dual boot.
+El `restore.sh` restaura la configuración y los datos en `~/.hermes/`, devuelve `.env` y `auth.json` a su sitio con permisos 600 y repone los scripts de voz en `~/.local/bin/`. El tarball incluye bajo `esquema/` el propio instalador, el parche del CLI, las unidades systemd (incluidas las del dual boot) y el esquema de dual boot.
 
 ---
 
 ## Requisitos externos (no viajan en el tarball)
 
-El tarball pesa ~1 MB: lleva configuración, datos y scripts, pero **no** las dependencias
-pesadas ni los paquetes del sistema. Para que una instalación desde limpio quede igual que
-este equipo hay que reponerlas aparte. El instalador ya lo hace (PASOS 1, 5c y 5d).
+El tarball pesa ~1 MB: lleva configuración, datos y scripts, pero **no** las dependencias pesadas ni los paquetes del sistema. Para que una instalación desde limpio quede igual que este equipo hay que reponerlas aparte. El instalador ya lo hace (PASOS 1, 5c y 5d).
 
 | Pieza | Dónde vive | Cómo se repone |
 |---|---|---|
@@ -187,18 +170,13 @@ bash ~/Config/hermes/instalar-stack-voz.sh --comprobar
 bash ~/Config/hermes/check-setup-completo.sh   # su sección 8 avisa de lo que falte
 ```
 
-⚠️ Al probar el instalador con un HOME aislado (`HOME=/tmp/x bash setup-hermes-completo.sh`),
-si se invoca el CLI real con ese HOME, **se reescriben los shims del runtime real**
-(`~/.hermes/hermes-agent/.hermes/bin/hermes` y `hermes-acp`) apuntando al python del HOME de
-prueba, y `hermes` deja de arrancar. En pruebas: pon un `hermes` simulado en el `PATH` o revisa
-`head -2` de esos shims después y restaura la ruta real (`~/.hermes/tools/python-*/bin/python3`).
+⚠️ Al probar el instalador con un HOME aislado (`HOME=/tmp/x bash setup-hermes-completo.sh`), si se invoca el CLI real con ese HOME, **se reescriben los shims del runtime real** (`~/.hermes/hermes-agent/.hermes/bin/hermes` y `hermes-acp`) apuntando al python del HOME de prueba, y `hermes` deja de arrancar. En pruebas: pon un `hermes` simulado en el `PATH` o revisa `head -2` de esos shims después y restaura la ruta real (`~/.hermes/tools/python-*/bin/python3`).
 
 ---
 
 ## Automatización (systemd)
 
-Unidades de usuario del esquema (copia en `~/Config/hermes/units/`; las del dual boot, en
-`dual-boot/systemd-user/`):
+Unidades de usuario del esquema (copia en `~/Config/hermes/units/`; las del dual boot, en `dual-boot/systemd-user/`):
 
 | Unidad | Qué hace |
 |---|---|
@@ -218,42 +196,32 @@ systemctl --user list-timers hermes-sync.timer
 tail -20 ~/Config/hermes/sync.log
 ```
 
-Retención: `LOG_RETENTION_DAYS` (por defecto 30 días) y poda diaria (se conserva el último
-tarball de cada día).
+Retención: `LOG_RETENTION_DAYS` (por defecto 30 días) y poda diaria (se conserva el último tarball de cada día).
 
 ---
+
+## Arranque del gateway y la red
+
+El gateway arranca en `default.target`, antes de que el wifi tenga ruta y DNS. `After=network-online.target` **no basta**: en systemd de usuario ese target no espera a la red real. Sin más, los primeros 8 intentos contra Telegram fallaban con `Temporary failure in name resolution` —también contra las IPs literales, porque aún no había ruta— y cada arranque dejaba ~12 WARNING en `errors.log` (766 acumulados entre el 28/09 y el 18/10/2026, sin pérdida real de mensajes: el polling solo empieza al conectar).
+
+- Drop-in `~/.config/systemd/user/hermes-gateway.service.d/10-esperar-red.conf` (copia canónica en `units/hermes-gateway.service.d/`): `ExecStartPre` que espera hasta 60 s a que haya ruta IPv4 por defecto **y** el DNS resuelva. Sale **siempre 0**, para no impedir el arranque si la red no llegase.
+- El bloque de `units/` de `setup-hermes-completo.sh` copia el drop-in aparte (el `cp` de unidades no entra en subdirectorios).
+- Comprobado el 18/10/2026: arranque limpio, conexión al primer intento y **0 WARNING**.
 
 ## Aviso de arranque del gateway
 
 Antonio quiere saber cuándo queda disponible Hermes al encender o reiniciar el PC.
 
-- Script: `~/.local/bin/hermes-ready-notify.sh` (viaja en `extras/bin/` del tarball y de
-  `sesion-hermes/`).
-- Unidad: `hermes-ready-notify.service` (`oneshot`, `After=hermes-gateway.service`,
-  `WantedBy=default.target`; copia en `units/`).
-- Flujo: espera hasta `HERMES_READY_TIMEOUT` (180 s por defecto) a que el servicio del gateway esté
-  `active` **y** el log muestre la conexión de Telegram posterior al arranque; entonces envía el
-  mensaje por la API de Telegram al `TELEGRAM_HOME_CHANNEL` del `.env`. El token nunca va en `argv`
-  (se pasa a `curl` por stdin) para que no aparezca en `ps` ni en los logs.
-- **No duplica el aviso nativo**: en reinicios planificados (`/restart`, `hermes update`) el propio
-  gateway ya avisa vía `~/.hermes/.restart_notify.json` / `.restart_pending.json`; con esos
-  marcadores el script calla.
-- Prueba real: `systemctl --user start hermes-ready-notify.service` (envía el mensaje) o
-  `DRY_RUN=1 ~/.local/bin/hermes-ready-notify.sh` (lo imprime sin enviarlo). **Nunca reiniciar
-  `hermes-gateway` desde una sesión propia del gateway**: el drain espera al turno en curso y acaba
-  en SIGTERM a los 70 s.
-- **El aviso lleva además el mantenimiento del arranque** (por eso se revisa siempre al empezar a
-  trabajar y no hay que preguntarlo):
-  - `🔄 Update`: resultado de `hermes update --check` (solo lectura: un `git fetch`, no toca nada).
-    «al día (canal stable)» o «⬆️ HAY ACTUALIZACIÓN — N commits behind…». **No actualiza solo**:
-    Antonio elige el momento porque el update reinicia el gateway.
-  - `🤝 Dual boot`: última importación (`~/.hermes/.dual-sync/estado.json`), si
-    `HermesSync/NOTA-PARA-LINUX.md` ha crecido desde el arranque anterior (marca en
-    `~/.hermes/state/arranque-nota.size`; la nota se acepta como vista al avisarla) y cuántos
-    encargos de `HermesSync/linux/encargos/` siguen sin estar en
-    `~/.hermes/state/encargos-hechos.json`.
-  - Queda registrado en `~/Config/hermes/logs/arranque-linux.log`, que es lo primero que se mira al
-    empezar sesión. Es registro local: `logs/` no viaja en el tarball.
+- Script: `~/.local/bin/hermes-ready-notify.sh` (viaja en `extras/bin/` del tarball y de `sesion-hermes/`).
+- Unidad: `hermes-ready-notify.service` (`oneshot`, `After=hermes-gateway.service`, `WantedBy=default.target`; copia en `units/`).
+- Flujo: espera hasta `HERMES_READY_TIMEOUT` (180 s por defecto) a que el servicio del gateway esté `active` **y** el log muestre la conexión de Telegram posterior al arranque; entonces envía el mensaje por la API de Telegram al `TELEGRAM_HOME_CHANNEL` del `.env`. El token nunca va en `argv` (se pasa a `curl` por stdin) para que no aparezca en `ps` ni en los logs.
+- **No duplica el aviso nativo**: en reinicios planificados (`/restart`, `hermes update`) el propio gateway ya avisa vía `~/.hermes/.restart_notify.json` / `.restart_pending.json`; con esos marcadores el script calla.
+- Prueba real: `systemctl --user start hermes-ready-notify.service` (envía el mensaje) o `DRY_RUN=1 ~/.local/bin/hermes-ready-notify.sh` (lo imprime sin enviarlo). **Nunca reiniciar `hermes-gateway` desde una sesión propia del gateway**: el drain espera al turno en curso y acaba en SIGTERM a los 70 s.
+- **El aviso lleva además el mantenimiento del arranque** (por eso se revisa siempre al empezar a trabajar y no hay que preguntarlo):
+  - `🔄 Update`: resultado de `hermes update --check` (solo lectura: un `git fetch`, no toca nada). «al día (canal stable)» o «⬆️ HAY ACTUALIZACIÓN — N commits behind…». **No actualiza solo**: Antonio elige el momento porque el update reinicia el gateway.
+  - `🤝 Dual boot`: última importación (`~/.hermes/.dual-sync/estado.json`), si `HermesSync/NOTA-PARA-LINUX.md` ha crecido desde el arranque anterior (marca en `~/.hermes/state/arranque-nota.size`; la nota se acepta como vista al avisarla) y cuántos encargos de `HermesSync/linux/encargos/` siguen sin estar en `~/.hermes/state/encargos-hechos.json`.
+  - `🛠️ Parche del CLI`: **solo aparece si NO está aplicado** (el resto de arranques callan). El parche local Ctrl+Q/Ctrl+C vive fuera de git: tras un `hermes update` el autostash puede dejarlo aparcado y las teclas dejan de cortar la locución. Se comprueba con `hermes-parche-ctrlq estado` (exit 0 = aplicado) y, si falla, el aviso lo dice con el comando para revisarlo.
+  - Queda registrado en `~/Config/hermes/logs/arranque-linux.log`, que es lo primero que se mira al empezar sesión. Es registro local: `logs/` no viaja en el tarball.
 - Detalle completo: skill `hermes-gateway-startup-alert`.
 
 ---
@@ -262,35 +230,17 @@ Antonio quiere saber cuándo queda disponible Hermes al encender o reiniciar el 
 
 Todo local y en CUDA, sin nube (skill `hermes-voz-local-gpu`):
 
-- **TTS**: proveedor de tipo comando en `tts.providers.kokoro` de `~/.hermes/config.yaml` →
-  `~/.local/bin/kokoro-tts --text-file {input_path} --out {output_path} --voice {voice}`, voz
-  `ef_dora` (española), salida WAV y `tts.provider: kokoro`.
-- **STT**: `~/.local/bin/whisper-stt` (envuelve el build CUDA de whisper.cpp, modelo
-  `ggml-large-v3-turbo-q5_0.bin`, idioma `es` por defecto) declarado como proveedor STT de tipo
-  comando. `hermes-voz` arranca el CLI e inyecta `/voice on`.
-- Los scripts (`kokoro-tts`, `whisper-stt`, `whisper-cli`, `hermes-voz` y, si están,
-  `speak-kokoro*`) viajan en `extras/bin/` del tarball y de `sesion-hermes/`. **El modelo y el
-  binario de whisper.cpp no** (viven en `~/.local/share/whisper-cpp/`): una instalación desde limpio
-  repone los scripts, pero hay que volver a descargar el modelo.
-- **Ruta del modelo de whisper**: `whisper-stt` busca
-  `~/.local/share/whisper-cpp/models/ggml-large-v3-turbo-q5_0.bin`; el bootstrap de OpenCode
-  (`~/.config/opencode/bootstrap-ocv.sh`) lo descarga en la **raíz** de `whisper-cpp/`. El wrapper
-  acepta las dos rutas (fallback a la raíz si no está en `models/`) y aquí hay un enlace duro en
-  `models/` para que también lo vea `check-setup-completo.sh`. Si el STT dice
-  `whisper-stt: falta el modelo …`, es esto: comprobar con
-  `bash ~/Config/hermes/instalar-stack-voz.sh --comprobar`.
-- La locución se corta con `ctrl+q` (solo calla la voz) o `ctrl+c` (corta e interrumpe el turno):
-  ver «Parches locales del CLI».
+- **TTS**: proveedor de tipo comando en `tts.providers.kokoro` de `~/.hermes/config.yaml` → `~/.local/bin/kokoro-tts --text-file {input_path} --out {output_path} --voice {voice}`, voz `ef_dora` (española), salida WAV y `tts.provider: kokoro`.
+- **STT**: `~/.local/bin/whisper-stt` (envuelve el build CUDA de whisper.cpp, modelo `ggml-large-v3-turbo-q5_0.bin`, idioma `es` por defecto) declarado como proveedor STT de tipo comando. `hermes-voz` arranca el CLI e inyecta `/voice on`.
+- Los scripts (`kokoro-tts`, `whisper-stt`, `whisper-cli`, `hermes-voz` y, si están, `speak-kokoro*`) viajan en `extras/bin/` del tarball y de `sesion-hermes/`. **El modelo y el binario de whisper.cpp no** (viven en `~/.local/share/whisper-cpp/`): una instalación desde limpio repone los scripts, pero hay que volver a descargar el modelo.
+- **Ruta del modelo de whisper**: `whisper-stt` busca `~/.local/share/whisper-cpp/models/ggml-large-v3-turbo-q5_0.bin`; el bootstrap de OpenCode (`~/.config/opencode/bootstrap-ocv.sh`) lo descarga en la **raíz** de `whisper-cpp/`. El wrapper acepta las dos rutas (fallback a la raíz si no está en `models/`) y aquí hay un enlace duro en `models/` para que también lo vea `check-setup-completo.sh`. Si el STT dice `whisper-stt: falta el modelo …`, es esto: comprobar con `bash ~/Config/hermes/instalar-stack-voz.sh --comprobar`.
+- La locución se corta con `ctrl+q` (solo calla la voz) o `ctrl+c` (corta e interrumpe el turno): ver «Parches locales del CLI».
 
 ---
 
 ## Comprobar qué modelos son viables como agente
 
-`hermes-modelos-viables` (`hermes-modelos-viables.sh` + `hermes-modelos-viables.py`, atajo en
-`~/.local/bin`) aplica la misma metodología que el `check-nvidia-whitelist.sh` de su esquema
-(`~/.config/opencode/check-nvidia-whitelist.sh`): un modelo sólo sirve como agente si
-responde con HTTP 200 real, genera a ≥ 10 tok/s (configurable) y
-emite **tool calling** de verdad.
+`hermes-modelos-viables` (`hermes-modelos-viables.sh` + `hermes-modelos-viables.py`, atajo en `~/.local/bin`) aplica la misma metodología que el `check-nvidia-whitelist.sh` de su esquema (`~/.config/opencode/check-nvidia-whitelist.sh`): un modelo sólo sirve como agente si responde con HTTP 200 real, genera a ≥ 10 tok/s (configurable) y emite **tool calling** de verdad.
 
 ```bash
 hermes-modelos-viables              # locales de LM Studio + whitelist de NVIDIA
@@ -299,20 +249,13 @@ hermes-modelos-viables --nvidia     # solo NVIDIA
 hermes-modelos-viables --modelo qwen3.8-9b --json
 ```
 
-- Los locales se descubren por **sondeo en vivo** (`http://127.0.0.1:1234/v1/models`), igual que el
-  selector de Hermes: si el servidor de LM Studio no está arrancado (`lms server start`), el
-  proveedor `lmstudio` se queda sin modelos y no aparece utilizable.
-- El whitelist de NVIDIA se lee de `~/.config/opencode/opencode.json` (una sola fuente de verdad);
-  las claves salen de `~/.hermes/.env` (`NVIDIA_API_KEY`; `LM_API_KEY` es opcional en LM Studio).
-- Log en `~/Config/hermes/logs/modelos-viables.log` (la carpeta `logs/` queda excluida de la copia
-  de dotfiles).
+- Los locales se descubren por **sondeo en vivo** (`http://127.0.0.1:1234/v1/models`), igual que el selector de Hermes: si el servidor de LM Studio no está arrancado (`lms server start`), el proveedor `lmstudio` se queda sin modelos y no aparece utilizable.
+- El whitelist de NVIDIA se lee de `~/.config/opencode/opencode.json` (una sola fuente de verdad); las claves salen de `~/.hermes/.env` (`NVIDIA_API_KEY`; `LM_API_KEY` es opcional en LM Studio).
+- Log en `~/Config/hermes/logs/modelos-viables.log` (la carpeta `logs/` queda excluida de la copia de dotfiles).
 
 ### Modelos en uso
 
-Los modelos se alternan con `/model <alias>`. Los alias viven en `model.aliases` de
-`~/.hermes/config.yaml` y replican el repertorio de OpenCode (`~/.config/opencode/opencode.json`:
-whitelist NVIDIA + proveedor `local` + `opencode-go`). En Hermes los alias se consultan **antes**
-que el catálogo de models.dev, de modo que los modelos NVIDIA retirados no aparecen:
+Los modelos se alternan con `/model <alias>`. Los alias viven en `model.aliases` de `~/.hermes/config.yaml` y replican el repertorio de OpenCode (`~/.config/opencode/opencode.json`: whitelist NVIDIA + proveedor `local` + `opencode-go`). En Hermes los alias se consultan **antes** que el catálogo de models.dev, de modo que los modelos NVIDIA retirados no aparecen:
 
 | Alias | Modelo en Hermes | Equivalente en OpenCode |
 |---|---|---|
@@ -328,46 +271,25 @@ que el catálogo de models.dev, de modo que los modelos NVIDIA retirados no apar
 | `vision` | `nvidia/meta/llama-3.2-11b-vision-instruct` | whitelist |
 | `multimodal` | `opencode-go/mimo-v2.5` | agente `multimodal` |
 
-Requisito que vive **fuera** del backup de Hermes (es config de LM Studio, no de Hermes):
-`defaultContextLength` en `~/.lmstudio/settings.json` debe ser ≥ 65536; aquí está en 81920 (valor
-con el que los tres locales caben juntos en 16 GB: gemma-4-e4b 6,7 GB,
-qwen3.8-9b 11,5 GB). Hermes exige 64 000 tokens de ventana; con el valor de fábrica (8192) rechaza
-el local como modelo principal y deja inservible el escalón `lmstudio` de la cadena de respaldo
-(cae al escalón anterior).
+Requisito que vive **fuera** del backup de Hermes (es config de LM Studio, no de Hermes): `defaultContextLength` en `~/.lmstudio/settings.json` debe ser ≥ 65536; aquí está en 81920 (valor con el que los tres locales caben juntos en 16 GB: gemma-4-e4b 6,7 GB, qwen3.8-9b 11,5 GB). Hermes exige 64 000 tokens de ventana; con el valor de fábrica (8192) rechaza el local como modelo principal y deja inservible el escalón `lmstudio` de la cadena de respaldo (cae al escalón anterior).
 
-📋 **Inventario del directorio de modelos (10/10/2026)**: `~/.lmstudio/models/` ocupa ~20 GB con los
-tres modelos en uso: `Qwen/Qwen3.8-9B-Q6_K` (7,1 GB), `Qwen/Qwen3.5-9B-Q6_K` (7,0 GB) y
-`lmstudio-community/gemma-4-E4B-it-GGUF` (5,0 GB + `mmproj` 946 MB, el único con visión). El
-10/10/2026 se **retiró** un cuarto fichero de prueba (`Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf`,
-8,4 GB) que no estaba registrado en el índice de LM Studio ni tenía alias en Hermes. Si vuelve a
-aparecer un `.gguf` sin registro ni alias, es resto inerte: no entra en el backup (los modelos no
-viajan en el tarball) y conviene proponer su retirada.
+📋 **Inventario del directorio de modelos (10/10/2026)**: `~/.lmstudio/models/` ocupa ~20 GB con los tres modelos en uso: `Qwen/Qwen3.8-9B-Q6_K` (7,1 GB), `Qwen/Qwen3.5-9B-Q6_K` (7,0 GB) y `lmstudio-community/gemma-4-E4B-it-GGUF` (5,0 GB + `mmproj` 946 MB, el único con visión). El 10/10/2026 se **retiró** un cuarto fichero de prueba (`Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf`, 8,4 GB) que no estaba registrado en el índice de LM Studio ni tenía alias en Hermes. Si vuelve a aparecer un `.gguf` sin registro ni alias, es resto inerte: no entra en el backup (los modelos no viajan en el tarball) y conviene proponer su retirada.
 
-**Regla al cargar un modelo en LM Studio**: primero VRAM limpia (`lms unload --all`, y comprobar
-que no queda un `llama-server` huérfano con `nvidia-smi --query-compute-apps=pid,used_memory
---format=csv`). Con otro modelo residente, una carga que cabe de sobra falla con `cudaMalloc
-failed: out of memory` — y ese error es engañoso: no significa que la ventana pedida no quepa.
-Procedimiento y trampas: skill `hermes-cambio-de-modelo`.
+**Regla al cargar un modelo en LM Studio**: primero VRAM limpia (`lms unload --all`, y comprobar que no queda un `llama-server` huérfano con `nvidia-smi --query-compute-apps=pid,used_memory --format=csv`). Con otro modelo residente, una carga que cabe de sobra falla con `cudaMalloc failed: out of memory` — y ese error es engañoso: no significa que la ventana pedida no quepa. Procedimiento y trampas: skill `hermes-cambio-de-modelo`.
 
 ### El selector sigue el whitelist de NVIDIA (plugin) y los alias se recompensan solos
 
-`hermes model` y `/model` mostraban los 82 modelos NVIDIA del catálogo. Ahora la lista sale del
-whitelist de OpenCode, por dos piezas que se mantienen solas:
+`hermes model` y `/model` mostraban los 82 modelos NVIDIA del catálogo. Ahora la lista sale del whitelist de OpenCode, por dos piezas que se mantienen solas:
 
 | Pieza | Qué hace |
 |---|---|
 | `~/.hermes/plugins/model-providers/nvidia/` | Perfil de proveedor que sustituye al de serie y filtra el catálogo con `providers.nvidia.whitelist` de `~/.config/opencode/opencode.json`. El whitelist se **relee en cada consulta**: si el timer quincenal retira un modelo, la lista de Hermes cambia sola. También alinea la lista curada del repo (`_PROVIDER_MODELS`) para que no se cuelen modelos retirados. |
 | `hermes-nvidia-aliases` (`~/Config/hermes/hermes-nvidia-aliases.{py,sh}`, atajo en `~/.local/bin`) | Recompone los alias cortos (`nvidia`, `gpt-oss`, `glimmer`…) desde el whitelist: añade los nuevos (nombre derivado, avisado en el log), retira los que salen y nunca toca alias ajenos (`local`, `multimodal`…). Estado en `state/nvidia-aliases.json`, log en `logs/nvidia-aliases.log`. |
 
-- Disparador: la unidad de usuario **`hermes-nvidia-aliases.path`** vigila
-  `~/.config/opencode/opencode.json`: cuando `check-nvidia-whitelist.sh` (días 1 y 16, vía
-  `check-nvidia-whitelist.timer`) reescribe el whitelist, el servicio `hermes-nvidia-aliases.service`
-  recompone los alias al momento. No se ha tocado ninguna unidad de OpenCode.
+- Disparador: la unidad de usuario **`hermes-nvidia-aliases.path`** vigila `~/.config/opencode/opencode.json`: cuando `check-nvidia-whitelist.sh` (días 1 y 16, vía `check-nvidia-whitelist.timer`) reescribe el whitelist, el servicio `hermes-nvidia-aliases.service` recompone los alias al momento. No se ha tocado ninguna unidad de OpenCode.
 - A mano: `hermes-nvidia-aliases` (o `--dry-run` para ver qué haría, `--json` para máquinas).
-- Las dos unidades tienen copia en `~/Config/hermes/units/` para una reinstalación desde limpio:
-  `cp ~/Config/hermes/units/hermes-nvidia-aliases.* ~/.config/systemd/user/ && systemctl --user daemon-reload && systemctl --user enable --now hermes-nvidia-aliases.path`.
-- Si algún día la caché de catálogos está vacía, la primera apertura de `/model` puede mostrar la
-  lista curada del repo hasta que el refresco en segundo plano llega; `/model --refresh` lo fuerza.
+- Las dos unidades tienen copia en `~/Config/hermes/units/` para una reinstalación desde limpio: `cp ~/Config/hermes/units/hermes-nvidia-aliases.* ~/.config/systemd/user/ && systemctl --user daemon-reload && systemctl --user enable --now hermes-nvidia-aliases.path`.
+- Si algún día la caché de catálogos está vacía, la primera apertura de `/model` puede mostrar la lista curada del repo hasta que el refresco en segundo plano llega; `/model --refresh` lo fuerza.
 
 ### Plugins instalados
 
@@ -379,48 +301,22 @@ En `~/.hermes/plugins/` *(instantánea 10/10/2026)*:
 | `homeassistant` | **deshabilitado** (10/10/2026) | del catálogo oficial (v2.0.1, pin `ba30cb0cf8`): adaptador de plataforma del gateway (eventos de HA por WebSocket; `cron deliver=homeassistant`) y el toolset `homeassistant` (`ha_list_entities`, `ha_get_state`, `ha_list_services`, `ha_call_service`) |
 
 - Los dos entran en el tarball (`plugins/` está en la lista de respaldados).
-- `homeassistant` quedó **deshabilitado el 10/10/2026** (`hermes plugins disable homeassistant`;
-  `plugins.enabled` vacío y `plugins.disabled: [homeassistant]`). Estaba instalado y habilitado pero
-  **sin credenciales** (`HASS_TOKEN` no estaba en el `.env`) y sin ninguna instancia de HA en la red
-  (`homeassistant.local:8123` no responde). **No se ha desinstalado**: sigue en `plugins/` para
-  cuando se monte Home Assistant. Para reactivarlo: crear un token de larga duración en HA,
-  ponerlo en `~/.hermes/.env` (`HASS_TOKEN`, y `HASS_URL` si no es `http://homeassistant.local:8123`)
-  y `hermes plugins enable homeassistant`. El cambio entra **al reiniciar la sesión**.
+- `homeassistant` quedó **deshabilitado el 10/10/2026** (`hermes plugins disable homeassistant`; `plugins.enabled` vacío y `plugins.disabled: [homeassistant]`). Estaba instalado y habilitado pero **sin credenciales** (`HASS_TOKEN` no estaba en el `.env`) y sin ninguna instancia de HA en la red (`homeassistant.local:8123` no responde). **No se ha desinstalado**: sigue en `plugins/` para cuando se monte Home Assistant. Para reactivarlo: crear un token de larga duración en HA, ponerlo en `~/.hermes/.env` (`HASS_TOKEN`, y `HASS_URL` si no es `http://homeassistant.local:8123`) y `hermes plugins enable homeassistant`. El cambio entra **al reiniciar la sesión**.
 
 ### LM Studio: la app y el servicio headless no caben a la vez
 
-`lms server start` levanta un LM Studio **headless** que se queda con el perfil de la app
-(`~/.config/LM Studio/SingletonLock -> cachyos-<pid>`). Con ese candado vivo, al abrir la ventana
-de LM Studio su lista de modelos aparece **vacía**, aunque los ficheros, el índice (`model-index-cache.json`),
-`lms ls` y la API sigan viendo los 4 modelos. Diagnóstico rápido: `ls -la ~/.config/"LM Studio"/SingletonLock`
-y comparar con `pgrep -af "lm-studio"`.
+`lms server start` levanta un LM Studio **headless** que se queda con el perfil de la app (`~/.config/LM Studio/SingletonLock -> cachyos-<pid>`). Con ese candado vivo, al abrir la ventana de LM Studio su lista de modelos aparece **vacía**, aunque los ficheros, el índice (`model-index-cache.json`), `lms ls` y la API sigan viendo los 4 modelos. Diagnóstico rápido: `ls -la ~/.config/"LM Studio"/SingletonLock` y comparar con `pgrep -af "lm-studio"`.
 
-Receta — ya automatizada, no hay que hacerla a mano: el arranque de sesión usa el **modo servicio**
-(subsección siguiente) y, para ver la interfaz, el atajo `lm-studio-gui` para ese modo y abre la
-ventana; al cerrarla vuelve el modo servicio. Tampoco hace falta `lms server start` ni
-`lms daemon up`: la unidad de arranque ya deja el API sirviendo, y el candado lo gestiona el atajo.
+Receta — ya automatizada, no hay que hacerla a mano: el arranque de sesión usa el **modo servicio** (subsección siguiente) y, para ver la interfaz, el atajo `lm-studio-gui` para ese modo y abre la ventana; al cerrarla vuelve el modo servicio. Tampoco hace falta `lms server start` ni `lms daemon up`: la unidad de arranque ya deja el API sirviendo, y el candado lo gestiona el atajo.
 
 #### La app, bajo systemd de usuario: `lm-studio-app.service` (modo servicio, SIN ventana)
 
-- **Antonio pidió (30/09/2026) que al iniciar sesión no se abra la ventana.** El arranque es ahora
-  `ExecStart=/usr/bin/lm-studio --run-as-service`: el modo servicio oficial («Desktop app in
-  headless mode», doc `developer/core/headless`), el mismo que usa `lms server start` por dentro.
-  El journal lo confirma: `Running in headless mode.`
-- Unidad: `~/.config/systemd/user/lm-studio-app.service` (copia en `~/Config/hermes/units/`), con
-  `TMPDIR=/tmp`, `Restart=on-failure` y `WantedBy=default.target` (ya no depende de
-  `graphical-session.target`). **Por qué no se lanza a mano**: desde una sesión de agente hereda el
-  `TMPDIR` de la caché de Hermes, monta la AppImage dentro de `~/.hermes/cache/scratch` y deja el
-  proceso atado a esa sesión (así se llegó al zombi del 29/09/2026).
-- **LM Studio ignora SIGTERM, también en modo servicio**: sin `KillSignal=SIGKILL` +
-  `SuccessExitStatus=SIGKILL 137` systemd agotaba el `TimeoutStopSec` (20 s) y la unidad quedaba en
-  «failed (timeout)» cada vez que se paraba o al abrir la ventana.
-- Estado y reinicio: `systemctl --user status|restart lm-studio-app.service` · log:
-  `journalctl --user -u lm-studio-app`.
-- Comprobado el 30/09/2026 que sin ventana no se pierde nada: `curl
-  http://127.0.0.1:1234/v1/models` → HTTP 200 con los 4 modelos y el selector `/model` de Hermes
-  mostrando *LM Studio (3 models)*.
-- Alternativa oficial para máquinas sin GUI: el daemon `llmster` (`lms daemon up`, doc
-  `developer/core/headless_llmster`). Aquí no hace falta: la app ya tiene unidad y vigilante.
+- **Antonio pidió (30/09/2026) que al iniciar sesión no se abra la ventana.** El arranque es ahora `ExecStart=/usr/bin/lm-studio --run-as-service`: el modo servicio oficial («Desktop app in headless mode», doc `developer/core/headless`), el mismo que usa `lms server start` por dentro. El journal lo confirma: `Running in headless mode.`
+- Unidad: `~/.config/systemd/user/lm-studio-app.service` (copia en `~/Config/hermes/units/`), con `TMPDIR=/tmp`, `Restart=on-failure` y `WantedBy=default.target` (ya no depende de `graphical-session.target`). **Por qué no se lanza a mano**: desde una sesión de agente hereda el `TMPDIR` de la caché de Hermes, monta la AppImage dentro de `~/.hermes/cache/scratch` y deja el proceso atado a esa sesión (así se llegó al zombi del 29/09/2026).
+- **LM Studio ignora SIGTERM, también en modo servicio**: sin `KillSignal=SIGKILL` + `SuccessExitStatus=SIGKILL 137` systemd agotaba el `TimeoutStopSec` (20 s) y la unidad quedaba en «failed (timeout)» cada vez que se paraba o al abrir la ventana.
+- Estado y reinicio: `systemctl --user status|restart lm-studio-app.service` · log: `journalctl --user -u lm-studio-app`.
+- Comprobado el 30/09/2026 que sin ventana no se pierde nada: `curl http://127.0.0.1:1234/v1/models` → HTTP 200 con los 4 modelos y el selector `/model` de Hermes mostrando *LM Studio (3 models)*.
+- Alternativa oficial para máquinas sin GUI: el daemon `llmster` (`lms daemon up`, doc `developer/core/headless_llmster`). Aquí no hace falta: la app ya tiene unidad y vigilante.
 
 #### Abrir la ventana cuando haga falta: atajo `lm-studio-gui`
 
@@ -432,131 +328,56 @@ La interfaz sigue haciendo falta para gestionar modelos, así que hay un segundo
 | `lm-studio-gui.service` (copia en `units/`) | la app **con** ventana: `Conflicts=lm-studio-app.service` para antes el modo servicio y `ExecStopPost` lo vuelve a arrancar al cerrarla. **No se habilita**: se arranca solo con el atajo |
 | `lm-studio-gui-run.sh` | `ExecStart` de esa unidad: limpia los `Singleton*` huérfanos (los que apuntan a un PID muerto) antes de lanzar la app |
 
-- **Por qué `Conflicts`**: con el modo servicio vivo, abrir la ventana desde el menú choca con su
-  `SingletonLock` («Another instance of the app is already running») o, con un candado huérfano, la
-  app muestra la **lista de modelos vacía**. El atajo resuelve las dos cosas.
-- Ciclo verificado el 30/09/2026: `abrir` deja `lm-studio-gui` activa y `lm-studio-app` inactive
-  (result `success`), la API responde 200 durante todo el ciclo y `parar` devuelve el modo servicio
-  solo, sin dejar ninguna unidad en «failed».
-- Mientras la ventana está abierta, el API lo sirve la propia app (`enableLocalService: true`), así
-  que Hermes no se queda sin el modelo local en ningún momento.
-- **Validado por Antonio el 30/09/2026 tras reiniciar la sesión**: al entrar no aparece ninguna
-  ventana, LM Studio arranca solo y **deja su icono en la bandeja del sistema** (señal de que está
-  vivo), y `/model` ofrece sus *3 models*. El icono, además, es la vía cómoda de abrir la ventana:
-  si se abre desde ahí, comprobar que la lista de modelos **no** salga vacía; si sale vacía es el
-  choque de candado, y entonces `lm-studio-gui parar` y `lm-studio-gui`. Cerrar la ventana la minimiza a la
-  bandeja y el servidor sigue; para volver del todo al modo servicio, `lm-studio-gui parar`.
-- **Pitfall (sigue vigente)**: el servidor puede quedarse **mudo** (acepta conexiones en el 1234
-  pero no contesta: `curl` se cuelga, `lms ls` no lista) y la interfaz muestra la lista de modelos
-  vacía, porque la saca de ese mismo servidor. En `~/.lmstudio/server-logs/AAAA-MM/` se ve la última
-  petición sin responder. Arreglo: `systemctl --user restart lm-studio-app.service` (o esperar al
-  vigilante, que lo hace solo).
+- **Por qué `Conflicts`**: con el modo servicio vivo, abrir la ventana desde el menú choca con su `SingletonLock` («Another instance of the app is already running») o, con un candado huérfano, la app muestra la **lista de modelos vacía**. El atajo resuelve las dos cosas.
+- Ciclo verificado el 30/09/2026: `abrir` deja `lm-studio-gui` activa y `lm-studio-app` inactive (result `success`), la API responde 200 durante todo el ciclo y `parar` devuelve el modo servicio solo, sin dejar ninguna unidad en «failed».
+- Mientras la ventana está abierta, el API lo sirve la propia app (`enableLocalService: true`), así que Hermes no se queda sin el modelo local en ningún momento.
+- **Validado por Antonio el 30/09/2026 tras reiniciar la sesión**: al entrar no aparece ninguna ventana, LM Studio arranca solo y **deja su icono en la bandeja del sistema** (señal de que está vivo), y `/model` ofrece sus *3 models*. El icono, además, es la vía cómoda de abrir la ventana: si se abre desde ahí, comprobar que la lista de modelos **no** salga vacía; si sale vacía es el choque de candado, y entonces `lm-studio-gui parar` y `lm-studio-gui`. Cerrar la ventana la minimiza a la bandeja y el servidor sigue; para volver del todo al modo servicio, `lm-studio-gui parar`.
+- **Pitfall (sigue vigente)**: el servidor puede quedarse **mudo** (acepta conexiones en el 1234 pero no contesta: `curl` se cuelga, `lms ls` no lista) y la interfaz muestra la lista de modelos vacía, porque la saca de ese mismo servidor. En `~/.lmstudio/server-logs/AAAA-MM/` se ve la última petición sin responder. Arreglo: `systemctl --user restart lm-studio-app.service` (o esperar al vigilante, que lo hace solo).
 
 #### Vigilante del «servidor mudo»: `lm-studio-watchdog`
 
-`Restart=on-failure` no cubre el caso que más duele (proceso vivo, servidor sin contestar), así que
-hay un vigilante propio:
+`Restart=on-failure` no cubre el caso que más duele (proceso vivo, servidor sin contestar), así que hay un vigilante propio:
 
-- `~/Config/hermes/lm-studio-watchdog.sh` (atajo en `~/.local/bin/lm-studio-watchdog`), disparado
-  por `lm-studio-watchdog.timer` **cada 5 min** (unidades copiadas en `~/Config/hermes/units/`).
-- Qué hace: `curl -m 5` a `http://127.0.0.1:1234/v1/models`. Si no responde 200 durante **2 pasadas
-  seguidas**, reinicia `lm-studio-app.service`. Si la unidad no está activa, **no toca nada** (así no
-  pelea si Antonio la ha parado para usar `llmster`).
-- Log: `~/Config/hermes/logs/lm-studio-watchdog.log` (solo escribe fallos, reinicios y recuperaciones).
-  Estado de fallos: `~/.hermes/state/lm-studio-watchdog.fallos` (efímero, fuera del backup).
-- Probado el 29/09/2026 con un agujero negro local (socket que acepta y nunca contesta): detecta,
-  reinicia la unidad y la API vuelve sola. Coste medido por pasada: **~5 ms de CPU y 15 MB de RSS
-  durante milisegundos**, sin VRAM ni carga de modelos (el sondeo solo lista `/v1/models`).
-- Comprobar a mano sin esperar al temporizador: `systemctl --user start lm-studio-watchdog.service`
-  (silencioso = todo bien).
+- `~/Config/hermes/lm-studio-watchdog.sh` (atajo en `~/.local/bin/lm-studio-watchdog`), disparado por `lm-studio-watchdog.timer` **cada 5 min** (unidades copiadas en `~/Config/hermes/units/`).
+- Qué hace: `curl -m 5` a `http://127.0.0.1:1234/v1/models`. Si no responde 200 durante **2 pasadas seguidas**, reinicia `lm-studio-app.service`. Si la unidad no está activa, **no toca nada** (así no pelea si Antonio la ha parado para usar `llmster`).
+- Log: `~/Config/hermes/logs/lm-studio-watchdog.log` (solo escribe fallos, reinicios y recuperaciones). Estado de fallos: `~/.hermes/state/lm-studio-watchdog.fallos` (efímero, fuera del backup).
+- Probado el 29/09/2026 con un agujero negro local (socket que acepta y nunca contesta): detecta, reinicia la unidad y la API vuelve sola. Coste medido por pasada: **~5 ms de CPU y 15 MB de RSS durante milisegundos**, sin VRAM ni carga de modelos (el sondeo solo lista `/v1/models`).
+- Comprobar a mano sin esperar al temporizador: `systemctl --user start lm-studio-watchdog.service` (silencioso = todo bien).
 
 
 
 ### LM Studio en el selector: `LM_API_KEY`
 
-Hermes **no autodetecta** LM Studio (su disponibilidad no se deduce de una clave), así que el
-proveedor no aparecía en `/model` aunque el servidor estuviera levantado. Con `LM_API_KEY=lm-studio`
-en `~/.hermes/.env` (el servidor sin auth lo ignora) ya sale la fila *LM Studio (3 models)* con sus
-modelos en vivo. Es la misma clave que exporta el `.zshrc` para OpenCode.
+Hermes **no autodetecta** LM Studio (su disponibilidad no se deduce de una clave), así que el proveedor no aparecía en `/model` aunque el servidor estuviera levantado. Con `LM_API_KEY=lm-studio` en `~/.hermes/.env` (el servidor sin auth lo ignora) ya sale la fila *LM Studio (3 models)* con sus modelos en vivo. Es la misma clave que exporta el `.zshrc` para OpenCode.
 
 ### Al probar cambios de configuración de Hermes
 
-**Nunca lanzar `hermes` con un `HERMES_HOME` temporal y vacío**: el lanzador trata ese home como
-instalación nueva, se pone a reconstruir (TUI, web, escritorio, `agent-browser`, `cua-driver`) y
-**reescribe `~/.hermes/hermes-agent/.hermes/bin/{hermes,hermes-acp}` con las rutas del home
-temporal**, dejando el lanzador real roto. Ocurrió el 29/09/2026 y se reparó sustituyendo el prefijo
-`/tmp/wl-hermes` → `/home/antonio/.hermes` en esos dos ficheros. Para probar cambios de config sin
-tocar nada, usar un doble del binario (`HERMES_BIN=<script que simula `config get/set/unset`>`) o
-una copia completa del home.
+**Nunca lanzar `hermes` con un `HERMES_HOME` temporal y vacío**: el lanzador trata ese home como instalación nueva, se pone a reconstruir (TUI, web, escritorio, `agent-browser`, `cua-driver`) y **reescribe `~/.hermes/hermes-agent/.hermes/bin/{hermes,hermes-acp}` con las rutas del home temporal**, dejando el lanzador real roto. Ocurrió el 29/09/2026 y se reparó sustituyendo el prefijo `/tmp/wl-hermes` → `/home/antonio/.hermes` en esos dos ficheros. Para probar cambios de config sin tocar nada, usar un doble del binario (`HERMES_BIN=<script que simula `config get/set/unset`>`) o una copia completa del home.
 
 ### Parches locales del CLI (Ctrl+Q corta el audio; Ctrl+C lo corta e interrumpe)
 
-El CLI de serie no cortaba la locución al pulsar `ctrl+q` ni `ctrl+c` (solo la grabación o el
-barge-in llamaban a `stop_playback()`), así que el audio seguía sonando. Se arregla con un parche
-**local**, no con configuración:
+El CLI de serie no cortaba la locución al pulsar `ctrl+q` ni `ctrl+c` (solo la grabación o el barge-in llamaban a `stop_playback()`), así que el audio seguía sonando. Se arregla con un parche **local**, no con configuración:
 
-- `hermes_cli/cli_tui_mixin.py` → nuevo helper `CLITuiMixin._tui_cut_tts(motivo)`, invocado desde
-  los manejadores de `ctrl+q` y `ctrl+c`. Solo actúa si hay audio sonando (`is_audio_output_active()`
-  o la tubería de TTS sin terminar).
-- `tools/voice_mode.py` → flag `_playback_interrupted`: tras un corte deliberado, la cadena de
-  reproductores **ya no prueba el siguiente candidato**. Sin esto, matar `ffplay` hacía arrancar
-  `aplay` con la MISMA frase desde el principio (chasquido + reinicio): parecía que la tecla no
-  callaba nada y había que pulsar **dos veces** (la segunda mataba `aplay`; después quedaba el aviso
-  `No audio player available for …ogg` en `errors.log` como firma del corte completo). El flag se
-  activa en `stop_playback()` y cuando un reproductor muere por señal (`rc < 0`), y se limpia al
-  empezar cada reproducción.
-- **Reparto de teclas pedido por Antonio (29/09/2026)**: `ctrl+q` **solo** calla la locución y no
-  hace nada más — no interrumpe el turno ni cierra selectores. Interrumpir el turno (con su salida
-  forzada por doble pulsación y su cadena de prioridades) sigue siendo `ctrl+c`, que además corta el
-  audio. Antes de esto, `ctrl+q` conservaba la interrupción de serie y Antonio se encontraba con el
-  turno cancelado cuando solo quería silenciar la voz.
-- El diff vive en `~/Config/hermes/parches/ctrl-q-corta-audio.patch` y se aplica/revierte con
-  `hermes-parche-ctrlq [estado|aplicar|revertir]` (atajo en `~/.local/bin`; log en
-  `~/Config/hermes/logs/parches.log`). Es idempotente y sale con 0/1/2 según esté aplicado, sin
-  aplicar o en conflicto. En `parches/` se conservan además las versiones históricas: la anterior al
-  re-porte (`ctrl-q-corta-audio-6590f13.patch`) y el resto del autostash del update del 07/10/2026
-  (`ctrl-q-corta-audio-autostash-20261007.patch`), que se descartó de git por estar ya superado.
-- **El cambio no entra en una sesión ya abierta**: el módulo está importado en el proceso en marcha.
-  Hay que reiniciar Hermes para que la tecla se comporte así.
-- Prueba funcional del reparto de teclas: `scripts/test-ctrlq-solo-tts.py` de la skill
-  `hermes-voz-local-gpu` (interpreta el módulo real y comprueba que Ctrl+Q no interrumpe el turno).
-- Corte reproducible sin tocar la tecla: `scripts/test-corte-reproductor.py` de la misma skill
-  (pipeline real + `stop_event`/`stop_playback()`; exit 0 = corte limpio, 1 = algún reproductor
-  reintentó, 2 = no llegó a sonar).
-- **Después de cada `hermes update`**: el actualizador autostashea los cambios locales y los
-  restaura, pero un conflicto puede dejarlos aparcados. Comprobar con `hermes-parche-ctrlq estado`.
-- **Re-porte tras un salto grande de versión**: el parche guardado puede dejar de aplicar en
-  `cli_tui_mixin.py` (lo rompen los refactors de esa zona; `voice_mode.py` aplica con
-  desplazamiento). Hay dos re-portes documentados:
-  - **07/10/2026** (salto a `main 0e219331`, refactor
-    `from agent.interrupt_compat import request_hard_interrupt`): el válido lo portó Windows,
-    `HermesSync/windows/parches/ctrl-q-80309111b4.patch` (sha256 `8994c93c…`); el anterior quedó
-    como `parches/ctrl-q-corta-audio-6590f13.patch`.
-  - **14/10/2026** (tras el update a 0.22.2): el vigente pasó a ser
-    `parches/ctrl-q-corta-audio.patch` (sha256 `5303bfcb…`), con copia histórica en
-    `parches/ctrl-q-corta-audio-e06df9c.patch`. Se publicó a Windows como
-    `HermesSync/windows/parches/ctrl-q-d923a5eb48.patch` (mismo sha; `commit-parche.txt` =
-    `d923a5eb48`). Comprobar antes en un `git worktree` de prueba.
+- `hermes_cli/cli_tui_mixin.py` → nuevo helper `CLITuiMixin._tui_cut_tts(motivo)`, invocado desde los manejadores de `ctrl+q` y `ctrl+c`. Solo actúa si hay audio sonando (`is_audio_output_active()` o la tubería de TTS sin terminar).
+- `tools/voice_mode.py` → flag `_playback_interrupted`: tras un corte deliberado, la cadena de reproductores **ya no prueba el siguiente candidato**. Sin esto, matar `ffplay` hacía arrancar `aplay` con la MISMA frase desde el principio (chasquido + reinicio): parecía que la tecla no callaba nada y había que pulsar **dos veces** (la segunda mataba `aplay`; después quedaba el aviso `No audio player available for …ogg` en `errors.log` como firma del corte completo). El flag se activa en `stop_playback()` y cuando un reproductor muere por señal (`rc < 0`), y se limpia al empezar cada reproducción.
+- **Reparto de teclas pedido por Antonio (29/09/2026)**: `ctrl+q` **solo** calla la locución y no hace nada más — no interrumpe el turno ni cierra selectores. Interrumpir el turno (con su salida forzada por doble pulsación y su cadena de prioridades) sigue siendo `ctrl+c`, que además corta el audio. Antes de esto, `ctrl+q` conservaba la interrupción de serie y Antonio se encontraba con el turno cancelado cuando solo quería silenciar la voz.
+- El diff vive en `~/Config/hermes/parches/ctrl-q-corta-audio.patch` y se aplica/revierte con `hermes-parche-ctrlq [estado|aplicar|revertir]` (atajo en `~/.local/bin`; log en `~/Config/hermes/logs/parches.log`). Es idempotente y sale con 0/1/2 según esté aplicado, sin aplicar o en conflicto. En `parches/` se conservan además las versiones históricas: la anterior al re-porte (`ctrl-q-corta-audio-6590f13.patch`) y el resto del autostash del update del 07/10/2026 (`ctrl-q-corta-audio-autostash-20261007.patch`), que se descartó de git por estar ya superado.
+- **El cambio no entra en una sesión ya abierta**: el módulo está importado en el proceso en marcha. Hay que reiniciar Hermes para que la tecla se comporte así.
+- Prueba funcional del reparto de teclas: `scripts/test-ctrlq-solo-tts.py` de la skill `hermes-voz-local-gpu` (interpreta el módulo real y comprueba que Ctrl+Q no interrumpe el turno).
+- Corte reproducible sin tocar la tecla: `scripts/test-corte-reproductor.py` de la misma skill (pipeline real + `stop_event`/`stop_playback()`; exit 0 = corte limpio, 1 = algún reproductor reintentó, 2 = no llegó a sonar).
+- **Después de cada `hermes update`**: el actualizador autostashea los cambios locales y los restaura, pero un conflicto puede dejarlos aparcados. Comprobar con `hermes-parche-ctrlq estado`.
+- **Re-porte tras un salto grande de versión**: el parche guardado puede dejar de aplicar en `cli_tui_mixin.py` (lo rompen los refactors de esa zona; `voice_mode.py` aplica con desplazamiento). Hay dos re-portes documentados:
+  - **07/10/2026** (salto a `main 0e219331`, refactor `from agent.interrupt_compat import request_hard_interrupt`): el válido lo portó Windows, `HermesSync/windows/parches/ctrl-q-80309111b4.patch` (sha256 `8994c93c…`); el anterior quedó como `parches/ctrl-q-corta-audio-6590f13.patch`.
+  - **14/10/2026** (tras el update a 0.22.2): el vigente pasó a ser `parches/ctrl-q-corta-audio.patch` (sha256 `5303bfcb…`), con copia histórica en `parches/ctrl-q-corta-audio-e06df9c.patch`. Se publicó a Windows como `HermesSync/windows/parches/ctrl-q-d923a5eb48.patch` (mismo sha; `commit-parche.txt` = `d923a5eb48`). Comprobar antes en un `git worktree` de prueba.
+  - **22/10/2026** (tras el update a v0.22.4, commit `4d04303818`): el vigente pasó a `parches/ctrl-q-corta-audio.patch` (sha256 `3bf6052b389f…`), **re-portado a mano** porque v0.22.4 cambió el docstring y el cuerpo de `_tui_handle_ctrl_c` (el autostash del update chocó y el actualizador dejó el árbol limpio: «stashed 2 local modification(s) and did NOT restore them»). El anterior quedó como `parches/ctrl-q-d923a5eb48.patch` y el autostash, como `parches/ctrl-q-corta-audio-autostash-20261022.patch`. Se publicó a Windows como `HermesSync/windows/parches/ctrl-q-4d04303818.patch` (mismo sha; `commit-parche.txt` = `4d04303818`). Sigue cuadrando en 52/15 líneas.
 - Si algún día el arreglo entra aguas arriba, se revierte el parche y este apartado se borra.
-- **Arreglo propuesto aguas arriba**: PR **abierto** en `NousResearch/hermes-agent` (#128385, rama
-  `fix/cli-interrupt-cuts-tts`), que corta la locución en Ctrl+C y Ctrl+Q y hace que un corte
-  deliberado no reintente la cadena de reproductores. Mantiene la semántica de serie de las teclas.
-  Los worktrees de trabajo (`~/pr-hermes-ctrlq`, `~/pr-hermes-x11-desktop`) ya no existen en disco:
-  quedan como entradas «prunable» (limpiar con `git -C ~/.hermes/hermes-agent worktree prune`).
-  Si lo aceptan: revertir el parche local (queda solo la preferencia de que Ctrl+Q no interrumpa el
-  turno, que seguiría siendo local).
+- **Arreglo propuesto aguas arriba**: PR **abierto** en `NousResearch/hermes-agent` (#128385, rama `fix/cli-interrupt-cuts-tts`), que corta la locución en Ctrl+C y Ctrl+Q y hace que un corte deliberado no reintente la cadena de reproductores. Mantiene la semántica de serie de las teclas. Los worktrees de trabajo (`~/pr-hermes-ctrlq`, `~/pr-hermes-x11-desktop`) ya no existen en disco: quedan como entradas «prunable» (limpiar con `git -C ~/.hermes/hermes-agent worktree prune`). Si lo aceptan: revertir el parche local (queda solo la preferencia de que Ctrl+Q no interrumpa el turno, que seguiría siendo local).
 
 ## Dual boot Linux ↔ Windows
 
-Los dos sistemas comparten **un mismo estado de Hermes** (conversaciones, memoria, skills,
-cron, kanban) a través de la carpeta `HermesSync/` del disco SEAGATE
-(`/mnt/seagate/HermesSync` en Linux, `D:\HermesSync` en Windows — la letra puede cambiar entre
-sesiones: **identificar el volumen por su marca `SEAGATE`**). Nunca están encendidos a
-la vez, así que la regla es **el último que publica manda**, con historial y copia previa.
+Los dos sistemas comparten **un mismo estado de Hermes** (conversaciones, memoria, skills, cron, kanban) a través de la carpeta `HermesSync/` del disco SEAGATE (`/mnt/seagate/HermesSync` en Linux, `D:\HermesSync` en Windows — la letra puede cambiar entre sesiones: **identificar el volumen por su marca `SEAGATE`**). Nunca están encendidos a la vez, así que la regla es **el último que publica manda**, con historial y copia previa.
 
-- **Definición original del encargo**: `definicion-encargo-dual-boot.html` (la pega de Antonio del
-  13/10/2026, con los tres objetivos: saber en qué sistema se está antes de leer nada, no perder
-  conversaciones al reiniciar y que cada Hermes toque solo su propio sistema).
+- **Definición original del encargo**: `definicion-encargo-dual-boot.html` (la pega de Antonio del 13/10/2026, con los tres objetivos: saber en qué sistema se está antes de leer nada, no perder conversaciones al reiniciar y que cada Hermes toque solo su propio sistema).
 
 | Pieza | Linux | Windows |
 |---|---|---|
@@ -566,194 +387,72 @@ la vez, así que la regla es **el último que publica manda**, con historial y c
 | Importa | unidad de usuario al arrancar (antes del gateway) | lanzador de la carpeta Inicio (`Inicio\Hermes_Gateway.vbs` → `dual-boot\arranque-hermes.vbs`), antes del gateway — **no** hay tarea programada de import |
 | Config | `~/.config/hermes-dual-sync.conf` | parámetro `-Comun` / autodetección |
 
-- Montaje del disco compartido: `/etc/fstab` → `UUID=A472BB2A72BB005A /mnt/seagate ntfs3 …nofail,x-systemd.automount`
-  (instalado con `pkexec bash ~/Config/hermes/dual-boot/instalar-montaje.sh`).
-- Unidades: `~/.config/systemd/user/hermes-dual-sync-{import,export,apagado}.service` y `hermes-dual-sync.timer`.
-  El timer lleva `Unit=hermes-dual-sync-export.service` porque el servicio no comparte nombre base con él.
-- El hook vive en `~/.hermes/agent-hooks/dual-sync-publicar.sh` y está declarado en
-  `~/.hermes/config.yaml` en **dos** eventos: `hooks.on_session_end` (al terminar cada turno) y
-  `hooks.on_session_finalize` (**al cerrar la sesión**: app de escritorio, TUI o CLI — añadido el
-  10/10/2026, tras perderse una conversación de Windows por apagar antes de que publicara la tarea
-  de 5 min). Los dos pares están aprobados en `~/.hermes/shell-hooks-allowlist.json`: si se edita el
-  script hay que volver a aprobarlos (la aprobación guarda su `mtime`).
-  El script publica con `--solo-si-cambia`, así que un disparo de más no cuesta nada.
+- Montaje del disco compartido: `/etc/fstab` → `UUID=A472BB2A72BB005A /mnt/seagate ntfs3 …nofail,x-systemd.automount` (instalado con `pkexec bash ~/Config/hermes/dual-boot/instalar-montaje.sh`).
+- Unidades: `~/.config/systemd/user/hermes-dual-sync-{import,export,apagado}.service` y `hermes-dual-sync.timer`. El timer lleva `Unit=hermes-dual-sync-export.service` porque el servicio no comparte nombre base con él.
+- El hook vive en `~/.hermes/agent-hooks/dual-sync-publicar.sh` y está declarado en `~/.hermes/config.yaml` en **dos** eventos: `hooks.on_session_end` (al terminar cada turno) y `hooks.on_session_finalize` (**al cerrar la sesión**: app de escritorio, TUI o CLI — añadido el 10/10/2026, tras perderse una conversación de Windows por apagar antes de que publicara la tarea de 5 min). Los dos pares están aprobados en `~/.hermes/shell-hooks-allowlist.json`: si se edita el script hay que volver a aprobarlos (la aprobación guarda su `mtime`). El script publica con `--solo-si-cambia`, así que un disparo de más no cuesta nada.
 - Documento de usuario para Windows: `HermesSync/LEEME.md`.
-- **Nota de traspaso al Hermes de Windows**: `HermesSync/PARA-WINDOWS-backup.md` (copia en
-  `windows/`) le encarga montar su propio
-  esquema de backup con destino en el disco compartido: respaldo canónico en
-  `X:\Linux\Config\Hermes-Win\` y copia saneada sin claves en
-  `X:\Linux\Documentos\dotfiles\hermes-win\`. Al terminar debe dejar constancia en
-  `HermesSync/NOTA-PARA-LINUX.md`.
-- **Ajustes locales de Linux → Windows**: `windows/PARA-WINDOWS-ajustes-linux.md` +
-  `windows/aplicar-ajustes-linux.ps1` (con `parches/ctrl-q-corta-audio.patch`,
-  `alias-modelos.json` y `plugins/model-providers/nvidia/`). Reproducen en el Hermes de Windows
-  el parche Ctrl+Q (corta la locución **sin** interrumpir el turno) y los agentes/modelos: los 11
-  alias de modelo, el plugin `nvidia` y el whitelist NVIDIA dentro del `opencode.json` de Windows.
-  El script es idempotente y admite `-SoloEstado`; **tras cada `hermes update` en Windows hay que
-  repetirlo** (el actualizador puede dejar el parche aparcado).
-- **Windows ejecuta su COPIA LOCAL del motor del dual boot, no la distribuida**:
-  `%LOCALAPPDATA%\hermes\dual-boot\hermes-dual-sync.ps1` (decisión del 28/09: así una
-  republicación desde Linux no revierte arreglos hechos en Windows). Publicar el motor en
-  `HermesSync/windows/` **no** lo cambia en Windows: hay que pasarlo con
-  `windows\actualizar-motor-local.ps1` (copia + `.bak-<fecha>`, verifica sha256 y comprueba que
-  el lanzador de la carpeta Inicio sigue importando antes del gateway; `aplicar-ajustes-linux.ps1`
-  avisa del desfase en su paso 3d).
-- **Import con Hermes en marcha (05/10/2026)**: el motor de Windows ya no descarta la
-  importación cuando Hermes está abierto — fusiona las sesiones que falten
-  (`copiar-state.py --fusionar`, sin sustituir `state.db`) y copia los árboles, dejando
-  `kanban.db` para el primer import con Hermes cerrado (`estado.json` lo marca como parcial y no
-  repite trabajo mientras espera). Antes se quedaba en bucle: no importaba con Hermes vivo y, con
-  estado ajeno sin integrar, tampoco publicaba (`-SinImport`) — 10 intentos seguidos el 05/10 de
-  12:36 a 12:56, y ninguna publicación de Windows desde el 29/09.
-- **Recuentos del manifiesto tomados de la copia publicada (10/10/2026)**: el export contaba
-  `sessions`/`messages` de la base **viva**, que puede llevar alguna sesión más que la copia
-  (una oculta y sin mensajes creada entre la copia y el recuento), y entonces el import del otro
-  equipo abortaba con «state.db remota tiene N sesiones pero el manifiesto declara M: copia
-  incompleta». Ahora los recuentos se toman de **la copia publicada** y el desajuste pasa a ser
-  un **aviso** que no interrumpe el import: la garantía de integridad sigue siendo el **sha256**
-  del manifiesto, que se comprueba aparte.
+- **Nota de traspaso al Hermes de Windows**: `HermesSync/PARA-WINDOWS-backup.md` (copia en `windows/`) le encarga montar su propio esquema de backup con destino en el disco compartido: respaldo canónico en `X:\Linux\Config\Hermes-Win\` y copia saneada sin claves en `X:\Linux\Documentos\dotfiles\hermes-win\`. Al terminar debe dejar constancia en `HermesSync/NOTA-PARA-LINUX.md`.
+- **Ajustes locales de Linux → Windows**: `windows/PARA-WINDOWS-ajustes-linux.md` + `windows/aplicar-ajustes-linux.ps1` (con `parches/ctrl-q-corta-audio.patch`, `alias-modelos.json` y `plugins/model-providers/nvidia/`). Reproducen en el Hermes de Windows el parche Ctrl+Q (corta la locución **sin** interrumpir el turno) y los agentes/modelos: los 11 alias de modelo, el plugin `nvidia` y el whitelist NVIDIA dentro del `opencode.json` de Windows. El script es idempotente y admite `-SoloEstado`; **tras cada `hermes update` en Windows hay que repetirlo** (el actualizador puede dejar el parche aparcado).
+- **Windows ejecuta su COPIA LOCAL del motor del dual boot, no la distribuida**: `%LOCALAPPDATA%\hermes\dual-boot\hermes-dual-sync.ps1` (decisión del 28/09: así una republicación desde Linux no revierte arreglos hechos en Windows). Publicar el motor en `HermesSync/windows/` **no** lo cambia en Windows: hay que pasarlo con `windows\actualizar-motor-local.ps1` (copia + `.bak-<fecha>`, verifica sha256 y comprueba que el lanzador de la carpeta Inicio sigue importando antes del gateway; `aplicar-ajustes-linux.ps1` avisa del desfase en su paso 3d).
+- **Import con Hermes en marcha (05/10/2026)**: el motor de Windows ya no descarta la importación cuando Hermes está abierto — fusiona las sesiones que falten (`copiar-state.py --fusionar`, sin sustituir `state.db`) y copia los árboles, dejando `kanban.db` para el primer import con Hermes cerrado (`estado.json` lo marca como parcial y no repite trabajo mientras espera). Antes se quedaba en bucle: no importaba con Hermes vivo y, con estado ajeno sin integrar, tampoco publicaba (`-SinImport`) — 10 intentos seguidos el 05/10 de 12:36 a 12:56, y ninguna publicación de Windows desde el 29/09.
+- **Recuentos del manifiesto tomados de la copia publicada (10/10/2026)**: el export contaba `sessions`/`messages` de la base **viva**, que puede llevar alguna sesión más que la copia (una oculta y sin mensajes creada entre la copia y el recuento), y entonces el import del otro equipo abortaba con «state.db remota tiene N sesiones pero el manifiesto declara M: copia incompleta». Ahora los recuentos se toman de **la copia publicada** y el desajuste pasa a ser un **aviso** que no interrumpe el import: la garantía de integridad sigue siendo el **sha256** del manifiesto, que se comprueba aparte.
 
-Comandos: `hermes-dual-sync estado|import|export|listar-historico|restaurar <equipo> <epoch>`
-(`--quiet`, `--forzar`, `--reiniciar-gateway`, `--solo-si-cambia`, `--comun <ruta>`).
+Comandos: `hermes-dual-sync estado|import|export|listar-historico|restaurar <equipo> <epoch>` (`--quiet`, `--forzar`, `--reiniciar-gateway`, `--solo-si-cambia`, `--comun <ruta>`).
 
 Pitfalls que ya han mordido:
 
-- **Nunca `exec … 2>/dev/null` en el motor**: redirige el stderr del shell para el resto de la
-  ejecución y los mensajes de error desaparecen (parecía que el script "moría sin decir nada").
-- **Windows con "inicio rápido"** deja las particiones NTFS marcadas: Linux las monta en solo
-  lectura y la publicación se omite con aviso. Desactivar el inicio rápido.
-- **El disco compartido tarda en montarse y el import de arranque lo pillaba sin montar**: está en
-  fstab con `x-systemd.automount`, así que el NTFS sólo se monta cuando alguien toca
-  `/mnt/seagate`. Caso real del 29/09/2026: arranque 10:44:13 → import 10:44:26 → montaje real
-  10:47:43; el import no hizo nada y, con `--quiet`, salió con éxito en silencio (indistinguible de
-  un import correcto: `estado` decía "Última importación: nunca"). Arreglado por dos vías: el
-  motor fuerza el acceso al punto de montaje y espera hasta 12 s (`ls` dispara el automount), y la
-  unidad de import lleva `RequiresMountsFor=/mnt/seagate`. Además el aviso de "disco no montado"
-  ahora se escribe siempre en stderr, aunque vaya con `--quiet`, para que quede en el journal.
-- **Comprobar que el import de arranque hizo su trabajo**: `journalctl --user -u hermes-dual-sync-import.service`
-  sólo dice "Starting/Finished" (el script calla con `--quiet`); la prueba de verdad es
-  `hermes-dual-sync estado` → "Última importación" y `~/.hermes/.dual-sync/estado.json`. Si dicen
-  "nunca" tras cambiar de sistema, el estado del otro equipo está sólo en `historial/<equipo>/`.
-- **No sustituir `state.db` con Hermes en marcha** — ni el gateway ni una sesión abierta
-  (CLI, escritorio). El caso real del 28/09/2026: la importación de arranque coincidió con el
-  arranque de Hermes, la base se sustituyó con la aplicación viva y quedó ilegible
-  (`database disk image is malformed`); hubo que restaurar la publicación del historial y
-  copiar aparte las sesiones del otro sistema. Los motores ya lo detectan (Linux: `lsof`;
-  Windows: `Test-HermesVivo`, que pregunta por CIM a cualquier proceso de Hermes, con una
-  segunda comprobación justo antes de copiar y verificación de integridad después). Si aun así
-  pasa: parar Hermes, restaurar la publicación buena del historial
-  (`hermes-dual-sync restaurar <equipo> <epoch>`) y fusionar las sesiones del otro sistema
-  desde su copia, nunca al revés.
-- **La semilla lleva claves en claro** (`.env`, `auth.json`): se genera **solo a petición**
-  (`hermes-dual-sync semilla` en Linux, `-Accion semilla` en Windows) y se aplica una única vez
-  en el otro sistema (`%LOCALAPPDATA%\hermes\.dual-sync\semilla-aplicada.json`). Antes se
-  recreaba sola cuando faltaba, así que borrarla no servía de nada: reaparecía con las claves
-  en pocos minutos. Borrarla cuando ya esté aplicada.
-- **Los scripts de Windows no se ejecutan desde la carpeta común**: Windows usa su copia en
-  `%LOCALAPPDATA%\hermes\dual-boot\`. La carpeta común es distribución/referencia, así que una
-  publicación desde Linux no revierte los arreglos hechos en Windows — pero conviene mantener
-  la copia de `~/Config/hermes/dual-boot/windows/` igual que la común (el `rsync -au` del
-  export solo actualiza lo que es más nuevo en origen).
-- **Update automático del lado Windows** (10/10/2026, encargo 12): al iniciar sesión, el lanzador
-  `Hermes_Update.vbs` de la carpeta Inicio ejecuta
-  `%LOCALAPPDATA%\hermes\dual-boot\update-hermes-arranque.ps1`, que actualiza Hermes **solo** (CLI y
-  app de escritorio) cuando hay algo nuevo o quedó un update a medias, espera a que la app de
-  escritorio se cierre (hasta 1 h) y deja el informe en `NOTA-PARA-LINUX.md` y un aviso por Telegram.
-  Las piezas las monta el encargo `windows/encargos/12-update-hermes-arranque.ps1`, que además lanza la
-  primera pasada con una tarea de una sola pasada (el propio trabajador la borra al terminar). El
-  detalle completo está en `AGENTS-WIN.md`, del lado Windows.
+- **Nunca `exec … 2>/dev/null` en el motor**: redirige el stderr del shell para el resto de la ejecución y los mensajes de error desaparecen (parecía que el script "moría sin decir nada").
+- **Windows con "inicio rápido"** deja las particiones NTFS marcadas: Linux las monta en solo lectura y la publicación se omite con aviso. Desactivar el inicio rápido.
+- **El disco compartido tarda en montarse y el import de arranque lo pillaba sin montar**: está en fstab con `x-systemd.automount`, así que el NTFS sólo se monta cuando alguien toca `/mnt/seagate`. Caso real del 29/09/2026: arranque 10:44:13 → import 10:44:26 → montaje real 10:47:43; el import no hizo nada y, con `--quiet`, salió con éxito en silencio (indistinguible de un import correcto: `estado` decía "Última importación: nunca"). Arreglado por dos vías: el motor fuerza el acceso al punto de montaje y espera hasta 12 s (`ls` dispara el automount), y la unidad de import lleva `RequiresMountsFor=/mnt/seagate`. Además el aviso de "disco no montado" ahora se escribe siempre en stderr, aunque vaya con `--quiet`, para que quede en el journal.
+- **Comprobar que el import de arranque hizo su trabajo**: `journalctl --user -u hermes-dual-sync-import.service` sólo dice "Starting/Finished" (el script calla con `--quiet`); la prueba de verdad es `hermes-dual-sync estado` → "Última importación" y `~/.hermes/.dual-sync/estado.json`. Si dicen "nunca" tras cambiar de sistema, el estado del otro equipo está sólo en `historial/<equipo>/`.
+- **No sustituir `state.db` con Hermes en marcha** — ni el gateway ni una sesión abierta (CLI, escritorio). El caso real del 28/09/2026: la importación de arranque coincidió con el arranque de Hermes, la base se sustituyó con la aplicación viva y quedó ilegible (`database disk image is malformed`); hubo que restaurar la publicación del historial y copiar aparte las sesiones del otro sistema. Los motores ya lo detectan (Linux: `lsof`; Windows: `Test-HermesVivo`, que pregunta por CIM a cualquier proceso de Hermes, con una segunda comprobación justo antes de copiar y verificación de integridad después). Si aun así pasa: parar Hermes, restaurar la publicación buena del historial (`hermes-dual-sync restaurar <equipo> <epoch>`) y fusionar las sesiones del otro sistema desde su copia, nunca al revés.
+- **La semilla lleva claves en claro** (`.env`, `auth.json`): se genera **solo a petición** (`hermes-dual-sync semilla` en Linux, `-Accion semilla` en Windows) y se aplica una única vez en el otro sistema (`%LOCALAPPDATA%\hermes\.dual-sync\semilla-aplicada.json`). Antes se recreaba sola cuando faltaba, así que borrarla no servía de nada: reaparecía con las claves en pocos minutos. Borrarla cuando ya esté aplicada.
+- **Los scripts de Windows no se ejecutan desde la carpeta común**: Windows usa su copia en `%LOCALAPPDATA%\hermes\dual-boot\`. La carpeta común es distribución/referencia, así que una publicación desde Linux no revierte los arreglos hechos en Windows — pero conviene mantener la copia de `~/Config/hermes/dual-boot/windows/` igual que la común (el `rsync -au` del export solo actualiza lo que es más nuevo en origen).
+- **Update automático del lado Windows** (10/10/2026, encargo 12): al iniciar sesión, el lanzador `Hermes_Update.vbs` de la carpeta Inicio ejecuta `%LOCALAPPDATA%\hermes\dual-boot\update-hermes-arranque.ps1`, que actualiza Hermes **solo** (CLI y app de escritorio) cuando hay algo nuevo o quedó un update a medias, espera a que la app de escritorio se cierre (hasta 1 h) y deja el informe en `NOTA-PARA-LINUX.md` y un aviso por Telegram. Las piezas las monta el encargo `windows/encargos/12-update-hermes-arranque.ps1`, que además lanza la primera pasada con una tarea de una sola pasada (el propio trabajador la borra al terminar). El detalle completo está en `AGENTS-WIN.md`, del lado Windows.
+- **Parche Ctrl+Q en Windows sin intervención** (22/10/2026, encargo 21): `windows/encargos/21-aplicar-parche-ctrlq.ps1` se ejecuta al arrancar el gateway de Windows y, si el parche no está aplicado en su árbol, lo aplica desde el canal (`windows/parches/ctrl-q-corta-audio.patch`, el vivo) y verifica el resultado con `--reverse-check`. Es idempotente (si ya está, sale 0 sin tocar) y **no fuerza nada**: si el parche no aplica limpio (es de otro commit) sale con 1, deja el aviso en el log del canal y se reintenta al siguiente arranque, cuando se haya dejado el re-porte. El efecto se nota en el arranque siguiente: el parche se escribe cuando el gateway ya cargó sus módulos. Escrito en ASCII puro, UTF-8 con BOM y CRLF (PowerShell 5.1 lee sin BOM como ANSI), y validado con el parser de `pwsh` más un banco de pruebas con `git` simulado (aplicar / ya aplicado / no aplica limpio / sin carpeta compartida).
 
 ---
 
 ### Lo que cambió el 14/10/2026
 
-Cuatro fallos con la misma forma —«se creía que estaba bien y nadie lo veía»—, corregidos en los dos
-motores y con prueba en `dual-boot/pruebas/` (montan laboratorios en scratch y ejecutan el motor real):
+Cuatro fallos con la misma forma —«se creía que estaba bien y nadie lo veía»—, corregidos en los dos motores y con prueba en `dual-boot/pruebas/` (montan laboratorios en scratch y ejecutan el motor real):
 
-- **El import ya no sustituye `state.db`, lo integra**: fusiona con `scripts/fusionar-mensajes.py
-  --aplicar`, así que lo escrito aquí que aún no había viajado se conserva. Antes copiaba la base en
-  bloque y lo local se perdía en silencio (el fusionador del arranque solo puede traer lo del otro;
-  nunca devuelve lo borrado). Prueba: `prueba-import.sh`.
-- **El `SOUL.md` del otro ya no se pisa**: si difiere (comparando sin contar CRLF/LF) se archiva como
-  `SOUL.md.de-<equipo>` en el backup previo del import y se avisa. Norma: en `SOUL.md` solo reglas
-  comunes y neutras; lo local, fuera de ahí. Sigue viajando porque es el único fichero que Hermes
-  carga en **cada** sesión.
-- **La publicación ya no sale corta en silencio**: si la copia de `state.db` lleva menos mensajes que
-  la base viva se reintenta y, si sigue corta, el motor **aborta** (antes publicaba igual con un
-  aviso). Así viajó una vez un estado 2 mensajes corto: el `MANIFEST` se calcula sobre la propia
-  copia, de modo que cuadraba consigo mismo. Prueba: `prueba-copia-corta.sh`.
-- **Veredicto automático**: `orientar.py --veredicto` (código 0/1) sobre disco compartido, estado del
-  otro sin integrar, motor propio sin publicar desde hace más de 30 min y salud del perfil. El aviso
-  de arranque solo escribe la línea en Telegram **cuando hay algo mal** (y siempre en
-  `logs/arranque-linux.log`).
+- **El import ya no sustituye `state.db`, lo integra**: fusiona con `scripts/fusionar-mensajes.py --aplicar`, así que lo escrito aquí que aún no había viajado se conserva. Antes copiaba la base en bloque y lo local se perdía en silencio (el fusionador del arranque solo puede traer lo del otro; nunca devuelve lo borrado). Prueba: `prueba-import.sh`.
+- **El `SOUL.md` del otro ya no se pisa**: si difiere (comparando sin contar CRLF/LF) se archiva como `SOUL.md.de-<equipo>` en el backup previo del import y se avisa. Norma: en `SOUL.md` solo reglas comunes y neutras; lo local, fuera de ahí. Sigue viajando porque es el único fichero que Hermes carga en **cada** sesión.
+- **La publicación ya no sale corta en silencio**: si la copia de `state.db` lleva menos mensajes que la base viva se reintenta y, si sigue corta, el motor **aborta** (antes publicaba igual con un aviso). Así viajó una vez un estado 2 mensajes corto: el `MANIFEST` se calcula sobre la propia copia, de modo que cuadraba consigo mismo. Prueba: `prueba-copia-corta.sh`.
+- **Veredicto automático**: `orientar.py --veredicto` (código 0/1) sobre disco compartido, estado del otro sin integrar, motor propio sin publicar desde hace más de 30 min y salud del perfil. El aviso de arranque solo escribe la línea en Telegram **cuando hay algo mal** (y siempre en `logs/arranque-linux.log`).
 
 ### Poda del historial del dual boot
 
-`historial/<equipo>/` guarda la publicación del otro sistema antes de cada importación; cada
-publicación son varios ficheros del mismo instante (`<epoch>-state.db`, `-state.db.gz`,
-`-resto.zip`, `-resto.tar.gz`).
+`historial/<equipo>/` guarda la publicación del otro sistema antes de cada importación; cada publicación son varios ficheros del mismo instante (`<epoch>-state.db`, `-state.db.gz`, `-resto.zip`, `-resto.tar.gz`).
 
-**Regla (13/10/2026, idéntica en los dos motores):** se conservan **15 publicaciones** por equipo
-(`RETENCION=15`) y **nunca se borra nada con menos de 7 días** (`DIAS_MIN_PODA=7`); se borra la
-publicación **completa** (media copia no restaura) y la **última nunca se toca**. Se aplica en cada
-publicación del motor, y a mano con `podar-historico.sh` (admite `--simular`).
+**Regla (13/10/2026, idéntica en los dos motores):** se conservan **15 publicaciones** por equipo (`RETENCION=15`) y **nunca se borra nada con menos de 7 días** (`DIAS_MIN_PODA=7`); se borra la publicación **completa** (media copia no restaura) y la **última nunca se toca**. Se aplica en cada publicación del motor, y a mano con `podar-historico.sh` (admite `--simular`).
 
 Tres fallos corregidos el 14/10/2026 (el mecanismo se creía correcto en los tres casos):
 
-- `~/.config/hermes-dual-sync.conf` (de septiembre) traía **`RETENCION=5`** y **sobrescribía** el 15
-  del script: la poda conservaba 5 publicaciones, no 15. El `.conf` manda: mirarlo antes que el script.
-- El motor de Windows no aplicaba esta regla (borraba patrón a patrón con `-Skip 5` y sin mínimo de
-  días) y dejaba **medias publicaciones**; ahora aplica la misma regla que Linux.
-- `rm -f` **no borra directorios** (un `resto` descomprimido sobrevive siempre) y Windows ni los veía:
-  ahora `rm -rf` y `Remove-Item -Recurse -Force`.
+- `~/.config/hermes-dual-sync.conf` (de septiembre) traía **`RETENCION=5`** y **sobrescribía** el 15 del script: la poda conservaba 5 publicaciones, no 15. El `.conf` manda: mirarlo antes que el script.
+- El motor de Windows no aplicaba esta regla (borraba patrón a patrón con `-Skip 5` y sin mínimo de días) y dejaba **medias publicaciones**; ahora aplica la misma regla que Linux.
+- `rm -f` **no borra directorios** (un `resto` descomprimido sobrevive siempre) y Windows ni los veía: ahora `rm -rf` y `Remove-Item -Recurse -Force`.
 
-Prueba: `dual-boot/pruebas/prueba-poda.sh` (historial sintético de 21 publicaciones) → 21 → 15, nada
-de menos de 7 días tocado, la última intacta y el directorio borrado. Y lo que **no** hay que
-«arreglar»: las publicaciones que siguen en `historial/` no están por un formato que la poda no
-entienda (borra por prefijo de epoch, mire la extensión) sino porque cumplen la regla de los 7 días.
+Prueba: `dual-boot/pruebas/prueba-poda.sh` (historial sintético de 21 publicaciones) → 21 → 15, nada de menos de 7 días tocado, la última intacta y el directorio borrado. Y lo que **no** hay que «arreglar»: las publicaciones que siguen en `historial/` no están por un formato que la poda no entienda (borra por prefijo de epoch, mire la extensión) sino porque cumplen la regla de los 7 días.
 
 ### Fusión de conversaciones del dual boot (13/10/2026)
 
-Antonio lo pidió así: «siempre que se inicie Hermes comprueba que todas las conversaciones estén al
-día». Lo hace un **hook propio** (`~/.hermes/hooks/fusionar-mensajes/`, evento `gateway:startup`),
-**no** un encargo: los encargos se ejecutan una sola vez (quedan en `encargos-hechos.json`) y esto
-tiene que correr en cada arranque. El hook lanza, **en un hilo aparte**, el fusionador
-(`/mnt/seagate/HermesSync/scripts/fusionar-mensajes.py --aplicar`): el arranque nunca se bloquea.
+Antonio lo pidió así: «siempre que se inicie Hermes comprueba que todas las conversaciones estén al día». Lo hace un **hook propio** (`~/.hermes/hooks/fusionar-mensajes/`, evento `gateway:startup`), **no** un encargo: los encargos se ejecutan una sola vez (quedan en `encargos-hechos.json`) y esto tiene que correr en cada arranque. El hook lanza, **en un hilo aparte**, el fusionador (`/mnt/seagate/HermesSync/scripts/fusionar-mensajes.py --aplicar`): el arranque nunca se bloquea.
 
-Qué hace, por sesión: **crea las sesiones que falten** enteras · añade los mensajes que falten
-**comparando por contenido** (rol + texto, 1 s de tolerancia: así es imposible duplicar) · borra las
-**copias repetidas** (mismo rol, texto e instante) · renumera el orden por fecha. Copia previa,
-`integrity_check` y *rollback* si falla; idempotente (si está al día, no toca nada).
+Qué hace, por sesión: **crea las sesiones que falten** enteras · añade los mensajes que falten **comparando por contenido** (rol + texto, 1 s de tolerancia: así es imposible duplicar) · borra las **copias repetidas** (mismo rol, texto e instante) · renumera el orden por fecha. Copia previa, `integrity_check` y *rollback* si falla; idempotente (si está al día, no toca nada).
 
-- **El renumerado corre también cada minuto**, no solo al arrancar: `hermes-renumerar.service` +
-  `hermes-renumerar.timer` (`OnBootSec=1min`, `OnUnitActiveSec=1min`, copia en
-  `dual-boot/systemd-user/`) ejecutan el fusionador con `--aplicar --sin-orientacion`. Sin esto el
-  descuadre se rehace con cada mensaje nuevo y la conversación vuelve a verse cortada en la app a los
-  pocos minutos.
-- **Comprobar SIEMPRE en qué sistema se está corriendo** antes de usar rutas o lanzar comandos
-  (`uname -s`, `$HOME`). Antonio lo señaló el 13/10/2026: asumirlo rompe justo lo que pide — «no leer
-  la información que deja la contraparte» — y pasó en las dos sesiones (un `powershell.exe` desde
-  Linux y rutas `/mnt/...` desde Windows). El import automático sí funciona: el log del motor dice
-  el host y la hora (`Importando estado de 'PC-ANTONIO' publicado el ...` → `✅ Importado`); si algo
-  no se ha leído, mirar ahí antes de sospechar del otro sistema.
-- **Primer paso de cada sesión**: `python /mnt/seagate/HermesSync/scripts/orientar.py` (en Windows:
-  `python D:\HermesSync\scripts\orientar.py`). Imprime en un tirón el sistema, las rutas válidas de
-  este lado, quién publicó y cuándo, la última importación y el último resultado del hook de
-  conversaciones. Es lo que evita trabajar con las rutas del sistema equivocado.
-- Por qué existe: el import trae sesiones que falten, pero **no** los mensajes nuevos de una sesión
-  que ya existe en los dos lados, y las filas insertadas a mano volvían al otro sistema como copias
-  (**456 copias en 8 sesiones** desde el 28/09, que Antonio veía como «faltan cosas de las
-  conversaciones»). Comparar por (instante, rol) no basta.
-- ⚠️ Al escribir desde Windows en la partición de Linux (`F:\@home\...`), los ficheros quedan con
-  dueño `nobody` y hay que devolverlos a `antonio` con `pkexec chown` antes de que Linux los lea.
-- Log: `~/Config/hermes/logs/fusionar-mensajes.log`. A mano:
-  `/mnt/seagate/HermesSync/scripts/fusionar-mensajes.py` (simulación) o `--aplicar`.
+- **El renumerado corre también cada minuto**, no solo al arrancar: `hermes-renumerar.service` + `hermes-renumerar.timer` (`OnBootSec=1min`, `OnUnitActiveSec=1min`, copia en `dual-boot/systemd-user/`) ejecutan el fusionador con `--aplicar --sin-orientacion`. Sin esto el descuadre se rehace con cada mensaje nuevo y la conversación vuelve a verse cortada en la app a los pocos minutos.
+- **Comprobar SIEMPRE en qué sistema se está corriendo** antes de usar rutas o lanzar comandos (`uname -s`, `$HOME`). Antonio lo señaló el 13/10/2026: asumirlo rompe justo lo que pide — «no leer la información que deja la contraparte» — y pasó en las dos sesiones (un `powershell.exe` desde Linux y rutas `/mnt/...` desde Windows). El import automático sí funciona: el log del motor dice el host y la hora (`Importando estado de 'PC-ANTONIO' publicado el ...` → `✅ Importado`); si algo no se ha leído, mirar ahí antes de sospechar del otro sistema.
+- **Primer paso de cada sesión**: `python /mnt/seagate/HermesSync/scripts/orientar.py` (en Windows: `python D:\HermesSync\scripts\orientar.py`). Imprime en un tirón el sistema, las rutas válidas de este lado, quién publicó y cuándo, la última importación y el último resultado del hook de conversaciones. Es lo que evita trabajar con las rutas del sistema equivocado.
+- Por qué existe: el import trae sesiones que falten, pero **no** los mensajes nuevos de una sesión que ya existe en los dos lados, y las filas insertadas a mano volvían al otro sistema como copias (**456 copias en 8 sesiones** desde el 28/09, que Antonio veía como «faltan cosas de las conversaciones»). Comparar por (instante, rol) no basta.
+- ⚠️ Al escribir desde Windows en la partición de Linux (`F:\@home\...`), los ficheros quedan con dueño `nobody` y hay que devolverlos a `antonio` con `pkexec chown` antes de que Linux los lea.
+- Log: `~/Config/hermes/logs/fusionar-mensajes.log`. A mano: `/mnt/seagate/HermesSync/scripts/fusionar-mensajes.py` (simulación) o `--aplicar`.
 - Detalle completo: `HermesSync/NOTA-FUSION-CONVERSACIONES.md`.
 
 ## Herramientas propias: parche del CLI, unidades systemd y atajos
 
-Todo lo que se montó a mano vive en la raíz de `~/Config/hermes/` y entra en los dos destinos
-(`sesion-hermes/` y el tarball, este último bajo `esquema/`):
+Todo lo que se montó a mano vive en la raíz de `~/Config/hermes/` y entra en los dos destinos (`sesion-hermes/` y el tarball, este último bajo `esquema/`):
 
 | Pieza | En `~/Config/hermes/` | Atajo en `~/.local/bin` |
 |---|---|---|
@@ -769,22 +468,13 @@ Todo lo que se montó a mano vive en la raíz de `~/Config/hermes/` y entra en l
 | Aviso de arranque | `units/hermes-ready-notify.service` | `hermes-ready-notify.sh` |
 | Espejo del vault (Obsidian) | `espejo-vault.{sh,py}` | `espejo-vault` |
 
-- El instalador desde limpio (`setup-hermes-completo.sh`, PASO 5b) repone los atajos, copia las
-  unidades, habilita los servicios (`hermes-sync.timer`, `hermes-ready-notify.service`,
-  `lm-studio-app.service`, `lm-studio-watchdog.timer`, `hermes-nvidia-aliases.path`,
-  `hermes-espejo-vault.path`) y aplica el
-  parche del CLI. El `restore.sh` del tarball hace lo mismo a partir de `esquema/`.
-- `check-setup-completo.sh` comprueba que existan los ficheros, las unidades y los atajos, y
-  **avisa** (sin abortar el backup) si el parche del CLI está pendiente de aplicar.
-- Tras cada `hermes update`: `hermes-parche-ctrlq estado` (0 = aplicado, 1 = sin aplicar,
-  2 = conflicto); si no está, `hermes-parche-ctrlq aplicar` y reiniciar Hermes.
+- El instalador desde limpio (`setup-hermes-completo.sh`, PASO 5b) repone los atajos, copia las unidades, habilita los servicios (`hermes-sync.timer`, `hermes-ready-notify.service`, `lm-studio-app.service`, `lm-studio-watchdog.timer`, `hermes-nvidia-aliases.path`, `hermes-espejo-vault.path`) y aplica el parche del CLI. El `restore.sh` del tarball hace lo mismo a partir de `esquema/`.
+- `check-setup-completo.sh` comprueba que existan los ficheros, las unidades y los atajos, y **avisa** (sin abortar el backup) si el parche del CLI está pendiente de aplicar.
+- Tras cada `hermes update`: `hermes-parche-ctrlq estado` (0 = aplicado, 1 = sin aplicar, 2 = conflicto); si no está, `hermes-parche-ctrlq aplicar` y reiniciar Hermes.
 
 ### Auditoría del manual: `hermes-auditoria-manual`
 
-`hermes-auditoria-manual` (`hermes-auditoria-manual.sh` + `.py`, atajo en `~/.local/bin`)
-contrasta **este documento y sus copias con el sistema vivo** y responde a la pregunta «¿está al
-día el manual?» sin releerlo a ojo. Devuelve **0** si todo cuadra y **1** si hay desfases (los
-enumera); `--json` para máquinas y `--sin-espejo` para saltarse el vault (equipos sin MEGA).
+`hermes-auditoria-manual` (`hermes-auditoria-manual.sh` + `.py`, atajo en `~/.local/bin`) contrasta **este documento y sus copias con el sistema vivo** y responde a la pregunta «¿está al día el manual?» sin releerlo a ojo. Devuelve **0** si todo cuadra y **1** si hay desfases (los enumera); `--json` para máquinas y `--sin-espejo` para saltarse el vault (equipos sin MEGA).
 
 Qué comprueba (10 bloques, ~100 comprobaciones):
 
@@ -797,26 +487,15 @@ Qué comprueba (10 bloques, ~100 comprobaciones):
 | Modelos | `~/.lmstudio/models` (ficheros documentados y tamaño declarado, ±2 GB) |
 | Whitelist | `opencode.json` ↔ export de Windows |
 | Esquema | parche Ctrl+Q aplicado y con el sha256 esperado, `defaultContextLength`, python313 |
-| Espejo | las 8 notas del vault fieles a su origen y 0 enlaces rotos en el índice |
+| Espejo | las 15 notas del vault fieles a su origen y 0 enlaces rotos en el índice |
 | Copias | `sesion-hermes/AGENTS.md` y `dotfiles/hermes/AGENTS.md` idénticas |
 | Frescura | el último tarball **no** es anterior a la última edición del manual |
 
-Se ejecuta a mano antes de dar por bueno un cambio del esquema (y después de tocar el manual). En
-equipos sin el vault ni LM Studio avisa y sigue, en vez de fallar: sirve también tras una
-restauración desde limpio.
+Se ejecuta a mano antes de dar por bueno un cambio del esquema (y después de tocar el manual). En equipos sin el vault ni LM Studio avisa y sigue, en vez de fallar: sirve también tras una restauración desde limpio.
 
 ## Skills propias
 
-Las skills viven en `~/.hermes/skills/` (entran en el backup). Las de autoría local, todas en
-`autonomous-ai-agents/`: `hermes-agent`, `hermes-backup-restore`, `hermes-cambio-de-modelo`,
-`hermes-modelos-proveedores`, `hermes-modelos-viables`, `hermes-dual-boot-sync`,
-`hermes-voz-local-gpu`, `hermes-local-surfaces`, `hermes-gateway-startup-alert`,
-`hermes-upstream-pr`, `hermes-auditoria-sesiones`, `hermes-event-hooks` (hooks de evento y
-arranque), `hermes-diagnostico-arranque` (errores y avisos al arrancar Hermes),
-`hermes-actualizaciones` (actualizar Hermes y depurar su arranque), `hermes-perfil-real-navegador`
-(cuando una web pide sesión en el navegador real) y `modelos-locales-dimensionado`.
-Son la memoria operativa del esquema: ante una
-tarea de Hermes se carga la skill correspondiente antes de improvisar.
+Las skills viven en `~/.hermes/skills/` (entran en el backup). Las de autoría local, todas en `autonomous-ai-agents/`: `hermes-agent`, `hermes-backup-restore`, `hermes-cambio-de-modelo`, `hermes-modelos-proveedores`, `hermes-modelos-viables`, `hermes-dual-boot-sync`, `hermes-voz-local-gpu`, `hermes-local-surfaces`, `hermes-gateway-startup-alert`, `hermes-upstream-pr`, `hermes-auditoria-sesiones`, `hermes-event-hooks` (hooks de evento y arranque), `hermes-diagnostico-arranque` (errores y avisos al arrancar Hermes), `hermes-actualizaciones` (actualizar Hermes y depurar su arranque), `hermes-perfil-real-navegador` (cuando una web pide sesión en el navegador real) y `modelos-locales-dimensionado`. Son la memoria operativa del esquema: ante una tarea de Hermes se carga la skill correspondiente antes de improvisar. El import del dual boot trae además las skills propias del lado Windows —hoy `hermes-voz-kokoro-windows` (voz de Hermes en Windows: «Falló la lectura en voz alta», servidor Kokoro, cambio de voz), con `platforms: [windows]`, así que solo aplica allí—; viven aquí porque el estado viaja, pero no deben cargarse en este equipo.
 
 ---
 
@@ -824,102 +503,62 @@ tarea de Hermes se carga la skill correspondiente antes de improvisar.
 
 1. El instalador desde limpio vive **solo** en `sesion-hermes/` (más el enlace simbólico en la raíz).
 2. Nunca copiar `.env`, `auth.json`, `credenciales/` ni `*.tar.gz` a `~/Documentos/dotfiles/`.
-3. Usar `rsync --delete --delete-excluded` en la copia de dotfiles: con solo `--delete`, lo
-   excluido se acumula en el destino.
+3. Usar `rsync --delete --delete-excluded` en la copia de dotfiles: con solo `--delete`, lo excluido se acumula en el destino.
 4. El tarball se crea siempre con `umask 077` y se deja en 600.
 5. No meter en el backup `state.db`, `sessions/`, `tools/`, `installs/` ni `hermes-agent/`.
-6. El parche del CLI, las unidades de `units/` y los atajos viajan SIEMPRE en el tarball (bajo
-   `esquema/`), en `sesion-hermes/` y en la copia saneada: sin ellos, una instalación desde limpio
-   no llega al estado actual.
-7. El material para Windows (`dual-boot/windows/`) se publica con `hermes-dual-sync export`; no se
-   edita directamente en la carpeta común (el export lo sobrescribe).
-8. Los scripts que viven fuera de `~/.hermes` (stack de voz y `hermes-ready-notify.sh`) viajan
-   SIEMPRE en `extras/bin/` del tarball y de `sesion-hermes/`: sin ellos la instalación desde limpio
-   se queda muda y sin aviso de arranque.
-9. Al cambiar una pieza del esquema, actualizar a la vez este documento y la skill que la
-   documenta (`hermes-*`), que es lo que se carga en las sesiones.
+6. El parche del CLI, las unidades de `units/` y los atajos viajan SIEMPRE en el tarball (bajo `esquema/`), en `sesion-hermes/` y en la copia saneada: sin ellos, una instalación desde limpio no llega al estado actual.
+7. El material para Windows (`dual-boot/windows/`) se publica con `hermes-dual-sync export`; no se edita directamente en la carpeta común (el export lo sobrescribe).
+8. Los scripts que viven fuera de `~/.hermes` (stack de voz y `hermes-ready-notify.sh`) viajan SIEMPRE en `extras/bin/` del tarball y de `sesion-hermes/`: sin ellos la instalación desde limpio se queda muda y sin aviso de arranque.
+9. Al cambiar una pieza del esquema, actualizar a la vez este documento y la skill que la documenta (`hermes-*`), que es lo que se carga en las sesiones.
 
 ## Encargos automáticos del dual boot (gateway:startup)
 
-El otro sistema (normalmente Windows) puede dejar **encargos** para el Hermes de
-Linux en la carpeta compartida: `<común>/linux/encargos/*.sh` (aquí,
-`/mnt/seagate/HermesSync/linux/encargos/`). Se ejecutan solos al arrancar el
-gateway y cada uno **una sola vez**.
+El otro sistema (normalmente Windows) puede dejar **encargos** para el Hermes de Linux en la carpeta compartida: `<común>/linux/encargos/*.sh` (aquí, `/mnt/seagate/HermesSync/linux/encargos/`). Se ejecutan solos al arrancar el gateway y cada uno **una sola vez**.
 
-- **Disparador**: hook de gateway `~/.hermes/hooks/encargos-linux/`
-  (`HOOK.yaml` + `handler.py`, evento `gateway:startup`). Se carga por
-  *trusted-by-placement*: bastan los dos ficheros, sin allowlist ni tocar `config.yaml`.
-- **Qué hace**: al arrancar el gateway ejecuta los `*.sh` de `linux/encargos/` que
-  aún no estén hechos (timeout de 120 s cada uno); los que salen con 0 se registran
-  por nombre en `~/.hermes/state/encargos-hechos.json` y no se repiten; los que
-  fallan se reintentan en el siguiente arranque.
+- **Disparador**: hook de gateway `~/.hermes/hooks/encargos-linux/` (`HOOK.yaml` + `handler.py`, evento `gateway:startup`). Se carga por *trusted-by-placement*: bastan los dos ficheros, sin allowlist ni tocar `config.yaml`.
+- **Qué hace**: al arrancar el gateway ejecuta los `*.sh` de `linux/encargos/` que aún no estén hechos (timeout de 120 s cada uno); los que salen con 0 se registran por nombre en `~/.hermes/state/encargos-hechos.json` y no se repiten; los que fallan se reintentan en el siguiente arranque.
 - **Log**: `~/Config/hermes/logs/encargos-linux.log`.
-- **Añadir un encargo**: dejar el script en `<común>/linux/encargos/NN-nombre.sh`
-  (idempotente y con `exit 0` si va bien). Se ejecutará al próximo arranque.
-- **Reejecutar uno ya hecho**: quitar su nombre de `encargos-hechos.json`, o
-  renombrar el fichero.
-- **Propietario**: los ficheros creados desde Windows en el disco compartido
-  heredan su propietario; si el gateway no puede leerlos/ejecutarlos,
-  `chown -R antonio:antonio ~/.hermes/hooks/encargos-linux`.
+- **Añadir un encargo**: dejar el script en `<común>/linux/encargos/NN-nombre.sh` (idempotente y con `exit 0` si va bien). Se ejecutará al próximo arranque.
+- **Reejecutar uno ya hecho**: quitar su nombre de `encargos-hechos.json`, o renombrar el fichero.
+- **Propietario**: los ficheros creados desde Windows en el disco compartido heredan su propietario; si el gateway no puede leerlos/ejecutarlos, `chown -R antonio:antonio ~/.hermes/hooks/encargos-linux`.
 
 ## Inventario del equipo (SISTEMA-CACHYOS.md)
 
-`~/Config/hermes/SISTEMA-CACHYOS.md` es el **inventario completo del equipo**: hardware y sistema
-(cpu, RAM, GPU, monitores, discos con SMART, btrfs, red, audio, sensores), el dual boot, las
-incidencias detectadas y las recomendaciones. Cada valor dinámico va marcado como *(instantánea)*
-con la fecha de captura en la cabecera.
+`~/Config/hermes/SISTEMA-CACHYOS.md` es el **inventario completo del equipo**: hardware y sistema (cpu, RAM, GPU, monitores, discos con SMART, btrfs, red, audio, sensores), el dual boot, las incidencias detectadas y las recomendaciones. Cada valor dinámico va marcado como *(instantánea)* con la fecha de captura en la cabecera.
 
-- **Captura vigente: 10/10/2026.** Se regenera con los comandos de su anexo 14; los que necesitan
-  privilegios (`smartctl`, `dmidecode`, `efibootmgr`) van con `pkexec` y conviene lanzarlos desde
-  la terminal de Antonio: desde una sesión de agente `pkexec` puede quedarse esperando la
-  autorización de polkit hasta agotar el tiempo de espera.
-- **No viaja en el tarball**: `backup-hermes.sh` empaqueta bajo `esquema/` una lista explícita
-  (parche del CLI, unidades, utilidades, `dual-boot/` y este manual). Es documentación de
-  referencia del equipo, no una pieza de la restauración.
-- Actualizarlo cuando cambie el hardware (discos, RAM, GPU) o se resuelva alguna de las
-  incidencias que recoge, dejando constancia de la nueva fecha de captura.
+- **Captura vigente: 10/10/2026.** Se regenera con los comandos de su anexo 14; los que necesitan privilegios (`smartctl`, `dmidecode`, `efibootmgr`) van con `pkexec` y conviene lanzarlos desde la terminal de Antonio: desde una sesión de agente `pkexec` puede quedarse esperando la autorización de polkit hasta agotar el tiempo de espera.
+- **No viaja en el tarball**: `backup-hermes.sh` empaqueta bajo `esquema/` una lista explícita (parche del CLI, unidades, utilidades, `dual-boot/` y este manual). Es documentación de referencia del equipo, no una pieza de la restauración.
+- Actualizarlo cuando cambie el hardware (discos, RAM, GPU) o se resuelva alguna de las incidencias que recoge, dejando constancia de la nueva fecha de captura.
 
 ## Documentación de configuración (documentos/)
 
-`~/Config/hermes/documentos/` guarda una **copia de respaldo** de los markdown de configuración de
-Hermes: `AGENTS.md`, `SISTEMA-CACHYOS.md`, `SOUL.md` (tomado del activo `~/.hermes/SOUL.md`) y los
-manuales del dual boot (`dual-boot/*.md`).
+`~/Config/hermes/documentos/` guarda una **copia de respaldo** de los markdown de configuración de Hermes: `AGENTS.md`, `SISTEMA-CACHYOS.md`, `SOUL.md` (tomado del activo `~/.hermes/SOUL.md`) y los manuales del dual boot (`dual-boot/*.md`).
 
-- **Es copia, no original**: el original de cada documento sigue en su ruta de siempre (`AGENTS.md`
-  y `SISTEMA-CACHYOS.md` en la raíz, `SOUL.md` en `~/.hermes/`, los del dual boot en
-  `dual-boot/windows/`). Ningún script depende de `documentos/`.
-- La regenera `backup-hermes.sh` en cada pasada (y por tanto `sync-hermes.sh`, cada 30 min): no hay
-  que copiar nada a mano. Nunca se edita ahí.
+- **Es copia, no original**: el original de cada documento sigue en su ruta de siempre (`AGENTS.md` y `SISTEMA-CACHYOS.md` en la raíz, `SOUL.md` en `~/.hermes/`, los del dual boot en `dual-boot/windows/`). Ningún script depende de `documentos/`.
+- La regenera `backup-hermes.sh` en cada pasada (y por tanto `sync-hermes.sh`, cada 30 min): no hay que copiar nada a mano. Nunca se edita ahí.
 - **Sí viaja a la copia saneada de dotfiles** (como el resto del árbol); **no** va en el tarball.
-- `SISTEMA-CACHYOS.md` queda **excluido** de la copia de dotfiles (también en `documentos/`): lleva
-  números de serie, UUID y Machine ID del equipo y ese repositorio es público. Vive en local y en el
-  espejo de Obsidian.
+- `SISTEMA-CACHYOS.md` queda **excluido** de la copia de dotfiles (también en `documentos/`): lleva números de serie, UUID y Machine ID del equipo y ese repositorio es público. Vive en local y en el espejo de Obsidian.
 - Lectura cómoda: el espejo del vault (skill `obsidian-espejo-config`).
 
 ---
 
 ## Espejo en Obsidian (automático)
 
-Los markdown de configuración se leen cómodamente en el vault
-(`~/MEGA/Obsidian/Obsidian/armarui74/`): `Hermes/` para este equipo y `Hermes-win/` para el
-esquema de Windows. **Se refresca solo**: no hay que acordarse de copiarlos.
+Los markdown de configuración se leen cómodamente en el vault (`~/MEGA/Obsidian/Obsidian/armarui74/`): `Hermes/` para este equipo y `Hermes-win/` para el esquema de Windows. **Se refresca solo**: no hay que acordarse de copiarlos.
 
 | Pieza | Qué es |
 |---|---|
-| `espejo-vault.py` (+ `.sh`) | Espeja 10 notas: `AGENTS.md`, `SISTEMA-CACHYOS.md`, `SOUL.md`, los 5 markdown del dual boot (`dual-boot/windows/*.md`) y los 2 del esquema de Windows (`~/Config/Hermes-Win/*.md`) |
-| `units/hermes-espejo-vault.path` | Vigila esos 10 orígenes (y sus carpetas, para altas y bajas) |
+| `espejo-vault.py` (+ `.sh`) | Espeja 15 notas: `AGENTS.md`, `SISTEMA-CACHYOS.md`, `SOUL.md`, los 5 markdown del dual boot (`dual-boot/windows/*.md`), `NOTA-FUSION-CONVERSACIONES.md` (mapa, 13/10/2026), los 4 añadidos el 18/10/2026 (`dual-boot/PLAN-convivencia-dual-boot.md`, `dual-boot/windows/PARA-WINDOWS-tareas-ntfs.md`, `dual-boot/windows/whatsapp/LEEME.md` y `dual-boot/windows/messages/LEEME.md`) y los 2 del esquema de Windows (`~/Config/Hermes-Win/*.md`) |
+| `reflow-md.py` | Reflowa manuales: **un párrafo = una línea** (une las líneas partidas a mano que Obsidian muestra cortadas). Verifica que el texto no cambia; no toca copias (`documentos/`, `sesion-hermes/`) |
+| `units/hermes-espejo-vault.path` | Vigila esos 15 orígenes (y sus carpetas, para altas y bajas) |
 | `units/hermes-espejo-vault.service` | Dispara el espejado al detectar un cambio |
 | `~/.local/bin/espejo-vault` | Atajo para lanzarlo a mano |
 | `logs/espejo-vault.log` | Qué refrescó y cuándo (solo escribe cuando algo cambia) |
 
-- La nota es el origen **verbatim** con una línea en blanco delante; el mapa origen → nota es
-  explícito en el script (nunca se inventan nombres ni se publica un fichero sin nota).
-- Antes de escribir, el script busca claves de API (`sk-…`, `nvapi-…`, `oc_sk_…`, `API_KEY=…`):
-  si aparece algo, se salta ese fichero y lo anota en el log.
-- OpenCode y MiMoCode **no** pasan por aquí: su espejo necesita reescritura de enlaces y lo cubren
-  el cron semanal «Espejo Obsidian al dia» y sus `check-setup` (skill `obsidian-espejo-config`).
-- Comprobarlo vivo: `systemctl --user list-units 'hermes-espejo*'` y `espejo-vault` (dice
-  «todas al dia» cuando no hay nada que refrescar).
+- La nota es el origen **verbatim** con una línea en blanco delante; el mapa origen → nota es explícito en el script (nunca se inventan nombres ni se publica un fichero sin nota).
+- Antes de escribir, el script busca claves de API (`sk-…`, `nvapi-…`, `oc_sk_…`, `API_KEY=…`): si aparece algo, se salta ese fichero y lo anota en el log.
+- OpenCode y MiMoCode **no** pasan por aquí: su espejo necesita reescritura de enlaces y lo cubren el cron semanal «Espejo Obsidian al dia» y sus `check-setup` (skill `obsidian-espejo-config`).
+- Comprobarlo vivo: `systemctl --user list-units 'hermes-espejo*'` y `espejo-vault` (dice «todas al dia» cuando no hay nada que refrescar).
 
 ---
 
@@ -930,20 +569,14 @@ esquema de Windows. **Se refresca solo**: no hay que acordarse de copiarlos.
 
 ## Traspaso de información entre Linux y Windows (dual boot)
 
-Los dos sistemas comparten la carpeta `HermesSync/` del disco SEAGATE (letra variable;
-se localiza por la marca `.hermes-sync`). El estado de Hermes viaja solo por `estado/`
-(memorias, skills, conversaciones, kanban). Para lo que hay que **hacer** o **leer**
-hay dos canales explícitos, y los dos son automáticos:
+Los dos sistemas comparten la carpeta `HermesSync/` del disco SEAGATE (letra variable; se localiza por la marca `.hermes-sync`). El estado de Hermes viaja solo por `estado/` (memorias, skills, conversaciones, kanban). Para lo que hay que **hacer** o **leer** hay dos canales explícitos, y los dos son automáticos:
 
 | Dirección | Tareas de una sola vez | Notas | Quién las ejecuta |
 |---|---|---|---|
 | Windows → Linux | `HermesSync/linux/encargos/*.sh` | `HermesSync/NOTA-PARA-LINUX.md` | hook `encargos-linux` (evento `gateway:startup`) |
 | Linux → Windows | `HermesSync/windows/encargos/*.ps1` | `HermesSync/NOTA-PARA-WINDOWS.md` | hook `encargos-windows` (evento `gateway:startup`) |
 
-Reglas de un encargo: se ejecuta **una sola vez** (su nombre queda en
-`~/.hermes/state/encargos-hechos.json`), **sin argumentos** y **sin interacción**, y si
-falla (salida ≠ 0) se reintenta en el siguiente arranque. Debe ser **idempotente** y
-**sin secretos** (el disco es compartido y no cifra).
+Reglas de un encargo: se ejecuta **una sola vez** (su nombre queda en `~/.hermes/state/encargos-hechos.json`), **sin argumentos** y **sin interacción**, y si falla (salida ≠ 0) se reintenta en el siguiente arranque. Debe ser **idempotente** y **sin secretos** (el disco es compartido y no cifra).
 
 Dónde queda la salida:
 
@@ -957,5 +590,4 @@ tail -20 /mnt/seagate/HermesSync/logs/encargos-linux.log
 bash /mnt/seagate/HermesSync/linux/encargos/<nombre>.sh   # (no lo marca como hecho)
 ```
 
-Para dejar algo dicho al otro lado **siempre** vale la nota correspondiente: el canal de
-encargos es para lo que se puede automatizar; la nota, para lo que hay que leer.
+Para dejar algo dicho al otro lado **siempre** vale la nota correspondiente: el canal de encargos es para lo que se puede automatizar; la nota, para lo que hay que leer.

@@ -153,7 +153,18 @@ fi
 veredicto_line=""
 orientar="$COMUN/scripts/orientar.py"
 if [ -f "$orientar" ]; then
-  v=$(timeout 60 python3 "$orientar" --veredicto 2>&1 || true)
+  # El timer de publicacion (hermes-dual-sync.timer) arranca con OnBootSec=3min y tarda unos
+  # segundos: al arrancar el aviso puede llegar ANTES de que exista la publicacion de esta
+  # sesion y veria la de la sesion anterior (p. ej. "806 min sin publicar" tras pasar la noche
+  # apagado). Se espera un poco, y si sigue avisando de la publicacion se reintenta una vez.
+  espera=0
+  while [ "$espera" -lt 90 ]; do
+    v=$(timeout 60 python3 "$orientar" --veredicto 2>&1 || true)
+    case "$v" in
+      *"sin publicar"*) sleep 10; espera=$((espera + 10)) ;;
+      *) break ;;
+    esac
+  done
   case "$v" in
     "VEREDICTO: OK"*) : ;;                                  # todo bien: silencio
     "")               veredicto_line="⚠️ no pude comprobar el estado del dual boot" ;;
@@ -161,6 +172,19 @@ if [ -f "$orientar" ]; then
   esac
 fi
 log "veredicto del dual boot: ${veredicto_line:-OK}"
+
+# --- Parche local del CLI (Ctrl+Q/Ctrl+C cortan la locucion) ---------------
+# El parche vive fuera de git: si un `hermes update` deja los cambios locales
+# aparcados en el autostash, las teclas dejan de cortar el audio y eso solo se
+# nota al usarlas. Se comprueba al arrancar y SOLO se avisa si NO esta aplicado.
+parche_line=""
+parche_bin="$HOME/.local/bin/hermes-parche-ctrlq"
+if [ -x "$parche_bin" ]; then
+  if ! timeout 30 "$parche_bin" estado >/dev/null 2>&1; then
+    parche_line="⚠️ parche Ctrl+Q/Ctrl+C del CLI NO aplicado (revisa: hermes-parche-ctrlq estado)"
+  fi
+fi
+log "parche local del CLI: ${parche_line:-aplicado}"
 
 # --- Espera a que el gateway este realmente listo -------------------------
 # "Listo" = servicio active Y adaptador de Telegram conectado despues de
@@ -197,13 +221,16 @@ _registrar() {
     printf '%s  arranque: update -> %s\n' "$(date '+%F %T')" "$update_line"
     printf '%s  arranque: dual boot -> %s\n' "$(date '+%F %T')" "$dual_line"
     [ -n "${veredicto_line:-}" ] && printf '%s  arranque: veredicto -> %s\n' "$(date '+%F %T')" "$veredicto_line"
+    [ -n "${parche_line:-}" ] && printf '%s  arranque: parche -> %s\n' "$(date '+%F %T')" "$parche_line"
   } >> "$LOG_ARRANQUE" 2>/dev/null || true
 }
 
 if [ "$ready" = "1" ]; then
   _registrar
   extra=""
-  [ -n "$veredicto_line" ] && extra="
+  [ -n "$parche_line" ] && extra="$extra
+${parche_line}"
+  [ -n "$veredicto_line" ] && extra="$extra
 ${veredicto_line}"
   _send "✅ Hermes activo — gateway listo y Telegram conectado (arranque $(date +%H:%M)). Ya puedes escribirme.
 🔄 Update: ${update_line}

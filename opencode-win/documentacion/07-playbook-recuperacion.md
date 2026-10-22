@@ -4,14 +4,9 @@
 |-----------|----------|------------|
 | 🛟 Recuperación | 10/09/2026 · rev. 18/10/2026 | Antonio |
 
-> Procedimiento paso a paso para restaurar OpenCode desde un backup o una
-> reinstalación desde limpio, recuperar el grafo de memoria y re-sincronizar
-> todo el sistema **en Windows (PowerShell 5.1)**.
+> Procedimiento paso a paso para restaurar OpenCode desde un backup o una reinstalación desde limpio, recuperar el grafo de memoria y re-sincronizar todo el sistema **en Windows (PowerShell 5.1)**.
 
-> ⚠️ **Nota Windows:** todos los comandos de este playbook son de
-> **Windows PowerShell 5.1**. No existen `bash`, `zsh`, `systemd`, `sudo` ni
-> `pkexec`. La elevación se hace con **UAC** y la automatización periódica con el
-> **Programador de tareas** de Windows.
+> ⚠️ **Nota Windows:** todos los comandos de este playbook son de **Windows PowerShell 5.1**. No existen `bash`, `zsh`, `systemd`, `sudo` ni `pkexec`. La elevación se hace con **UAC** y la automatización periódica con el **Programador de tareas** de Windows.
 
 ---
 
@@ -46,8 +41,7 @@
 
 ### ⏸️ Detener servicios antes de restaurar
 
-> ⚠️ **No aplica en Windows:** `systemctl --user` no existe. La tarea
-> programada de sincronización se detiene con el **Programador de tareas**:
+> ⚠️ **No aplica en Windows:** `systemctl --user` no existe. La tarea programada de sincronización se detiene con el **Programador de tareas**:
 
 ```powershell
 # Detener la tarea de sincronización (si existe)
@@ -62,15 +56,13 @@ Get-CimInstance Win32_Process |
 Get-Process opencode -ErrorAction SilentlyContinue | Stop-Process -Force
 ```
 
-> ⚠️ Detener la tarea evita que la sincronización automática interfiera
-> mientras restauras archivos. Al terminar, vuelve a arrancarla.
+> ⚠️ Detener la tarea evita que la sincronización automática interfiera mientras restauras archivos. Al terminar, vuelve a arrancarla.
 
 ---
 
 ## Escenario A: restaurar el grafo de memoria
 
-Para cuando el grafo se pierde o corrompe (el servidor MCP memory no carga,
-errores de entidades vacías, archivo dañado, etc.).
+Para cuando el grafo se pierde o corrompe (el servidor MCP memory no carga, errores de entidades vacías, archivo dañado, etc.).
 
 ### Paso 1 — Localizar el backup más reciente
 
@@ -79,8 +71,7 @@ Get-ChildItem "D:\Linux\Config\opencode-win\data\memory\mcp-memory-backup-*.json
   Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
 ```
 
-Guarda la ruta resultante, por ejemplo:
-`D:\Linux\Config\opencode-win\data\memory\mcp-memory-backup-20260905_0042.jsonl`
+Guarda la ruta resultante, por ejemplo: `D:\Linux\Config\opencode-win\data\memory\mcp-memory-backup-20260905_0042.jsonl`
 
 ### Paso 2 — Hacer copia del grafo actual (por seguridad)
 
@@ -102,14 +93,11 @@ Copy-Item "D:\Linux\Config\opencode-win\data\memory\mcp-memory-backup-XXXX.jsonl
 python -c "import json; [json.loads(l) for l in open(r'C:\Users\evo01\.config\opencode\data\memory\memory.jsonl', encoding='utf-8') if l.strip()]; print('grafo OK')"
 ```
 
-> ⚠️ **Nota Windows:** no hay `python3`; el intérprete es
-> `C:\Python314\python.exe` (invocable como `python`).
+> ⚠️ **Nota Windows:** no hay `python3`; el intérprete es `C:\Python314\python.exe` (invocable como `python`).
 
 ### Paso 5 — Reiniciar OpenCode
 
-El servidor MCP memory lee `MEMORY_FILE_PATH` (vía `environment` en el bloque
-`mcp.memory` de los perfiles JSON). Al abrir `ocv` se recarga el grafo
-automáticamente.
+El servidor MCP memory lee `MEMORY_FILE_PATH` (vía `environment` en el bloque `mcp.memory` de los perfiles JSON). Al abrir `ocv` se recarga el grafo automáticamente.
 
 ---
 
@@ -126,9 +114,7 @@ Get-ChildItem "D:\Linux\Config\opencode-win\backups\opencode\*" |
 
 ### Paso 2 — Instalar OpenCode y dependencias base
 
-> ⚠️ **No aplica en Windows:** no hay `pacman` ni `pkexec`. OpenCode se instala
-> **globalmente por npm** (paquete `@opencode/cli`, V2). Node está en
-> `C:\Program Files\nodejs\node.exe` y npm es la versión 11.19.0.
+> ⚠️ **No aplica en Windows:** no hay `pacman` ni `pkexec`. OpenCode se instala **globalmente por npm** (paquete `@opencode/cli`, V2). Node está en `C:\Program Files\nodejs\node.exe` y npm es la versión 11.19.0.
 
 ```powershell
 # OpenCode (global por npm)
@@ -150,22 +136,15 @@ Ejecuta el instalador PowerShell que contiene toda la configuración del setup:
 powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\opencode-win\instalar-opencode-win.ps1"
 ```
 
-> ⚠️ Si el instalador necesita privilegios, aparecerá una ventana de **UAC**:
-> acepta para continuar (equivale al `pkexec`/`sudo` de Linux).
+> ⚠️ Si el instalador necesita privilegios, aparecerá una ventana de **UAC**: acepta para continuar (equivale al `pkexec`/`sudo` de Linux).
 
-> ⚠️ **No aplica en Windows:** el `setup-opencode-completo.sh` y el `restore.sh`
-> (Bash + tarball `.tar.gz`) son de Linux. En Windows el instalador equivalente es
-> `instalar-opencode-win.ps1`.
+> ⚠️ **No aplica en Windows:** el `setup-opencode-completo.sh` y el `restore.sh` (Bash + tarball `.tar.gz`) son de Linux. En Windows el instalador equivalente es `instalar-opencode-win.ps1`.
 
-> 🔑 El instalador debe restaurar también `auth.json` (credenciales de NVIDIA
-> `nvapi-*` y OpenCode GO `sk-*`) a `C:\Users\evo01\.local\share\opencode\auth.json`
-> desde `credenciales\auth.json`. Sin este paso, los agentes en la nube no
-> funcionan tras reinstalar.
+> 🔑 El instalador debe restaurar también `auth.json` (credenciales de NVIDIA `nvapi-*` y OpenCode GO `sk-*`) a `C:\Users\evo01\.local\share\opencode\auth.json` desde `credenciales\auth.json`. Sin este paso, los agentes en la nube no funcionan tras reinstalar.
 
 ### Paso 4 — Restaurar el grafo de memoria
 
-Siguiendo el [Escenario A](#escenario-a-restaurar-el-grafo-de-memoria), copia
-el backup del grafo a la ruta activa.
+Siguiendo el [Escenario A](#escenario-a-restaurar-el-grafo-de-memoria), copia el backup del grafo a la ruta activa.
 
 ### Paso 5 — Restaurar la base de datos de sesiones (opcional)
 
@@ -177,8 +156,7 @@ Copy-Item "$env:TEMP\opencode.db" "C:\Users\evo01\.local\share\opencode\opencode
 
 > Este paso recupera el historial de sesiones y peticiones (TUI timeline).
 
-> ⚠️ **Nota Windows:** `tar.exe` está incluido en Windows 10/11, por lo que se
-> pueden extraer los tarballs `.tar.gz` sin instalar nada extra.
+> ⚠️ **Nota Windows:** `tar.exe` está incluido en Windows 10/11, por lo que se pueden extraer los tarballs `.tar.gz` sin instalar nada extra.
 
 ### Paso 6 — Re-sincronizar y verificar
 
@@ -206,8 +184,7 @@ Copy-Item "$env:TEMP\opencode-restore\.config\opencode\opencode.json" `
 
 ### Paso 3 — Re-sincronizar a la copia de seguridad
 
-> ⚠️ **No aplica en Windows:** el script `sync-opencode.sh` es de Linux. Copia el
-> archivo a la carpeta de respaldo con PowerShell:
+> ⚠️ **No aplica en Windows:** el script `sync-opencode.sh` es de Linux. Copia el archivo a la carpeta de respaldo con PowerShell:
 
 ```powershell
 Copy-Item "C:\Users\evo01\.config\opencode\opencode.json" `
@@ -241,10 +218,7 @@ powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\opencode-win\scripts\b
 # Copy-Item "C:\Users\evo01\.config\opencode\AGENTS.md" "D:\Linux\Config\opencode-win\AGENTS.md" -Force
 ```
 
-> ⚠️ **No aplica en Windows:** los pasos originales usaban
-> `set -a; source .env; set +a`, `init-opencode.sh`, `systemctl --user start` y
-> `backup-opencode.sh`. En Windows se sustituyen por el fragmento PowerShell de
-> arriba (variables de entorno, `ocv-status`, Programador de tareas y `Copy-Item`).
+> ⚠️ **No aplica en Windows:** los pasos originales usaban `set -a; source .env; set +a`, `init-opencode.sh`, `systemctl --user start` y `backup-opencode.sh`. En Windows se sustituyen por el fragmento PowerShell de arriba (variables de entorno, `ocv-status`, Programador de tareas y `Copy-Item`).
 
 ---
 
@@ -262,8 +236,7 @@ powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\opencode-win\scripts\b
 | 8 | Historial de sesiones | ⚠️ No aplica `timeline-completo`; usar el módulo `sqlite3` de Python |
 | 9 | Plugin TUI de voz + throughput | abrir `ocv` y verificar barra lateral |
 
-> ⚠️ **Nota Windows:** el punto 5 (PWAs `.desktop`) y el punto 8
-> (`timeline-completo`, script Bash) no aplican tal cual en Windows.
+> ⚠️ **Nota Windows:** el punto 5 (PWAs `.desktop`) y el punto 8 (`timeline-completo`, script Bash) no aplican tal cual en Windows.
 
 ---
 
@@ -278,13 +251,9 @@ powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\opencode-win\scripts\b
 | TUI no muestra historial completo | Límite hardcodeado (~6 peticiones, PR #26861) | Consultar `opencode.db` con el módulo `sqlite3` de Python |
 | Modelo de OpenCode Go requiere opt-in | Migración a hosting en China | Activar toggle en https://opencode.ai/workspace/wrk_01KWNJZHA9QS258DM0M2KY8PNZ/go |
 
-> ⚠️ **No aplica en Windows:** la solución original del proxy
-> (`bash ~/.config/opencode/start-lmstudio-server.sh`) y la de `timeline-completo`
-> son de Linux.
+> ⚠️ **No aplica en Windows:** la solución original del proxy (`bash ~/.config/opencode/start-lmstudio-server.sh`) y la de `timeline-completo` son de Linux.
 
 ---
 
-> 📁 Este playbook vive en `C:\Users\evo01\.config\opencode\documentacion\07-playbook-recuperacion.md`
-> (activo) y `D:\Linux\Config\opencode-win\documentacion\07-playbook-recuperacion.md`
-> (backup). El instalador es `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1`.
+> 📁 Este playbook vive en `C:\Users\evo01\.config\opencode\documentacion\07-playbook-recuperacion.md` (activo) y `D:\Linux\Config\opencode-win\documentacion\07-playbook-recuperacion.md` (backup). El instalador es `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1`.
 

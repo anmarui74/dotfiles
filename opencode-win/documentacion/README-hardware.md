@@ -4,10 +4,7 @@
 |-----------|----------|------------|
 | ✅ activo | 10/09/2026 · rev. 10/09/2026 | Antonio |
 
-> Guía de comandos PowerShell para consultar la información del equipo.
-> Para un escaneo completo y automático del proyecto Linux se usaba
-> `python3 ~/.config/opencode/hardware-query.py scan`; en Windows ese script
-> **todavía no está portado** (pendiente).
+> Guía de comandos PowerShell para consultar la información del equipo. Para un escaneo completo y automático del proyecto Linux se usaba `python3 ~/.config/opencode/hardware-query.py scan`; en Windows ese script **todavía no está portado** (pendiente).
 
 ---
 
@@ -24,8 +21,7 @@
 | `Get-NetAdapter \| Select-Object Name,InterfaceDescription,Status,LinkSpeed` | Adaptadores de red |
 | `Get-CimInstance Win32_BaseBoard` / `Win32_BIOS` | Placa base y BIOS |
 
-> ⚠️ **No aplica en Windows:** el script `hardware-query.py` y la función `hw_query`
-> del proyecto Linux no están portados. Usar los cmdlets de la tabla.
+> ⚠️ **No aplica en Windows:** el script `hardware-query.py` y la función `hw_query` del proyecto Linux no están portados. Usar los cmdlets de la tabla.
 
 ## Comandos manuales equivalentes
 
@@ -51,8 +47,7 @@ Resultado: 63,1 GB total.
 (Get-CimInstance Win32_BaseBoard).Product
 ```
 
-> ⚠️ **No aplica en Windows:** no hay un fichero `/sys/.../board_name`; el modelo se
-> obtiene de `Win32_BaseBoard`. El valor concreto depende del equipo.
+> ⚠️ **No aplica en Windows:** no hay un fichero `/sys/.../board_name`; el modelo se obtiene de `Win32_BaseBoard`. El valor concreto depende del equipo.
 
 ### GPU NVIDIA
 
@@ -90,7 +85,6 @@ Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free
 ## Notas
 
 - Todos los comandos devuelven la salida directamente a la consola PowerShell 5.1.
-- El índice JSON (cuando se porte el script) vivirá en
-  `C:\Users\evo01\.config\opencode\data\hardware\index.json`.
+- El índice JSON (cuando se porte el script) vivirá en `C:\Users\evo01\.config\opencode\data\hardware\index.json`.
 - Detalle completo del equipo: ver [hardware-info.md](hardware-info.md).
 

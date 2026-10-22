@@ -13,10 +13,18 @@ PathChanged=%h/Config/hermes/dual-boot/windows/PARA-WINDOWS-backup.md
 PathChanged=%h/Config/hermes/dual-boot/windows/PARA-WINDOWS-motor-fusion.md
 PathChanged=%h/Config/hermes/dual-boot/windows/LEEME-comun.md
 PathChanged=%h/Config/hermes/dual-boot/windows/LEEME-WINDOWS.md
+PathChanged=%h/Config/hermes/NOTA-FUSION-CONVERSACIONES.md
+PathChanged=%h/Config/hermes/dual-boot/PLAN-convivencia-dual-boot.md
+PathChanged=%h/Config/hermes/dual-boot/windows/PARA-WINDOWS-tareas-ntfs.md
+PathChanged=%h/Config/hermes/dual-boot/windows/whatsapp/LEEME.md
+PathChanged=%h/Config/hermes/dual-boot/windows/messages/LEEME.md
 PathChanged=%h/Config/Hermes-Win/AGENTS-WIN.md
 PathChanged=%h/Config/Hermes-Win/SISTEMA-WINDOWS.md
 PathModified=%h/Config/hermes/dual-boot/windows
 PathModified=%h/Config/Hermes-Win
+PathModified=%h/Config/hermes/dual-boot
+PathModified=%h/Config/hermes/dual-boot/windows/whatsapp
+PathModified=%h/Config/hermes/dual-boot/windows/messages
 Unit=hermes-espejo-vault.service
 
 [Install]

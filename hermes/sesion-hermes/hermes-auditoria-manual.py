@@ -161,7 +161,7 @@ if os.path.isfile(parche) and os.path.isdir(f"{HERMES}/hermes-agent/.git"):
         aviso("parche Ctrl+Q en conflicto (revisa 'hermes-parche-ctrlq estado')")
 sha = sh(f"sha256sum {BASE}/parches/ctrl-q-corta-audio.patch 2>/dev/null").split()
 if sha:
-    check(sha[0].startswith("5303bfcb"), f"sha256 del parche distinto al documentado: {sha[0][:12]}")
+    check(sha[0].startswith("3bf6052b"), f"sha256 del parche distinto al documentado: {sha[0][:12]}")
 
 settings = f"{HOME}/.lmstudio/settings.json"
 if os.path.isfile(settings):
@@ -177,12 +177,18 @@ if sh("command -v pacman"):
 
 # ─── 8. Espejo de Obsidian (fiel a los orígenes) ───
 NOTAS = [(f"{BASE}/AGENTS.md", "💻 Manual de Hermes — AGENTS.md"),
+         (f"{BASE}/SISTEMA-CACHYOS.md", "💻 Sistema — Inventario del equipo · SISTEMA-CACHYOS.md"),
+         (f"{BASE}/NOTA-FUSION-CONVERSACIONES.md", "💻 Dual boot — Fusión de conversaciones · NOTA-FUSION-CONVERSACIONES.md"),
          (f"{BASE}/sesion-hermes/SOUL.md", "💻 Identidad de Hermes — SOUL.md"),
          (f"{BASE}/dual-boot/windows/LEEME-comun.md", "💻 Dual boot — Estado compartido · LEEME-comun.md"),
          (f"{BASE}/dual-boot/windows/LEEME-WINDOWS.md", "💻 Dual boot — Windows · LEEME-WINDOWS.md"),
          (f"{BASE}/dual-boot/windows/PARA-WINDOWS-motor-fusion.md", "💻 Dual boot — Motor de fusión · PARA-WINDOWS-motor-fusion.md"),
          (f"{BASE}/dual-boot/windows/PARA-WINDOWS-ajustes-linux.md", "💻 Dual boot — Ajustes de Linux en Windows · PARA-WINDOWS-ajustes-linux.md"),
-         (f"{BASE}/dual-boot/windows/PARA-WINDOWS-backup.md", "💻 Dual boot — Backup en Windows · PARA-WINDOWS-backup.md")]
+         (f"{BASE}/dual-boot/windows/PARA-WINDOWS-backup.md", "💻 Dual boot — Backup en Windows · PARA-WINDOWS-backup.md"),
+         (f"{BASE}/dual-boot/PLAN-convivencia-dual-boot.md", "💻 Dual boot — Plan de convivencia · PLAN-convivencia-dual-boot.md"),
+         (f"{BASE}/dual-boot/windows/PARA-WINDOWS-tareas-ntfs.md", "💻 Dual boot — Tareas NTFS en Windows · PARA-WINDOWS-tareas-ntfs.md"),
+         (f"{BASE}/dual-boot/windows/whatsapp/LEEME.md", "💻 Dual boot — WhatsApp de Windows · whatsapp-LEEME.md"),
+         (f"{BASE}/dual-boot/windows/messages/LEEME.md", "💻 Dual boot — Mensajes de Google en Windows · messages-LEEME.md"),]
 if SIN_ESPEJO or not os.path.isdir(VAULT):
     aviso("espejo de Obsidian no comprobado (vault no accesible o --sin-espejo)")
 else:

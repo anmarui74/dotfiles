@@ -4,12 +4,8 @@
 |-----------|------------|------------|-----------|
 | ✅ al día | 10/10/2026 (captura 17:20–17:45 · revisión 19:45) | Antonio | PC-ANTONIO (Windows 11 Pro) |
 
-> Inventario del equipo **tal como lo ve Windows** (el gemelo de `SISTEMA-CACHYOS.md`, que lo mira
-> desde Linux). Es documentación de referencia: describe el sistema, no es una pieza de la
-> restauración, así que **no viaja en el ZIP** (aunque sí en la copia saneada de dotfiles).
->
-> Escrito por el Hermes de Windows el 10/10/2026. Los valores dinámicos van marcados como
-> *(instantánea)*.
+> Inventario del equipo **tal como lo ve Windows** (el gemelo de `SISTEMA-CACHYOS.md`, que lo mira desde Linux). Es documentación de referencia: describe el sistema, no es una pieza de la restauración, así que **no viaja en el ZIP** (aunque sí en la copia saneada de dotfiles).
+> Escrito por el Hermes de Windows el 10/10/2026. Los valores dinámicos van marcados como *(instantánea)*.
 
 ---
 
@@ -46,14 +42,9 @@ Discos físicos (4 + los dos del espejo):
 | 5 | ST4000NM0035-1V4107 | 3726 | HDD del disco compartido (`D:`, **SEAGATE**) |
 | 3, 4 | **TOSHIBA HDWE140** | 3726 c/u | Grupo dinámico LDM → volumen espejo `E:` |
 
-⚠️ **El espejo `E:` no se toca desde Linux suelto**: los dos Toshiba contienen un plexo cada uno del
-**mismo** volumen NTFS (misma etiqueta y UUID). En Linux se monta una sola vez con `ldmtool` en
-`/mnt/toshiba` y los plexos se ocultan a udisks (ver `SISTEMA-CACHYOS.md`, regla
-`90-ocultar-miembros-ldm.rules`). Desde Windows, escribir en `E:` es lo correcto.
+⚠️ **El espejo `E:` no se toca desde Linux suelto**: los dos Toshiba contienen un plexo cada uno del **mismo** volumen NTFS (misma etiqueta y UUID). En Linux se monta una sola vez con `ldmtool` en `/mnt/toshiba` y los plexos se ocultan a udisks (ver `SISTEMA-CACHYOS.md`, regla `90-ocultar-miembros-ldm.rules`). Desde Windows, escribir en `E:` es lo correcto.
 
-**Letras variables**: `D:` (SEAGATE), `F:`/`H:` (los discos de Linux, vía WinBtrfs) y las del espejo
-pueden cambiar entre arranques. Se localizan por **etiqueta** o por marca, nunca por letra fija:
-`<letra>:\HermesSync\.hermes-sync` (compartido), `<letra>:\@home\antonio\.hermes` (Linux).
+**Letras variables**: `D:` (SEAGATE), `F:`/`H:` (los discos de Linux, vía WinBtrfs) y las del espejo pueden cambiar entre arranques. Se localizan por **etiqueta** o por marca, nunca por letra fija: `<letra>:\HermesSync\.hermes-sync` (compartido), `<letra>:\@home\antonio\.hermes` (Linux).
 
 ---
 
@@ -92,9 +83,7 @@ pueden cambiar entre arranques. Se localizan por **etiqueta** o por marca, nunca
 ### Memoria y skills
 
 - `memories\MEMORY.md` 2.230 B · `memories\USER.md` 1.363 B *(instantánea)*.
-- Skills: 12 categorías + **15 propias** en `skills\autonomous-ai-agents\` (14 `hermes-*` +
-  `modelos-locales-dimensionado`) y las 4 de orquestación (`claude-code`, `codex`, `computer-use`,
-  `opencode`).
+- Skills: 12 categorías + **15 propias** en `skills\autonomous-ai-agents\` (14 `hermes-*` + `modelos-locales-dimensionado`) y las 4 de orquestación (`claude-code`, `codex`, `computer-use`, `opencode`).
 
 ---
 
@@ -113,31 +102,17 @@ pueden cambiar entre arranques. Se localizan por **etiqueta** o por marca, nunca
 
 ## 6. Incidencias detectadas *(10/10/2026 · revisado 23:55)*
 
-1. **Tarea `HermesBackup-Win` intermitente**: falló a las 15:53 y a las 17:27 con
-   `0x800710E0` (*ERROR_NO_SUCH_DEVICE*), y funcionó a las 16:11, 17:35 y 17:41 (resultado 0). El
-   lanzador vive en el disco SEAGATE (`D:`), así que la causa probable es que la unidad no
-   respondiera en ese instante (giro en reposo o disco recién despertado). **Hoy está en 0**; si
-   vuelve a fallar, ver `sync.log` y el resultado de la tarea.
-2. **Update: cerrado el 10/10/2026 a las 23:41.** El update de las 18:50 (`v0.21.5+7252` →
-   `v0.21.6+521.gf86276d.dirty`, `main` @ `f86276d2eb`) dejó la cola sin terminar
-   (`source-completion-pending`: dependencias sí, builds y reempaquetado de la app no). Lo cerró el
-   **update automático al iniciar sesión** (encargo 12): `hermes update --yes` rc=0, app de escritorio
-   reempaquetada, parche Ctrl+Q validado y regenerado (corregida su codificación), `hermes doctor` rc=1
-   solo por avisos de npm/claves, respaldo rc=0 y aviso por Telegram. El marcador ya no existe y
-   `aplicar-ajustes-linux.ps1` dice `[ok] parche Ctrl+Q: aplicado`.
-3. **Inicio rápido**: estaba **activado** (`HiberbootEnabled=1`) hasta el 10/10/2026 a las 17:18,
-   cuando el encargo 06 lo desactivó (con UAC) tras el NTFS sucio del SEAGATE. Ya en **0**.
-4. **`documentos\` no existía** en el esquema de Windows (el de Linux sí lo tiene): añadido el
-   10/10/2026, lo regenera el backup.
+1. **Tarea `HermesBackup-Win` intermitente**: falló a las 15:53 y a las 17:27 con `0x800710E0` (*ERROR_NO_SUCH_DEVICE*), y funcionó a las 16:11, 17:35 y 17:41 (resultado 0). El lanzador vive en el disco SEAGATE (`D:`), así que la causa probable es que la unidad no respondiera en ese instante (giro en reposo o disco recién despertado). **Hoy está en 0**; si vuelve a fallar, ver `sync.log` y el resultado de la tarea.
+2. **Update: cerrado el 10/10/2026 a las 23:41.** El update de las 18:50 (`v0.21.5+7252` → `v0.21.6+521.gf86276d.dirty`, `main` @ `f86276d2eb`) dejó la cola sin terminar (`source-completion-pending`: dependencias sí, builds y reempaquetado de la app no). Lo cerró el **update automático al iniciar sesión** (encargo 12): `hermes update --yes` rc=0, app de escritorio reempaquetada, parche Ctrl+Q validado y regenerado (corregida su codificación), `hermes doctor` rc=1 solo por avisos de npm/claves, respaldo rc=0 y aviso por Telegram. El marcador ya no existe y `aplicar-ajustes-linux.ps1` dice `[ok] parche Ctrl+Q: aplicado`.
+3. **Inicio rápido**: estaba **activado** (`HiberbootEnabled=1`) hasta el 10/10/2026 a las 17:18, cuando el encargo 06 lo desactivó (con UAC) tras el NTFS sucio del SEAGATE. Ya en **0**.
+4. **`documentos\` no existía** en el esquema de Windows (el de Linux sí lo tiene): añadido el 10/10/2026, lo regenera el backup.
 
 ---
 
 ## 7. Recomendaciones
 
-- Pasar `chkdsk` al SEAGATE solo si vuelve a quedar sucio; con el inicio rápido apagado ya no debería
-  repetirse (el del 10/10 salió limpio: «Se examinó el sistema de archivos sin encontrar problemas»).
-- Añadir **reintentos** a `HermesBackup-Win` (`-RestartCount 3 -RestartInterval 1min`) si el fallo
-  intermitente se repite.
+- Pasar `chkdsk` al SEAGATE solo si vuelve a quedar sucio; con el inicio rápido apagado ya no debería repetirse (el del 10/10 salió limpio: «Se examinó el sistema de archivos sin encontrar problemas»).
+- Añadir **reintentos** a `HermesBackup-Win` (`-RestartCount 3 -RestartInterval 1min`) si el fallo intermitente se repite.
 - Descargar en LM Studio los modelos de `local-qwen35` y `local-gemma` si se quieren usar en Windows.
 
 ---
@@ -155,5 +130,4 @@ Get-ScheduledTask | Where-Object TaskName -like '*Hermes*' | Get-ScheduledTaskIn
 hermes --version
 ```
 
-En Linux, el inventario gemelo es `~/Config/hermes/SISTEMA-CACHYOS.md` (`pkexec` para `smartctl`,
-`dmidecode` y `efibootmgr`).
+En Linux, el inventario gemelo es `~/Config/hermes/SISTEMA-CACHYOS.md` (`pkexec` para `smartctl`, `dmidecode` y `efibootmgr`).

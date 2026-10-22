@@ -47,7 +47,10 @@ def clean_tts_text(text: str) -> str:
     text = _ANSI_RE.sub("", text)
     text = _BOX_RE.sub("", text)
     text = _EMOJI_RE.sub("", text)
-    text = re.sub(r"[*_`~#>|]+", " ", text)
+    # Tablas markdown: una fila de tabla, sin las barras, se queda en fragmentos sueltos
+    # ("Carpeta Notas") que no producen fonemas y hacen fallar la sintesis. Fuera entera.
+    text = re.sub(r"(?m)^\s*\|.*\|\s*$", "", text)
+    text = re.sub(r"[*_`~#>|]+\s?", " ", text)
     # IMPORTANTE: conservar los saltos de linea (pausas entre parrafos/lineas)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r" *\n *", "\n", text)
@@ -93,11 +96,32 @@ _kokoro = None
 _default_voice = "ef_dora"
 
 
+def _partir_largo(t: str, maximo: int) -> list[str]:
+    """Parte una frase larga en trozos de <= maximo caracteres.
+
+    Kokoro falla con frases que pasan de ~510 tokens ("index 510 is out of bounds"):
+    un parrafo sin puntos (una tabla vieja, una lista de rutas) tumbaba la sintesis.
+    """
+    if len(t) <= maximo:
+        return [t]
+    trozos, actual = [], ""
+    for palabra in t.split():
+        if actual and len(actual) + len(palabra) + 1 > maximo:
+            trozos.append(actual)
+            actual = palabra
+        else:
+            actual = (actual + " " + palabra).strip()
+    if actual:
+        trozos.append(actual)
+    return trozos
+
+
 def _split_chunks(text: str) -> list[tuple[str, float]]:
     """Separa el texto en fragmentos y calcula la pausa posterior de cada uno."""
     pause_para = float(os.environ.get("SPEAK_PAUSE", "0.8"))
     pause_sent = float(os.environ.get("SPEAK_PAUSE_SENT", "0.35"))
     pause_clause = float(os.environ.get("SPEAK_PAUSE_CLAUSE", "0.3"))
+    maximo = int(os.environ.get("SPEAK_MAX_CHARS", "200"))
 
     chunks: list[tuple[str, float]] = []
     for para in re.split(r"\n+", text):
@@ -116,8 +140,22 @@ def _split_chunks(text: str) -> list[tuple[str, float]]:
                 pa = pause_clause
             else:
                 pa = 0.0
-            chunks.append((p, pa))
+            trozos = _partir_largo(p, maximo)
+            for k, trozo in enumerate(trozos):
+                chunks.append((trozo, pa if k == len(trozos) - 1 else 0.0))
     return chunks
+
+
+def _silencio(ms: int = 150, sr: int = 24000) -> bytes:
+    """WAV de silencio corto, para trozos que no hay nada que leer."""
+    pcm = (np.zeros(int(sr * ms / 1000), dtype=np.int16)).tobytes()
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes(pcm)
+    return buf.getvalue()
 
 
 def synthesize(text: str, voice: str, speed: float, lang: str = "es") -> bytes | None:
@@ -135,10 +173,20 @@ def synthesize(text: str, voice: str, speed: float, lang: str = "es") -> bytes |
         pieces = []
         sr = 24000
         for idx, (seg, pa) in enumerate(chunks):
-            s, sr = _kokoro.create(seg, voice=voice, speed=speed, lang=lang)
+            # Un fragmento sin fonemas (restos de tabla, solo simbolos) lanzaba "need at least
+            # one array to concatenate" y tumbaba TODA la locucion: se salta ese trozo.
+            try:
+                s, sr = _kokoro.create(seg, voice=voice, speed=speed, lang=lang)
+            except Exception as exc:
+                print(f"[kokoro] tramo {idx + 1} omitido ({exc})", flush=True)
+                continue
+            if s is None or len(s) == 0:
+                continue
             pieces.append(np.asarray(s, dtype=np.float32))
             if idx < len(chunks) - 1 and pa > 0:
                 pieces.append(np.zeros(int(sr * pa), dtype=np.float32))
+        if not pieces:
+            return None
         samples = np.concatenate(pieces) if len(pieces) > 1 else pieces[0]
 
     samples = np.clip(np.asarray(samples, dtype=np.float32), -1.0, 1.0)
@@ -209,8 +257,10 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if not wav_bytes:
-            self._json(400, {"error": "empty text"})
-            return
+            # Nada locutable (un trozo que era solo una tabla, o solo simbolos): se devuelve un
+            # silencio corto en vez de 400, porque un 400 tumba la locucion entera en el cliente
+            # ("Falló la lectura en voz alta") por un trozo que no hay que leer.
+            wav_bytes = _silencio()
 
         self.send_response(200)
         self.send_header("Content-Type", "audio/wav")

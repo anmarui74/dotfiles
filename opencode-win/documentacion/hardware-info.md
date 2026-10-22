@@ -12,8 +12,7 @@
 |---------------|----------|------------------|
 | Windows Shell (Explorer) | Windows PowerShell 5.1 | es-ES · Europe/Madrid |
 
-> 📊 **Información actualizada:** 10/09/2026 · Datos reales del equipo Windows
-> (CPU, GPU, RAM y almacenamiento). El resto de secciones indican cómo consultarlas.
+> 📊 **Información actualizada:** 10/09/2026 · Datos reales del equipo Windows (CPU, GPU, RAM y almacenamiento). El resto de secciones indican cómo consultarlas.
 
 ---
 
@@ -30,13 +29,7 @@
 | ISA | AVX-512 completo, AVX2, FMA3, BMI1/2, AES-NI, SHA-NI, VAES, GFNI, F16C |
 | Microcode | Consultar (no expuesto directamente en Windows) |
 
-> ⚠️ **No aplica en Windows:** los campos de microcode y de mitigaciones de
-> vulnerabilidades que en Linux reportaba `lscpu` no tienen equivalente directo.
-> Consultar con:
-> ```powershell
-> Get-CimInstance Win32_Processor | Select-Object Name,NumberOfCores,NumberOfLogicalProcessors,MaxClockSpeed
-> Get-ItemProperty 'HKLM:\HARDWARE\DESCRIPTION\System\CentralProcessor\0' -Name 'Update Revision'
-> ```
+> ⚠️ **No aplica en Windows:** los campos de microcode y de mitigaciones de vulnerabilidades que en Linux reportaba `lscpu` no tienen equivalente directo. Consultar con: ```powershell Get-CimInstance Win32_Processor | Select-Object Name,NumberOfCores,NumberOfLogicalProcessors,MaxClockSpeed Get-ItemProperty 'HKLM:\HARDWARE\DESCRIPTION\System\CentralProcessor\0' -Name 'Update Revision' ```
 
 ## 💾 RAM
 
@@ -47,13 +40,7 @@
 | Slots | Consultar con `Get-CimInstance Win32_PhysicalMemory` |
 | Swap | `pagefile.sys` (equivalente al swap de Linux) |
 
-> ⚠️ **No aplica en Windows:** no existe `zram`. Windows gestiona la memoria de
-> intercambio mediante el archivo de paginación (`pagefile.sys`).
-> Consultar:
-> ```powershell
-> Get-CimInstance Win32_PhysicalMemory | Select-Object BankLabel,Capacity,Speed,Manufacturer
-> "{0:N2} GB" -f ((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB)
-> ```
+> ⚠️ **No aplica en Windows:** no existe `zram`. Windows gestiona la memoria de intercambio mediante el archivo de paginación (`pagefile.sys`). Consultar: ```powershell Get-CimInstance Win32_PhysicalMemory | Select-Object BankLabel,Capacity,Speed,Manufacturer "{0:N2} GB" -f ((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB) ```
 
 ## 🔌 Placa base
 
@@ -63,11 +50,7 @@
 | BIOS | Consultar con `Get-CimInstance Win32_BIOS` |
 | Firmware | UEFI |
 
-> Consultar:
-> ```powershell
-> Get-CimInstance Win32_BaseBoard | Select-Object Manufacturer,Product,Version
-> Get-CimInstance Win32_BIOS | Select-Object Manufacturer,SMBIOSBIOSVersion,ReleaseDate
-> ```
+> Consultar: ```powershell Get-CimInstance Win32_BaseBoard | Select-Object Manufacturer,Product,Version Get-CimInstance Win32_BIOS | Select-Object Manufacturer,SMBIOSBIOSVersion,ReleaseDate ```
 
 ## 🎮 GPU
 
@@ -79,11 +62,7 @@
 | Backend IA | LM Studio detecta **CUDA 12.8** y llama.cpp |
 | Uso CUDA | LM Studio (modelo `qwen3.8-9b`) |
 
-> Consultar:
-> ```powershell
-> nvidia-smi
-> Get-CimInstance Win32_VideoController | Select-Object Name,AdapterRAM,DriverVersion
-> ```
+> Consultar: ```powershell nvidia-smi Get-CimInstance Win32_VideoController | Select-Object Name,AdapterRAM,DriverVersion ```
 
 ## 🖥️ Monitores
 
@@ -91,12 +70,7 @@
 |---|---|---|---|
 | Consultar | — | — | — |
 
-> ⚠️ **No aplica en Windows:** la topología de monitores que en Linux daba
-> `xrandr` no se consulta igual. Usar:
-> ```powershell
-> Get-CimInstance -Namespace root\wmi -ClassName WmiMonitorBasicDisplayParams
-> Get-CimInstance Win32_VideoController | Select-Object Name,CurrentHorizontalResolution,CurrentVerticalResolution
-> ```
+> ⚠️ **No aplica en Windows:** la topología de monitores que en Linux daba `xrandr` no se consulta igual. Usar: ```powershell Get-CimInstance -Namespace root\wmi -ClassName WmiMonitorBasicDisplayParams Get-CimInstance Win32_VideoController | Select-Object Name,CurrentHorizontalResolution,CurrentVerticalResolution ```
 
 ## 💽 Almacenamiento
 
@@ -105,14 +79,9 @@
 | C: | Sistema | NTFS | Unidad del sistema operativo |
 | D: | Datos | NTFS | Contiene `D:\Linux\modelos_ia` (modelos de IA) |
 
-> No se registran capacidades exactas de disco en este documento. Consultar:
-> ```powershell
-> Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free
-> Get-PhysicalDisk | Select-Object FriendlyName,MediaType,Size,HealthStatus
-> ```
+> No se registran capacidades exactas de disco en este documento. Consultar: ```powershell Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free Get-PhysicalDisk | Select-Object FriendlyName,MediaType,Size,HealthStatus ```
 
-> ⚠️ **No aplica en Windows:** el contenedor Docker `open-webui` del equipo Linux
-> no está presente de serie en Windows (solo con Docker Desktop).
+> ⚠️ **No aplica en Windows:** el contenedor Docker `open-webui` del equipo Linux no está presente de serie en Windows (solo con Docker Desktop).
 
 ## 🌐 Red
 
@@ -137,14 +106,7 @@
 |---|---|---|
 | Consultar | — | Adaptadores `vEthernet` (WSL/Hyper-V) o VMware |
 
-> ⚠️ **No aplica en Windows:** las interfaces `docker0`, `vmnet1`/`vmnet8` con esos
-> nombres exactos no existen. En Windows aparecen como `vEthernet (WSL)`,
-> `vEthernet (Default Switch)` o adaptadores VMware. Consultar:
-> ```powershell
-> Get-NetAdapter | Select-Object Name,InterfaceDescription,Status,LinkSpeed
-> netsh wlan show interfaces
-> ipconfig /all
-> ```
+> ⚠️ **No aplica en Windows:** las interfaces `docker0`, `vmnet1`/`vmnet8` con esos nombres exactos no existen. En Windows aparecen como `vEthernet (WSL)`, `vEthernet (Default Switch)` o adaptadores VMware. Consultar: ```powershell Get-NetAdapter | Select-Object Name,InterfaceDescription,Status,LinkSpeed netsh wlan show interfaces ipconfig /all ```
 
 ## 🌡️ Sensores
 
@@ -153,20 +115,13 @@
 | GPU NVIDIA | Consultar con `nvidia-smi` |
 | CPU | Consultar (requiere herramienta externa) |
 
-> ⚠️ **No aplica en Windows:** no existe el comando `sensors` (LM-sensors).
-> La temperatura de la GPU se lee con `nvidia-smi`; la de CPU no está expuesta
-> de forma nativa y requiere herramientas externas (HWiNFO, OpenHardwareMonitor).
-> ```powershell
-> nvidia-smi --query-gpu=name,temperature.gpu,power.draw --format=csv
-> ```
+> ⚠️ **No aplica en Windows:** no existe el comando `sensors` (LM-sensors). La temperatura de la GPU se lee con `nvidia-smi`; la de CPU no está expuesta de forma nativa y requiere herramientas externas (HWiNFO, OpenHardwareMonitor). ```powershell nvidia-smi --query-gpu=name,temperature.gpu,power.draw --format=csv ```
 
 ---
 
 ## 🛠️ Cómo consultar el hardware
 
-> ✅ **Portado a Windows:** el `hardware-query.py` / función `hw_query` de Linux tiene su
-> equivalente en `scripts\hardware-query.ps1` (comando `hw_query` del perfil). Úsalo para el
-> resumen rápido; para el detalle completo usa los cmdlets de PowerShell equivalentes:
+> ✅ **Portado a Windows:** el `hardware-query.py` / función `hw_query` de Linux tiene su equivalente en `scripts\hardware-query.ps1` (comando `hw_query` del perfil). Úsalo para el resumen rápido; para el detalle completo usa los cmdlets de PowerShell equivalentes:
 
 | Comando | Descripción |
 |---|---|
@@ -180,6 +135,5 @@
 | `Get-NetAdapter` | Adaptadores de red |
 | `Get-CimInstance Win32_BaseBoard` / `Win32_BIOS` | Placa base y BIOS |
 
-> 📁 El índice `data\hardware\index.json` que existe en Linux **no se genera** en Windows;
-> el equivalente es el volcado de `scripts\sysinfo.ps1` (ver [09-informe-sistema.md](09-informe-sistema.md)).
+> 📁 El índice `data\hardware\index.json` que existe en Linux **no se genera** en Windows; el equivalente es el volcado de `scripts\sysinfo.ps1` (ver [09-informe-sistema.md](09-informe-sistema.md)).
 

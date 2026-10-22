@@ -156,6 +156,17 @@ Write-Output '🗂️  Vault de Obsidian (manuales → OpenCode-win):'
 $obsScript = Join-Path $scriptsDst 'sync-obsidian.ps1'
 if (Test-Path -LiteralPath $obsScript) {
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $obsScript -Quiet
+  if ($LASTEXITCODE -ne 0) {
+    Write-Output '   ❌ sync-obsidian.ps1 fallo al aplicar los manuales.'
+    exit 1
+  }
+  $obsCheck = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $obsScript -Check -Quiet 2>&1 | Out-String
+  if ($LASTEXITCODE -ne 0) {
+    Write-Output '   ❌ Desfase en Obsidian tras sincronizar -> backup abortado:'
+    Write-Output ('      ' + ($obsCheck.Trim() -replace "`r?`n", "`n      "))
+    exit 1
+  }
+  Write-Output '   ✅ Verificado: vault de Obsidian al dia (0 desfases)'
 } else {
   Write-Output '   ⏭️  Omitido (no existe): sync-obsidian.ps1'
 }

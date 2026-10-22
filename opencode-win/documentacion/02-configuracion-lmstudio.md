@@ -27,10 +27,7 @@
 
 ## Descripción general
 
-**LM Studio** es el servidor de inferencia **local** de la configuración de OpenCode en
-Windows. Proporciona el modelo `qwen3.8-9b` (Qwen 3.8, 9B, Q6_K) con 80K de contexto.
-Se ejecuta como servidor local en el puerto `1234` y se accede a través de un proxy
-Python en el puerto `4001`.
+**LM Studio** es el servidor de inferencia **local** de la configuración de OpenCode en Windows. Proporciona el modelo `qwen3.8-9b` (Qwen 3.8, 9B, Q6_K) con 80K de contexto. Se ejecuta como servidor local en el puerto `1234` y se accede a través de un proxy Python en el puerto `4001`.
 
 ### Arquitectura
 
@@ -42,8 +39,7 @@ OpenCode → http://localhost:4001/v1 (proxy) → http://localhost:1234/v1 (LM S
 - **Puerto Proxy (4001):** `lmstudio-proxy.py` — reenvía peticiones y mide tokens/s
 - **Provider en OpenCode:** `lmstudio/qwen3.8-9b` con baseURL `http://localhost:4001/v1`
 
-El modelo es de **razonamiento** ("thinking"): genera `reasoning_content` antes del
-contenido final. El tool calling funciona nativamente.
+El modelo es de **razonamiento** ("thinking"): genera `reasoning_content` antes del contenido final. El tool calling funciona nativamente.
 
 ---
 
@@ -59,8 +55,7 @@ Proxy HTTP entre OpenCode y LM Studio con **métricas de rendimiento**:
 2. Las reenvía a LM Studio (`127.0.0.1:1234`)
 3. Para respuestas **no streaming**, inyecta `stats.tokens_per_second` (y prompt/completion tokens, latencia)
 4. Para respuestas **streaming**, mide TTFT y tokens/s (con `usage` del último chunk si viene)
-5. Guarda un histórico en `C:\Users\evo01\.config\opencode\data\metrics.json`
-   (últimas 500 peticiones + media de tokens/s)
+5. Guarda un histórico en `C:\Users\evo01\.config\opencode\data\metrics.json` (últimas 500 peticiones + media de tokens/s)
 
 ### Características técnicas
 
@@ -72,10 +67,7 @@ Proxy HTTP entre OpenCode y LM Studio con **métricas de rendimiento**:
 | Timeout upstream | 600 s (generaciones largas) |
 | Variable de entorno | `PROXY_PORT`, `LMSTUDIO_UPSTREAM`, `METRICS_EXPORT_PATH`, `ENABLE_METRICS` |
 
-> ⚠️ **Diferencia con Linux:** el proxy de Linux hacía *cambio automático de modelo*
-> (descarga/carga vía `lms`). En Windows el proxy **no** hace eso: la
-> carga del modelo la gestiona `start-lmstudio.ps1`, que es más
-> robusto.
+> ⚠️ **Diferencia con Linux:** el proxy de Linux hacía *cambio automático de modelo* (descarga/carga vía `lms`). En Windows el proxy **no** hace eso: la carga del modelo la gestiona `start-lmstudio.ps1`, que es más robusto.
 
 ---
 
@@ -83,8 +75,7 @@ Proxy HTTP entre OpenCode y LM Studio con **métricas de rendimiento**:
 
 ### Archivo: `C:\Users\evo01\.config\opencode\start-lmstudio.ps1`
 
-Equivalente Windows de `start-lmstudio.sh` / `init-opencode.sh`. Es **portable**
-(autodetecta `lms.exe` y `python.exe`) e **idempotente** (no reinicia lo que ya está):
+Equivalente Windows de `start-lmstudio.sh` / `init-opencode.sh`. Es **portable** (autodetecta `lms.exe` y `python.exe`) e **idempotente** (no reinicia lo que ya está):
 
 | Paso | Qué hace |
 |------|----------|
@@ -105,8 +96,7 @@ powershell -ExecutionPolicy Bypass -File "C:\Users\evo01\.config\opencode\start-
 
 ## Lanzador de OpenCode
 
-En Windows no hay scripts `.sh` ni symlinks: los lanzadores son **funciones del perfil
-de PowerShell** (`C:\Users\evo01\OneDrive\Documentos\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`).
+En Windows no hay scripts `.sh` ni symlinks: los lanzadores son **funciones del perfil de PowerShell** (`C:\Users\evo01\OneDrive\Documentos\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`).
 
 | Comando | Qué hace |
 |---------|----------|
@@ -116,8 +106,7 @@ de PowerShell** (`C:\Users\evo01\OneDrive\Documentos\WindowsPowerShell\Microsoft
 | `ocv-status` | Muestra estado del servidor (1234), modelo en VRAM, proxy (4001) y servidor TTS (4210) |
 | `tts-server` | Gestiona el servidor TTS persistente (`status`/`start`/`stop`/`restart`) |
 
-`ocv` restaura la variable `OPENCODE_CONFIG` al salir, para no dejar la sesión "pegada"
-al perfil local.
+`ocv` restaura la variable `OPENCODE_CONFIG` al salir, para no dejar la sesión "pegada" al perfil local.
 
 > ⚠️ **No aplica en Windows:** `start-opencode-server.sh`, `start-opencode.sh` y el
 
@@ -129,8 +118,7 @@ al perfil local.
 
 ## Settings de LM Studio
 
-En Windows no se modifica `~/.lmstudio/settings.json` desde el instalador. El contexto
-se fija **explícitamente** en la carga:
+En Windows no se modifica `~/.lmstudio/settings.json` desde el instalador. El contexto se fija **explícitamente** en la carga:
 
 ```powershell
 lms load qwen3.8-9b --gpu max -c 80000 -y
@@ -146,8 +134,7 @@ lms load qwen3.8-9b --gpu max -c 80000 -y
 
 ## Variables de entorno
 
-No hay variables específicas de LM Studio: el proxy y el modelo se configuran en
-`opencode-local.json`:
+No hay variables específicas de LM Studio: el proxy y el modelo se configuran en `opencode-local.json`:
 
 ```json
 "lmstudio": {
@@ -176,8 +163,7 @@ No hay variables específicas de LM Studio: el proxy y el modelo se configuran e
 
 > ejecutar `ocv`** (función del perfil), no al iniciar sesión.
 
-Si se quiere automatizar (backup diario, verificación NVIDIA), el instalador soporta la
-creación de tareas en el **Programador de tareas** de Windows:
+Si se quiere automatizar (backup diario, verificación NVIDIA), el instalador soporta la creación de tareas en el **Programador de tareas** de Windows:
 
 ```powershell
 # Durante la instalación

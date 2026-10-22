@@ -293,6 +293,21 @@ foreach ($rel in $binFiles) {
     Write-Ok "Script: $rel"
   }
 }
+
+# Dependencias de los plugins locales de V2 (@opencode/plugin, solid-js, @opentui/*).
+# Sin ellas el plugin de voz y la barra lateral no cargan.
+$pkgFile = Join-Path $TargetConfig 'package.json'
+if (Test-Path -LiteralPath $pkgFile) {
+  Write-Host "  Instalando dependencias de plugins locales..." -ForegroundColor DarkGray
+  Push-Location $TargetConfig
+  try {
+    $out = (npm install --no-audit --no-fund 2>&1 | Out-String)
+    if ($LASTEXITCODE -eq 0) { Write-Ok "Dependencias de config instaladas." }
+    else { Write-Warn2 "npm install en la config fallo: $out" }
+  } finally {
+    Pop-Location
+  }
+}
 # Carpetas completas (voz + plugins TUI/CLI): scripts de voz, plugin de voz y
 # plugin de barra lateral MiMo (se auto-descubre desde plugins\<nombre>\tui.tsx)
 foreach ($rel in @("voice", "opencode-voice-modified", "plugins")) {

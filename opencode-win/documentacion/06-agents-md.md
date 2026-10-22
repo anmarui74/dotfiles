@@ -4,13 +4,9 @@
 |-----------|----------|------------|
 | 📜 Reglas del sistema | 10/09/2026 · rev. 18/10/2026 | Antonio |
 
-> Instrucciones del sistema que OpenCode carga al inicio de cada sesión.
-> Esta versión documenta el **equivalente en Windows** (PowerShell 5.1) del
-> setup original de Linux.
+> Instrucciones del sistema que OpenCode carga al inicio de cada sesión. Esta versión documenta el **equivalente en Windows** (PowerShell 5.1) del setup original de Linux.
 
-> ⚠️ **Nota Windows:** el sistema operativo es **Windows 10/11** y el shell es
-> **Windows PowerShell 5.1** (NO existe `pwsh`). No hay `zsh` ni `bash` nativos
-> (salvo Git Bash). Los comandos y rutas de este manual usan PowerShell.
+> ⚠️ **Nota Windows:** el sistema operativo es **Windows 10/11** y el shell es **Windows PowerShell 5.1** (NO existe `pwsh`). No hay `zsh` ni `bash` nativos (salvo Git Bash). Los comandos y rutas de este manual usan PowerShell.
 
 ---
 
@@ -112,10 +108,7 @@ Config\opencode-win\
 
 El AGENTS.md documenta esta estructura y exige mantener la raíz limpia.
 
-> ⚠️ **Nota Windows:** en Linux la copia de seguridad era `~/Config/opencode/`
-> con scripts `.sh` y un tarball `opencode-backup-*.tar.gz`. En Windows la copia
-> vive en `D:\Linux\Config\opencode-win\` y el instalador es un script
-> **PowerShell** (`instalar-opencode-win.ps1`).
+> ⚠️ **Nota Windows:** en Linux la copia de seguridad era `~/Config/opencode/` con scripts `.sh` y un tarball `opencode-backup-*.tar.gz`. En Windows la copia vive en `D:\Linux\Config\opencode-win\` y el instalador es un script **PowerShell** (`instalar-opencode-win.ps1`).
 
 ---
 
@@ -160,9 +153,7 @@ Razón: OpenCode a veces cambia al inglés espontáneamente. Esta regla **fuerza
 
 Es un concepto importante. Cuando el TTS lee el texto en voz alta, los emojis como ✈️ serían leídos como "avión" o "icono de avión". El **locucionero** es un filtro que elimina los emojis ANTES de pasar el texto al TTS, permitiendo que el asistente use emojis en pantalla sin que la voz los lea.
 
-> ⚠️ **No aplica en Windows:** el locucionero original (script `speak` con
-> `edge-tts`) es una utilidad de Linux. En Windows, si se usa TTS, el filtro de
-> emojis debe implementarse aparte; no forma parte del setup actual.
+> ⚠️ **No aplica en Windows:** el locucionero original (script `speak` con `edge-tts`) es una utilidad de Linux. En Windows, si se usa TTS, el filtro de emojis debe implementarse aparte; no forma parte del setup actual.
 
 #### Formato de fecha y hora
 
@@ -178,9 +169,7 @@ Es un concepto importante. Cuando el TTS lee el texto en voz alta, los emojis co
 
 #### Formato de manuales y README (líneas 22-71) — añadido 07/09/2026
 
-El AGENTS.md incluye una sección **`📄 Formato de manuales y README (OBLIGATORIO)`** que
-estandariza cómo se escriben TODOS los documentos Markdown de configuración
-(manuales en `D:\Linux\Config\opencode-win\documentacion\`, README, notas).
+El AGENTS.md incluye una sección **`📄 Formato de manuales y README (OBLIGATORIO)`** que estandariza cómo se escriben TODOS los documentos Markdown de configuración (manuales en `D:\Linux\Config\opencode-win\documentacion\`, README, notas).
 
 Plantilla de estructura:
 
@@ -247,10 +236,7 @@ NO ejecutes comandos de detección (inxi, lspci, dmidecode, etc.)
 
 Razón: Ejecutar comandos de hardware es lento y consume recursos. El archivo `index.json` ya contiene **toda** la información del sistema, generada una sola vez. Contiene múltiples secciones con datos de CPU, RAM, GPU, discos, monitores, audio, USB, sensores, red, etc.
 
-> ⚠️ **No aplica en Windows:** el helper `hardware-query.sh` (`source ... &&
-> hw_query <campo>`) es un script **Bash** de Linux y no está disponible en
-> PowerShell. En Windows lee directamente el JSON con `Get-Content` o
-> `ConvertFrom-Json`:
+> ⚠️ **No aplica en Windows:** el helper `hardware-query.sh` (`source ... && hw_query <campo>`) es un script **Bash** de Linux y no está disponible en PowerShell. En Windows lee directamente el JSON con `Get-Content` o `ConvertFrom-Json`:
 
 ```powershell
 Get-Content "C:\Users\evo01\.config\opencode\data\hardware\index.json" -Raw | ConvertFrom-Json
@@ -280,10 +266,7 @@ Ejemplo de lo que SÍ debe hacer:
 - Ejemplo: lanzar PowerShell "Ejecutar como administrador" antes del comando
 ```
 
-> ⚠️ **Nota Windows:** no existen `sudo` ni `pkexec`. En Windows la elevación se
-> hace mediante **UAC** ("Ejecutar como administrador"). Cuando el agente necesite
-> privilegios, debe lanzar el proceso con `Start-Process -Verb RunAs` (aparecerá
-> la ventana de UAC para que Antonio acepte).
+> ⚠️ **Nota Windows:** no existen `sudo` ni `pkexec`. En Windows la elevación se hace mediante **UAC** ("Ejecutar como administrador"). Cuando el agente necesite privilegios, debe lanzar el proceso con `Start-Process -Verb RunAs` (aparecerá la ventana de UAC para que Antonio acepte).
 
 ```powershell
 Start-Process powershell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File C:\ruta\script.ps1"
@@ -313,11 +296,7 @@ D:\Linux\Config\opencode-win\      ↑ Copia de seguridad (para reinstalar desde
 4. Ejecuta el backup/sincronización correspondiente
 ```
 
-> ⚠️ **No aplica en Windows:** el flujo original usaba `backup-opencode.sh`,
-> `bootstrap-ocv.sh` y `restore.sh` (Bash + tarball `.tar.gz`). En Windows el
-> instalador es `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1` y la
-> sincronización/empaquetado se hace con cmdlets de PowerShell
-> (`Copy-Item`, `Compress-Archive`).
+> ⚠️ **No aplica en Windows:** el flujo original usaba `backup-opencode.sh`, `bootstrap-ocv.sh` y `restore.sh` (Bash + tarball `.tar.gz`). En Windows el instalador es `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1` y la sincronización/empaquetado se hace con cmdlets de PowerShell (`Copy-Item`, `Compress-Archive`).
 
 ### Atención al instalador (líneas 208-259) — IMPORTANTE
 
@@ -329,8 +308,7 @@ El instalador `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1` es el **i
 - Antes de un backup, hay que **revisar** que el instalador incluya TODOS los archivos actuales
 - El instalador coloca la configuración en `C:\Users\evo01\.config\opencode\`
 
-> ⚠️ **No aplica en Windows:** el `setup-opencode-completo.sh` con heredocs
-> embebidos es específico de Linux. En Windows se usa el instalador `.ps1`.
+> ⚠️ **No aplica en Windows:** el `setup-opencode-completo.sh` con heredocs embebidos es específico de Linux. En Windows se usa el instalador `.ps1`.
 
 ---
 
@@ -338,8 +316,7 @@ El instalador `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1` es el **i
 
 ### Variables de entorno (líneas 260-265)
 
-El `.env` contiene credenciales y rutas sensibles. En Windows se puede cargar en
-la sesión actual con `$env:VAR` o definirse como variables de entorno de usuario.
+El `.env` contiene credenciales y rutas sensibles. En Windows se puede cargar en la sesión actual con `$env:VAR` o definirse como variables de entorno de usuario.
 
 ```powershell
 # Cargar el .env en la sesión actual (equivalente a "set -a; source .env; set +a")
@@ -353,9 +330,7 @@ Get-Content "C:\Users\evo01\.config\opencode\.env" | ForEach-Object {
 $env:MEMORY_FILE_PATH
 ```
 
-> ⚠️ **Nota Windows:** no existe `set -a; source .env; set +a`. Usa variables de
-> entorno de usuario (panel de sistema o `[Environment]::SetEnvironmentVariable`)
-> o cárgalas en la sesión como se muestra arriba.
+> ⚠️ **Nota Windows:** no existe `set -a; source .env; set +a`. Usa variables de entorno de usuario (panel de sistema o `[Environment]::SetEnvironmentVariable`) o cárgalas en la sesión como se muestra arriba.
 
 ### Inicialización tras reinicio (líneas 266-279)
 
@@ -370,9 +345,7 @@ Verifica:
 4. **PWAs** (si aplica)
 5. **Variables de entorno** (.env)
 
-> ⚠️ **No aplica en Windows:** el script `init-opencode.sh` es de Linux. En
-> Windows el arranque/chequeo se hace con las funciones del perfil de PowerShell
-> (`ocv` arranca LM Studio + proxy + OpenCode; `ocv-status` muestra el estado).
+> ⚠️ **No aplica en Windows:** el script `init-opencode.sh` es de Linux. En Windows el arranque/chequeo se hace con las funciones del perfil de PowerShell (`ocv` arranca LM Studio + proxy + OpenCode; `ocv-status` muestra el estado).
 
 ### Backup del grafo de memoria (líneas 280-296)
 
@@ -390,9 +363,7 @@ El grafo se respalda copiando el archivo activo a la carpeta de backups:
 
 El grafo activo vive en `C:\Users\evo01\.config\opencode\data\memory\memory.jsonl`.
 
-> ⚠️ **Nota Windows:** no hay `systemd` ni tarballs automáticos. La copia
-> periódica se programa con el **Programador de tareas** de Windows, que ejecuta
-> un script PowerShell de backup.
+> ⚠️ **Nota Windows:** no hay `systemd` ni tarballs automáticos. La copia periódica se programa con el **Programador de tareas** de Windows, que ejecuta un script PowerShell de backup.
 
 ### Recuperación del grafo (líneas 298-314)
 
@@ -412,9 +383,7 @@ Alternativa: reinstalar/restaurar con `D:\Linux\Config\opencode-win\instalar-ope
 
 ### Recordatorio MCP memory (líneas 310-320) — IMPORTANTE
 
-Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observación**
-del array DEBE incluir el campo `entityName` junto a `contents`. Si falta `entityName`,
-el MCP devuelve error `-32602` (Input validation error). Formato correcto:
+Al usar `memory_add_observations` o `memory_delete_observations`, **CADA observación** del array DEBE incluir el campo `entityName` junto a `contents`. Si falta `entityName`, el MCP devuelve error `-32602` (Input validation error). Formato correcto:
 
 ```json
 {"observations": [
@@ -422,18 +391,13 @@ el MCP devuelve error `-32602` (Input validation error). Formato correcto:
 ]}
 ```
 
-> 📍 Este recordatorio se añadió el **10/08/2026** porque el asistente repetía el error
-> de omitir `entityName` al usar las herramientas de memoria. Mismo formato para
-> `memory_create_relations` (cada relación necesita `from`, `to`, `relationType`).
+> 📍 Este recordatorio se añadió el **10/08/2026** porque el asistente repetía el error de omitir `entityName` al usar las herramientas de memoria. Mismo formato para `memory_create_relations` (cada relación necesita `from`, `to`, `relationType`).
 
 ### Timeline completo (líneas 321-335)
 
-La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado;
-el PR #26861 que lo arregla sigue abierto, sin mergear).
+La TUI de OpenCode (Ctrl+X G) solo muestra las últimas ~6 peticiones (límite hardcodeado; el PR #26861 que lo arregla sigue abierto, sin mergear).
 
-> ⚠️ **No aplica en Windows:** el script `timeline-completo` es una utilidad **Bash**
-> de Linux y no está instalado en Windows. Como no hay `sqlite3` en el PATH, usa el
-> **módulo `sqlite3` de Python** contra la base de datos de sesiones:
+> ⚠️ **No aplica en Windows:** el script `timeline-completo` es una utilidad **Bash** de Linux y no está instalado en Windows. Como no hay `sqlite3` en el PATH, usa el **módulo `sqlite3` de Python** contra la base de datos de sesiones:
 
 ```powershell
 python -c "import sqlite3; c=sqlite3.connect(r'C:\Users\evo01\.local\share\opencode\opencode.db'); print(c.execute('SELECT name FROM sqlite_master WHERE type=\"table\"').fetchall())"
@@ -443,9 +407,7 @@ python -c "import sqlite3; c=sqlite3.connect(r'C:\Users\evo01\.local\share\openc
 
 El PR #26861 de OpenCode corrige el límite del timeline. Si se mergea, avisa para retirar `timeline-completo`.
 
-> ⚠️ **No aplica en Windows:** el script `check-timeline-fix.sh` y su timer
-> `systemd` son de Linux. En Windows, si se desea, se programa una comprobación
-> equivalente con el **Programador de tareas**.
+> ⚠️ **No aplica en Windows:** el script `check-timeline-fix.sh` y su timer `systemd` son de Linux. En Windows, si se desea, se programa una comprobación equivalente con el **Programador de tareas**.
 
 ### Directorios de datos (líneas 344-354)
 
@@ -464,15 +426,11 @@ Esta sección está pensada principalmente para cuando se usa **DeepSeek** u otr
 
 ### PWAs - Abrir (líneas 355-359)
 
-> ⚠️ **No aplica en Windows:** las PWAs del setup de Linux se lanzaban desde
-> archivos `.desktop` (`chrome-<app-id>-Profile_2.desktop`) en el Escritorio. En
-> Windows Chrome instala las PWAs como accesos directos `.lnk`, no `.desktop`.
+> ⚠️ **No aplica en Windows:** las PWAs del setup de Linux se lanzaban desde archivos `.desktop` (`chrome-<app-id>-Profile_2.desktop`) en el Escritorio. En Windows Chrome instala las PWAs como accesos directos `.lnk`, no `.desktop`.
 
 ### PWAs - Cerrar (líneas 360-363)
 
-> ⚠️ **No aplica en Windows:** el cierre por puerto de depuración se mantiene
-> conceptualmente, pero el comando `pkill` es de Linux. En Windows se cierran con
-> `Stop-Process`:
+> ⚠️ **No aplica en Windows:** el cierre por puerto de depuración se mantiene conceptualmente, pero el comando `pkill` es de Linux. En Windows se cierran con `Stop-Process`:
 
 ```powershell
 # Cerrar una PWA específica vía DevTools Protocol
@@ -495,8 +453,7 @@ Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" `
 
 Lanza Chrome en modo depuración con un perfil temporal, necesario para controlar PWAs remotamente.
 
-> ⚠️ **Nota Windows:** no hay `nohup` ni `/tmp`; se usa `Start-Process` y la
-> variable `$env:TEMP`.
+> ⚠️ **Nota Windows:** no hay `nohup` ni `/tmp`; se usa `Start-Process` y la variable `$env:TEMP`.
 
 ### Carga automática al abrir opencode/ocv (líneas 367-382)
 
@@ -510,9 +467,7 @@ La carga ocurre solo al abrir `ocv`/`opencode` (no hay servicio que cargue el mo
 
 > 📍 **Perfil cloud:** `ocv-cloud` NO carga el modelo local en VRAM.
 
-> ⚠️ **No aplica en Windows:** el lanzador `start-opencode-server.sh` es de Linux.
-> En Windows el arranque lo hace la función **`ocv`** del perfil de PowerShell
-> (`C:\Users\evo01\OneDrive\Documentos\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`).
+> ⚠️ **No aplica en Windows:** el lanzador `start-opencode-server.sh` es de Linux. En Windows el arranque lo hace la función **`ocv`** del perfil de PowerShell (`C:\Users\evo01\OneDrive\Documentos\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`).
 
 ### Perfiles por lanzador (líneas 383-398)
 
@@ -528,8 +483,7 @@ Cada comando del perfil de PowerShell cumple una función distinta:
 
 En cloud: agente local desactivado (`agents.local.disabled`) y providers `lmstudio`/`local` bloqueados (`experimental.policies`).
 
-> ⚠️ **Nota Windows:** las funciones disponibles son `ocv` (global), `ocv-local` (local
-> con MCPs esenciales), `ocv-cloud` (cloud estricto), `ocv-status` y `tts-server`.
+> ⚠️ **Nota Windows:** las funciones disponibles son `ocv` (global), `ocv-local` (local con MCPs esenciales), `ocv-cloud` (cloud estricto), `ocv-status` y `tts-server`.
 
 ### Iniciar LM Studio manualmente (líneas 431-436)
 
@@ -541,8 +495,7 @@ ocv
 & "C:\Users\evo01\.lmstudio\bin\lms.exe" server start
 ```
 
-> ⚠️ **No aplica en Windows:** los scripts `start-lmstudio.sh` y
-> `start-lmstudio-server.sh` son de Linux.
+> ⚠️ **No aplica en Windows:** los scripts `start-lmstudio.sh` y `start-lmstudio-server.sh` son de Linux.
 
 ### Liberar VRAM (líneas 437-442)
 
@@ -556,25 +509,19 @@ Si el modelo se satura, usar:
 
 #### En la TUI — barra lateral MiMo
 
-Plugin TUI propio (`plugins\antonio.sidebar-mimo\tui.tsx`, auto-descubierto por V2). En la barra
-lateral muestra el bloque **Context** (tokens usados, % del límite, límite del modelo, **t/s** y
-coste), el directorio de trabajo y los ficheros de instrucciones. Funciona para TODOS los
-providers (local, NVIDIA y cloud) porque engancha los eventos de mensaje de OpenCode.
+Plugin TUI propio (`plugins\antonio.sidebar-mimo\tui.tsx`, auto-descubierto por V2). En la barra lateral muestra el bloque **Context** (tokens usados, % del límite, límite del modelo, **t/s** y coste), el directorio de trabajo y los ficheros de instrucciones. Funciona para TODOS los providers (local, NVIDIA y cloud) porque engancha los eventos de mensaje de OpenCode.
 
-> ⚠️ El antiguo plugin npm `opencode-throughput` ya **no está instalado**; su función la cubren
-> la barra MiMo y el proxy (puerto 4001).
+> ⚠️ El antiguo plugin npm `opencode-throughput` ya **no está instalado**; su función la cubren la barra MiMo y el proxy (puerto 4001).
 
 #### Proxy local (puerto 4001)
 
-El proxy `lmstudio-proxy.py` (versión con métricas, 05/09/2026) reenvía a LM
-Studio y además:
+El proxy `lmstudio-proxy.py` (versión con métricas, 05/09/2026) reenvía a LM Studio y además:
 - Registra métricas por request en `data\metrics.json` (`METRICS_EXPORT_PATH`).
 - Inyecta `stats.tokens_per_second` en respuestas no-streaming.
 
 #### Dashboard web (puerto 4200)
 
-`lmstudio-metrics-server.py` sirve en `http://localhost:4200` el histórico de
-velocidad, tokens y peticiones del proxy local. Datos crudos en `/api/metrics`.
+`lmstudio-metrics-server.py` sirve en `http://localhost:4200` el histórico de velocidad, tokens y peticiones del proxy local. Datos crudos en `/api/metrics`.
 
 Método rápido por terminal:
 
@@ -587,8 +534,7 @@ $r = Invoke-RestMethod -Uri "http://localhost:4001/v1/chat/completions" -Method 
 "Velocidad: $($r.stats.tokens_per_second) tok/s"
 ```
 
-> ⚠️ **Nota Windows:** `python3` no existe; el intérprete es
-> `C:\Python314\python.exe` (invocable como `python`).
+> ⚠️ **Nota Windows:** `python3` no existe; el intérprete es `C:\Python314\python.exe` (invocable como `python`).
 
 ---
 
@@ -630,16 +576,11 @@ Es una **auto-verificación** que el asistente debe repasar mentalmente antes de
 Si quieres modificar AGENTS.md en Windows:
 
 1. Edita `C:\Users\evo01\.config\opencode\AGENTS.md` (el activo: es el único que se toca a mano).
-2. **Sincroniza** con `scripts\sync-opencode.ps1` (o con el backup completo, que lo llama). Deja el fichero
-   en los **dos** destinos del esquema: `config\AGENTS.md` (el desplegable, el que usa el instalador) y
-   `AGENTS.md` en la raíz (espejo plano, lo exige `check-setup-completo.ps1`). **Ya no hay que copiar a mano.**
-3. **Actualiza**, si el cambio afecta a la instalación, `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1`
-   (despliega desde `config\`).
-4. **Regenera** la copia de seguridad con `scripts\backup-opencode.ps1`: verifica el setup, sincroniza,
-   rehace los dotfiles sin claves, refresca el vault y publica en `F:`.
+2. **Sincroniza** con `scripts\sync-opencode.ps1` (o con el backup completo, que lo llama). Deja el fichero en los **dos** destinos del esquema: `config\AGENTS.md` (el desplegable, el que usa el instalador) y `AGENTS.md` en la raíz (espejo plano, lo exige `check-setup-completo.ps1`). **Ya no hay que copiar a mano.**
+3. **Actualiza**, si el cambio afecta a la instalación, `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1` (despliega desde `config\`).
+4. **Regenera** la copia de seguridad con `scripts\backup-opencode.ps1`: verifica el setup, sincroniza, rehace los dotfiles sin claves, refresca el vault y publica en `F:`.
 
-> ⚠️ **No aplica en Windows:** el paso original "regenerar backup con
-> `bash ~/Config/opencode/backup-opencode.sh`" es de Linux.
+> ⚠️ **No aplica en Windows:** el paso original "regenerar backup con `bash ~/Config/opencode/backup-opencode.sh`" es de Linux.
 
 ### Notas sobre el "locucionero"
 
@@ -648,14 +589,9 @@ El término aparece en la línea 14:
 
 Es una **nota para Antonio** (no para el asistente). Le indica que puede usar emojis con libertad porque el sistema de voz los filtra automáticamente.
 
-> ⚠️ **No aplica en Windows:** el "locucionero" es el script `speak`
-> (`~/.local/bin/speak`, Bash + `edge-tts`) del setup de Linux; no existe en
-> Windows.
+> ⚠️ **No aplica en Windows:** el "locucionero" es el script `speak` (`~/.local/bin/speak`, Bash + `edge-tts`) del setup de Linux; no existe en Windows.
 
 ---
 
-> 📁 Activo: `C:\Users\evo01\.config\opencode\AGENTS.md` ·
-> Copia desplegable: `D:\Linux\Config\opencode-win\config\AGENTS.md` ·
-> Copia (espejo plano): `D:\Linux\Config\opencode-win\AGENTS.md` ·
-> Manual: `D:\Linux\Config\opencode-win\documentacion\06-agents-md.md`
+> 📁 Activo: `C:\Users\evo01\.config\opencode\AGENTS.md` · Copia desplegable: `D:\Linux\Config\opencode-win\config\AGENTS.md` · Copia (espejo plano): `D:\Linux\Config\opencode-win\AGENTS.md` · Manual: `D:\Linux\Config\opencode-win\documentacion\06-agents-md.md`
 

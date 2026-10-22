@@ -302,8 +302,7 @@ function ocv {
 - Se cambia de agente primario con **Shift+Tab** (V2); `Ctrl+X` → `A` abre la lista.
 - El `system` de `build`/`plan` apunta a `prompts/read-agents.txt`.
 
-> 💡 **Nota V2:** el `model` de un agente primario no cambia el modelo de la sesión al
-> seleccionarlo (la sesión guarda el suyo); sí se aplica cuando se usa como subagente.
+> 💡 **Nota V2:** el `model` de un agente primario no cambia el modelo de la sesión al seleccionarlo (la sesión guarda el suyo); sí se aplica cuando se usa como subagente.
 
 ---
 
@@ -382,7 +381,7 @@ Configurados bajo `mcp.servers` (sintaxis V2). En Windows hay **5 MCPs**:
 
 ## LSP
 
-> ✅ **OpenCode V2 2.0.32 sí ejecuta servidores LSP** a través del bloque `lsp` de la configuración.
+> ✅ **OpenCode V2 2.1.2 sí ejecuta servidores LSP** a través del bloque `lsp` de la configuración.
 
 Los tres perfiles (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json`) declaran **11 servidores LSP** lanzados con `npx -y` (bajo demanda, sin instalación global):
 
@@ -402,8 +401,7 @@ Los tres perfiles (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json
 
 > ⚠️ El servidor Python es **`basedpyright`** (paquete npm real). El nombre `@basedpyright/language-server` **no existe** y devuelve error 404 en npm.
 
-> 🧪 Verificados: `basedpyright 1.40.1` y `typescript-language-server 6.0.0` arrancan correctamente.
-> Los LSP corren en segundo plano y **no aparecen** en la barra lateral MiMo; se activan al abrir archivos de la extensión correspondiente.
+> 🧪 Verificados: `basedpyright 1.40.1` y `typescript-language-server 6.0.0` arrancan correctamente. Los LSP corren en segundo plano y **no aparecen** en la barra lateral MiMo; se activan al abrir archivos de la extensión correspondiente.
 
 ---
 
@@ -414,16 +412,26 @@ Los tres perfiles (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json
 ```json
 {
   "dependencies": {
-    "@opencode-ai/plugin": "^1.18.32"
+    "@opencode/plugin": "^2.1.2",
+    "@opencode/theme": "^2.1.2",
+    "@opentui/core": "^0.6.6",
+    "@opentui/solid": "^0.6.6",
+    "solid-js": "^1.9.17"
   }
 }
 ```
 
 | Paquete | Versión | Propósito |
 |---------|---------|-----------|
-| `@opencode-ai/plugin` | `^1.18.32` | SDK para desarrollar plugins de OpenCode |
+| `@opencode/plugin` | `^2.1.2` | SDK de plugins V2 (servidor y TUI) |
+| `@opencode/theme` | `^2.1.2` | Tokens de tema para plugins TUI |
+| `@opentui/core` | `^0.6.6` | Renderer OpenTUI (peer de TUI) |
+| `@opentui/solid` | `^0.6.6` | Bindings Solid para OpenTUI |
+| `solid-js` | `^1.9.17` | Reactividad de la UI de plugins TUI |
 
-> 📍 Solo contiene el SDK de plugins. Los SDK de AI los resuelve el binario de OpenCode y los plugins TUI/CLI se registran en `cli.json` (V2).
+> ⚠️ **Imprescindible para la voz y la barra lateral.** `opencode-voice-modified/tui.js` y `plugins\antonio.sidebar-mimo\tui.tsx` importan `@opencode/plugin/tui`; si faltan estas dependencias el plugin no carga (falla en silencio) y la voz deja de funcionar. El instalador ejecuta `npm install` en la carpeta de config para restaurarlas.
+
+> 📍 `@opencode-ai/plugin` (V1) queda como resto y no lo usa ningún plugin; se puede desinstalar cuando npm lo permita sin conflictos de peers.
 
 ---
 

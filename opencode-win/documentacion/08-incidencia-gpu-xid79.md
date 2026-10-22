@@ -5,9 +5,7 @@ Registro del fallo de la GPU NVIDIA RTX 4070 Ti SUPER (caída del bus PCIe, Xid 
 |-----------|----------|------------|
 | 🔴 Incidencia · pendiente revisión de hardware | 22/09/2026 · rev. 10/10/2026 | Antonio |
 
-> El evento **Xid 79** se detectó el **22/09/2026** arrancando **Linux** (el equipo se
-> quedó bloqueado). Como es un fallo de **hardware compartido** (equipo dual boot), este
-> manual documenta qué es, cómo se detecta **desde Windows** y qué medidas aplicar.
+> El evento **Xid 79** se detectó el **22/09/2026** arrancando **Linux** (el equipo se quedó bloqueado). Como es un fallo de **hardware compartido** (equipo dual boot), este manual documenta qué es, cómo se detecta **desde Windows** y qué medidas aplicar.
 
 ---
 
@@ -24,10 +22,7 @@ Registro del fallo de la GPU NVIDIA RTX 4070 Ti SUPER (caída del bus PCIe, Xid 
 
 ## Qué es el Xid 79
 
-`Xid 79` = **«GPU has fallen off the bus»**: la GPU deja de responder en el bus PCIe y el
-driver no puede recuperarla. Es un error de **nivel de bus / hardware / firmware**, no del
-software de usuario (aunque la primera señal suele ser que se caen las aplicaciones que usan
-la GPU: LM Studio, el TTS con CUDA, el escritorio…).
+`Xid 79` = **«GPU has fallen off the bus»**: la GPU deja de responder en el bus PCIe y el driver no puede recuperarla. Es un error de **nivel de bus / hardware / firmware**, no del software de usuario (aunque la primera señal suele ser que se caen las aplicaciones que usan la GPU: LM Studio, el TTS con CUDA, el escritorio…).
 
 En Linux el kernel lo registra así:
 
@@ -36,16 +31,13 @@ NVRM: Xid (PCI:0000:01:00): 79, pid=5344, name=gnome-shell, GPU has fallen off t
 NVRM: GPU 0000:01:00.0: GPU has fallen off the bus.
 ```
 
-En **Windows** el mismo fallo lo registra el driver NVIDIA (`nvlddmkm`) en el Visor de
-eventos y suele provocar un **TDR** (Time-out Detection and Recovery) o la pérdida de la
-señal de vídeo.
+En **Windows** el mismo fallo lo registra el driver NVIDIA (`nvlddmkm`) en el Visor de eventos y suele provocar un **TDR** (Time-out Detection and Recovery) o la pérdida de la señal de vídeo.
 
 ---
 
 ## El incidente del 22/09/2026
 
-El equipo (mismo hardware que se usa en Windows) se bloqueó a las **06:20:52** mientras se
-ejecutaba una auditoría **de solo lectura**:
+El equipo (mismo hardware que se usa en Windows) se bloqueó a las **06:20:52** mientras se ejecutaba una auditoría **de solo lectura**:
 
 | Hora | Evento |
 |------|--------|
@@ -57,8 +49,7 @@ ejecutaba una auditoría **de solo lectura**:
 | 06:21:59 | 🔄 Reinicio manual · sistema operativo de nuevo |
 | 06:22:00+ | ✅ Sistema y GPU funcionando con normalidad |
 
-> 📌 En Windows el síntoma equivalente sería: **pantalla negra / señal perdida**, TDR
-> repetido o cuelgue del escritorio, con eventos `nvlddmkm` en el Visor de eventos.
+> 📌 En Windows el síntoma equivalente sería: **pantalla negra / señal perdida**, TDR repetido o cuelgue del escritorio, con eventos `nvlddmkm` en el Visor de eventos.
 
 Causas probables, por orden de frecuencia:
 
@@ -99,8 +90,7 @@ nvidia-smi --query-gpu=name,temperature.gpu,power.draw,clocks.sm,pcie.link.gen.c
 
 ## Causa raíz
 
-**Xid 79 = error de bus PCIe / hardware / firmware.** La GPU deja de responder y el driver
-no la recupera (en Windows solo consigue recuperarla un reinicio).
+**Xid 79 = error de bus PCIe / hardware / firmware.** La GPU deja de responder y el driver no la recupera (en Windows solo consigue recuperarla un reinicio).
 
 | Dato | Valor |
 |------|-------|
@@ -111,8 +101,7 @@ no la recupera (en Windows solo consigue recuperarla un reinicio).
 | Episodio previo | 16/09/2026 (Linux, causa no confirmada) |
 | Carga en el fallo | LM Studio (11,4 GB VRAM) + TTS ONNX CUDA + escritorio |
 
-> ✅ Se verificó que **no** fue la auditoría (solo lectura), ni OOM (61 GB de RAM con 7 GB
-> usados), ni I/O de disco: Xid 79 es un fallo de bus.
+> ✅ Se verificó que **no** fue la auditoría (solo lectura), ni OOM (61 GB de RAM con 7 GB usados), ni I/O de disco: Xid 79 es un fallo de bus.
 
 ---
 
@@ -154,9 +143,7 @@ Get-WinEvent -LogName System |
   Select-Object TimeCreated, ProviderName, Id, Message
 ```
 
-> 💡 En un equipo dual boot conviene comprobar **también** el log del lado Linux
-> (`journalctl -b -1 -k | grep -iE 'Xid|NVRM'`) para correlacionar: si el Xid aparece en
-> ambos sistemas, es hardware con casi total seguridad.
+> 💡 En un equipo dual boot conviene comprobar **también** el log del lado Linux (`journalctl -b -1 -k | grep -iE 'Xid|NVRM'`) para correlacionar: si el Xid aparece en ambos sistemas, es hardware con casi total seguridad.
 
 ---
 
@@ -171,6 +158,4 @@ Get-WinEvent -LogName System |
 
 ---
 
-> 📁 Este manual vive en `D:\Linux\Config\opencode-win\documentacion\08-incidencia-gpu-xid79.md` (backup)
-> y se publica en Obsidian como `💻 Windows 08 Incidencia GPU Xid 79.md`.
-> 📊 Hardware del equipo: [hardware-info.md](hardware-info.md) · 🔗 Herramientas: [README-hardware.md](README-hardware.md)
+> 📁 Este manual vive en `D:\Linux\Config\opencode-win\documentacion\08-incidencia-gpu-xid79.md` (backup) y se publica en Obsidian como `💻 Windows 08 Incidencia GPU Xid 79.md`. 📊 Hardware del equipo: [hardware-info.md](hardware-info.md) · 🔗 Herramientas: [README-hardware.md](README-hardware.md)

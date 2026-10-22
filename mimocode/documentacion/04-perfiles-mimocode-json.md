@@ -67,7 +67,6 @@ Perfil por defecto para `mimo`. Incluye `model` principal, `model_groups.lite` (
 ```
 
 > ⚠️ **`small_model` NO se usa en MiMoCode**: no está definido en ninguno de los 3 perfiles. El modelo barato se fija con `model_groups.lite` (`opencode-go/mimo-v2.6-flash` en global y cloud; `lmstudio/models-qwen3.8-9b` en local — **regla de Antonio 09/10/2026**: en el perfil local la delegación barata se queda EN LOCAL).
->
 > ⚠️ El `model` top-level del global sigue en `nvidia/meta/muse-glimmer-30b`, pero el **agente** `nvidia` —que es el `default_agent`— apunta desde el 23/09/2026 a `nvidia/nvidia/nemotron-3-ultra-550b-a55b`. El top-level no lo usa ningún agente.
 
 ---
@@ -90,13 +89,7 @@ Replica `opencode-cloud.json`. Desactiva el proveedor local (`disabled_providers
 
 > 🔴 **El agente `local` va con `disable: true`** (22/09/2026), replicando el `disabled: true` de `opencode-cloud.json`. Es coherente con `disabled_providers: ["lmstudio"]`: no habría modelo local que usar. El agente `title` también apunta a la nube (`opencode-go/deepseek-v4.1-flash`).
 
-> 🤖 **Modelo de trabajo de `opencode-go` = `opencode-go/mimo-v2.6-flash` (09/10/2026):**
-> - `MiMo-V2.6-Flash` es ahora el modelo de los agentes **`build`** y **`cloud`** en los 3 perfiles,
->   del **`model` raíz del perfil cloud** y de **`model_groups.lite`** en global y cloud.
-> - Historial: `deepseek-v4-flash` → `deepseek-v4.1-flash` (11/09/2026) → `mimo-v2.6-flash` en
->   `build`/`cloud`/`lite` (09/10/2026). `plan` y `title` **siguen** en `deepseek-v4.1-flash`.
-> - `provider.opencode-go` no admite un campo de "modelo por defecto" en el esquema, así que el
->   predeterminado se fija en las claves `model` / `model_groups` / `agent.<nombre>.model`.
+> 🤖 **Modelo de trabajo de `opencode-go` = `opencode-go/mimo-v2.6-flash` (09/10/2026):** - `MiMo-V2.6-Flash` es ahora el modelo de los agentes **`build`** y **`cloud`** en los 3 perfiles, del **`model` raíz del perfil cloud** y de **`model_groups.lite`** en global y cloud. - Historial: `deepseek-v4-flash` → `deepseek-v4.1-flash` (11/09/2026) → `mimo-v2.6-flash` en `build`/`cloud`/`lite` (09/10/2026). `plan` y `title` **siguen** en `deepseek-v4.1-flash`. - `provider.opencode-go` no admite un campo de "modelo por defecto" en el esquema, así que el predeterminado se fija en las claves `model` / `model_groups` / `agent.<nombre>.model`.
 
 ---
 
@@ -120,16 +113,13 @@ Los plugins TUI y los keybinds van en el archivo TUI separado `tui.json` (NO en 
 }
 ```
 
-> ⚠️ La entrada del plugin es una **ruta simple**, no un par `[ruta, opciones]`: desde v0.6.0
-> (11/09/2026) no se le pasa `endpoint` ni `model`. Es un fichero único, sin variante por perfil.
+> ⚠️ La entrada del plugin es una **ruta simple**, no un par `[ruta, opciones]`: desde v0.6.0 (11/09/2026) no se le pasa `endpoint` ni `model`. Es un fichero único, sin variante por perfil.
 
 ---
 
 ## Agentes
 
-Los **8 agentes** están replicados en los 3 perfiles a partir de la configuración **activa** de OpenCode
-(`~/.config/opencode/opencode.json`, `opencode-local.json` y `opencode-cloud.json`), traducidos al
-esquema de MiMoCode:
+Los **8 agentes** están replicados en los 3 perfiles a partir de la configuración **activa** de OpenCode (`~/.config/opencode/opencode.json`, `opencode-local.json` y `opencode-cloud.json`), traducidos al esquema de MiMoCode:
 
 | OpenCode | MiMoCode |
 |----------|----------|
@@ -149,11 +139,7 @@ esquema de MiMoCode:
 | `multimodal` | `all` | `opencode-go/mimo-v2.5` | igual | igual |
 | `compose` | `primary` | `nvidia/meta/muse-glimmer-30b` | igual | igual |
 
-> 🤖 `build` y `plan` conservan el prompt que en OpenCode era `{file:./prompts/read-agents.txt}`, con la ruta adaptada a `~/.config/mimocode/AGENTS.md` y el texto **inline** (MiMoCode ya carga `AGENTS.md` vía `instructions`, así que es un recordatorio redundante pero fiel al original). `multimodal` mantiene su prompt de sistema original.
-> 🔐 El agente `cloud` declara `permission { actor: allow, task: allow }` — el equivalente MiMoCode del `permissions: [{action: "subagent"}]` de OpenCode — para poder delegar en subagentes.
-> ⚠️ `mode: all` permite usar el agente tanto como primario (Shift+Tab) como de subagente; `primary` lo limita a primario.
-> ⚠️ `nvidia` ya no lleva `temperature: 1` / `top_p: 0.95` (eran un ajuste específico de Muse Glimmer); ahora apunta a **Nemotron 3 Ultra 550B**, actualizado el 23/09/2026.
-> ✅ Verificado con `mimo debug config` el 09/10/2026: los 3 perfiles cargan los **8 agentes** sin error de esquema.
+> 🤖 `build` y `plan` conservan el prompt que en OpenCode era `{file:./prompts/read-agents.txt}`, con la ruta adaptada a `~/.config/mimocode/AGENTS.md` y el texto **inline** (MiMoCode ya carga `AGENTS.md` vía `instructions`, así que es un recordatorio redundante pero fiel al original). `multimodal` mantiene su prompt de sistema original. 🔐 El agente `cloud` declara `permission { actor: allow, task: allow }` — el equivalente MiMoCode del `permissions: [{action: "subagent"}]` de OpenCode — para poder delegar en subagentes. ⚠️ `mode: all` permite usar el agente tanto como primario (Shift+Tab) como de subagente; `primary` lo limita a primario. ⚠️ `nvidia` ya no lleva `temperature: 1` / `top_p: 0.95` (eran un ajuste específico de Muse Glimmer); ahora apunta a **Nemotron 3 Ultra 550B**, actualizado el 23/09/2026. ✅ Verificado con `mimo debug config` el 09/10/2026: los 3 perfiles cargan los **8 agentes** sin error de esquema.
 
 Comprobación rápida de coherencia (debe listar **8** agentes en los tres, con `local` `OFF` solo en cloud):
 
@@ -212,7 +198,6 @@ mimo-local    # profiles/local
 mimo-cloud    # profiles/cloud
 ```
 
-> 🎙️ No hay lanzador de voz: el plugin se carga en los 3 perfiles, basta con `/voice` en la TUI.
-> 🎨 Los tres se ejecutan en la ventana actual (no abren ventana nueva). ⚠️ El fondo translúcido de la TUI es un **bug oficial de MiMoCode** (issue #1146) que **no se arregla por configuración**: ver `bug-fondo-translucido-mimocode.md`.
+> 🎙️ No hay lanzador de voz: el plugin se carga en los 3 perfiles, basta con `/voice` en la TUI. 🎨 Los tres se ejecutan en la ventana actual (no abren ventana nueva). ⚠️ El fondo translúcido de la TUI es un **bug oficial de MiMoCode** (issue #1146) que **no se arregla por configuración**: ver `bug-fondo-translucido-mimocode.md`.
 
 > 📁 `~/.config/mimocode/` - Configuración independiente de MiMoCode

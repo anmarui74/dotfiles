@@ -5,9 +5,7 @@ Guía completa del sistema de voz, modelos y herramientas en Windows.
 |-----------|----------|------------|
 | ✅ Índice de documentación | 24/09/2026 · rev. 10/10/2026 | Antonio |
 
-> 📁 Índice de todos los manuales de configuración de OpenCode **en Windows**
-> (`D:\Linux\Config\opencode-win\documentacion\`).
-> Manuales del lado Linux: `D:\Linux\Config\opencode\documentacion\`.
+> 📁 Índice de todos los manuales de configuración de OpenCode **en Windows** (`D:\Linux\Config\opencode-win\documentacion\`). Manuales del lado Linux: `D:\Linux\Config\opencode\documentacion\`.
 
 ---
 
@@ -66,9 +64,7 @@ Todos en **esquema V2** (`permissions`, `agents`, `providers`, `mcp`, `lsp`):
 | `ocv-cloud` | `opencode-cloud.json` | ❌ No carga |
 | `ocv-status` | — | Estado de componentes |
 
-> 🖥️ **App de escritorio V2** (2.0.32): instalada desde `opencode.ai/download` (NSIS) en `%LOCALAPPDATA%\Programs\@opencodedesktop`.
-> La V1 de `winget` fue desinstalada. El CLI V2 (`@opencode/cli`) está en **2.0.32**.
-> Los LSP se lanzan con `npx -y` (Python vía `basedpyright`) y **no** aparecen en la barra lateral: corren en segundo plano.
+> 🖥️ **App de escritorio V2** (2.1.2): instalada desde `opencode.ai/download` (NSIS) en `%LOCALAPPDATA%\Programs\@opencodedesktop`. La V1 de `winget` fue desinstalada. El CLI V2 (`@opencode/cli`) está en **2.1.2**. Los LSP se lanzan con `npx -y` (Python vía `basedpyright`) y **no** aparecen en la barra lateral: corren en segundo plano.
 
 ---
 
@@ -158,23 +154,11 @@ powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\opencode-win\instalar-
 
 ## Notas importantes
 
-> 🕐 **Timeline:** la TUI solo muestra las últimas ~6 peticiones (PR #26861 sin
-> mergear). `timeline-completo.ps1` lee todas desde `opencode.db` (SQLite vía Python).
->
-> 💾 **Backup:** `backup-opencode.ps1` copia el grafo de memoria (`memory.jsonl`) con
-> fecha, sincroniza la config activa con `D:\Linux\Config\opencode-win\`, vuelca una
-> copia saneada (sin claves) a `D:\Linux\Documentos\dotfiles\opencode-win` y publica un
-> espejo en `F:` (`F:\@home\antonio\Config\opencode-win`).
->
-> 🗂️ **Obsidian:** `sync-obsidian.ps1` espeja estos manuales al vault
-> (`…\MEGA\Obsidian\Obsidian\armarui74\OpenCode-win\`), con la misma estructura que en Linux.
->
-> 🔊 **TTS:** el servidor Kokoro persistente (puerto 4210) reduce la locución de
-> ~2,1 s a ~0,5-1,5 s. Se arranca solo al locutar o al abrir `ocv`/`ocv-local`/`ocv-cloud`.
-> Se para con `tts-server stop` (libera VRAM).
->
-> 🎙️ **Micrófono:** el predeterminado es el **TONOR TD510 Air Mic** (configurado con
-> el módulo `AudioDeviceCmdlets`, `Set-AudioDevice`).
+> 🕐 **Timeline:** la TUI solo muestra las últimas ~6 peticiones (PR #26861 sin mergear). `timeline-completo.ps1` lee todas desde `opencode.db` (SQLite vía Python).
+> 💾 **Backup:** `backup-opencode.ps1` copia el grafo de memoria (`memory.jsonl`) con fecha, sincroniza la config activa con `D:\Linux\Config\opencode-win\`, vuelca una copia saneada (sin claves) a `D:\Linux\Documentos\dotfiles\opencode-win` y publica un espejo en `F:` (`F:\@home\antonio\Config\opencode-win`).
+> 🗂️ **Obsidian:** `sync-obsidian.ps1` espeja estos manuales al vault (`…\MEGA\Obsidian\Obsidian\armarui74\OpenCode-win\`), con la misma estructura que en Linux.
+> 🔊 **TTS:** el servidor Kokoro persistente (puerto 4210) reduce la locución de ~2,1 s a ~0,5-1,5 s. Se arranca solo al locutar o al abrir `ocv`/`ocv-local`/`ocv-cloud`. Se para con `tts-server stop` (libera VRAM).
+> 🎙️ **Micrófono:** el predeterminado es el **TONOR TD510 Air Mic** (configurado con el módulo `AudioDeviceCmdlets`, `Set-AudioDevice`).
 
 ---
 

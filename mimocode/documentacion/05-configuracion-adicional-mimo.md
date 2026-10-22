@@ -104,7 +104,6 @@ Además de la configuración, `~/.config/mimocode/` contiene la **infraestructur
 | `~/Config/mimocode/backups/mimocode/*.tar.gz` | Tarballs (permisos `600`, directorio `700`) |
 | `~/Config/mimocode/backups/mimocode-memory-backup-*.jsonl` | Copias **fechadas** del grafo (una por backup; retención `LOG_RETENTION_DAYS`, 30 días por defecto, **más poda diaria**: solo la última de cada día; NO van a dotfiles) |
 
-> 🔐 **Claves**: van en `~/Config/mimocode/` (tarballs + instalador embebido) y **NUNCA** en `~/Documentos/dotfiles/`.
-> Detalle en `06-agents-md-mimo.md` → «Reglas de backup y claves».
+> 🔐 **Claves**: van en `~/Config/mimocode/` (tarballs + instalador embebido) y **NUNCA** en `~/Documentos/dotfiles/`. Detalle en `06-agents-md-mimo.md` → «Reglas de backup y claves».
 
 > 📁 `~/.config/mimocode/` - Configuración independiente de MiMoCode

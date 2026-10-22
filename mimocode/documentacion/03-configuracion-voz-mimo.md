@@ -21,18 +21,13 @@ Replicación del plugin de voz independiente para MiMoCode.
 
 MiMoCode usa el plugin independiente `mimocode-voice-modified` para STT y TTS:
 
-**STT**
-`sox` record 16k mono → `whisper-cli` CUDA → texto final
+**STT** `sox` record 16k mono → `whisper-cli` CUDA → texto final
 
-**TTS**
-Texto asistente → `cleanMarkdown()` (regex locales) → `~/.local/bin/speak-kokoro-gpu` Kokoro v1.0 GPU voz `ef_dora` → `paplay`
+**TTS** Texto asistente → `cleanMarkdown()` (regex locales) → `~/.local/bin/speak-kokoro-gpu` Kokoro v1.0 GPU voz `ef_dora` → `paplay`
 
 Auto-TTS en `session.idle`, anuncios en `permission.asked`/`question.asked`.
 
-> 🔄 **v0.6.0 (11/09/2026): SIN normalización por LLM y SIN transcripción vía API.**
-> El STT transcribe con `whisper-cpp` local y el TTS limpia el markdown con **regex locales**,
-> así que el plugin **no llama a ningún endpoint** (ni al proxy 4001 ni a la nube). Antes el flujo
-> incluía una pasada de normalización con Qwen 3.8; se eliminó junto con la transcripción por API.
+> 🔄 **v0.6.0 (11/09/2026): SIN normalización por LLM y SIN transcripción vía API.** El STT transcribe con `whisper-cpp` local y el TTS limpia el markdown con **regex locales**, así que el plugin **no llama a ningún endpoint** (ni al proxy 4001 ni a la nube). Antes el flujo incluía una pasada de normalización con Qwen 3.8; se eliminó junto con la transcripción por API.
 
 ---
 
@@ -43,8 +38,7 @@ Auto-TTS en `session.idle`, anuncios en `permission.asked`/`question.asked`.
 - TTS: `~/.local/bin/speak-kokoro-gpu` modelos `~/.local/share/kokoro/`
 - Plugin: `/home/antonio/.config/mimocode/mimocode-voice-modified/index.js`
 
-> ⚠️ **No hay componente LLM en el plugin** (v0.6.0): el `endpoint`/`model` que se declaraban antes
-> en `tui.json` ya no se usan. El único modelo que sigue haciendo falta es el de Kokoro para el TTS.
+> ⚠️ **No hay componente LLM en el plugin** (v0.6.0): el `endpoint`/`model` que se declaraban antes en `tui.json` ya no se usan. El único modelo que sigue haciendo falta es el de Kokoro para el TTS.
 
 ---
 
@@ -66,11 +60,8 @@ El plugin TUI se registra en `~/.config/mimocode/tui.json` (archivo TUI separado
 }
 ```
 
-> ⚠️ La entrada es una **ruta simple**, no un par `[ruta, opciones]`: desde v0.6.0 el plugin no
-> recibe `endpoint` ni `model`. El fichero es único (sin variante por perfil) y se hereda en los 3.
->
+> ⚠️ La entrada es una **ruta simple**, no un par `[ruta, opciones]`: desde v0.6.0 el plugin no recibe `endpoint` ni `model`. El fichero es único (sin variante por perfil) y se hereda en los 3.
 > ⚠️ **Clave:** los plugins TUI (que exportan `tui()`) van en `tui.json`, no en `mimocode.jsonc`. Ponerlos en `mimocode.jsonc` da error: `must default export an object with server()`.
->
 > Los campos `voice.asr_model` y `voice.control_model` son valores por defecto del esquema MiMoCode (`xiaomi/mimo-v2.5-asr` y `xiaomi/mimo-v2.5`). No es necesario declararlos en el JSONC a menos que se quiera usar un modelo diferente.
 
 ---
@@ -96,12 +87,8 @@ Cambios realizados en `lib/stt.js` y `lib/tts.js` para evitar colisiones con MiM
 - `whisper-cli` CUDA disponible
 - Kokoro GPU y `speak-kokoro-gpu` operativo
 
-> ✅ **No hace falta LM Studio ni el proxy 4001 para la voz** (v0.6.0): el plugin no usa ningún
-> modelo remoto. El proxy sigue siendo necesario para el agente `local`/`title`, pero eso es
-> config de LM Studio, no de voz — ver `02-configuracion-lmstudio-mimo.md`.
+> ✅ **No hace falta LM Studio ni el proxy 4001 para la voz** (v0.6.0): el plugin no usa ningún modelo remoto. El proxy sigue siendo necesario para el agente `local`/`title`, pero eso es config de LM Studio, no de voz — ver `02-configuracion-lmstudio-mimo.md`.
 
-> 🔗 **Infraestructura propia (22/09/2026):** el servidor LM Studio y el proxy del puerto 4001 que
-> usa la voz los levanta MiMoCode con **sus propios scripts** (`~/.config/mimocode/start-lmstudio.sh`
-> y `lmstudio-proxy.py`), **sin depender de OpenCode**. Ver `02-configuracion-lmstudio-mimo.md`.
+> 🔗 **Infraestructura propia (22/09/2026):** el servidor LM Studio y el proxy del puerto 4001 que usa la voz los levanta MiMoCode con **sus propios scripts** (`~/.config/mimocode/start-lmstudio.sh` y `lmstudio-proxy.py`), **sin depender de OpenCode**. Ver `02-configuracion-lmstudio-mimo.md`.
 
 > 📁 `~/.config/mimocode/` - Configuración independiente de MiMoCode

@@ -317,6 +317,14 @@ if [ -d "${BACKUP_BASE}/units" ]; then
     mkdir -p "$HOME/.config/systemd/user"
     cp -f "${BACKUP_BASE}/units/"*.service "${BACKUP_BASE}/units/"*.timer \
           "${BACKUP_BASE}/units/"*.path "$HOME/.config/systemd/user/" 2>/dev/null || true
+    # Drop-in del gateway: espera a que haya ruta y DNS antes de conectar (sin el, el arranque
+    # agota sus 8 intentos contra Telegram con "Temporary failure in name resolution"). El cp de
+    # arriba no entra en subdirectorios, asi que se copia aparte.
+    if [ -d "${BACKUP_BASE}/units/hermes-gateway.service.d" ]; then
+        mkdir -p "$HOME/.config/systemd/user/hermes-gateway.service.d"
+        cp -f "${BACKUP_BASE}/units/hermes-gateway.service.d/"*.conf \
+              "$HOME/.config/systemd/user/hermes-gateway.service.d/" 2>/dev/null || true
+    fi
     systemctl --user daemon-reload 2>/dev/null || true
     for u in hermes-sync.timer hermes-ready-notify.service lm-studio-app.service \
              lm-studio-watchdog.timer hermes-nvidia-aliases.path \

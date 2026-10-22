@@ -5,8 +5,7 @@ Restaurar la configuración, el grafo de memoria y el sistema completo desde un 
 |-----------|----------|------------|
 | 🛟 Recuperación | 10/09/2026 · rev. 10/10/2026 | Antonio |
 
-> Procedimiento paso a paso para restaurar MiMoCode desde un tarball, recuperar el
-> grafo de memoria o instalar todo desde cero con el instalador autónomo.
+> Procedimiento paso a paso para restaurar MiMoCode desde un tarball, recuperar el grafo de memoria o instalar todo desde cero con el instalador autónomo.
 
 ---
 
@@ -45,9 +44,7 @@ systemctl --user stop mimocode-sync.timer 2>/dev/null
 pkill -f "lmstudio-proxy" 2>/dev/null
 ```
 
-> ⚠️ El timer `mimocode-sync.timer` sincroniza **y regenera el tarball** cada 30 min (desde el
-> 10/10/2026): detenerlo evita que interfiera durante la restauración y que te pise el estado a
-> medio restaurar. Al terminar, reactivarlo con `systemctl --user start mimocode-sync.timer`.
+> ⚠️ El timer `mimocode-sync.timer` sincroniza **y regenera el tarball** cada 30 min (desde el 10/10/2026): detenerlo evita que interfiera durante la restauración y que te pise el estado a medio restaurar. Al terminar, reactivarlo con `systemctl --user start mimocode-sync.timer`.
 
 ---
 
@@ -82,8 +79,7 @@ Cuando el grafo se pierde o se corrompe.
 
 4. Reiniciar MiMoCode. El servidor MCP memory lee `MEMORY_FILE_PATH`.
 
-> 📌 El grafo también está dentro del tarball en `config.tar.gz` y en
-> `~/Documentos/dotfiles/mimocode/sesion-mimocode/config/data/memory/memory.jsonl`.
+> 📌 El grafo también está dentro del tarball en `config.tar.gz` y en `~/Documentos/dotfiles/mimocode/sesion-mimocode/config/data/memory/memory.jsonl`.
 
 ---
 
@@ -105,11 +101,7 @@ Para recuperar la configuración completa (incluidas credenciales) desde un back
    bash /tmp/mimo-restore/restore.sh
    ```
 
-   El `restore.sh` restaura:
-   - `config.tar.gz` → `~/.config/mimocode/`
-   - `credenciales/auth.json` → `~/.local/share/mimocode/auth.json` (permisos `600`)
-   - `setup.tar.gz` → `~/Config/mimocode/sesion-mimocode/`
-   - `backup-mimocode.sh` y `check-setup-completo.sh` → `~/Config/mimocode/`
+   El `restore.sh` restaura: - `config.tar.gz` → `~/.config/mimocode/` - `credenciales/auth.json` → `~/.local/share/mimocode/auth.json` (permisos `600`) - `setup.tar.gz` → `~/Config/mimocode/sesion-mimocode/` - `backup-mimocode.sh` y `check-setup-completo.sh` → `~/Config/mimocode/`
 
 3. Si un plugin necesita dependencias: `cd ~/.config/mimocode && npm install`
 
@@ -117,8 +109,7 @@ Para recuperar la configuración completa (incluidas credenciales) desde un back
 
 ## Escenario C: instalación desde cero
 
-El instalador `setup-mimocode-completo.sh` es **autónomo**: deja MiMoCode igual que la
-instalación activa partiendo de un sistema limpio. **14 pasos** (PASO 0 → 13):
+El instalador `setup-mimocode-completo.sh` es **autónomo**: deja MiMoCode igual que la instalación activa partiendo de un sistema limpio. **14 pasos** (PASO 0 → 13):
 
 ```bash
 bash ~/Config/mimocode/setup-mimocode-completo.sh
@@ -141,12 +132,9 @@ bash ~/Config/mimocode/setup-mimocode-completo.sh
 | 12 | Dependencias de voz |
 | 13 | Verificación final + sincronización |
 
-> 🔐 **El instalador embebe `auth.json` con las claves reales** (a propósito, para que quede
-> operativo). La copia de **dotfiles se sanea** automáticamente. **NUNCA** sanear el instalador
-> canónico de `~/Config/mimocode/sesion-mimocode/`.
+> 🔐 **El instalador embebe `auth.json` con las claves reales** (a propósito, para que quede operativo). La copia de **dotfiles se sanea** automáticamente. **NUNCA** sanear el instalador canónico de `~/Config/mimocode/sesion-mimocode/`.
 
-> ⚠️ **Verificación automática**: `check-setup-completo.sh` compara los **11 heredocs embebidos**
-> con los ficheros activos. Si alguno difiere, el backup se **ABORTA**.
+> ⚠️ **Verificación automática**: `check-setup-completo.sh` compara los **11 heredocs embebidos** con los ficheros activos. Si alguno difiere, el backup se **ABORTA**.
 
 ---
 

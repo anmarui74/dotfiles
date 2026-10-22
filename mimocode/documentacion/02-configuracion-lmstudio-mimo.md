@@ -25,8 +25,7 @@ Servidor LM Studio, proxy propio en el puerto 4001 y modelos locales de MiMoCode
 LM Studio (puerto 1234) → lmstudio-proxy.py (puerto 4001) → MiMoCode
 ```
 
-MiMoCode apunta al **proxy**, no directamente a LM Studio. El proxy inyecta
-`stats.tokens_per_second` en las respuestas no-streaming y expone el prefijo `lmstudio/`.
+MiMoCode apunta al **proxy**, no directamente a LM Studio. El proxy inyecta `stats.tokens_per_second` en las respuestas no-streaming y expone el prefijo `lmstudio/`.
 
 ---
 
@@ -42,8 +41,7 @@ MiMoCode apunta al **proxy**, no directamente a LM Studio. El proxy inyecta
 
 ## Infraestructura propia
 
-Desde el **22/09/2026 MiMoCode es autónomo**: tiene su **propia copia** de la
-infraestructura en `~/.config/mimocode/` y **NO depende de que OpenCode esté instalado**.
+Desde el **22/09/2026 MiMoCode es autónomo**: tiene su **propia copia** de la infraestructura en `~/.config/mimocode/` y **NO depende de que OpenCode esté instalado**.
 
 | Fichero | Función |
 |---------|---------|
@@ -51,8 +49,7 @@ infraestructura en `~/.config/mimocode/` y **NO depende de que OpenCode esté in
 | `~/.config/mimocode/start-lmstudio-server.sh` | Solo servidor + proxy, **sin cargar** el modelo en VRAM |
 | `~/.config/mimocode/lmstudio-proxy.py` | Proxy del puerto 4001 (ver abajo) |
 
-Los lanzadores `mimo` y `mimo-local` invocan la copia **propia** (`~/.config/mimocode/start-lmstudio.sh`).
-Los equivalentes de OpenCode siguen en `~/.config/opencode/` y son **independientes**.
+Los lanzadores `mimo` y `mimo-local` invocan la copia **propia** (`~/.config/mimocode/start-lmstudio.sh`). Los equivalentes de OpenCode siguen en `~/.config/opencode/` y son **independientes**.
 
 ---
 
@@ -61,8 +58,7 @@ Los equivalentes de OpenCode siguen en `~/.config/opencode/` y son **independien
 `~/.config/mimocode/lmstudio-proxy.py` — es **autocontenido**:
 
 - Usa `CONFIG_DIR` (el directorio donde vive el propio fichero) para todo.
-- **No necesita `.env` ni claves de API**: aplica sus valores por defecto
-  (`ENABLE_METRICS=true` y `METRICS_EXPORT_PATH=<CONFIG_DIR>/data/metrics.json`).
+- **No necesita `.env` ni claves de API**: aplica sus valores por defecto (`ENABLE_METRICS=true` y `METRICS_EXPORT_PATH=<CONFIG_DIR>/data/metrics.json`).
 - Escribe las métricas en `~/.config/mimocode/data/metrics.json` (**separadas** de las de OpenCode).
 - Se puede sobreescribir con un `.env` en `~/.config/mimocode/` si se quisiera.
 
@@ -91,9 +87,7 @@ El modelo principal se carga con **80k de contexto** (`81920` tokens).
 
 ## Configuración en el proveedor
 
-`models-qwen3.8-9b` con 80k contexto, declarado en
-`provider.lmstudio` de `mimocode.jsonc` con `baseURL = http://localhost:4001/v1`
-y `only_configured_models: true`.
+`models-qwen3.8-9b` con 80k contexto, declarado en `provider.lmstudio` de `mimocode.jsonc` con `baseURL = http://localhost:4001/v1` y `only_configured_models: true`.
 
 ```jsonc
 "lmstudio": {
