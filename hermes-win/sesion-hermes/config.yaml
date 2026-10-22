@@ -2152,3 +2152,14 @@ _left_core_scoped:
   - homeassistant
 _left_core_installed:
   - homeassistant
+auxiliary:
+  vision:
+    provider: opencode-go
+    model: deepseek-v4.1-flash
+    timeout: 240
+  approval:
+    timeout: 120
+providers:
+  opencode-go:
+    stale_timeout_seconds: 300
+    request_timeout_seconds: 600

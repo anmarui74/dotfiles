@@ -65,6 +65,9 @@ rsync -ah --delete \
 # ─── 1b. Incluir respaldo OnlyOffice-IA en el tarball ───
 if [ -d "${CONFIG_BACKUP}/data/onlyoffice-ai" ]; then
     mkdir -p "${BACKUP_ROOT}/data"
+    # Ojo: `cp -r src dst` anida src dentro de dst si dst ya existe (creaba
+    # data/onlyoffice-ai/onlyoffice-ai/). Borramos el destino primero.
+    rm -rf "${BACKUP_ROOT}/data/onlyoffice-ai"
     cp -r "${CONFIG_BACKUP}/data/onlyoffice-ai" "${BACKUP_ROOT}/data/onlyoffice-ai"
     echo "   ✅ Respaldo OnlyOffice-IA incluido en el backup"
 fi
@@ -102,6 +105,61 @@ if [ -f "$AUTH_JSON" ]; then
     echo "   ✅ auth.json incluido en el backup (credenciales de proveedores)"
 else
     echo "   ⚠️ auth.json no encontrado en $AUTH_JSON"
+fi
+
+# ─── 1d. Incluir el listado de API keys de ~/Documentos ───
+# Vive fuera de la config, así que sin esto se perdería al reinstalar.
+# Va en credenciales/, que queda excluido de la copia en dotfiles.
+APIKEYS_DOC="/home/antonio/Documentos/api-keys-opencode.md"
+if [ -f "$APIKEYS_DOC" ]; then
+    mkdir -p "${BACKUP_ROOT}/credenciales"
+    cp "$APIKEYS_DOC" "${BACKUP_ROOT}/credenciales/api-keys-opencode.md"
+    chmod 600 "${BACKUP_ROOT}/credenciales/api-keys-opencode.md"
+    echo "   ✅ api-keys-opencode.md incluido en el backup (credenciales/)"
+
+    # ─── 1d-bis. ¿El listado está al día? ───
+    # Compara auth.json y .env con el markdown: si una clave vigente no aparece
+    # en él, el listado se ha quedado atrás y hay que actualizarlo.
+    DESFASE=$(python3 - "$AUTH_JSON" "$APIKEYS_DOC" "${CONFIG_ACTIVO}/.env" <<'PYCHK'
+import json, re, sys
+
+auth_file, doc_file, env_file = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    doc = open(doc_file, encoding="utf-8").read()
+except OSError:
+    sys.exit(0)
+
+claves = []          # (origen, valor)
+try:
+    with open(auth_file, encoding="utf-8") as fh:
+        for proveedor, datos in json.load(fh).items():
+            clave = (datos or {}).get("key", "")
+            if isinstance(clave, str) and len(clave) >= 20:
+                claves.append((f"auth.json:{proveedor}", clave))
+except (OSError, ValueError):
+    pass
+try:
+    with open(env_file, encoding="utf-8") as fh:
+        for linea in fh:
+            m = re.match(r"^([A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD))=(.+)$", linea.strip())
+            if m and len(m.group(2)) >= 20 and not m.group(2).startswith("TU_CLAVE"):
+                claves.append((f".env:{m.group(1)}", m.group(2)))
+except OSError:
+    pass
+
+faltan = [origen for origen, clave in claves if clave not in doc]
+if faltan:
+    print(", ".join(faltan))
+PYCHK
+    )
+    if [ -n "$DESFASE" ]; then
+        echo "   ⚠️  api-keys-opencode.md DESACTUALIZADO: no incluye $DESFASE"
+        echo "      Actualízalo en ~/Documentos/api-keys-opencode.md antes de dar el backup por bueno."
+    else
+        echo "   ✅ api-keys-opencode.md al día con auth.json y .env"
+    fi
+else
+    echo "   ⚠️ api-keys-opencode.md no encontrado en $APIKEYS_DOC"
 fi
 
 # ─── 2. Generar restore.sh dentro del backup
@@ -169,6 +227,15 @@ if [ -f "${SOURCE_DIR}/credenciales/auth.json" ]; then
     cp "${SOURCE_DIR}/credenciales/auth.json" \
        "/home/antonio/.local/share/opencode/auth.json"
     echo "✅ auth.json restaurado en .local/share/opencode/"
+fi
+
+# Restaurar el listado de API keys en ~/Documentos
+if [ -f "${SOURCE_DIR}/credenciales/api-keys-opencode.md" ]; then
+    mkdir -p "/home/antonio/Documentos"
+    cp "${SOURCE_DIR}/credenciales/api-keys-opencode.md" \
+       "/home/antonio/Documentos/api-keys-opencode.md"
+    chmod 600 "/home/antonio/Documentos/api-keys-opencode.md"
+    echo "✅ api-keys-opencode.md restaurado en ~/Documentos/"
 fi
 
 if [ $? -eq 0 ]; then

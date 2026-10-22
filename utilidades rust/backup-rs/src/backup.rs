@@ -112,7 +112,14 @@ impl BackupEngine {
     ///
     /// Las opciones evitan chmod/mkstemp (no soportados por GVFS/SMB) y comparan
     /// por tamaño. Sobre CIFS del kernel (fstab users/automount) funciona sin root.
-    pub fn sync_network_mirror(&mut self, mirror_dest: &std::path::Path) -> Result<BackupStats> {
+    ///
+    /// Además de las `[[sources]]`, sincroniza las rutas de `extra_sources`
+    /// (p. ej. `/mnt/seagate/Windows`) si existen.
+    pub fn sync_network_mirror(
+        &mut self,
+        mirror_dest: &std::path::Path,
+        extra_sources: &[std::path::PathBuf],
+    ) -> Result<BackupStats> {
         println!("📦 Sincronizando espejo nube (rsync): {}", mirror_dest.display());
 
         self.stats = BackupStats::default();
@@ -124,100 +131,12 @@ impl BackupEngine {
         let sources = self.config.sources.clone();
 
         for source in &sources {
-            if !source.path.exists() {
-                eprintln!("⚠️  Origen no existe: {}", source.path.display());
-                continue;
-            }
+            self.rsync_source(&source.path, &source.exclude_patterns, mirror_dest)?;
+        }
 
-            // Destino: mirror/<nombre fuente> (mismo esquema que el espejo plano)
-            let source_name = source.path
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .to_string();
-            let dest_dir = mirror_dest.join(&source_name);
-
-            let src_arg = source.path.to_string_lossy().to_string();
-            let dst_arg = dest_dir.to_string_lossy().to_string();
-
-            // El origen se pasa con "/" al final para copiar su contenido
-            // dentro de <dest> (mismo comportamiento que el espejo plano).
-            let src_with_slash = if source.path.is_dir() {
-                format!("{}/", src_arg)
-            } else {
-                src_arg.clone()
-            };
-
-            println!("🔗 rsync: {} → {}", src_with_slash, dst_arg);
-            let mut cmd = std::process::Command::new("rsync");
-            // NO se usa --inplace sobre SMB: escribe directamente sobre el archivo
-            // destino existente y hace ftruncate() al final, que en CIFS (WD MyCloud)
-            // puede devolver EBADF/EIO y dejar el archivo TRUNCADO y corrupto en la nube.
-            // Sin --inplace, rsync escribe a un temporal y hace rename: si falla,
-            // el destino conserva intacto su contenido anterior.
-            cmd.arg("-r")
-                .arg("--no-perms")
-                .arg("--no-owner")
-                .arg("--no-group")
-                .arg("--no-times")
-                .arg("--size-only")
-                .arg("--delete")
-                .arg("--stats");
-
-            // Aplicar exclusiones (pattern es regex; rsync espera globs).
-            // Los patrones simples (nombres o rutas) funcionan como globs de rsync.
-            for pattern in &source.exclude_patterns {
-                cmd.arg("--exclude").arg(pattern);
-            }
-
-            // Los NAS WD MyCloud tienen `veto files` en su Samba: nombres como
-            // `.bin`, `uploaded`, `Nas_Prog`... están reservados y el servidor
-            // rechaza crearlos (NT_STATUS_OBJECT_NAME_NOT_FOUND), haciendo que
-            // rsync aborte con código 23. Se excluyen siempre para que la
-            // sincronización a la nube no falle.
-            for name in SMB_VETOED_NAMES {
-                cmd.arg("--exclude").arg(format!("{name}/"));
-                cmd.arg("--exclude").arg(name);
-            }
-
-            // Locale C para que las cifras de --stats sean estables (sin . miles)
-            cmd.env("LC_ALL", "C");
-
-            let output = cmd.arg(&src_with_slash).arg(&dst_arg).output();
-
-            match output {
-                Ok(o) if o.status.success() => {
-                    // rsync imprime las estadísticas en stdout con --stats
-                    let stdout = String::from_utf8_lossy(&o.stdout);
-                    parse_rsync_stats(&stdout, &mut self.stats);
-                }
-                Ok(o) => {
-                    let stderr = String::from_utf8_lossy(&o.stderr);
-                    // Mostrar las líneas de error reales de rsync (las que
-                    // empiezan por "rsync:"), no solo el resumen final.
-                    let errores: Vec<&str> = stderr
-                        .lines()
-                        .filter(|l| l.starts_with("rsync:"))
-                        .collect();
-                    if errores.is_empty() {
-                        anyhow::bail!(
-                            "rsync del espejo {} falló con código {}: {}",
-                            mirror_dest.display(),
-                            o.status.code().unwrap_or(-1),
-                            stderr.lines().last().unwrap_or_default()
-                        );
-                    } else {
-                        let detalle = errores.join("\n");
-                        anyhow::bail!(
-                            "rsync del espejo {} falló con código {}:\n{}",
-                            mirror_dest.display(),
-                            o.status.code().unwrap_or(-1),
-                            detalle
-                        );
-                    }
-                }
-                Err(e) => anyhow::bail!("No se pudo ejecutar rsync para {}: {}", mirror_dest.display(), e),
-            }
+        // Rutas adicionales propias de este mirror (p. ej. SEAGATE/Windows).
+        for extra in extra_sources {
+            self.rsync_source(extra, &[], mirror_dest)?;
         }
 
         self.print_stats();
@@ -225,6 +144,112 @@ impl BackupEngine {
         println!("✅ Sincronización nube completada (rsync).");
 
         Ok(self.stats.clone())
+    }
+
+    /// Sincroniza UNA ruta (fichero o directorio) a `mirror_dest/<nombre>` con
+    /// `rsync`. Si la ruta no existe, se omite con aviso.
+    fn rsync_source(
+        &mut self,
+        source_path: &Path,
+        exclude_patterns: &[String],
+        mirror_dest: &Path,
+    ) -> Result<()> {
+        if !source_path.exists() {
+            eprintln!("⚠️  Origen no existe: {}", source_path.display());
+            return Ok(());
+        }
+
+        // Destino: mirror/<nombre fuente> (mismo esquema que el espejo plano)
+        let source_name = source_path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        let dest_dir = mirror_dest.join(&source_name);
+
+        let src_arg = source_path.to_string_lossy().to_string();
+        let dst_arg = dest_dir.to_string_lossy().to_string();
+
+        // El origen se pasa con "/" al final para copiar su contenido
+        // dentro de <dest> (mismo comportamiento que el espejo plano).
+        let src_with_slash = if source_path.is_dir() {
+            format!("{}/", src_arg)
+        } else {
+            src_arg.clone()
+        };
+
+        println!("🔗 rsync: {} → {}", src_with_slash, dst_arg);
+        let mut cmd = std::process::Command::new("rsync");
+        // NO se usa --inplace sobre SMB: escribe directamente sobre el archivo
+        // destino existente y hace ftruncate() al final, que en CIFS (WD MyCloud)
+        // puede devolver EBADF/EIO y dejar el archivo TRUNCADO y corrupto en la nube.
+        // Sin --inplace, rsync escribe a un temporal y hace rename: si falla,
+        // el destino conserva intacto su contenido anterior.
+        cmd.arg("-r")
+            .arg("--no-perms")
+            .arg("--no-owner")
+            .arg("--no-group")
+            .arg("--no-times")
+            .arg("--size-only")
+            .arg("--delete")
+            .arg("--stats");
+
+        // Aplicar exclusiones (pattern es regex; rsync espera globs).
+        // Los patrones simples (nombres o rutas) funcionan como globs de rsync.
+        for pattern in exclude_patterns {
+            cmd.arg("--exclude").arg(pattern);
+        }
+
+        // Los NAS WD MyCloud tienen `veto files` en su Samba: nombres como
+        // `.bin`, `uploaded`, `Nas_Prog`... están reservados y el servidor
+        // rechaza crearlos (NT_STATUS_OBJECT_NAME_NOT_FOUND), haciendo que
+        // rsync aborte con código 23. Se excluyen siempre para que la
+        // sincronización a la nube no falle.
+        for name in SMB_VETOED_NAMES {
+            cmd.arg("--exclude").arg(format!("{name}/"));
+            cmd.arg("--exclude").arg(name);
+        }
+
+        // Locale C para que las cifras de --stats sean estables (sin . miles)
+        cmd.env("LC_ALL", "C");
+
+        let output = cmd.arg(&src_with_slash).arg(&dst_arg).output();
+
+        match output {
+            Ok(o) if o.status.success() => {
+                // rsync imprime las estadísticas en stdout con --stats
+                let stdout = String::from_utf8_lossy(&o.stdout);
+                parse_rsync_stats(&stdout, &mut self.stats);
+            }
+            Ok(o) => {
+                let stderr = String::from_utf8_lossy(&o.stderr);
+                // Mostrar las líneas de error reales de rsync (las que
+                // empiezan por "rsync:"), no solo el resumen final.
+                let errores: Vec<&str> = stderr
+                    .lines()
+                    .filter(|l| l.starts_with("rsync:"))
+                    .collect();
+                if errores.is_empty() {
+                    anyhow::bail!(
+                        "rsync del espejo {} falló con código {}: {}",
+                        mirror_dest.display(),
+                        o.status.code().unwrap_or(-1),
+                        stderr.lines().last().unwrap_or_default()
+                    );
+                } else {
+                    let detalle = errores.join("\n");
+                    anyhow::bail!(
+                        "rsync del espejo {} falló con código {}:\n{}",
+                        mirror_dest.display(),
+                        o.status.code().unwrap_or(-1),
+                        detalle
+                    );
+                }
+            }
+            Err(e) => anyhow::bail!("No se pudo ejecutar rsync para {}: {}", mirror_dest.display(), e),
+        }
+
+        Ok(())
     }
 
     /// Sincroniza un espejo plano que MACHACA los cambios (NTFS, sin versiones).
@@ -255,6 +280,66 @@ impl BackupEngine {
             } else {
                 eprintln!("⚠️  Origen no existe: {}", source.path.display());
             }
+        }
+
+        self.print_stats();
+
+        Ok(self.stats.clone())
+    }
+
+    /// Sincroniza un espejo **disco-a-disco**: copia desde `source_root` hacia
+    /// `dest_root` solo las entradas de `include` (o todas las de nivel superior
+    /// si `include` está vacío), con la MISMA lógica "machacar" **incremental**
+    /// que `sync_mirror_plain`: solo copia lo modificado (tamaño + fecha) y borra
+    /// dentro de cada carpeta lo que ya no existe. No toca las demás entradas de
+    /// `dest_root` (p. ej. carpetas propias del USB).
+    pub fn sync_path_mirror(
+        &mut self,
+        source_root: &Path,
+        dest_root: &Path,
+        include: &[String],
+    ) -> Result<BackupStats> {
+        println!(
+            "📦 Sincronizando espejo disco-a-disco (machacar incremental): {} → {}",
+            source_root.display(),
+            dest_root.display()
+        );
+
+        self.stats = BackupStats::default();
+        self.prev_snapshot = None;
+
+        if !dest_root.exists() {
+            anyhow::bail!("El destino del espejo no está montado/accesible: {}", dest_root.display());
+        }
+        if !source_root.exists() {
+            anyhow::bail!("El origen del espejo no está montado/accesible: {}", source_root.display());
+        }
+
+        // Entradas a espejar: las de `include` o, si está vacío, todas las de
+        // nivel superior del origen.
+        let items: Vec<String> = if include.is_empty() {
+            std::fs::read_dir(source_root)?
+                .filter_map(Result::ok)
+                .filter_map(|e| e.file_name().to_str().map(|s| s.to_string()))
+                .collect()
+        } else {
+            include.to_vec()
+        };
+
+        for item in &items {
+            let src = source_root.join(item);
+            let dst = dest_root.join(item);
+            if !src.exists() {
+                eprintln!("⚠️  Origen no existe, se omite: {}", src.display());
+                continue;
+            }
+            // Reutiliza la misma lógica incremental + borrado de sobrantes.
+            let source_cfg = SourceConfig {
+                path: src,
+                include_hidden: true,
+                exclude_patterns: vec![],
+            };
+            self.sync_plain_source(&source_cfg, &dst)?;
         }
 
         self.print_stats();

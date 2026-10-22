@@ -63,6 +63,9 @@ enum Commands {
     #[command(about = "Sincronizar espejos planos (machacar) definidos en la config")]
     Mirror,
 
+    #[command(about = "Backup USB: espejos disco-a-disco (p. ej. SEAGATE → SSD externo)")]
+    Usb,
+
     #[command(name = "_mirror-only", hide = true, about = "Sincronizar SOLO espejos planos (uso interno con sudo)")]
     MirrorOnly,
 }
@@ -101,6 +104,9 @@ async fn main() -> Result<()> {
         Commands::Mirror => {
             let mut engine = BackupEngine::new(config.clone());
             sync_plain_mirrors(&mut engine, &config, true)?;
+        }
+        Commands::Usb => {
+            run_usb_backup(&config).await?;
         }
         Commands::MirrorOnly => {
             let mut engine = BackupEngine::new(config.clone());
@@ -185,13 +191,19 @@ async fn run_backup_once(config: &Config) -> Result<()> {
     for mirror in &config.mirrors {
         let dest = &mirror.destination;
 
+        // Los espejos disco-a-disco (con `source`) se ejecutan aparte con
+        // `backup usb`; `backup once` los ignora.
+        if mirror.source.is_some() {
+            continue;
+        }
+
         // Espejo de red (SMB): se monta sin root (CIFS automount o GVFS) y se
         // sincroniza con rsync. Nunca requiere sudo.
         if mirror.uri.is_some() {
             match ensure_network_mount(mirror) {
                 Some(mounted) => {
                     println!("🔗 Sincronizando espejo nube: {} ({})", mirror.name, mounted.display());
-                    engine.sync_network_mirror(&mounted)?;
+                    engine.sync_network_mirror(&mounted, &mirror.extra_sources)?;
                 }
                 None => {
                     println!("⏭️  Espejo nube {} no accesible (share no montado), se omite: {}", mirror.name, mirror.uri.as_deref().unwrap_or(""));
@@ -238,6 +250,68 @@ async fn run_backup_once(config: &Config) -> Result<()> {
                 anyhow::bail!("No se pudo elevar a root la sincronización del espejo {} (sudo cancelado o fallido)", mirror.name);
             }
         }
+    }
+
+    Ok(())
+}
+
+/// Sincroniza SOLO los espejos disco-a-disco (p. ej. SEAGATE → SSD USB).
+/// Se ejecuta con `backup usb`, separado de `backup once`/`backup mirror`.
+/// Usa la misma lógica "machacar" **incremental**: solo copia lo modificado
+/// (tamaño + fecha) y borra dentro de cada carpeta lo que ya no exista.
+async fn run_usb_backup(config: &Config) -> Result<()> {
+    println!("🚀 Ejecutando backup USB (espejos disco-a-disco)...");
+
+    let mut engine = BackupEngine::new(config.clone());
+    let mut found = false;
+
+    for mirror in &config.mirrors {
+        // Solo los espejos con `source` son disco-a-disco.
+        let Some(src_root) = &mirror.source else {
+            continue;
+        };
+        found = true;
+        let dest = &mirror.destination;
+
+        // El ORIGEN debe estar montado (si no, podría vaciar el destino).
+        if !is_on_mounted_disk(src_root) {
+            println!(
+                "⏭️  Espejo {}: el origen {} no está montado, se omite.",
+                mirror.name,
+                src_root.display()
+            );
+            continue;
+        }
+
+        // El DESTINO debe estar montado (se monta si hace falta).
+        let disk = resolve_disk(dest);
+        if !disk_is_mounted(&disk, dest) {
+            ensure_mount(dest, &config.backup.folder_name, true);
+        }
+        if !disk_is_mounted(&disk, dest) {
+            println!("⏭️  Espejo {} no está montado, se omite: {}", mirror.name, dest.display());
+            continue;
+        }
+
+        let disk_base = disk
+            .map(|(_, base)| base)
+            .unwrap_or_else(|| dest.clone());
+        if !is_writable(&disk_base) {
+            println!("⏭️  Espejo {}: el destino no es escribible por antonio, se omite.", mirror.name);
+            continue;
+        }
+
+        println!(
+            "🔗 Sincronizando espejo disco-a-disco: {} ({} → {})",
+            mirror.name,
+            src_root.display(),
+            dest.display()
+        );
+        engine.sync_path_mirror(src_root, dest, &mirror.include)?;
+    }
+
+    if !found {
+        println!("⚠️  No hay espejos disco-a-disco configurados (ningún `[[mirrors]]` con `source`).");
     }
 
     Ok(())
@@ -578,6 +652,12 @@ async fn run_daemon(config: &Config) -> Result<()> {
 /// Sincroniza los espejos planos definidos en la config (solo si están montados)
 fn sync_plain_mirrors(engine: &mut BackupEngine, config: &Config, can_use_sudo: bool) -> Result<()> {
     for mirror in &config.mirrors {
+        // Los espejos disco-a-disco (con `source`) solo se ejecutan con
+        // `backup usb`; `backup mirror` y el daemon los ignoran.
+        if mirror.source.is_some() {
+            continue;
+        }
+
         // Espejo de red (SMB): se sincroniza siempre como antonio (sin root),
         // incluso en el daemon, porque CIFS automount/GVFS montan la sesión.
         // En `_mirror-only` (proceso root lanzado por `backup once` para los
@@ -590,7 +670,7 @@ fn sync_plain_mirrors(engine: &mut BackupEngine, config: &Config, can_use_sudo: 
             match ensure_network_mount(mirror) {
                 Some(mounted) => {
                     println!("🔗 Sincronizando espejo nube: {} ({})", mirror.name, mounted.display());
-                    engine.sync_network_mirror(&mounted)?;
+                    engine.sync_network_mirror(&mounted, &mirror.extra_sources)?;
                 }
                 None => {
                     println!("⏭️  Espejo nube {} no accesible (share no montado), se omite: {}", mirror.name, mirror.destination.display());

@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Operativo | 01/10/2026 · rev. 10/10/2026 | Antonio |
+| ✅ Operativo | 01/10/2026 · rev. 22/10/2026 | Antonio |
 
 > Herramienta CLI en **Rust** para Arch Linux (CachyOS) que respalda automáticamente los directorios personales
 > (`Config`, `Documentos`, `Descargas`, `Imágenes`, `Vídeos`, incluidos archivos
@@ -50,6 +50,7 @@ Tiene **dos modos complementarios**:
 |------|---------|----------|
 | **Backup manual (principal)** | `backup once` | Snapshot incremental del Crucial + espejo SEAGATE + NUBE (todo como `antonio`, sin root) |
 | **Actualizar espejos** | `backup mirror` | Sincroniza los espejos machacados: SEAGATE y NUBE antonio/public (sin root) |
+| **Backup USB (independiente)** | `backup usb` | Espejo disco-a-disco: SEAGATE → SSD externo, solo lo modificado (no se mezcla con `once`) |
 | **Daemon (opcional)** | `backup run` | Sincroniza el espejo `actual/` del Crucial, la NUBE, y vigila cambios en tiempo real (queda corriendo) |
 
 > 🏠 **Uso recomendado (sin daemon):** el servicio systemd está **deshabilitado**.
@@ -148,6 +149,31 @@ destination = "/mnt/seagate/Linux"
 > ⚠️ **Aviso:** el espejo plano **machaca y borra** — lo que se elimine del origen
 > desaparece del espejo. No guarda historial de versiones.
 
+### Espejo disco-a-disco (USB) — comando `backup usb`
+
+Además de los espejos que copian tus `[[sources]]`, puedes definir **espejos
+disco-a-disco**: copian desde una ruta (`source`, p. ej. el SEAGATE) hacia otra
+(`destination`, p. ej. un SSD externo), **solo** las entradas de `include`.
+
+Se ejecutan **en solitario** con `backup usb`, separados de `backup once` y
+`backup mirror` (esos los ignoran). Usan la misma lógica **machacar incremental**:
+solo copian lo modificado (tamaño + fecha) y borran dentro de cada carpeta lo que
+ya no exista. **No tocan** el resto de carpetas de `destination`.
+
+```toml
+[[mirrors]]
+name = "PORTABLE-SSD"
+destination = "/run/media/antonio/PortableSSD"
+source = "/mnt/seagate"
+include = ["Linux", "Mis Fotos", "Windows"]
+```
+
+- Si `source` está definido y `include` está **vacío**, se espejan todas las
+  entradas de nivel superior de `source`.
+- **Protección**: si el origen (`source`) o el destino no están montados, el
+  espejo se **omite** (nunca borra el destino por un origen vacío/no montado).
+- Uso: con el SSD conectado, `backup usb`.
+
 ### Limitaciones del espejo plano (qué NO viaja)
 
 El espejo reproduce **ficheros**; hay dos casos que el motor no gestiona (comprobado
@@ -224,15 +250,21 @@ monta/desmonta **sin root** y `rsync` funciona perfecto.
 name = "NUBE-antonio"
 destination = "/home/antonio/MyCloud/antonio/Linux"
 uri = "smb://mycloud-eudvfr.local/antonio/Linux"
+extra_sources = ["/mnt/seagate/Windows"]
 
 [[mirrors]]
 name = "NUBE-public"
 destination = "/home/antonio/MyCloud/public/Linux"
 uri = "smb://mycloud-eudvfr.local/public/Linux"
+extra_sources = ["/mnt/seagate/Windows"]
 ```
 
 - `destination`: punto de montaje CIFS local (con automount se monta al acceder)
 - `uri`: share SMB que se monta con GVFS como **fallback** si el punto CIFS no existe
+- `extra_sources`: rutas **adicionales** que se espejan **solo en este mirror**
+  (además de las `[[sources]]`). Ej.: incluir `/mnt/seagate/Windows` en la nube sin
+  añadirlo al backup versionado del Crucial ni al espejo de SEAGATE. Si la ruta no
+  existe (p. ej. el disco no está montado), se omite con aviso.
 
 Los mirrors nube se sincronizan con `backup once`/`backup mirror`/`backup run` y
 **nunca requieren sudo**. Si el punto CIFS está montado, `backup-rs` usa `rsync`
@@ -1473,6 +1505,9 @@ polkit.addRule(function(action, subject) {
 4. Actualizar solo los espejos (opcional, si el Crucial ya está al día)
    └── backup mirror   (SEAGATE + nube, todo sin root)
    ↓
+4b. Backup USB (independiente, opcional; con el SSD externo conectado)
+   └── backup usb   (espejo disco-a-disco SEAGATE → SSD, solo lo modificado)
+   ↓
 5. Restauración (manual)
    └── backup list
        backup restore <YYYY-MM-DD_HH-MM-SS> --target <destino>
@@ -1511,6 +1546,10 @@ backup run
 # Sincronizar manualmente los espejos planos (machacar, p. ej. SEAGATE) — sin root
 # (los espejos nube se sincronizan también aquí)
 backup mirror
+
+# Backup USB independiente: espejos disco-a-disco (p. ej. SEAGATE → SSD externo).
+# Solo copia lo modificado; no se ejecuta con "once"/"mirror".
+backup usb
 
 # Estado y versiones
 backup status

@@ -74,6 +74,17 @@ recursive = true
 name = "SEAGATE"
 destination = "/mnt/seagate/Linux"
 
+# Espejo disco-a-disco (opcional): copia desde `source` hacia `destination`
+# SOLO las entradas de `include` (o todas las de nivel superior si `include`
+# está vacío). Usa la misma lógica "machacar" INCREMENTAL que SEAGATE: solo
+# copia lo modificado (tamaño + fecha) y borra dentro de cada carpeta lo que
+# ya no exista en el origen. No toca el resto de `destination`.
+[[mirrors]]
+name = "PORTABLE-SSD"
+destination = "/run/media/antonio/PortableSSD"
+source = "/mnt/seagate"
+include = ["Linux", "Mis Fotos", "Windows"]
+
 # Espejo de red (nube): se monta sin root (CIFS kernel vía fstab `users`/automount,
 # o GVFS como fallback) y se sincroniza con rsync (rápido y fiable sobre SMB).
 # `uri` es el share SMB; `destination` es el punto de montaje CIFS local.
@@ -81,8 +92,12 @@ destination = "/mnt/seagate/Linux"
 name = "NUBE-antonio"
 destination = "/home/antonio/MyCloud/antonio/Linux"
 uri = "smb://mycloud-eudvfr.local/antonio/Linux"
+# Rutas extra propias de este mirror (además de las [[sources]]).
+# Ej.: incluir la carpeta Windows del SEAGATE en la nube.
+extra_sources = ["/mnt/seagate/Windows"]
 
 [[mirrors]]
 name = "NUBE-public"
 destination = "/home/antonio/MyCloud/public/Linux"
 uri = "smb://mycloud-eudvfr.local/public/Linux"
+extra_sources = ["/mnt/seagate/Windows"]

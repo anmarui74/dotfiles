@@ -20,15 +20,16 @@
 9. [Voz local (Kokoro TTS + whisper STT)](#voz-local-kokoro-tts--whisper-stt)
 10. [Comprobar qué modelos son viables como agente](#comprobar-qué-modelos-son-viables-como-agente)
 11. [Parches locales del CLI](#parches-locales-del-cli-ctrlq-corta-el-audio-ctrlc-lo-corta-e-interrumpe)
-12. [Dual boot Linux ↔ Windows](#dual-boot-linux--windows)
-13. [Herramientas propias: parche, unidades y atajos](#herramientas-propias-parche-del-cli-unidades-systemd-y-atajos)
-14. [Skills propias](#skills-propias)
-15. [Reglas que NO se deben romper](#reglas-que-no-se-deben-romper)
-16. [Encargos automáticos del dual boot](#encargos-automáticos-del-dual-boot-gatewaystartup)
-17. [Inventario del equipo](#inventario-del-equipo-sistema-cachyosmd)
-18. [Documentación de configuración](#documentación-de-configuración-documentos)
-19. [Espejo en Obsidian (automático)](#espejo-en-obsidian-automático)
-20. [Traspaso de información entre Linux y Windows](#traspaso-de-información-entre-linux-y-windows)
+12. [Fallos de la GPU (Xid 79 / WATCHDOG)](#fallos-de-la-gpu-xid-79--watchdog)
+13. [Dual boot Linux ↔ Windows](#dual-boot-linux--windows)
+14. [Herramientas propias: parche, unidades y atajos](#herramientas-propias-parche-del-cli-unidades-systemd-y-atajos)
+15. [Skills propias](#skills-propias)
+16. [Reglas que NO se deben romper](#reglas-que-no-se-deben-romper)
+17. [Encargos automáticos del dual boot](#encargos-automáticos-del-dual-boot-gatewaystartup)
+18. [Inventario del equipo](#inventario-del-equipo-sistema-cachyosmd)
+19. [Documentación de configuración](#documentación-de-configuración-documentos)
+20. [Espejo en Obsidian (automático)](#espejo-en-obsidian-automático)
+21. [Traspaso de información entre Linux y Windows](#traspaso-de-información-entre-linux-y-windows)
 
 ---
 
@@ -205,6 +206,7 @@ Retención: `LOG_RETENTION_DAYS` (por defecto 30 días) y poda diaria (se conser
 El gateway arranca en `default.target`, antes de que el wifi tenga ruta y DNS. `After=network-online.target` **no basta**: en systemd de usuario ese target no espera a la red real. Sin más, los primeros 8 intentos contra Telegram fallaban con `Temporary failure in name resolution` —también contra las IPs literales, porque aún no había ruta— y cada arranque dejaba ~12 WARNING en `errors.log` (766 acumulados entre el 28/09 y el 18/10/2026, sin pérdida real de mensajes: el polling solo empieza al conectar).
 
 - Drop-in `~/.config/systemd/user/hermes-gateway.service.d/10-esperar-red.conf` (copia canónica en `units/hermes-gateway.service.d/`): `ExecStartPre` que espera hasta 60 s a que haya ruta IPv4 por defecto **y** el DNS resuelva. Sale **siempre 0**, para no impedir el arranque si la red no llegase.
+- Drop-in `~/.config/systemd/user/hermes-gateway.service.d/20-cua-wayland.conf` + `~/.config/environment.d/60-cua-wayland.conf` (copias en `units/hermes-gateway.service.d/` y `dual-boot/systemd-user/`): ponen `CUA_DRIVER_RS_ENABLE_WAYLAND=1` para que el control de escritorio (`computer_use`) funcione en la sesión Wayland pura. Hacen falta **las dos**: el drop-in para el gateway y `environment.d` para el `serve` que lanza la app de escritorio (hereda el entorno de la sesión gráfica, no el de systemd). Se aplica al reiniciar el gateway y al cerrar/abrir sesión, respectivamente; `daemon-reload` basta para que el user manager lo vea (`systemctl --user show-environment`). Con la variable se obtiene **captura por portal XDG** (un consentimiento por sesión) y árbol AT-SPI; el input global sigue bloqueado en GNOME hasta instalar el helper `wayland-helper/winrects@cua` del propio driver (en GNOME 51 su `metadata.json` declara hasta 50, así que hay que añadir la versión y reiniciar sesión). Además hace falta `ELECTRON_ENABLE_ACCESSIBILITY=1` (también en los dos ficheros de entorno): sin ella Electron expone solo el marco, `get_window_state` devuelve 1 elemento y no hay nada que pulsar. WinRects se instala copiando `wayland-helper/winrects@cua` a `~/.local/share/gnome-shell/extensions/` y añadiéndolo a `org.gnome.shell enabled-extensions` con `gsettings` (`gnome-extensions enable` no la ve hasta que el shell la escanea en el siguiente inicio de sesión); en este equipo (GNOME 51.1) hubo que añadir `"51"` a su `metadata.json`, que declaraba hasta 50, y **ya está instalada y activa**. Límite conocido del driver en este equipo: **no tiene mapeada la tecla de la coma**, así que `Ctrl+,` no se puede enviar por `computer_use` (`no evdev keycode mapping for key 'comma'`), aunque `Ctrl+K`, los clics por coordenadas y `type_text` sí funcionan. Sin la variable, `computer_use` devuelve «window discovery returned no windows» y la captura falla con X11 `GetImage`.
 - El bloque de `units/` de `setup-hermes-completo.sh` copia el drop-in aparte (el `cp` de unidades no entra en subdirectorios).
 - Comprobado el 18/10/2026: arranque limpio, conexión al primer intento y **0 WARNING**.
 
@@ -235,8 +237,13 @@ Todo local y en CUDA, sin nube (skill `hermes-voz-local-gpu`):
 - Los scripts (`kokoro-tts`, `whisper-stt`, `whisper-cli`, `hermes-voz` y, si están, `speak-kokoro*`) viajan en `extras/bin/` del tarball y de `sesion-hermes/`. **El modelo y el binario de whisper.cpp no** (viven en `~/.local/share/whisper-cpp/`): una instalación desde limpio repone los scripts, pero hay que volver a descargar el modelo.
 - **Ruta del modelo de whisper**: `whisper-stt` busca `~/.local/share/whisper-cpp/models/ggml-large-v3-turbo-q5_0.bin`; el bootstrap de OpenCode (`~/.config/opencode/bootstrap-ocv.sh`) lo descarga en la **raíz** de `whisper-cpp/`. El wrapper acepta las dos rutas (fallback a la raíz si no está en `models/`) y aquí hay un enlace duro en `models/` para que también lo vea `check-setup-completo.sh`. Si el STT dice `whisper-stt: falta el modelo …`, es esto: comprobar con `bash ~/Config/hermes/instalar-stack-voz.sh --comprobar`.
 - La locución se corta con `ctrl+q` (solo calla la voz) o `ctrl+c` (corta e interrumpe el turno): ver «Parches locales del CLI».
+- **Locución automática en la app de escritorio** (verificado el 22/10/2026): el interruptor **no** es `voice.auto_tts` (eso es del gateway de mensajería); es un ajuste **local de la app**, `hermes.desktop.autoSpeakReplies`, guardado en su `localStorage` (`~/.config/Hermes/Local Storage/leveldb`). Viene en `false` y la app solo lo siembra desde `voice.auto_tts` si **nunca** se ha tocado (`readKey(KEY) !== null`). Se activa en **Ajustes → Voz → Texto a voz → «Leer respuestas en voz alta»**. Si la UI no responde a los clics sintéticos, la vía fiable es escribir la clave en el perfil con la app **cerrada**: copia del LevelDB, `put` de `_file://\x00\x01hermes.desktop.autoSpeakReplies` con el valor `\x01` + `true` (lector/escritor con `classic-level` de Node) y reabrir. **Verificación objetiva**: leer la clave del perfil (ver el interruptor en pantalla no basta, puede no haberse guardado) y comprobar que `agent.log` registra `tools.tts_tool: TTS audio saved …` al responder.
+- **Salida de audio del escritorio**: el sink por defecto es `alsa_output.usb-Generic_USB_Audio-00.HiFi__SPDIF__sink` (62 %, sin mute); la locución sale por ahí y Antonio la oye. Si el stream está activo (`pactl list short sink-inputs`) y no se oye, el problema está aguas abajo (entrada SPDIF del amplificador), no en Hermes.
+- **Visión (imágenes adjuntas)** (22/10/2026): `auxiliary.vision` fijado a `opencode-go / deepseek-v4.1-flash` con `timeout: 240`. Antes estaba en `provider: auto` con modelo vacío y **cada captura se colgaba 120 s** (`Auxiliary vision … timed out after 120.0s … fallbacks exhausted`) y acababa en `APITimeoutError`; ese timeout era del cliente auxiliar, no del modelo principal. DeepSeek lee imágenes, así que no hace falta un modelo aparte; el registro para diagnosticarlo es `~/.hermes/logs/errors.log`.
 
 ---
+
+**Aviso de cierre (22/10/2026, v2)**: Hermes no tiene evento de cierre (`gateway/hooks.py` solo define `gateway:startup`, `session:*` y `agent:*`), así que el aviso se da **desde fuera**: `windows/hermes-cierre-notify.ps1` vigila si hay proceso de gateway y manda un Telegram cuando desaparece (`🔌 Hermes se ha cerrado en Windows (hora HH:mm)…`). Si en **30 s** vuelve a aparecer otro gateway (un `restart` o un update) **no avisa**: distingue cierre de reinicio. El lanzador `Hermes_CierreNotify.vbs` va en Inicio y los encargos `windows/encargos/23-aviso-cierre-gateway.ps1` y `24-aviso-cierre-v2.ps1` lo instalan y lo relanzan. ⚠️ **La v1 solo miraba procesos `python.exe` y no dejaba rastro de su arranque**: si el gateway corre con otro nombre nunca lo veía, y sin log no había forma de saber si se había ejecutado. La v2 mira la línea de comandos de **todos** los procesos, espera hasta 6 h y escribe `vigilante iniciado (pid …)` en `logs\cierre-notify.log` al arrancar: esa línea es la prueba de que corre. Limitaciones reales: un apagón seco o un cierre de sesión matan el vigilante con todo lo demás, así que esos casos **no se pueden avisar desde dentro**.
 
 ## Comprobar qué modelos son viables como agente
 
@@ -373,6 +380,54 @@ El CLI de serie no cortaba la locución al pulsar `ctrl+q` ni `ctrl+c` (solo la 
 - Si algún día el arreglo entra aguas arriba, se revierte el parche y este apartado se borra.
 - **Arreglo propuesto aguas arriba**: PR **abierto** en `NousResearch/hermes-agent` (#128385, rama `fix/cli-interrupt-cuts-tts`), que corta la locución en Ctrl+C y Ctrl+Q y hace que un corte deliberado no reintente la cadena de reproductores. Mantiene la semántica de serie de las teclas. Los worktrees de trabajo (`~/pr-hermes-ctrlq`, `~/pr-hermes-x11-desktop`) ya no existen en disco: quedan como entradas «prunable» (limpiar con `git -C ~/.hermes/hermes-agent worktree prune`). Si lo aceptan: revertir el parche local (queda solo la preferencia de que Ctrl+Q no interrumpa el turno, que seguiría siendo local).
 
+## Fallos de la GPU (Xid 79 / WATCHDOG)
+
+El equipo arrastra cuelgues del subsistema gráfico desde junio de 2025: **103 volcados `WATCHDOG*`** en
+Windows (`LiveKernelReports`) y, en Linux, caídas duras del driver NVIDIA. **No es un problema de un solo
+sistema**, que es el dato más útil del expediente. Procedimiento completo: skill `diagnostico-fallos-gpu`.
+
+**Fallo del 22/10/2026 (17:44:16, Linux).** Ocho minutos después del arranque y con la GPU **en reposo**
+(44 °C, 11 W, P8, sin modelos cargados):
+
+```
+NVRM: Xid (PCI:0000:01:00): 79, GPU has fallen off the bus.
+NVRM: Xid (PCI:0000:01:00): 154, GPU recovery action changed 0x0 -> 0x2 (OS Reboot)
+NVRM: kgmmuInvalidateTlb_GM107: TLB invalidation failed (status=0x0f)   x396
+systemd-coredump: Process 6001 (Xwayland) dumped core
+```
+
+Consecuencia colateral que se repite con cada caída: el sistema muere sin desmontar, el NTFS del disco
+compartido queda **sucio** y Linux no lo monta al volver (`volume is dirty and "force" flag is not set`).
+Se resuelve con `ntfsfix --clear-dirty /dev/sdd1` y `systemctl restart mnt-seagate.mount`.
+
+**Descartado con medidas**, no por intuición: VRAM (memtest_vulkan: 3.341 iteraciones, 0 errores),
+temperatura, BIOS desactualizada (1.A93, AGESA PI-1.3.0.1d), suspensión (cayó en plena sesión), errores
+de enlace PCIe (contadores AER a cero) e inicio rápido de Windows (ya desactivado).
+
+**Estado (22/10/2026, decisión de Antonio):** revisado el hardware —tarjeta, alimentación y conexiones—
+sin anomalías apreciables. **No se aplica ninguna medida**; se sigue observando. Quedan en pausa las tres
+fases propuestas: **A** (GPU y puerto raíz en D0, ASPM L1 desactivado, `nvidia-smi -pm 1`), **B** (vigía
+a 1 Hz con temperatura, potencia, enlace PCIe y contadores AER) y **C** (reasentar la tarjeta y revisar el
+12VHPWR en ambos extremos).
+
+**Vigía activo desde el 22/10/2026 — `hermes-vigia-gpu.service`.** Unidad de usuario
+(`~/.config/systemd/user/`, copia en `units/hermes-vigia-gpu.service`) que ejecuta
+`~/.local/bin/hermes-vigia-gpu.py` (copia en `sesion-hermes/extras/bin/`). Registra **una muestra por
+segundo** en `~/.local/state/hermes-gpu/gpu-AAAAMMDD.csv`: temperatura, potencia, uso, VRAM, relojes,
+`pstate`, velocidad y ancho del enlace PCIe, ASPM L1, contadores AER y **cuántos `NVRM: Xid` nuevos**
+aparecieron en el kernel. Vuelca cada línea al disco y hace `fsync` cada minuto, así que un cuelgue
+conserva hasta el último segundo. Retención de 10 días, una sola instancia (`flock`) y 0,1 % de CPU.
+
+```bash
+hermes-vigia-gpu.py --estado                  # resumen de las muestras de hoy
+hermes-vigia-gpu.py --una                     # una muestra suelta, sin servicio
+systemctl --user status hermes-vigia-gpu     # estado del vigía
+```
+
+Lección que dejó esta caída: **cualquier crash deja escrituras a medias en el disco compartido** (se
+perdió una nota escrita minutos antes). El motor debería hacer `sync` tras publicar, y el arranque
+comprobar la integridad del canal antes de dar una publicación por buena.
+
 ## Dual boot Linux ↔ Windows
 
 Los dos sistemas comparten **un mismo estado de Hermes** (conversaciones, memoria, skills, cron, kanban) a través de la carpeta `HermesSync/` del disco SEAGATE (`/mnt/seagate/HermesSync` en Linux, `D:\HermesSync` en Windows — la letra puede cambiar entre sesiones: **identificar el volumen por su marca `SEAGATE`**). Nunca están encendidos a la vez, así que la regla es **el último que publica manda**, con historial y copia previa.
@@ -410,6 +465,7 @@ Pitfalls que ya han mordido:
 - **Los scripts de Windows no se ejecutan desde la carpeta común**: Windows usa su copia en `%LOCALAPPDATA%\hermes\dual-boot\`. La carpeta común es distribución/referencia, así que una publicación desde Linux no revierte los arreglos hechos en Windows — pero conviene mantener la copia de `~/Config/hermes/dual-boot/windows/` igual que la común (el `rsync -au` del export solo actualiza lo que es más nuevo en origen).
 - **Update automático del lado Windows** (10/10/2026, encargo 12): al iniciar sesión, el lanzador `Hermes_Update.vbs` de la carpeta Inicio ejecuta `%LOCALAPPDATA%\hermes\dual-boot\update-hermes-arranque.ps1`, que actualiza Hermes **solo** (CLI y app de escritorio) cuando hay algo nuevo o quedó un update a medias, espera a que la app de escritorio se cierre (hasta 1 h) y deja el informe en `NOTA-PARA-LINUX.md` y un aviso por Telegram. Las piezas las monta el encargo `windows/encargos/12-update-hermes-arranque.ps1`, que además lanza la primera pasada con una tarea de una sola pasada (el propio trabajador la borra al terminar). El detalle completo está en `AGENTS-WIN.md`, del lado Windows.
 - **Parche Ctrl+Q en Windows sin intervención** (22/10/2026, encargo 21): `windows/encargos/21-aplicar-parche-ctrlq.ps1` se ejecuta al arrancar el gateway de Windows y, si el parche no está aplicado en su árbol, lo aplica desde el canal (`windows/parches/ctrl-q-corta-audio.patch`, el vivo) y verifica el resultado con `--reverse-check`. Es idempotente (si ya está, sale 0 sin tocar) y **no fuerza nada**: si el parche no aplica limpio (es de otro commit) sale con 1, deja el aviso en el log del canal y se reintenta al siguiente arranque, cuando se haya dejado el re-porte. El efecto se nota en el arranque siguiente: el parche se escribe cuando el gateway ya cargó sus módulos. Escrito en ASCII puro, UTF-8 con BOM y CRLF (PowerShell 5.1 lee sin BOM como ANSI), y validado con el parser de `pwsh` más un banco de pruebas con `git` simulado (aplicar / ya aplicado / no aplica limpio / sin carpeta compartida).
+- **Aviso de arranque con la misma información que en Linux** (22/10/2026, encargo 22): el aviso de Windows (`gateway-service\hermes-ready-notify.ps1`, lanzado por `arranque-ready-notify.vbs` desde la carpeta Inicio) llevaba solo «Hermes activo + import»; ahora compone las mismas líneas que `hermes-ready-notify.sh`: **Update** (`hermes update --check` en un job con tope de 150 s y todos los veredictos reconocidos, `Selected release available` incluido), **Dual boot** (última importación de `.dual-sync\estado.json`, nota nueva de `NOTA-PARA-WINDOWS.md` con marca en `state\arranque-nota-win.size`, y encargos `windows/encargos/*.ps1` sin ejecutar), **veredicto** (`orientar.py --veredicto`, silencio cuando es OK) y **parche** (solo si el reverse-check falla); más el import de arranque que ya tenía. El encargo `windows/encargos/22-aviso-arranque-completo.ps1` lo instala en el esquema con `.bak-<fecha>`, lo valida con el parser de **PowerShell 5.1** y restaura el anterior si no compila. **Ojo con las dos rutas**: el esquema (`D:\Linux\Config\Hermes-Win\gateway-service\`) es solo la fuente; el lanzador del Inicio (`Hermes_ReadyNotify.vbs`) ejecuta `%LOCALAPPDATA%\hermes\gateway-service\hermes-ready-notify.ps1`, así que el encargo debe copiar a **las dos** y validar ambas (22/10/2026: copiaba solo al esquema y Windows arrancó una vez más con la copia local del 5 de octubre). Diferencias deliberadas con el de Linux: usa la nota y los encargos de su lado, y el parche se comprueba con `git apply --reverse --check` (allí no existe `hermes-parche-ctrlq`).
 
 ---
 

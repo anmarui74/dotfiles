@@ -1,0 +1,15 @@
+[Unit]
+Description=Vigía de GPU de Hermes (registro a 1 Hz, solo lectura)
+Documentation=file:///home/antonio/Config/hermes/AGENTS.md
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/hermes-vigia-gpu.py
+Restart=always
+RestartSec=10
+Nice=10
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=default.target

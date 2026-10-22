@@ -309,7 +309,25 @@ Este equipo acumula desde junio de 2025 más de un centenar de volcados **WATCHD
 - **MPO desactivado** (18/10/2026): `HKLM\SOFTWARE\Microsoft\Windows\Dwm\OverlayTestMode = 5`, como medida contra las pantallas negras del driver de vídeo. Se revierte borrando ese valor.
 - **Test de VRAM**: `C:\Users\evo01\diagnostico-gpu\memtest_vulkan.exe` (memtest_vulkan v0.5.0, sin instalación): ejecutarlo y esperar unos 6 minutos; si muestra errores, la VRAM está dañada.
 - **BIOS actualizada el 18/10/2026**: 1.A70 (02/12/2025) → **1.A93** (03/09/2026, AGESA PI-1.3.0.1d). Tras el flash se comprobó el perfil **EXPO** de la memoria (2×32 GB Corsair a 6000 MT/s configurados), MPO desactivado, inicio rápido desactivado y el vigía arrancando y registrando. Arranque limpio (sin Kernel-Power 41 ni volcados nuevos).
+- **El fallo también existe en Linux** (22/10/2026, 17:44:16): `Xid 79 — GPU has fallen off the bus`, `Xid 154 → OS Reboot`, `TLB invalidation failed` ×396, con la GPU **en reposo** (44 °C, 11 W). Misma familia que los WATCHDOG de aquí: **no es un problema de un solo sistema**. Ese crash dejó el NTFS del disco compartido marcado como sucio (Linux necesitó `ntfsfix`).
+- **Plan acordado y aún SIN aplicar** (decide Antonio): fase A —fijar GPU y puerto raíz en D0, desactivar ASPM L1, `nvidia-smi -pm 1`—, fase B —vigía a 1 Hz con temperatura, potencia, enlace PCIe y contadores AER— y fase C —física: reasentar la tarjeta y revisar el 12VHPWR en ambos extremos—.
 - Siguiente medida si vuelve a caer: **desactivar la suspensión y la hibernación** (hay 38 volcados pegados a un ciclo suspender/reanudar: el 04/01/2026 se encadenaron 30 en 20 minutos).
+
+### Avisos de Telegram del gateway (arranque y cierre)
+
+Dos avisos independientes, los dos lanzados desde la carpeta Inicio y **sin ventana**:
+
+| Pieza | Ficheros | Qué manda |
+|---|---|---|
+| Arranque | `hermes-ready-notify.ps1` + `Hermes_ReadyNotify.vbs` | estado (OK/aviso), update, dual boot, veredicto, parche Ctrl+Q (solo si falta) e importación de arranque |
+| Cierre | `hermes-cierre-notify.ps1` + `Hermes_CierreNotify.vbs` | `🔌 Hermes se ha cerrado en Windows (hora HH:mm). No te contestaré hasta que vuelva a arrancar.` |
+
+- Hermes **no tiene evento de cierre**: `gateway/hooks.py` solo define `gateway:startup`, `session:*` y `agent:*`. Por eso el aviso de cierre es un **vigilante externo**: espera a que aparezca el proceso del gateway (`python*` con `gateway run`), guarda su PID y avisa cuando desaparece.
+- **No avisa en un reinicio**: si en 30 s aparece otro gateway (un update o un `restart`), se calla. Sondeo cada 5 s; si no ve arrancar el gateway en 15 min, sale sin avisar.
+- No cubre el apagón seco (nadie da tiempo) ni el caso de que el gateway arranque antes que el vigilante.
+- Logs: `%LOCALAPPDATA%\hermes\logs\ready-notify.log` y `...\logs\cierre-notify.log`.
+- ⚠️ **Cada aviso vive en dos rutas**: el esquema (`D:\Linux\Config\Hermes-Win\gateway-service\`) es la fuente, pero **lo que se ejecuta es la copia local** `%LOCALAPPDATA%\hermes\gateway-service\`. Instalar solo en el esquema deja el arranque con la versión vieja (pasó el 22/10/2026); los encargos 22 y 23 ya copian a las dos y validan la sintaxis.
+- ⚠️ Los `.ps1` se guardan en **UTF-8 con BOM y CRLF**: PowerShell 5.1 lee sin BOM como ANSI y rompe acentos y emojis.
 
 ### Trabajos de cron de Hermes
 
@@ -460,6 +478,21 @@ Los dos arreglos están en `kokoro-server.py` **y** en `kokoro-tts.py` (respaldo
 - Son **los mismos 11 alias que en Linux** (el repertorio de OpenCode se replica aquí).
 - El catálogo de NVIDIA lo filtra el plugin `model-providers` con el whitelist de `~/.config/opencode/opencode.json`; los alias NVIDIA se recomponen con `hermes-nvidia-aliases` en Linux, no aquí.
 - Los alias `local-*` apuntan a LM Studio (`http://127.0.0.1:1234`): si el modelo no está descargado, la llamada falla. *(Instantánea 10/10/2026: en Windows solo está `Qwen/Qwen3.8-9B`.)*
+
+### Timeouts del proveedor (stream lento)
+
+`opencode-go` puede tardar en emitir el primer trozo y el vigilante de stream cortaba la respuesta
+(«60 s waiting for the first stream chunk… stream stale watchdog»). Fijado **por proveedor** en
+`config.yaml` (22/10/2026):
+
+```
+providers.opencode-go.stale_timeout_seconds   = 300
+providers.opencode-go.request_timeout_seconds = 600
+```
+
+Se aplican con `hermes config set <clave> <valor> --force` (el `--force` es necesario: `config set` no
+conoce las claves anidadas de `providers.*`). La clave se lee en cada llamada
+(`hermes_cli/timeouts.py`), pero una sesión ya abierta puede tener la caché vieja: reiniciar el gateway.
 
 ### Plugins instalados
 

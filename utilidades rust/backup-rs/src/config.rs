@@ -22,6 +22,21 @@ pub struct MirrorConfig {
     /// `rsync` (mucho más rápido y fiable sobre SMB que la copia archivo a archivo).
     #[serde(default)]
     pub uri: Option<String>,
+    /// Si se indica, el espejo copia desde esta ruta (p. ej. `/mnt/seagate`)
+    /// hacia `destination`, en vez de copiar las `[[sources]]`. Pensado para
+    /// espejos disco-a-disco (p. ej. SEAGATE → SSD USB externo).
+    #[serde(default)]
+    pub source: Option<PathBuf>,
+    /// Entradas de nivel superior de `source` a espejar (p. ej. `["Linux",
+    /// "Mis Fotos", "Windows"]`). Si `source` está definido y esto está vacío,
+    /// se espejan todas las entradas de nivel superior de `source`.
+    #[serde(default)]
+    pub include: Vec<String>,
+    /// Rutas adicionales a espejar en **este** mirror, además de las
+    /// `[[sources]]` habituales (p. ej. `/mnt/seagate/Windows` para los espejos
+    /// de nube, sin añadirlo al backup versionado del Crucial).
+    #[serde(default)]
+    pub extra_sources: Vec<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,6 +129,9 @@ impl Default for Config {
                     name: "SEAGATE".to_string(),
                     destination: PathBuf::from("/run/media/antonio/SEAGATE/Linux"),
                     uri: None,
+                    source: None,
+                    include: vec![],
+                    extra_sources: vec![],
                 },
             ],
         }
