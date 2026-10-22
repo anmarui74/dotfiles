@@ -247,6 +247,68 @@
           "options": {}
         }
       ]
+    },
+    "OpenCode Go": {
+      "name": "OpenCode Go",
+      "url": "http://localhost:4002/v1",
+      "key": "opencode-go",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "object": "model",
+          "created": 1792677000,
+          "owned_by": "opencode",
+          "name": "deepseek-v4.1-flash",
+          "endpoints": [
+            1
+          ],
+          "options": {}
+        },
+        {
+          "id": "glm-5.3-flash",
+          "object": "model",
+          "created": 1792677000,
+          "owned_by": "opencode",
+          "name": "glm-5.3-flash",
+          "endpoints": [
+            1
+          ],
+          "options": {}
+        },
+        {
+          "id": "kimi-k2.7-code",
+          "object": "model",
+          "created": 1792677000,
+          "owned_by": "opencode",
+          "name": "kimi-k2.7-code",
+          "endpoints": [
+            1
+          ],
+          "options": {}
+        },
+        {
+          "id": "mimo-v2.6-flash",
+          "object": "model",
+          "created": 1792677000,
+          "owned_by": "opencode",
+          "name": "mimo-v2.6-flash",
+          "endpoints": [
+            1
+          ],
+          "options": {}
+        },
+        {
+          "id": "minimax-m3.1-flash-free",
+          "object": "model",
+          "created": 1792677000,
+          "owned_by": "opencode",
+          "name": "minimax-m3.1-flash-free",
+          "endpoints": [
+            1
+          ],
+          "options": {}
+        }
+      ]
     }
   },
   "models": [
@@ -261,6 +323,36 @@
       "provider": "OpenCode Local",
       "name": "OpenCode Local [models-qwen3.5-9b]",
       "id": "models-qwen3.5-9b"
+    },
+    {
+      "capabilities": 511,
+      "provider": "OpenCode Go",
+      "name": "OpenCode Go [DeepSeek V4.1 Flash (razona, barato)]",
+      "id": "deepseek-v4.1-flash"
+    },
+    {
+      "capabilities": 511,
+      "provider": "OpenCode Go",
+      "name": "OpenCode Go [GLM-5.3 Flash (rápido, tareas de texto)]",
+      "id": "glm-5.3-flash"
+    },
+    {
+      "capabilities": 511,
+      "provider": "OpenCode Go",
+      "name": "OpenCode Go [Kimi K2.7 Code (código)]",
+      "id": "kimi-k2.7-code"
+    },
+    {
+      "capabilities": 511,
+      "provider": "OpenCode Go",
+      "name": "OpenCode Go [MiMo V2.6 Flash (rápido)]",
+      "id": "mimo-v2.6-flash"
+    },
+    {
+      "capabilities": 511,
+      "provider": "OpenCode Go",
+      "name": "OpenCode Go [MiniMax M3.1 Flash Free (gratis)]",
+      "id": "minimax-m3.1-flash-free"
     }
   ],
   "customProviders": {}

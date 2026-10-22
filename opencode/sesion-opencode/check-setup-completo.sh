@@ -98,6 +98,8 @@ archivos = {
     'check-nvidia-whitelist.sh': 'NVIDIA-WL_SHEOF',
     'check-mega-pr.sh': 'MEGA-PR_SHEOF',
     'lmstudio-proxy.py': 'LMPROXYEOF', 'lmstudio-metrics-server.py': 'METRICSSRVEOF',
+    'opencode-go-proxy.py': 'GO_PROXYEOF',
+    'data/onlyoffice-ai/inject-go-provider.py': 'INJECTGOEOF',
     'backup-opencode.sh': 'BKUEOF', 'bootstrap-ocv.sh': 'BOOTEOF',
     'settings.lmstudio.json': 'LMSETEOF',
     'package.json': 'ROOTPKGEOF',
@@ -124,6 +126,7 @@ extra_archivos = [
     ('systemd check-mega-pr.timer', 'CHECKMEGAPR-TIMEREOF', '/home/antonio/.config/systemd/user/check-mega-pr.timer'),
     ('systemd sync-obsidian.service', 'SYNCOBS-SERVEOF', '/home/antonio/.config/systemd/user/sync-obsidian.service'),
     ('systemd sync-obsidian.path', 'SYNCOBS-PATHEOF', '/home/antonio/.config/systemd/user/sync-obsidian.path'),
+    ('systemd opencode-go-proxy.service', 'GOUNITEOF', '/home/antonio/.config/systemd/user/opencode-go-proxy.service'),
 ]
 
 ok = 0

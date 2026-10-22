@@ -1001,6 +1001,7 @@ M = {
     "07-playbook-recuperacion.md": "💻 07 Playbook de Recuperación.md",
     "08-incidencia-gpu-xid79.md": "💻 08 Incidencia GPU Xid 79.md",
     "09-informe-sistema.md": "💻 09 Informe del sistema.md",
+    "10-onlyoffice-ia-opencode-go.md": "💻 10 OnlyOffice IA con OpenCode Go.md",
     "hardware-info.md": "💻 Hardware del equipo.md",
     "README-hardware.md": "💻 README hardware.md",
     "notas-opencode-go.md": "💻 Notas OpenCode Go.md",
@@ -2803,6 +2804,10 @@ USER_PREFER_MARKDOWN_TABLES=true
 # API Key gratuita para consultar predicciones oficiales de AEMET
 # Obtenida en: https://opendata.aemet.es/centrodedescargas/obtencionAPIKey
 AEMET_API_KEY=TU_CLAVE_AQUI
+
+# --- OpenCode Go (clave dedicada SOLO para el plugin IA de OnlyOffice) ---
+# Usada por opencode-go-proxy.py (puerto 4002) -> https://opencode.ai/inference/go/openai/v1
+OPENCODE_GO_ONLYOFFICE_KEY=TU_CLAVE_AQUI
 ENVEOF
 chmod 600 "$DIR_CONFIG/.env"
 info ".env creado (permisos 600)"
@@ -4949,6 +4954,9 @@ rsync -ah --delete \
 # ─── 1b. Incluir respaldo OnlyOffice-IA en el tarball ───
 if [ -d "${CONFIG_BACKUP}/data/onlyoffice-ai" ]; then
     mkdir -p "${BACKUP_ROOT}/data"
+    # Ojo: `cp -r src dst` anida src dentro de dst si dst ya existe (creaba
+    # data/onlyoffice-ai/onlyoffice-ai/). Borramos el destino primero.
+    rm -rf "${BACKUP_ROOT}/data/onlyoffice-ai"
     cp -r "${CONFIG_BACKUP}/data/onlyoffice-ai" "${BACKUP_ROOT}/data/onlyoffice-ai"
     echo "   ✅ Respaldo OnlyOffice-IA incluido en el backup"
 fi
@@ -5191,10 +5199,17 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
     # (localstorage-snapshot/leveldb/*.log): basura de caché, fuera del repo público.
     rm -rf "${DOTFILES_OPENCODE}/data/onlyoffice-ai/localstorage-snapshot" 2>/dev/null || true
 
-    # Saneado del instalador desde cero (embebe el .env con la clave AEMET real)
+    # Saneado del instalador desde cero (embebe el .env con claves reales).
+    # Se cubren las variables conocidas y, de forma genérica, cualquier *_KEY,
+    # *_TOKEN, *_SECRET o *_PASSWORD con valor largo (así no se repite el fallo
+    # cuando se añade una clave nueva al .env).
     SETUP_DOTFILES="${DOTFILES_OPENCODE}/sesion-opencode/setup-opencode-completo.sh"
     if [ -f "$SETUP_DOTFILES" ]; then
-        sed -E -i 's/^(AEMET_API_KEY=).*/\1TU_CLAVE_AQUI/' "$SETUP_DOTFILES"
+        sed -E -i \
+            -e 's/^(AEMET_API_KEY=).*/\1TU_CLAVE_AQUI/' \
+            -e 's/^(OPENCODE_GO_ONLYOFFICE_KEY=).*/\1TU_CLAVE_AQUI/' \
+            -e 's/^((export )?[A-Z0-9_]*(KEY|TOKEN|SECRET|PASSWORD)=)[A-Za-z0-9_.\-]{20,}$/\1TU_CLAVE_AQUI/' \
+            "$SETUP_DOTFILES"
     fi
 
     # Verificación: la copia de dotfiles no debe contener claves
@@ -7881,9 +7896,9 @@ chmod +x "$DIR_CONFIG/data/onlyoffice-ai/inject-provider.py"
 
 # 19.3 Documentación de la integración
 cat > "$DIR_CONFIG/data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md" << 'MDEOF'
-# 🤖 OnlyOffice IA + OpenCode Local (proveedor OpenAI-compatible)
+# 🤖 OnlyOffice IA + OpenCode (proveedores local y nube)
 
-> **Fecha:** 09/08/2026
+> **Fecha:** 09/08/2026 · **rev.:** 22/10/2026
 > **Autor:** Antonio (configurado por OpenCode)
 > **Ubicación del backup:** `~/Config/opencode/data/onlyoffice-ai/`
 
@@ -7891,132 +7906,118 @@ cat > "$DIR_CONFIG/data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md" << 'MDEOF'
 
 ## 📌 Resumen
 
-Integración del **plugin IA de ONLYOFFICE Desktop Editors** con **opencode local**
-(modelo Qwen 3.8 Q6_K) usando el endpoint OpenAI-compatible que opencode expone
-a través de su proxy en el puerto **4001**.
+Integración del **AI agent / Chat de IA de ONLYOFFICE Desktop Editors** con dos
+proveedores OpenAI-compatible servidos por OpenCode:
 
-De esta forma, el asistente de IA de OnlyOffice (chat, resumen, traducción,
-análisis de texto, ayuda con código...) usa el modelo local, **sin depender de
-servicios en la nube ni enviar datos fuera del equipo**.
+| Proveedor en OnlyOffice | Origen | Puerto | Privacidad |
+|---|---|---|---|
+| `OpenCode Local` | LM Studio (Qwen 3.8 9B) | `4001` | 100 % local 🔒 |
+| `OpenCode Go` | Suscripción OpenCode Go (nube) | `4002` | Datos al proveedor ☁️ |
+
+Ambos conviven: puedes elegir el modelo por conversación según necesites
+privacidad o potencia.
+
+> 📖 **Detalle completo de OpenCode Go:** `documentacion/10-onlyoffice-ia-opencode-go.md`
 
 ---
 
 ## 🔧 Datos técnicos
 
-| Parámetro | Valor |
+| Parámetro | Local | OpenCode Go |
+|---|---|---|
+| **Proveedor (nombre)** | `OpenCode Local` | `OpenCode Go` |
+| **URL base** | `http://localhost:4001/v1` | `http://localhost:4002/v1` |
+| **Modelos** | `qwen3.8-9b` | `glm-5.3-flash`, `deepseek-v4.1-flash`, `kimi-k2.7-code`, `mimo-v2.6-flash`, `minimax-m3.1-flash-free` |
+| **API key en OnlyOffice** | `lm-studio` (no se valida) | `opencode-go` (no se valida) |
+| **Clave real** | ninguna (LM Studio) | `OPENCODE_GO_ONLYOFFICE_KEY` en `.env` |
+| **Capacidades** | 511 (todas) | 511 (todas) |
+| **Servicio** | dentro de `start-lmstudio.sh` | `opencode-go-proxy.service` |
+
+| Dato | Valor |
 |---|---|
-| **Proveedor (nombre)** | `OpenCode Local` |
-| **URL base** | `http://localhost:4001/v1` |
-| **Modelo** | `models-qwen3.8-9b` |
-| **API key** | `lm-studio` (cualquiera; el proxy no la valida) |
-| **Capacidades** | 511 (todas: chat, resumen, traducción, análisis, código, etc.) |
-| **Aplicación** | ONLYOFFICE Desktop Editors |
-| **Plugin IA** | `asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}` (versión 3.2.2) |
+| **Aplicación** | ONLYOFFICE Desktop Editors 10.0.0 (`onlyoffice-bin`) |
+| **Plugin IA** | `asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}` (v3.2.99) |
+| **Dónde se configura** | Barra lateral → **Chat de IA** → Ajustes → **Connection / Add provider** |
+| **Dónde persiste** | `onlyoffice_ai_plugin_storage_key` (LevelDB del localStorage, formato v4) |
 
 ### Arquitectura
 
 ```
-OnlyOffice (plugin IA)
-        │  peticiones OpenAI-compatible
-        ▼
-http://localhost:4001/v1  ← lmstudio-proxy.py (proxy opencode)
-        │  reenvía
-        ▼
-http://localhost:1234     ← LM Studio server (modelo Qwen 3.8 Q6_K)
+OnlyOffice (AI agent / Chat de IA)
+        │  OpenAI-compatible + CORS + Private Network Access
+        ├──────────────► http://localhost:4001/v1  ← lmstudio-proxy.py
+        │                       └──► LM Studio :1234 (Qwen 3.8 9B)
+        └──────────────► http://localhost:4002/v1  ← opencode-go-proxy.py
+                                └──► opencode.ai/inference/go/openai/v1
 ```
 
 ---
 
-## 📋 Pasos seguidos (configuración realizada)
+## 📋 Pasos seguidos
 
-### 1. Verificación del backend de opencode
-
-Comprobado que el proxy responde y el modelo está cargado:
+### 1. Verificación de los backends
 
 ```bash
-curl -s http://localhost:4001/v1/models          # → lista modelos (OK)
-curl -s http://localhost:4001/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"models-qwen3.8-9b","messages":[{"role":"user","content":"di hola"}]}'
-# → {"choices":[{"message":{"content":"¡Hola!"}}]}  (OK)
+curl -s http://localhost:4001/v1/models          # LM Studio
+curl -s http://localhost:4002/v1/models          # OpenCode Go (filtrado)
 ```
 
-### 2. Localización del almacenamiento del plugin IA
+### 2. Localización del almacenamiento
 
-El plugin IA guarda su configuración en el `localStorage` interno de OnlyOffice,
-que en Linux se encuentra en un **LevelDB**:
+El AI agent guarda su configuración en el `localStorage` interno de OnlyOffice,
+un **LevelDB**:
 
 ```
 ~/.local/share/onlyoffice/desktopeditors/data/cache/Local Storage/leveldb/000003.log
 ```
 
 - **Clave:** `_onlyoffice://plugin\x00\x01onlyoffice_ai_plugin_storage_key`
-- **Valor:** `\x01` + JSON (el `\x01` es el marcador de codificación UTF-8 de Chromium)
+- **Valor:** `\x01` + JSON (marcador de codificación UTF-8 de Chromium)
 
 ### 3. Backup de seguridad previo
 
-Antes de tocar nada se copió el almacenamiento completo:
+```bash
+cp -r ~/.local/share/onlyoffice/desktopeditors/data/cache/Local\ Storage/leveldb \
+      ~/Config/opencode/data/onlyoffice-ai/localstorage-snapshot/
+```
+
+### 4. Inyección de los proveedores
+
+| Script | Proveedor | Cuándo usarlo |
+|---|---|---|
+| `inject-provider.py` | `OpenCode Local` (:4001) | Tras reinstalar / perfil nuevo |
+| `inject-go-provider.py` | `OpenCode Go` (:4002) | Tras reinstalar / perfil nuevo |
+
+⚠️ **OnlyOffice debe estar cerrado** al ejecutarlos.
+
+### 5. Verificación final
 
 ```bash
-cp -r ~/.local/share/onlyoffice/desktopeditors/data/cache/Local\ Storage/ \
-      ~/LocalStorage-backup-<fecha>/
+python3 inject-provider.py --check
+python3 inject-go-provider.py --check
 ```
-
-### 4. Análisis del formato LevelDB
-
-Se escribió un parser en Python (sin dependencias externas) para leer los
-records del log de LevelDB:
-- Checksum **CRC32C** enmascarado (`masked crc32c + 0xa282ead8`)
-- Cabecera: checksum(4) + longitud(2) + tipo(1)
-- Payload: WriteBatch con `sequence(8) + count(4) + entradas(key/value con varint32)`
-
-### 5. Inyección del proveedor
-
-Se añadió un **nuevo record** (`Put`) al final del log con una `sequence` mayor
-que las existentes (el último `Put` de una clave es el que gana al abrir):
-
-```json
-"OpenCode Local": {
-  "name": "OpenCode Local",
-  "url": "http://localhost:4001/v1",
-  "key": "lm-studio",
-  "models": [{ "id": "models-qwen3.8-9b", "endpoints": [1], ... }]
-}
-```
-
-Y el modelo registrado para todas las tareas:
-
-```json
-{
-  "capabilities": 511,
-  "provider": "OpenCode Local",
-  "name": "OpenCode Local [models-qwen3.8-9b]",
-  "id": "models-qwen3.8-9b"
-}
-```
-
-### 6. Verificación final
-
-- Checksum del record nuevo: **OK**
-- Relectura del log tras abrir OnlyOffice: la configuración persiste ✅
-- Resultado: el proveedor aparece en **IA → Ajustes → Editar modelos de IA**
 
 ---
 
-## 🖱️ Método alternativo (manual, sin tocar LevelDB)
+## 🖱️ Configuración por la interfaz (método oficial)
 
-Si en el futuro se quiere añadir otro proveedor por la interfaz:
+Válido para ambos proveedores. En ONLYOFFICE Desktop 10 la entrada es la barra
+lateral → **Chat de IA**; si no hay proveedor aparece «Conecte un modelo de IA».
 
-1. Abrir un documento en OnlyOffice
-2. Pestaña **IA** → **Ajustes** → **Editar modelos de IA**
-3. **+** → rellenar URL `http://localhost:4001/v1`, modelo `models-qwen3.8-9b`,
-   API key `lm-studio`
-4. Marcar las tareas deseadas → **OK**
+1. **Proveedor:** `OpenAI` (o *OpenAI Compatible*)
+2. **Nombre del perfil:** `OpenCode Local` u `OpenCode Go`
+3. **URL base:** `http://localhost:4001/v1` o `http://localhost:4002/v1`
+4. **Clave de la API:** `lm-studio` u `opencode-go` (los proxies no las validan)
+5. **Modelo:** desplegar y elegir (la lista viene de `/v1/models`)
+6. **Añadir modelo**
+
+> ⚠️ Si el desplegable de modelo sale vacío o da «error al pegar la API key», es
+> **CORS / Private Network Access**, no la clave. Ver el manual 10.
 
 ### Archivo de proveedor personalizado (JS)
 
-También se puede subir un archivo JS (método oficial de ONLYOFFICE para
-proveedores personalizados) — ver `opencode-provider.js` en esta carpeta:
+Método oficial de ONLYOFFICE para proveedores personalizados — ver
+`opencode-provider.js`:
 
 ```js
 "use strict";
@@ -8028,62 +8029,49 @@ class Provider extends AI.Provider {
 }
 ```
 
-Ruta de subida: **IA → Ajustes → Editar modelos de IA → + → Custom providers → +**
+Ruta: pestaña **IA** del editor → Ajustes → Editar modelos de IA → lápiz →
+**Custom providers** → **+** → subir el JS.
 
 ---
 
 ## ♻️ Restauración de esta configuración
 
-Hay **tres niveles** de restauración, de más a menos fino:
-
 ### Opción A — Script de inyección (recomendada)
 
 ```bash
-# Requisito: cerrar OnlyOffice primero
+# Con OnlyOffice cerrado
 python3 ~/Config/opencode/data/onlyoffice-ai/inject-provider.py
-# Comprobar sin modificar:
-python3 ~/Config/opencode/data/onlyoffice-ai/inject-provider.py --check
+python3 ~/Config/opencode/data/onlyoffice-ai/inject-go-provider.py
 ```
-
-Reconstruye el proveedor y el modelo sobre la configuración existente o la crea
-desde cero si no hay ninguna.
 
 ### Opción B — Copia del LevelDB completo (snapshot)
 
-Restaurar el directorio completo del snapshot:
-
 ```bash
-# SoloOffice cerrado:
+# Con OnlyOffice cerrado
 cp -r ~/Config/opencode/data/onlyoffice-ai/localstorage-snapshot/leveldb/* \
       ~/.local/share/onlyoffice/desktopeditors/data/cache/Local\ Storage/leveldb/
 ```
 
-⚠️ Restaura también el resto de claves del localStorage de esa fecha.
+⚠️ Restaura también el resto de claves de esa fecha.
 
 ### Opción C — Configuración JSON legible
 
-El archivo `onlyoffice-ai-config.json` contiene la configuración completa
-(15 proveedores + modelo OpenCode Local) por si se necesita inspeccionar,
-editar o migrar.
+`onlyoffice-ai-config.json` contiene la configuración completa (proveedores y
+modelos) del último volcado, para inspeccionar, editar o migrar.
 
 ---
 
 ## 🚀 Instalación automática (setup-opencode-completo.sh)
 
-El instalador completo `setup-opencode-completo.sh` incluye el **PASO 19**
-que automatiza todo este proceso:
+El **PASO 19** del instalador automatiza todo:
 
-1. **Instala** OnlyOffice Desktop Editors desde **pacman** (repos extra):
-   `pkexec pacman -S --needed --noconfirm onlyoffice-desktopeditors`
-2. **Embe** el script `inject-provider.py` y este documento en
-   `~/.config/opencode/data/onlyoffice-ai/`
-3. **Inicializa el perfil** de OnlyOffice (primera ejecución breve) si no
-   existe el almacenamiento del plugin IA
-4. **Inyecta el proveedor** "OpenCode Local" automáticamente y lo verifica
-   con `--check`
+1. Instala OnlyOffice desde pacman: `pkexec pacman -S --needed onlyoffice-desktopeditors`
+2. Embebe `inject-provider.py`, `inject-go-provider.py` y este documento
+3. Inicializa el perfil de OnlyOffice si no existe
+4. Inyecta **OpenCode Local** (19.5) y **OpenCode Go** (19.6), y verifica ambos
+5. Instala y habilita `opencode-go-proxy.service`
 
-Al reinstalar el sistema desde cero, basta con ejecutar el setup y la
-integración IA de OnlyOffice queda lista sin intervención manual.
+Tras reinstalar desde cero, la integración queda lista sin pasos manuales.
 
 ---
 
@@ -8092,27 +8080,31 @@ integración IA de OnlyOffice queda lista sin intervención manual.
 | Archivo | Descripción |
 |---|---|
 | `ONLYOFFICE-AI-OPENCODE.md` | Este documento |
-| `onlyoffice-ai-config.json` | Configuración completa del plugin IA (legible) |
-| `inject-provider.py` | Script de restauración del proveedor (autocontenido) |
-| `opencode-provider.js` | Archivo JS del proveedor (método manual oficial) |
-| `localstorage-snapshot/` | Snapshot del LevelDB del localStorage (estado exacto) |
+| `onlyoffice-ai-config.json` | Configuración completa del plugin (legible) |
+| `inject-provider.py` | Inyecta el proveedor `OpenCode Local` |
+| `inject-go-provider.py` | Inyecta el proveedor `OpenCode Go` |
+| `opencode-provider.js` | Proveedor personalizado (método manual oficial) |
+| `localstorage-snapshot/` | Snapshot del LevelDB (estado exacto) |
 
 ---
 
 ## ⚠️ Consideraciones
 
-- **Modelo en VRAM:** para que OnlyOffice responda, el modelo debe estar cargado
-  (arrancar con `opencode` u `ocv`, o `bash ~/.config/opencode/start-lmstudio.sh`).
-  Si no, LM Studio devuelve error de modelo no cargado.
-- **Solo local:** el proxy escucha en `127.0.0.1:4001`, por lo que esta
-  configuración funciona únicamente en este equipo.
-- **Document Server (Docker):** si se usara OnlyOffice en Docker, habría que:
-  1. Hacer que el proxy escuche en `0.0.0.0`
-  2. Usar `http://host.docker.internal:4001/v1` (o IP del host) como URL
-  3. Añadir cabeceras CORS al proxy (`Access-Control-Allow-Origin`)
-- **Privacidad:** al ser 100% local, los documentos no salen del equipo. 🔒
-- **Seguridad:** el backup de esta carpeta debe incluirse en cualquier copia
-  general de `~/Config/opencode/`.
+- **OpenCode Local:** el modelo debe estar cargado en VRAM (abrir `opencode`/`ocv`
+  o `bash ~/.config/opencode/start-lmstudio.sh`).
+- **OpenCode Go:** el proxy del 4002 arranca solo con la sesión
+  (`opencode-go-proxy.service`); no requiere abrir OpenCode.
+- **Solo local:** ambos proxies escuchan en `127.0.0.1`, así que esta configuración
+  funciona únicamente en este equipo.
+- **Document Server (Docker):** habría que escuchar en `0.0.0.0`, usar
+  `http://host.docker.internal:4001|4002/v1` y permitir el origen del Document
+  Server en CORS.
+- **`deepseek-v4.1-flash` razona antes de responder**: con límites de tokens bajos
+  puede devolver texto vacío. Para tareas cortas, `glm-5.3-flash`.
+
+---
+
+> 📁 `~/.config/opencode/data/onlyoffice-ai/` · 📖 `documentacion/10-onlyoffice-ia-opencode-go.md` · 🖥️ [Integrating AI (wiki)](https://helpcenter.onlyoffice.com/desktop/configuration/desktop-AI-agent.aspx)
 MDEOF
 
 # 19.4 Inicializar el perfil de OnlyOffice (primera ejecución) si hace falta
@@ -8133,6 +8125,620 @@ if python3 "$DIR_CONFIG/data/onlyoffice-ai/inject-provider.py" --check; then
     info "✅ Integración IA OnlyOffice + OpenCode lista"
 else
     aviso "La integración IA no se pudo verificar; revísala manualmente tras abrir OnlyOffice"
+fi
+
+# 19.6 Proxy OpenCode Go + proveedor "OpenCode Go" en OnlyOffice
+#      OpenCode Go exige la cabecera x-opencode-session, que el plugin IA no envía.
+#      El proxy local (4002) la inyecta y añade CORS.
+info "Configurando proxy OpenCode Go (http://localhost:4002/v1)..."
+cat > "$DIR_CONFIG/opencode-go-proxy.py" << 'GO_PROXYEOF'
+#!/usr/bin/env python3
+"""
+opencode-go-proxy.py — Proxy local OpenAI-compatible para OpenCode Go
+
+Permite usar los modelos de OpenCode Go (suscripción) desde clientes que NO
+envían las cabeceras que el endpoint de OpenCode exige, como el plugin de IA de
+ONLYOFFICE Desktop Editors.
+
+Problema que resuelve:
+    https://opencode.ai/inference/go/openai/v1/chat/completions devuelve
+    400 {"type":"MissingSessionID"} si no llega la cabecera x-opencode-session.
+
+Qué hace:
+    - Escucha en 127.0.0.1:4002 (configurable)
+    - Inyecta Authorization: Bearer <API key de auth.json>
+    - Inyecta x-opencode-session (UUID estable por proceso)
+    - Envía un User-Agent propio, como pide la documentación de Go
+    - Añade cabeceras CORS (el plugin IA de OnlyOffice las necesita)
+    - Reenvía SSE en streaming sin bufferizar
+
+Uso:
+    python3 opencode-go-proxy.py            # escucha en 4002
+    python3 opencode-go-proxy.py 4003       # otro puerto
+    OPENCODE_GO_SESSION=ses_xxx python3 opencode-go-proxy.py
+
+Cliente (OnlyOffice): URL base http://localhost:4002/v1 , API key cualquiera.
+"""
+import json
+import os
+import sys
+import threading
+import time
+import urllib.error
+import urllib.request
+import uuid
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+UPSTREAM = "https://opencode.ai/inference/go"
+AUTH_FILE = os.path.expanduser("~/.local/share/opencode/auth.json")
+USER_AGENT = "onlyoffice-ai-plugin/3.2 (+opencode-go-proxy/1.0)"
+# Sesión estable: la documentación de Go pide un ID estable por conversación.
+SESSION_ID = os.environ.get("OPENCODE_GO_SESSION") or f"ses_{uuid.uuid4().hex}"
+
+# Modelos de Go servidos por /openai/v1/chat/completions (los únicos que valen
+# para un cliente "OpenAI Compatible"). El resto usa /anthropic o /responses.
+CHAT_MODELS = [
+    "glm-5.3-flash",
+    "deepseek-v4.1-flash",
+    "kimi-k2.7-code",
+    "mimo-v2.6-flash",
+    "minimax-m3.1-flash-free",
+    "longcat-2.0",
+    "glm-5.3",
+    "glm-5.2",
+    "kimi-k3",
+    "deepseek-v4-pro",
+    "mimo-v2.6-pro",
+    "mimo-v2.5",
+    "mimo-v2.5-pro",
+    "hy3",
+    "hy4-preview",
+    "step-5-preview",
+    "longcat-2.5-preview-free",
+    "beam-free",
+]
+
+
+def filter_models(body: bytes) -> bytes:
+    """Deja solo los modelos que funcionan con /chat/completions, en orden de preferencia."""
+    try:
+        data = json.loads(body)
+        items = {m.get("id"): m for m in data.get("data", [])}
+        ordered = [items[mid] for mid in CHAT_MODELS if mid in items]
+        for mid, item in items.items():          # añade los nuevos no listados
+            if mid not in CHAT_MODELS:
+                ordered.append(item)
+        data["data"] = ordered
+        return json.dumps(data).encode("utf-8")
+    except Exception:  # noqa: BLE001
+        return body
+
+
+ENV_FILE = os.path.expanduser("~/.config/opencode/.env")
+
+
+def _from_env_file(var: str) -> str:
+    """Lee una variable suelta del .env de OpenCode (sin cargar todo el fichero)."""
+    try:
+        with open(ENV_FILE, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line.startswith(f"{var}="):
+                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return ""
+
+
+def load_api_key() -> str:
+    # 1) variable de entorno  2) clave dedicada del .env  3) auth.json de OpenCode
+    key = os.environ.get("OPENCODE_GO_API_KEY", "")
+    if key:
+        return key
+    key = _from_env_file("OPENCODE_GO_ONLYOFFICE_KEY")
+    if key:
+        return key
+    try:
+        with open(AUTH_FILE, encoding="utf-8") as fh:
+            return json.load(fh)["opencode-go"]["key"]
+    except Exception as exc:  # noqa: BLE001
+        print(f"❌ No pude leer la API key de {ENV_FILE} ni de {AUTH_FILE}: {exc}",
+              file=sys.stderr)
+        sys.exit(1)
+
+
+API_KEY = load_api_key()
+
+
+def log(msg: str) -> None:
+    print(f"[{time.strftime('%d/%m/%Y %H:%M:%S')}] {msg}", flush=True)
+
+
+class Handler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+    server_version = "opencode-go-proxy/1.0"
+
+    # ── utilidades ────────────────────────────────────────────────
+    def _cors(self, preflight: bool = False) -> None:
+        # Reflejamos el Origin cuando existe (permite credenciales) y '*' si no.
+        origin = self.headers.get("Origin")
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Credentials", "true")
+            self.send_header("Vary", "Origin")
+        else:
+            self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        # Reflejamos los headers pedidos: nunca nos quedamos cortos.
+        requested = self.headers.get("Access-Control-Request-Headers")
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            requested or "Content-Type, Authorization, x-api-key, X-Requested-With, x-opencode-session",
+        )
+        self.send_header("Access-Control-Max-Age", "86400")
+        self.send_header("Access-Control-Expose-Headers", "*")
+        # Chrome/CEF exige permiso explícito para acceder a localhost (Private Network Access).
+        if preflight and self.headers.get("Access-Control-Request-Private-Network") == "true":
+            self.send_header("Access-Control-Allow-Private-Network", "true")
+
+    def _upstream_path(self, path: str) -> str:
+        # /v1/chat/completions -> .../go/openai/v1/chat/completions
+        if path.startswith("/v1/"):
+            return f"{UPSTREAM}/openai{path}"
+        if path.startswith("/models"):
+            return f"{UPSTREAM}/v1/models"
+        return f"{UPSTREAM}/openai{path}"
+
+    def log_message(self, fmt, *args):  # silencia el log por defecto
+        log(f"{self.command} {self.path} -> {args[1] if len(args) > 1 else ''}")
+
+    # ── preflight ────────────────────────────────────────────────
+    def do_OPTIONS(self):  # noqa: N802
+        self.send_response(204)
+        self._cors(preflight=True)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+        log(f"preflight Origin={self.headers.get('Origin')!r} "
+            f"ReqHeaders={self.headers.get('Access-Control-Request-Headers')!r} "
+            f"PNA={self.headers.get('Access-Control-Request-Private-Network')!r}")
+
+    # ── GET (lista de modelos) ───────────────────────────────────
+    def do_GET(self):  # noqa: N802
+        if self.path.rstrip("/") in ("/v1/models", "/models"):
+            try:
+                req = urllib.request.Request(
+                    f"{UPSTREAM}/v1/models",
+                    headers={"Authorization": f"Bearer {API_KEY}",
+                             "User-Agent": USER_AGENT},
+                )
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    body = resp.read()
+                body = filter_models(body)
+                self.send_response(200)
+                self._cors()
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except Exception as exc:  # noqa: BLE001
+                self._error(502, f"Error consultando modelos: {exc}")
+                return
+        if self.path.rstrip("/") in ("/health", "/"):
+            body = b'{"status":"ok"}'
+            self.send_response(200)
+            self._cors()
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        self._error(404, "Ruta no encontrada")
+
+    # ── POST (chat completions) ──────────────────────────────────
+    def do_POST(self):  # noqa: N802
+        # El SDK de OpenAI intenta /v1/responses primero. OpenCode Go no lo
+        # ofrece para estos modelos: responder 404 hace que el cliente caiga
+        # de inmediato a /chat/completions en vez de esperar un 400.
+        if self.path.rstrip("/").endswith("/responses"):
+            self._error(404, "Endpoints /responses no soportado; usa /v1/chat/completions")
+            return
+        length = int(self.headers.get("Content-Length") or 0)
+        raw = self.rfile.read(length) if length else b""
+        try:
+            payload = json.loads(raw or b"{}")
+        except json.JSONDecodeError:
+            self._error(400, "JSON inválido")
+            return
+
+        stream = bool(payload.get("stream"))
+        model = payload.get("model", "?")
+        log(f"→ modelo={model} stream={stream}")
+
+        headers = {
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream" if stream else "application/json",
+            "User-Agent": USER_AGENT,
+            "x-opencode-session": SESSION_ID,
+        }
+        req = urllib.request.Request(
+            f"{UPSTREAM}/openai/v1/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+
+        try:
+            resp = urllib.request.urlopen(req, timeout=600)
+        except urllib.error.HTTPError as exc:
+            body = exc.read()
+            log(f"← HTTP {exc.code}: {body[:300]!r}")
+            self.send_response(exc.code)
+            self._cors()
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._error(502, f"Error conectando con OpenCode Go: {exc}")
+            return
+
+        if not stream:
+            try:
+                body = resp.read()
+            finally:
+                resp.close()
+            self.send_response(200)
+            self._cors()
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        # ── streaming SSE con chunked encoding ───────────────────
+        self.send_response(200)
+        self._cors()
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("X-Accel-Buffering", "no")
+        self.send_header("Transfer-Encoding", "chunked")
+        self.end_headers()
+        try:
+            while True:
+                chunk = resp.read(512)
+                if not chunk:
+                    break
+                self.wfile.write(f"{len(chunk):X}\r\n".encode() + chunk + b"\r\n")
+                self.wfile.flush()
+            self.wfile.write(b"0\r\n\r\n")
+            self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            log("Cliente desconectado durante el stream")
+        finally:
+            resp.close()
+
+    def _error(self, code: int, msg: str) -> None:
+        body = json.dumps({"error": {"message": msg, "type": "proxy_error"}}).encode()
+        self.send_response(code)
+        self._cors()
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
+def main() -> None:
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("OPENCODE_GO_PORT", 4002))
+    srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    log(f"✅ opencode-go-proxy escuchando en http://localhost:{port}/v1")
+    log(f"   upstream: {UPSTREAM}/openai/v1 | sesión: {SESSION_ID}")
+    try:
+        srv.serve_forever()
+    except KeyboardInterrupt:
+        log("Detenido por el usuario")
+    finally:
+        srv.server_close()
+
+
+if __name__ == "__main__":
+    main()
+GO_PROXYEOF
+chmod +x "$DIR_CONFIG/opencode-go-proxy.py"
+
+cat > "$DIR_CONFIG/data/onlyoffice-ai/inject-go-provider.py" << 'INJECTGOEOF'
+#!/usr/bin/env python3
+"""
+inject-go-provider.py — Añade el proveedor "OpenCode Go" al plugin IA de ONLYOFFICE
+
+Escribe en el LevelDB del localStorage del plugin IA un proveedor OpenAI-compatible
+que apunta al proxy local opencode-go-proxy.py (puerto 4002), el cual añade la
+cabecera x-opencode-session que OpenCode Go exige.
+
+Requisitos:
+    1. El proxy debe estar corriendo:  python3 ~/.config/opencode/opencode-go-proxy.py
+    2. ONLYOFFICE Desktop Editors CERRADO (si está abierto, al salir sobrescribe
+       el LevelDB con su copia en memoria y se pierde el cambio)
+
+Uso:
+    python3 inject-go-provider.py            # inyecta / actualiza
+    python3 inject-go-provider.py --check    # solo verifica el estado actual
+    python3 inject-go-provider.py --remove   # quita el proveedor OpenCode Go
+"""
+import json
+import os
+import struct
+import sys
+
+LVL = os.path.expanduser(
+    "~/.local/share/onlyoffice/desktopeditors/data/cache/Local Storage/leveldb")
+LOG = os.path.join(LVL, "000003.log")
+KEY = b"_onlyoffice://plugin\x00\x01onlyoffice_ai_plugin_storage_key"
+
+PROVIDER_NAME = "OpenCode Go"
+BASE_URL = "http://localhost:4002/v1"
+API_KEY = "opencode-go"          # el proxy no la valida; la real vive en .env
+CAPABILITIES = 511               # todas las tareas del plugin
+
+# Modelos accesibles por el endpoint OpenAI-compatible de Go (/chat/completions).
+# Los modelos de Go servidos por /anthropic o /responses NO valen para el plugin.
+MODELS = [
+    ("deepseek-v4.1-flash", "DeepSeek V4.1 Flash (razona, barato)"),
+    ("glm-5.3-flash", "GLM-5.3 Flash (rápido, tareas de texto)"),
+    ("kimi-k2.7-code", "Kimi K2.7 Code (código)"),
+    ("mimo-v2.6-flash", "MiMo V2.6 Flash (rápido)"),
+    ("minimax-m3.1-flash-free", "MiniMax M3.1 Flash Free (gratis)"),
+]
+
+
+# ── CRC32C (polinomio 0x82F63B78) ─────────────────────────────
+def _crc32c_table():
+    poly = 0x82F63B78
+    table = []
+    for i in range(256):
+        c = i
+        for _ in range(8):
+            c = (c >> 1) ^ poly if c & 1 else c >> 1
+        table.append(c & 0xFFFFFFFF)
+    return table
+
+
+_TABLE = _crc32c_table()
+
+
+def crc32c(data, crc=0):
+    crc ^= 0xFFFFFFFF
+    for b in data:
+        crc = _TABLE[(crc ^ b) & 0xFF] ^ (crc >> 8)
+    return (crc ^ 0xFFFFFFFF) & 0xFFFFFFFF
+
+
+def mask(crc):
+    return (((crc >> 15) | (crc << 17)) + 0xA282EAD8) & 0xFFFFFFFF
+
+
+# ── LevelDB: lectura ──────────────────────────────────────────
+def _read_varint(buf, off):
+    result, shift = 0, 0
+    while True:
+        b = buf[off]
+        off += 1
+        result |= (b & 0x7F) << shift
+        if not (b & 0x80):
+            break
+        shift += 7
+    return result, off
+
+
+def parse_log(path):
+    data = open(path, "rb").read()
+    off, entries = 0, []
+    while off + 7 <= len(data):
+        checksum, length, rtype = struct.unpack_from("<IHB", data, off)
+        off += 7
+        if off + length > len(data):
+            break
+        payload = data[off:off + length]
+        off += length
+        if rtype != 1 or len(payload) < 12:
+            continue
+        real = mask(crc32c(b"\x01" + payload))
+        seq, count = struct.unpack_from("<QI", payload, 0)
+        p = 12
+        for _ in range(count):
+            if p >= len(payload):
+                break
+            et = payload[p]
+            p += 1
+            klen, p = _read_varint(payload, p)
+            key = payload[p:p + klen]
+            p += klen
+            if et == 1:
+                vlen, p = _read_varint(payload, p)
+                val = payload[p:p + vlen]
+                p += vlen
+            else:
+                val = b"<DEL>"
+            entries.append({"seq": seq, "type": "put" if et == 1 else "del",
+                            "key": key, "val": val, "cksum_ok": real == checksum})
+    return entries
+
+
+def _enc_varint(n):
+    out = b""
+    while True:
+        b = n & 0x7F
+        n >>= 7
+        out += bytes([b | 0x80]) if n else bytes([b])
+        if not n:
+            break
+    return out
+
+
+def make_record(seq, key, value):
+    payload = struct.pack("<QI", seq, 1) + b"\x01"
+    payload += _enc_varint(len(key)) + key
+    payload += _enc_varint(len(value)) + value
+    return struct.pack("<IHB", mask(crc32c(b"\x01" + payload)), len(payload), 1) + payload
+
+
+def get_current():
+    best = None
+    if os.path.exists(LOG):
+        for e in parse_log(LOG):
+            if e["key"] == KEY and e["type"] == "put":
+                if best is None or e["seq"] > best["seq"]:
+                    best = e
+    return best
+
+
+def onlyoffice_running():
+    try:
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit():
+                continue
+            try:
+                with open(f"/proc/{pid}/cmdline", "rb") as fh:
+                    cmd = fh.read().replace(b"\x00", b" ").decode("utf-8", "ignore")
+            except OSError:
+                continue
+            if "onlyoffice" in cmd.lower() and "DesktopEditors" in cmd:
+                return pid
+    except OSError:
+        pass
+    return None
+
+
+def save(cfg):
+    new_value = b"\x01" + json.dumps(cfg, ensure_ascii=False).encode("utf-8")
+    max_seq = max((e["seq"] for e in parse_log(LOG)), default=0) if os.path.exists(LOG) else 0
+    seq = max_seq + 10
+    with open(LOG, "ab") as fh:
+        fh.write(make_record(seq, KEY, new_value))
+    for e in parse_log(LOG):
+        if e["key"] == KEY and e["seq"] == seq and e["type"] == "put":
+            ok = e["cksum_ok"] and e["val"] == new_value
+            return ok, seq
+    return False, seq
+
+
+def main():
+    check_only = "--check" in sys.argv
+    remove = "--remove" in sys.argv
+
+    if not os.path.isdir(LVL):
+        os.makedirs(LVL, exist_ok=True)
+        print("ℹ️  Creado el directorio del perfil de OnlyOffice (perfil nuevo).")
+
+    cur = get_current()
+    if cur:
+        cfg = json.loads(cur["val"][1:])
+        print(f"ℹ️  Configuración actual: version={cfg.get('version')}, "
+              f"proveedores={len(cfg.get('providers', {}))}")
+    else:
+        print("⚠️  No hay configuración previa del plugin IA; se creará desde cero.")
+        cfg = {"version": 4, "providers": {}, "models": [], "customProviders": {}}
+
+    prov = cfg.get("providers", {}).get(PROVIDER_NAME)
+
+    if check_only:
+        if prov:
+            print(f"✅ Proveedor '{PROVIDER_NAME}' presente -> {prov['url']}")
+            print(f"   Modelos del proveedor: {[m['id'] for m in prov.get('models', [])]}")
+            activos = [m for m in cfg.get("models", []) if m.get("provider") == PROVIDER_NAME]
+            print(f"   Modelos asignados: {[m['id'] for m in activos]}")
+            return 0
+        print(f"❌ Proveedor '{PROVIDER_NAME}' NO presente")
+        return 1
+
+    if remove:
+        if not prov:
+            print(f"ℹ️  '{PROVIDER_NAME}' no estaba configurado.")
+            return 0
+        del cfg["providers"][PROVIDER_NAME]
+        cfg["models"] = [m for m in cfg.get("models", [])
+                         if m.get("provider") != PROVIDER_NAME]
+        ok, seq = save(cfg)
+        print(f"{'✅' if ok else '❌'} Proveedor '{PROVIDER_NAME}' eliminado (seq={seq})")
+        return 0 if ok else 1
+
+    pid = onlyoffice_running()
+    if pid:
+        print(f"🔴 ONLYOFFICE está abierto (PID {pid}).")
+        print("   Ciérralo por completo y vuelve a ejecutar este script: si sigue abierto,")
+        print("   al salir reescribirá el LevelDB y se perderá el cambio.")
+        return 2
+
+    ahora = 1792677000
+    cfg["providers"][PROVIDER_NAME] = {
+        "name": PROVIDER_NAME,
+        "url": BASE_URL,
+        "key": API_KEY,
+        "models": [
+            {"id": mid, "object": "model", "created": ahora, "owned_by": "opencode",
+             "name": mid, "endpoints": [1], "options": {}}
+            for mid, _desc in MODELS
+        ],
+    }
+
+    cfg["models"] = [m for m in cfg.get("models", [])
+                     if m.get("provider") != PROVIDER_NAME]
+    for mid, desc in MODELS:
+        cfg["models"].append({
+            "capabilities": CAPABILITIES,
+            "provider": PROVIDER_NAME,
+            "name": f"{PROVIDER_NAME} [{desc}]",
+            "id": mid,
+        })
+
+    ok, seq = save(cfg)
+    print(f"{'✅' if ok else '❌'} Record escrito en el LevelDB (seq={seq})")
+    print(f"   '{PROVIDER_NAME}' -> {BASE_URL}")
+    print(f"   Modelos registrados: {[m for m, _ in MODELS]}")
+    print("   Abre OnlyOffice → pestaña IA → Ajustes → Editar modelos de IA")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+INJECTGOEOF
+chmod +x "$DIR_CONFIG/data/onlyoffice-ai/inject-go-provider.py"
+
+mkdir -p "$HOME/.config/systemd/user"
+cat > "$HOME/.config/systemd/user/opencode-go-proxy.service" << 'GOUNITEOF'
+[Unit]
+Description=Proxy local OpenCode Go (OpenAI-compatible) para el plugin IA de OnlyOffice
+Documentation=file:%h/.config/opencode/documentacion/10-onlyoffice-ia-opencode-go.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.config/opencode/opencode-go-proxy.py 4002
+Restart=always
+RestartSec=5
+StandardOutput=append:%h/.config/opencode/data/opencode-go-proxy.log
+StandardError=append:%h/.config/opencode/data/opencode-go-proxy.log
+
+[Install]
+WantedBy=default.target
+GOUNITEOF
+
+systemctl --user daemon-reload 2>/dev/null || true
+systemctl --user enable opencode-go-proxy.service 2>/dev/null || true
+
+if [ -n "${OPENCODE_GO_ONLYOFFICE_KEY:-}" ] || grep -q '^OPENCODE_GO_ONLYOFFICE_KEY=' "$DIR_CONFIG/.env" 2>/dev/null; then
+    systemctl --user restart opencode-go-proxy.service 2>/dev/null || true
+    python3 "$DIR_CONFIG/data/onlyoffice-ai/inject-go-provider.py" || true
+    if python3 "$DIR_CONFIG/data/onlyoffice-ai/inject-go-provider.py" --check; then
+        info "✅ Integración IA OnlyOffice + OpenCode Go lista (proxy :4002)"
+    else
+        aviso "Proveedor 'OpenCode Go' no verificado; revísalo tras abrir OnlyOffice"
+    fi
+else
+    aviso "Falta OPENCODE_GO_ONLYOFFICE_KEY en el .env: el proveedor 'OpenCode Go' no se inyecta"
 fi
 
 echo ""

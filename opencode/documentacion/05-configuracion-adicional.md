@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🔧 Utilidades | 26/07/2026 · rev. 10/10/2026 | Antonio |
+| 🔧 Utilidades | 26/07/2026 · rev. 22/10/2026 | Antonio |
 
 > Variables de entorno, sincronización, systemd y scripts
 
@@ -280,6 +280,33 @@ Unit=opencode-sync.service
 
 **Propósito:** Ejecuta la sincronización cada 30 minutos (cambiado de 2 min a 30 min el 10/08/2026).
 
+### `opencode-go-proxy.service` (22/10/2026)
+
+**Archivo:** `~/.config/systemd/user/opencode-go-proxy.service`
+
+```ini
+[Unit]
+Description=Proxy local OpenCode Go (OpenAI-compatible) para el plugin IA de OnlyOffice
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.config/opencode/opencode-go-proxy.py 4002
+Restart=always
+RestartSec=5
+StandardOutput=append:%h/.config/opencode/data/opencode-go-proxy.log
+StandardError=append:%h/.config/opencode/data/opencode-go-proxy.log
+
+[Install]
+WantedBy=default.target
+```
+
+**Propósito:** mantiene disponible el proxy de OpenCode Go (puerto **4002**) para el
+AI agent de ONLYOFFICE, sin depender de tener OpenCode abierto. Arranca con la
+sesión y se reinicia solo. Manual completo en `10-onlyoffice-ia-opencode-go.md`.
+
+
 ### `check-opencode-fix.timer` — RETIRADO (12/10/2026)
 
 > 🗑️ El vigilante `check-fix.sh` + `check-opencode-fix.service`/`.timer` se **retiraron el 12/10/2026**.
@@ -493,6 +520,28 @@ Proxy OpenCode ↔ LM Studio (puerto 4001). Además de reenviar las peticiones:
 - **Registra métricas por request** en `data/metrics.json` (definido en `METRICS_EXPORT_PATH` del `.env`, activado con `ENABLE_METRICS=true`): timestamp, modelo, tokens in/out, tiempo y **tokens/s**.
 - **Inyecta `stats.tokens_per_second`** en respuestas no-streaming (las streaming estiman tokens con chars/4 porque LM Studio no reporta usage en SSE).
 
+### `opencode-go-proxy.py` (22/10/2026)
+
+**Archivo:** `~/.config/opencode/opencode-go-proxy.py`
+
+Proxy OpenAI-compatible (puerto **4002**) hacia OpenCode Go. Resuelve el error
+`HTTP 400 MissingSessionID`, porque añade lo que la app cliente no puede enviar:
+
+- `Authorization: Bearer` con la clave de `.env` (`OPENCODE_GO_ONLYOFFICE_KEY`).
+- **`x-opencode-session`** estable (UUID por proceso), obligatoria en Go.
+- `User-Agent` propio, como exige la documentación de Go.
+- **CORS completo**: refleja el `Origin`, `Allow-Credentials`, `Allow-Headers`
+  (reflejando lo pedido) y **`Access-Control-Allow-Private-Network: true`**.
+   Sin esto último, Chrome/CEF bloquea las llamadas de `onlyoffice://` a `localhost`
+  y el log muestra varios `OPTIONS` sin ningún `GET`.
+- `/v1/models` **filtrado** a los modelos servidos por `/chat/completions`
+  (los de `/anthropic` y `/responses` no valen para un cliente OpenAI-compatible).
+- `/v1/responses` → 404 inmediato, para que el SDK caiga rápido a `/chat/completions`.
+- Reenvía SSE en streaming con `Transfer-Encoding: chunked`.
+
+**Log:** `data/opencode-go-proxy.log` (registra modelo, stream, Origin, cabeceras
+del preflight y si la petición trae `Private-Network`).
+
 ### `lmstudio-metrics-server.py` (dashboard, 05/09/2026)
 
 **Archivo:** `~/.config/opencode/lmstudio-metrics-server.py`
@@ -644,6 +693,7 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 ├── hardware-query.sh          # Consulta hardware (wrapper)
 ├── hardware-query.py          # Consulta hardware (motor Python)
 ├── lmstudio-proxy.py          # Proxy LM Studio + métricas (metrics.json)
+├── opencode-go-proxy.py       # Proxy OpenCode Go (4002) + CORS/PNA para OnlyOffice
 ├── lmstudio-metrics-server.py # Dashboard web de métricas (puerto 4200)
 │
 ├── settings.lmstudio.json     # Settings de LM Studio
@@ -690,6 +740,8 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
     │   └── README.txt
     ├── memory/               # Grafo de memoria persistente
     ├── metrics.json          # Métricas de tokens/s del proxy LM Studio
+    ├── opencode-go-proxy.log # Log del proxy OpenCode Go (4002)
+    ├── onlyoffice-ai/        # Proveedores IA de OnlyOffice (scripts, snapshot, config)
     ├── init.log              # Log de inicialización
     ├── sync.log              # Log de sincronización
     ├── sync-obsidian.log     # Log del espejo a Obsidian

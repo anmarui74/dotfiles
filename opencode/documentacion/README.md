@@ -3,7 +3,7 @@ Guía completa del sistema de voz, modelos y herramientas.
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Índice de documentación | 26/07/2026 · rev. 10/10/2026 | Antonio |
+| ✅ Índice de documentación | 26/07/2026 · rev. 22/10/2026 | Antonio |
 
 > 📁 Índice de todos los manuales de configuración de OpenCode
 > (`~/.config/opencode/documentacion/`).
@@ -36,6 +36,7 @@ Guía completa del sistema de voz, modelos y herramientas.
 | 07 | [Playbook de Recuperación](07-playbook-recuperacion.md) | 🛟 Restaurar OpenCode · grafo de memoria · reinstalación desde limpio |
 | 08 | [Incidencia GPU Xid 79](08-incidencia-gpu-xid79.md) | 💥 GPU caída del bus PCIe (22/09/2026) |
 | 09 | [Informe del sistema — procedimiento](09-informe-sistema.md) | 📝 Generar informe del equipo con `pkexec` (inxi, SMART, btrfs, sensores) |
+| 10 | [OnlyOffice IA con OpenCode Go](10-onlyoffice-ia-opencode-go.md) | 🤖 Proxy 4002 · `x-opencode-session` · plugin IA de ONLYOFFICE |
 
 ### Notas y hardware
 
@@ -46,7 +47,7 @@ Guía completa del sistema de voz, modelos y herramientas.
 | [notas-opencode-go.md](notas-opencode-go.md) | ☁️ Modelos de OpenCode Go alojados en China (opt-in) |
 | [seguimiento-issue-memory.md](seguimiento-issue-memory.md) | 🐛 Seguimiento del issue MCP memory (draft-07 vs 2020-12) |
 
-> 📝 Integración OnlyOffice IA: [ONLYOFFICE-AI-OPENCODE.md](../data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md)
+> 📝 Integración OnlyOffice IA (local): [ONLYOFFICE-AI-OPENCODE.md](../data/onlyoffice-ai/ONLYOFFICE-AI-OPENCODE.md) · (nube Go): [10-onlyoffice-ia-opencode-go.md](10-onlyoffice-ia-opencode-go.md)
 
 ---
 

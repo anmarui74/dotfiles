@@ -1,0 +1,16 @@
+[Unit]
+Description=Proxy local OpenCode Go (OpenAI-compatible) para el plugin IA de OnlyOffice
+Documentation=file:%h/.config/opencode/documentacion/10-onlyoffice-ia-opencode-go.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.config/opencode/opencode-go-proxy.py 4002
+Restart=always
+RestartSec=5
+StandardOutput=append:%h/.config/opencode/data/opencode-go-proxy.log
+StandardError=append:%h/.config/opencode/data/opencode-go-proxy.log
+
+[Install]
+WantedBy=default.target

@@ -62,6 +62,7 @@ M = {
     "07-playbook-recuperacion.md": "💻 07 Playbook de Recuperación.md",
     "08-incidencia-gpu-xid79.md": "💻 08 Incidencia GPU Xid 79.md",
     "09-informe-sistema.md": "💻 09 Informe del sistema.md",
+    "10-onlyoffice-ia-opencode-go.md": "💻 10 OnlyOffice IA con OpenCode Go.md",
     "hardware-info.md": "💻 Hardware del equipo.md",
     "README-hardware.md": "💻 README hardware.md",
     "notas-opencode-go.md": "💻 Notas OpenCode Go.md",

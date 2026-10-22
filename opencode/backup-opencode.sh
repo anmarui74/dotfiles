@@ -65,6 +65,9 @@ rsync -ah --delete \
 # ─── 1b. Incluir respaldo OnlyOffice-IA en el tarball ───
 if [ -d "${CONFIG_BACKUP}/data/onlyoffice-ai" ]; then
     mkdir -p "${BACKUP_ROOT}/data"
+    # Ojo: `cp -r src dst` anida src dentro de dst si dst ya existe (creaba
+    # data/onlyoffice-ai/onlyoffice-ai/). Borramos el destino primero.
+    rm -rf "${BACKUP_ROOT}/data/onlyoffice-ai"
     cp -r "${CONFIG_BACKUP}/data/onlyoffice-ai" "${BACKUP_ROOT}/data/onlyoffice-ai"
     echo "   ✅ Respaldo OnlyOffice-IA incluido en el backup"
 fi
@@ -307,10 +310,17 @@ if [ -d "${HOME}/Documentos/dotfiles" ]; then
     # (localstorage-snapshot/leveldb/*.log): basura de caché, fuera del repo público.
     rm -rf "${DOTFILES_OPENCODE}/data/onlyoffice-ai/localstorage-snapshot" 2>/dev/null || true
 
-    # Saneado del instalador desde cero (embebe el .env con la clave AEMET real)
+    # Saneado del instalador desde cero (embebe el .env con claves reales).
+    # Se cubren las variables conocidas y, de forma genérica, cualquier *_KEY,
+    # *_TOKEN, *_SECRET o *_PASSWORD con valor largo (así no se repite el fallo
+    # cuando se añade una clave nueva al .env).
     SETUP_DOTFILES="${DOTFILES_OPENCODE}/sesion-opencode/setup-opencode-completo.sh"
     if [ -f "$SETUP_DOTFILES" ]; then
-        sed -E -i 's/^(AEMET_API_KEY=).*/\1TU_CLAVE_AQUI/' "$SETUP_DOTFILES"
+        sed -E -i \
+            -e 's/^(AEMET_API_KEY=).*/\1TU_CLAVE_AQUI/' \
+            -e 's/^(OPENCODE_GO_ONLYOFFICE_KEY=).*/\1TU_CLAVE_AQUI/' \
+            -e 's/^((export )?[A-Z0-9_]*(KEY|TOKEN|SECRET|PASSWORD)=)[A-Za-z0-9_.\-]{20,}$/\1TU_CLAVE_AQUI/' \
+            "$SETUP_DOTFILES"
     fi
 
     # Verificación: la copia de dotfiles no debe contener claves
