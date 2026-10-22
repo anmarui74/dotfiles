@@ -566,6 +566,8 @@ Las skills viven en `~/.hermes/skills/` (entran en el backup). Las de autoría l
 7. El material para Windows (`dual-boot/windows/`) se publica con `hermes-dual-sync export`; no se edita directamente en la carpeta común (el export lo sobrescribe).
 8. Los scripts que viven fuera de `~/.hermes` (stack de voz y `hermes-ready-notify.sh`) viajan SIEMPRE en `extras/bin/` del tarball y de `sesion-hermes/`: sin ellos la instalación desde limpio se queda muda y sin aviso de arranque.
 9. Al cambiar una pieza del esquema, actualizar a la vez este documento y la skill que la documenta (`hermes-*`), que es lo que se carga en las sesiones.
+10. **Los commits y el push los hace Antonio, nunca el agente** (regla suya, 22/10/2026). No se ejecuta `git add`, `git commit`, `git push` ni `git tag` en **ningún** repo suyo (`~/Documentos/dotfiles`, `~/.hermes/hermes-agent`, …). El agente deja la copia saneada, actualizada y sin claves y ahí termina: si hace falta, se le dice qué ha cambiado y qué queda listo para commitear. El motivo es que dotfiles es **público** y un commit con una clave o un dato personal no se deshace con un `rm`. Los parches locales del clon de Hermes se quedan sin commitear a propósito.
+11. **Tope de contexto en `~/.hermes/config.yaml`**: `compression.threshold_tokens: 100000` y `protect_last_n: 10`. Sin el tope se usa el 50 % de la ventana del modelo, y con un modelo de 1 M eso son peticiones de ~430.000 tokens: el primer trozo tarda 60-140 s, sale el aviso «waiting for the first stream chunk» y cada compactación resume 430.000 tokens (85 s, medido el 22/10/2026). El suelo real es el rabo protegido (~19.000 con 10 mensajes) más el resumen (~9.000).
 
 ## Encargos automáticos del dual boot (gateway:startup)
 

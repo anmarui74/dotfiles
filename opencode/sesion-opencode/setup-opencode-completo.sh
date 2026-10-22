@@ -2019,6 +2019,11 @@ echo "--- 7/19: Reglas del asistente ---"
 cat > "$DIR_CONFIG/AGENTS.md" << 'AGEOF'
 # REGLAS OBLIGATORIAS (APLICAR SIEMPRE)
 
+## 🚫 Git: NUNCA hacer commit ni push (SOLO Antonio)
+- **El agente NO ejecuta `git commit` ni `git push`**, ni en `~/Documentos/dotfiles` ni en ningún repo de GitHub. Los commits y pushes los hace **siempre Antonio a mano**.
+- El agente **sí** puede: editar archivos, dejar la copia de dotfiles generada por `backup-opencode.sh`/`sync-opencode.sh` y **verificar** que no hay claves. Pero **no** confirma ni publica.
+- Al terminar un cambio: deja los archivos listos y avisa a Antonio de que puede commitearlo él.
+
 ## Usuario
 - Se llama Antonio
 - Vive en Pechina (Almería, España)
@@ -2435,6 +2440,9 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   5. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
   6. Verificar que el tarball contiene el setup actualizado y que no hay copias
      del setup en `~/.config/opencode/` (ni en la raíz ni en `sesion-opencode/scripts/`)
+  7. 🚫 **NO hacer `git commit` ni `git push`**: la copia en dotfiles ya queda generada
+     por el backup, pero el commit y el push los hace **siempre Antonio a mano**.
+     El agente deja los cambios listos y le avisa (ver la regla al inicio del documento).
 
   ### ✅ CHECKLIST OBLIGATORIO del punto 1 (revisar el setup POR COMPLETO):
   - [ ] `bash -n` del setup (sintaxis)

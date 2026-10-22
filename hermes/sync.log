@@ -1865,3 +1865,18 @@ rsync error: some files/attrs were not transferred (see previous errors) (code 2
 [22/10/2026 22:01:35] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
 [22/10/2026 22:01:35] ✅ Archivos sincronizados
 [22/10/2026 22:01:35] 📦 Regenerando tarball de backup...
+[22/10/2026 22:01:37] ✅ Backup regenerado: ✅ Tarball creado (12M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261022-220135.tar.gz
+[22/10/2026 22:01:37] ─────────────────────────────────────
+[22/10/2026 22:09:55] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[22/10/2026 22:09:55] ✅ Archivos sincronizados
+[22/10/2026 22:09:55] 📦 Regenerando tarball de backup...
+[22/10/2026 22:09:58] ✅ Backup regenerado: ✅ Tarball creado (12M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261022-220955.tar.gz
+[22/10/2026 22:09:58] ─────────────────────────────────────
+[22/10/2026 22:32:52] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[22/10/2026 22:32:52] ✅ Archivos sincronizados
+[22/10/2026 22:32:52] 📦 Regenerando tarball de backup...
+[22/10/2026 22:32:55] ✅ Backup regenerado: ✅ Tarball creado (12M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261022-223252.tar.gz
+[22/10/2026 22:32:55] ─────────────────────────────────────
+[22/10/2026 22:40:22] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[22/10/2026 22:40:22] ✅ Archivos sincronizados
+[22/10/2026 22:40:22] 📦 Regenerando tarball de backup...
