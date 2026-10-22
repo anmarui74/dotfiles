@@ -313,6 +313,12 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
   `~/.local/share/opencode/auth.json` (claves de NVIDIA `nvapi-*` y OpenCode GO `sk-*`)
   en `credenciales/auth.json` dentro del tarball. El `restore.sh` lo restaura a su
   ubicación original. Sin él, los agentes en la nube no funcionan tras reinstalar.
+  - 📄 **Listado de API keys (`~/Documentos/api-keys-opencode.md`)** (22/10/2026): se incluye
+    en el tarball como `credenciales/api-keys-opencode.md` y el `restore.sh` lo devuelve a
+    `~/Documentos/` con permisos `600`. Vive **fuera** de la config, así que sin esto se perdía
+    al reinstalar.
+    ⚠️ El archivo original está en `~/Documentos` (fuera de dotfiles), pero **cualquier copia
+    que se haga debe quedar fuera del repo**: está excluido por estar dentro de `credenciales/`.
   - ✅ **Las claves de API SÍ DEBEN ESTAR en `~/Config/opencode/`** (dentro de los tarballs de
     `backups/opencode/`): es el backup de restauración y las necesita. **El único sitio donde NO
     deben estar NUNCA es `~/Documentos/dotfiles/`.** Esa es la frontera real, no "Config vs resto".
@@ -402,8 +408,13 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   3. Si falta algo o está desactualizado, actualizarlo ANTES del backup en
      `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh`
      (única copia en disco)
-  4. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
-  5. Verificar que el tarball contiene el setup actualizado y que no hay copias
+  4. **Poner al día `~/Documentos/api-keys-opencode.md`**: debe listar TODAS las
+     claves vigentes de `auth.json` y del `.env` (AEMET, `OPENCODE_GO_ONLYOFFICE_KEY`,
+     `opencode-go`, `nvidia`, etc.) con su fecha de revisión. El backup lo embebe
+     en `credenciales/api-keys-opencode.md` y avisa si detecta alguna clave que
+     falte en el listado (`⚠️ api-keys-opencode.md DESACTUALIZADO`).
+  5. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
+  6. Verificar que el tarball contiene el setup actualizado y que no hay copias
      del setup en `~/.config/opencode/` (ni en la raíz ni en `sesion-opencode/scripts/`)
 
   ### ✅ CHECKLIST OBLIGATORIO del punto 1 (revisar el setup POR COMPLETO):
@@ -418,6 +429,8 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
         — no solo los JSON
   - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
   - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
+  - [ ] `~/Documentos/api-keys-opencode.md` al día (sin `⚠️ DESACTUALIZADO` en la salida del backup)
+        y con la clave real de OnlyOffice (`OPENCODE_GO_ONLYOFFICE_KEY`) incluida
 
   ### ⚡ VERIFICACIÓN AUTOMÁTICA (NO DEPENDE DE MI MEMORIA):
   El script `~/.config/opencode/check-setup-completo.sh` hace TODO el checklist

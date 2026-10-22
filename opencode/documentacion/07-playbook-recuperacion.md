@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🛟 Recuperación | 05/09/2026 · rev. 10/10/2026 | Antonio |
+| 🛟 Recuperación | 05/09/2026 · rev. 22/10/2026 | Antonio |
 
 > Procedimiento paso a paso para restaurar OpenCode desde un backup o una
 > reinstalación desde limpio, recuperar el grafo de memoria y re-sincronizar
@@ -36,6 +36,7 @@
 | Grafo de memoria (histórico local, NO va a dotfiles) | `~/Config/opencode/backups/mcp-memory-backup-*.jsonl` |
 | Variables de entorno | `~/.config/opencode/.env` |
 | Credenciales de proveedores LLM (NVIDIA, OpenCode GO) | `~/.local/share/opencode/auth.json` (backup en `credenciales/auth.json` del tarball) |
+| Listado de API keys de Antonio | `~/Documentos/api-keys-opencode.md` (backup en `credenciales/api-keys-opencode.md` del tarball) |
 | Base de datos de sesiones | `~/.local/share/opencode/opencode.db` |
 | Cache de plugins npm | `~/.cache/opencode/node_modules/` |
 
@@ -147,6 +148,10 @@ ls /tmp/opencode-restore   # debe contener setup-opencode-completo.sh + restore.
 > embebidos) reinstala configuración, scripts, perfiles, skills, voz y MCPs.
 > El `restore.sh` coloca el setup en `~/Config/opencode/sesion-opencode/`.
 
+> 📄 También restaura `~/Documentos/api-keys-opencode.md` (permisos `600`) desde
+> `credenciales/api-keys-opencode.md`: ese listado vive fuera de la config, así que
+> sin este paso se perdía al reinstalar.
+>
 > 🔑 El `restore.sh` restaura también `auth.json` (credenciales de NVIDIA
 > `nvapi-*` y OpenCode GO `sk-*`) a `~/.local/share/opencode/auth.json`
 > desde `credenciales/auth.json` del tarball. Sin este paso, los agentes

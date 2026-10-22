@@ -2332,6 +2332,12 @@ Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a e
   `~/.local/share/opencode/auth.json` (claves de NVIDIA `nvapi-*` y OpenCode GO `sk-*`)
   en `credenciales/auth.json` dentro del tarball. El `restore.sh` lo restaura a su
   ubicación original. Sin él, los agentes en la nube no funcionan tras reinstalar.
+  - 📄 **Listado de API keys (`~/Documentos/api-keys-opencode.md`)** (22/10/2026): se incluye
+    en el tarball como `credenciales/api-keys-opencode.md` y el `restore.sh` lo devuelve a
+    `~/Documentos/` con permisos `600`. Vive **fuera** de la config, así que sin esto se perdía
+    al reinstalar.
+    ⚠️ El archivo original está en `~/Documentos` (fuera de dotfiles), pero **cualquier copia
+    que se haga debe quedar fuera del repo**: está excluido por estar dentro de `credenciales/`.
   - ✅ **Las claves de API SÍ DEBEN ESTAR en `~/Config/opencode/`** (dentro de los tarballs de
     `backups/opencode/`): es el backup de restauración y las necesita. **El único sitio donde NO
     deben estar NUNCA es `~/Documentos/dotfiles/`.** Esa es la frontera real, no "Config vs resto".
@@ -2421,8 +2427,13 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
   3. Si falta algo o está desactualizado, actualizarlo ANTES del backup en
      `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh`
      (única copia en disco)
-  4. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
-  5. Verificar que el tarball contiene el setup actualizado y que no hay copias
+  4. **Poner al día `~/Documentos/api-keys-opencode.md`**: debe listar TODAS las
+     claves vigentes de `auth.json` y del `.env` (AEMET, `OPENCODE_GO_ONLYOFFICE_KEY`,
+     `opencode-go`, `nvidia`, etc.) con su fecha de revisión. El backup lo embebe
+     en `credenciales/api-keys-opencode.md` y avisa si detecta alguna clave que
+     falte en el listado (`⚠️ api-keys-opencode.md DESACTUALIZADO`).
+  5. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
+  6. Verificar que el tarball contiene el setup actualizado y que no hay copias
      del setup en `~/.config/opencode/` (ni en la raíz ni en `sesion-opencode/scripts/`)
 
   ### ✅ CHECKLIST OBLIGATORIO del punto 1 (revisar el setup POR COMPLETO):
@@ -2437,6 +2448,8 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
         — no solo los JSON
   - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
   - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
+  - [ ] `~/Documentos/api-keys-opencode.md` al día (sin `⚠️ DESACTUALIZADO` en la salida del backup)
+        y con la clave real de OnlyOffice (`OPENCODE_GO_ONLYOFFICE_KEY`) incluida
 
   ### ⚡ VERIFICACIÓN AUTOMÁTICA (NO DEPENDE DE MI MEMORIA):
   El script `~/.config/opencode/check-setup-completo.sh` hace TODO el checklist
@@ -4996,6 +5009,61 @@ else
     echo "   ⚠️ auth.json no encontrado en $AUTH_JSON"
 fi
 
+# ─── 1d. Incluir el listado de API keys de ~/Documentos ───
+# Vive fuera de la config, así que sin esto se perdería al reinstalar.
+# Va en credenciales/, que queda excluido de la copia en dotfiles.
+APIKEYS_DOC="/home/antonio/Documentos/api-keys-opencode.md"
+if [ -f "$APIKEYS_DOC" ]; then
+    mkdir -p "${BACKUP_ROOT}/credenciales"
+    cp "$APIKEYS_DOC" "${BACKUP_ROOT}/credenciales/api-keys-opencode.md"
+    chmod 600 "${BACKUP_ROOT}/credenciales/api-keys-opencode.md"
+    echo "   ✅ api-keys-opencode.md incluido en el backup (credenciales/)"
+
+    # ─── 1d-bis. ¿El listado está al día? ───
+    # Compara auth.json y .env con el markdown: si una clave vigente no aparece
+    # en él, el listado se ha quedado atrás y hay que actualizarlo.
+    DESFASE=$(python3 - "$AUTH_JSON" "$APIKEYS_DOC" "${CONFIG_ACTIVO}/.env" <<'PYCHK'
+import json, re, sys
+
+auth_file, doc_file, env_file = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    doc = open(doc_file, encoding="utf-8").read()
+except OSError:
+    sys.exit(0)
+
+claves = []          # (origen, valor)
+try:
+    with open(auth_file, encoding="utf-8") as fh:
+        for proveedor, datos in json.load(fh).items():
+            clave = (datos or {}).get("key", "")
+            if isinstance(clave, str) and len(clave) >= 20:
+                claves.append((f"auth.json:{proveedor}", clave))
+except (OSError, ValueError):
+    pass
+try:
+    with open(env_file, encoding="utf-8") as fh:
+        for linea in fh:
+            m = re.match(r"^([A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD))=(.+)$", linea.strip())
+            if m and len(m.group(2)) >= 20 and not m.group(2).startswith("TU_CLAVE"):
+                claves.append((f".env:{m.group(1)}", m.group(2)))
+except OSError:
+    pass
+
+faltan = [origen for origen, clave in claves if clave not in doc]
+if faltan:
+    print(", ".join(faltan))
+PYCHK
+    )
+    if [ -n "$DESFASE" ]; then
+        echo "   ⚠️  api-keys-opencode.md DESACTUALIZADO: no incluye $DESFASE"
+        echo "      Actualízalo en ~/Documentos/api-keys-opencode.md antes de dar el backup por bueno."
+    else
+        echo "   ✅ api-keys-opencode.md al día con auth.json y .env"
+    fi
+else
+    echo "   ⚠️ api-keys-opencode.md no encontrado en $APIKEYS_DOC"
+fi
+
 # ─── 2. Generar restore.sh dentro del backup
 echo "🔧 Creando restore.sh..."
 cat > "${BACKUP_ROOT}/${BACKUP_NAME}-restore.sh" << 'RESTORE_EOF'
@@ -5061,6 +5129,15 @@ if [ -f "${SOURCE_DIR}/credenciales/auth.json" ]; then
     cp "${SOURCE_DIR}/credenciales/auth.json" \
        "/home/antonio/.local/share/opencode/auth.json"
     echo "✅ auth.json restaurado en .local/share/opencode/"
+fi
+
+# Restaurar el listado de API keys en ~/Documentos
+if [ -f "${SOURCE_DIR}/credenciales/api-keys-opencode.md" ]; then
+    mkdir -p "/home/antonio/Documentos"
+    cp "${SOURCE_DIR}/credenciales/api-keys-opencode.md" \
+       "/home/antonio/Documentos/api-keys-opencode.md"
+    chmod 600 "/home/antonio/Documentos/api-keys-opencode.md"
+    echo "✅ api-keys-opencode.md restaurado en ~/Documentos/"
 fi
 
 if [ $? -eq 0 ]; then

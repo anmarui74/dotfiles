@@ -160,6 +160,9 @@ HARDWARE_INDEX_PATH=/home/antonio/.config/opencode/data/hardware/index.json
 
 # ─── AEMET (tiempo) ───
 AEMET_API_KEY=********   # clave real en el .env activo (no se documenta)
+
+# ─── OpenCode Go (solo plugin IA de OnlyOffice) ───
+OPENCODE_GO_ONLYOFFICE_KEY=********   # clave dedicada; la usa opencode-go-proxy.py (4002)
 ```
 
 > 📌 Las antiguas variables `OLLAMA_API_KEY` y `OLLAMA_PROXY_PORT` se **retiraron** del `.env`
@@ -187,6 +190,7 @@ AEMET_API_KEY=********   # clave real en el .env activo (no se documenta)
 | `METRICS_EXPORT_PATH` | `data/metrics.json` | Ruta de exportación de métricas del proxy |
 | `HARDWARE_INDEX_PATH` | `data/hardware/index.json` | Ruta al índice de hardware |
 | `AEMET_API_KEY` | (clave privada) | API key de AEMET OpenData para el tiempo (ID Pechina `04074`) |
+| `OPENCODE_GO_ONLYOFFICE_KEY` | (clave privada) | API key de **OpenCode Go** exclusiva para el AI agent de ONLYOFFICE (la inyecta `opencode-go-proxy.py` en el puerto 4002). Si se revoca, regenerarla en el [console](https://opencode.ai/console) |
 
 ### Cargar el .env
 
