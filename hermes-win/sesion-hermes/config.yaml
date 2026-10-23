@@ -435,7 +435,7 @@ compression:
   # Number of most-recent messages to always preserve (default: 20 ≈ 10 full turns)
   # Higher values keep more recent conversation intact at the cost of more aggressive
   # compression of older turns.
-  protect_last_n: 20
+  protect_last_n: 10
 
   # Minimum number of REAL (actionable) user messages guaranteed to survive in
   # the uncompressed tail (default: 1 = the existing single last-user anchor,
@@ -562,6 +562,7 @@ compression:
 # Anthropic supports two TTL tiers for cached prefixes: "5m" (default) and
 # "1h". Other values are ignored and "5m" is used.
 #
+  threshold_tokens: 100000
 prompt_caching:
   cache_ttl: "5m" # use "1h" for long sessions with pauses between turns
 

@@ -65,12 +65,9 @@ OpenCode → http://localhost:4000/v1 (proxy) → http://localhost:11434/api/cha
 
 ```python
 # Detectar bug #34892: function.name undefined
-if not fn.get("name"):
-    needs_injection = True
-    reason = "tools con function.name vacío (bug #34892)"
+if not fn.get("name"): needs_injection = True reason = "tools con function.name vacío (bug #34892)"
 
-if needs_injection:
-    body["tools"] = _tools_cache  # Inyecta tools de fallback
+if needs_injection: body["tools"] = _tools_cache  # Inyecta tools de fallback
 ```
 
 El proxy tiene **15 herramientas predefinidas** de fallback (read, write, edit, bash, grep, glob, list_files, task, todowrite, question, fetch, websearch, search_files, etc.) y además descubre herramientas MCP automáticamente.
@@ -80,8 +77,7 @@ El proxy tiene **15 herramientas predefinidas** de fallback (read, write, edit, 
 Del archivo `.env` (`C:\Users\evo01\.config\opencode\.env`):
 
 ```ini
-OLLAMA_API_KEY=ollama
-OLLAMA_PROXY_PORT=4000
+OLLAMA_API_KEY=ollama OLLAMA_PROXY_PORT=4000
 ```
 
 ---
@@ -93,31 +89,15 @@ OLLAMA_PROXY_PORT=4000
 LiteLLM sirve como **capa de abstracción** para usar modelos de Ollama con interfaz OpenAI-compatible. Define 5 modelos:
 
 ```yaml
-model_list:
-  - model_name: modelo-llama3.1
-    litellm_params:
-      model: ollama/llama3.1:8b
-      api_base: http://localhost:11434
+model_list: - model_name: modelo-llama3.1 litellm_params: model: ollama/llama3.1:8b api_base: http://localhost:11434
 
-  - model_name: modelo-gemma4
-    litellm_params:
-      model: ollama/gemma4:e4b
-      api_base: http://localhost:11434
+  - model_name: modelo-gemma4 litellm_params: model: ollama/gemma4:e4b api_base: http://localhost:11434
 
-  - model_name: modelo-deepseek-r1
-    litellm_params:
-      model: ollama/deepseek-r1:8b
-      api_base: http://localhost:11434
+  - model_name: modelo-deepseek-r1 litellm_params: model: ollama/deepseek-r1:8b api_base: http://localhost:11434
 
-  - model_name: modelo-deepseek-v4-flash
-    litellm_params:
-      model: ollama/deepseek-v4-flash-stock:latest
-      api_base: http://localhost:11434
+  - model_name: modelo-deepseek-v4-flash litellm_params: model: ollama/deepseek-v4-flash-stock:latest api_base: http://localhost:11434
 
-  - model_name: modelo-qwen3.5
-    litellm_params:
-      model: ollama/qwen3.5:9b
-      api_base: http://localhost:11434
+  - model_name: modelo-qwen3.5 litellm_params: model: ollama/qwen3.5:9b api_base: http://localhost:11434
 ```
 
 | Modelo LiteLLM | Modelo Ollama | Uso |

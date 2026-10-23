@@ -157,6 +157,46 @@ EXCL_ARBOLES=(--exclude='*.lock' --exclude='executions.db*' --exclude='ticker_he
 FICHEROS=(state.db kanban.db SOUL.md)
 
 #==============================================================================
+# CANAL: vaciado a disco y comprobación de que lo publicado está entero
+#==============================================================================
+# Motivo (22/10/2026): un cuelgue de la GPU (Xid 79, «fallen off the bus», 17:44)
+# tumbó el equipo con escrituras aún en la caché del núcleo. La entrada de las
+# 17:22 de NOTA-PARA-LINUX.md se quedó a medias y no llegó al disco, y no había
+# forma de saberlo: el motor daba la publicación por buena. De ahí el `sync` tras
+# publicar y la comprobación de tamaño/última entrada antes de fiarse del canal.
+comprobar_canal() {
+    local fallos=0 f
+    for f in "$COMUN"/NOTA-PARA-*.md "$COMUN"/AVISOS-dual-boot.md; do
+        [ -f "$f" ] || continue
+        if [ ! -s "$f" ]; then
+            avisar "⚠️  $(basename "$f") está vacío: publicación incompleta"; fallos=1; continue
+        fi
+        # Un fichero de texto sano acaba en salto de línea; si no, se cortó a mitad.
+        if [ "$(tail -c 1 "$f" 2>/dev/null | od -An -c | tr -d ' \n')" != '\n' ]; then
+            avisar "⚠️  $(basename "$f") no acaba en salto de línea: puede estar truncado por un corte"; fallos=1
+        fi
+    done
+    if [ -f "$COMUN/estado/MANIFEST.json" ]; then
+        python3 -c 'import json,sys; json.load(open(sys.argv[1],encoding="utf-8"))' \
+            "$COMUN/estado/MANIFEST.json" 2>/dev/null \
+            || { avisar "⚠️  estado/MANIFEST.json no se puede leer: publicación incompleta"; fallos=1; }
+    fi
+    return "$fallos"
+}
+
+sincronizar_canal() {
+    # `sync -f` vacía solo el sistema de ficheros del canal (syncfs); el `sync` global
+    # arrastraría también los discos de datos y tarda mucho más.
+    sync -f "$COMUN" 2>/dev/null || sync 2>/dev/null || true
+    if comprobar_canal; then
+        log "💾 Canal vaciado a disco y verificado (notas completas y manifiesto legible)"
+    else
+        avisar "⚠️  Canal vaciado, pero con avisos de integridad (ver arriba)"
+    fi
+    return 0
+}
+
+#==============================================================================
 # EXPORT: publicar el estado de este sistema en la carpeta común
 #==============================================================================
 hacer_export() {
@@ -335,6 +375,7 @@ PY
     done
 
     log "✅ Publicado: $sesiones sesiones / $mensajes mensajes (sha256 ${sha:0:12}…)"
+    sincronizar_canal
     touch "$MARCA_PUBLICACION" 2>/dev/null || true
 }
 
@@ -344,6 +385,11 @@ PY
 hacer_import() {
     local man="$COMUN/estado/MANIFEST.json"
     [ -f "$man" ] || { avisar "ℹ️  Aún no hay nada publicado por el otro sistema."; return 0; }
+
+    # El canal puede llevar escrituras a medias de un corte del otro equipo (22/10/2026):
+    # antes de fiarse se comprueban las notas y el manifiesto.  La base se valida más
+    # abajo con sha256 + integrity_check, así que un aviso aquí no aborta el import.
+    comprobar_canal || avisar "    (aviso: restos de un corte en el canal; sigo con lo que hay publicado)"
 
     local r_epoch r_host r_sha r_sesiones
     r_epoch="$(json_get "$man" publicado_epoch)"; r_host="$(json_get "$man" host)"

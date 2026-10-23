@@ -405,10 +405,11 @@ temperatura, BIOS desactualizada (1.A93, AGESA PI-1.3.0.1d), suspensión (cayó 
 de enlace PCIe (contadores AER a cero) e inicio rápido de Windows (ya desactivado).
 
 **Estado (22/10/2026, decisión de Antonio):** revisado el hardware —tarjeta, alimentación y conexiones—
-sin anomalías apreciables. **No se aplica ninguna medida**; se sigue observando. Quedan en pausa las tres
-fases propuestas: **A** (GPU y puerto raíz en D0, ASPM L1 desactivado, `nvidia-smi -pm 1`), **B** (vigía
-a 1 Hz con temperatura, potencia, enlace PCIe y contadores AER) y **C** (reasentar la tarjeta y revisar el
-12VHPWR en ambos extremos).
+sin anomalías apreciables. **No se aplica ninguna medida**: ni fases A (GPU y puerto raíz en D0, ASPM L1
+desactivado, `nvidia-smi -pm 1`) ni C (reasentar la tarjeta y revisar el 12VHPWR en ambos extremos). La
+política es **seguir observando con la fase B, que ya está en marcha** (el vigía de abajo). Solo se
+reabre si aparece un Xid nuevo con datos del vigía que apunten a otra causa. **No volver a proponer el
+plan en fases ni reinicios para esto.**
 
 **Vigía activo desde el 22/10/2026 — `hermes-vigia-gpu.service`.** Unidad de usuario
 (`~/.config/systemd/user/`, copia en `units/hermes-vigia-gpu.service`) que ejecuta
@@ -425,8 +426,9 @@ systemctl --user status hermes-vigia-gpu     # estado del vigía
 ```
 
 Lección que dejó esta caída: **cualquier crash deja escrituras a medias en el disco compartido** (se
-perdió una nota escrita minutos antes). El motor debería hacer `sync` tras publicar, y el arranque
-comprobar la integridad del canal antes de dar una publicación por buena.
+perdió una nota escrita minutos antes). Ya está corregido en el motor: hace `sync -f` sobre el disco
+compartido tras publicar y comprueba notas y `MANIFEST.json` antes de dar la publicación por buena
+(§ *Lo que cambió el 22/10/2026*).
 
 ## Dual boot Linux ↔ Windows
 
@@ -477,6 +479,11 @@ Cuatro fallos con la misma forma —«se creía que estaba bien y nadie lo veía
 - **El `SOUL.md` del otro ya no se pisa**: si difiere (comparando sin contar CRLF/LF) se archiva como `SOUL.md.de-<equipo>` en el backup previo del import y se avisa. Norma: en `SOUL.md` solo reglas comunes y neutras; lo local, fuera de ahí. Sigue viajando porque es el único fichero que Hermes carga en **cada** sesión.
 - **La publicación ya no sale corta en silencio**: si la copia de `state.db` lleva menos mensajes que la base viva se reintenta y, si sigue corta, el motor **aborta** (antes publicaba igual con un aviso). Así viajó una vez un estado 2 mensajes corto: el `MANIFEST` se calcula sobre la propia copia, de modo que cuadraba consigo mismo. Prueba: `prueba-copia-corta.sh`.
 - **Veredicto automático**: `orientar.py --veredicto` (código 0/1) sobre disco compartido, estado del otro sin integrar, motor propio sin publicar desde hace más de 30 min y salud del perfil. El aviso de arranque solo escribe la línea en Telegram **cuando hay algo mal** (y siempre en `logs/arranque-linux.log`).
+
+### Lo que cambió el 22/10/2026
+
+- **El canal se vacía a disco y se comprueba antes de darlo por bueno**: tras publicar, `sincronizar_canal` hace `sync -f` (syncfs del disco compartido) y `comprobar_canal` verifica que las `NOTA-PARA-*.md` y `AVISOS-dual-boot.md` no estén vacías ni cortadas a mitad (deben acabar en salto de línea) y que `estado/MANIFEST.json` se pueda leer. El import ejecuta la misma comprobación antes de fiarse del canal (solo avisa: la base se valida aparte con sha256 + `integrity_check`). Motivo: el cuelgue de GPU del 22/10 a las 17:44 (Xid 79, «fallen off the bus») tumbó el equipo con escrituras en la caché y la entrada de las 17:22 de la nota se quedó a medias sin que nadie lo viera.
+- **Una conversación importada del otro sistema necesita recibo local para poder reanudarse**: el trasvase copia `sessions` y `messages` pero no `state_meta`, así que la app de escritorio responde «No se pudo reanudar: `storage_unavailable`». El recibo no se puede copiar (el id es `local-` + sha256 del perfil, principal y petición, y el perfil es una ruta distinta en cada sistema): se da de alta con `scripts/alta-recibo-local.py` y la fila `gateway.local_legacy.v1:`. Detalle en la skill `hermes-dual-boot-sync`.
 
 ### Poda del historial del dual boot
 

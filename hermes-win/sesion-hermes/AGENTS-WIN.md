@@ -4,8 +4,7 @@
 |-----------|----------|------------|-----------|
 | ✅ activo · rev. 10/10/2026 | 29/09/2026 | Antonio | PC-ANTONIO (Windows 11) |
 
-> Réplica en Windows del esquema de `~/Config/hermes/` de Linux: respaldo canónico, ZIP con `restore-win.cmd` dentro, credenciales con permisos restringidos, retención de 30 días y copia saneada (sin claves) en dotfiles. Origen: `D:\HermesSync\PARA-WINDOWS-backup.md`.
-> ⚠️ En Windows hay **dos paquetes de respaldo activos**; ver «Respaldo rápido» al final del apartado Procedimientos para no confundirlos.
+> Réplica en Windows del esquema de `~/Config/hermes/` de Linux: respaldo canónico, ZIP con `restore-win.cmd` dentro, credenciales con permisos restringidos, retención de 30 días y copia saneada (sin claves) en dotfiles. Origen: `D:\HermesSync\PARA-WINDOWS-backup.md`. ⚠️ En Windows hay **dos paquetes de respaldo activos**; ver «Respaldo rápido» al final del apartado Procedimientos para no confundirlos.
 
 ---
 
@@ -160,6 +159,9 @@ Restaura el último ZIP (o `sesion-hermes\`), repone `.env` y `auth.json` con AC
 ### Al modificar la configuración de Hermes
 1. Los cambios se hacen en `%LOCALAPPDATA%\hermes` con `hermes config set` (nunca a mano en `config.yaml`).
 2. Ejecutar `sync-hermes.ps1` → refresca `sesion-hermes\` y regenera el ZIP.
+
+### ⛔ Regla que no se rompe: `commit` y `push` los hace Antonio
+El agente **nunca** ejecuta `git add`, `git commit`, `git push` ni `git tag` en ningún repo de Antonio (dotfiles, `hermes-agent`, …). Deja la copia saneada, actualizada y **sin claves**, y ahí termina. Motivo: `dotfiles` es público y un commit con una clave no se deshace (queda en el historial). Decidido por Antonio el 22/10/2026; está también en el manual de Linux (`AGENTS.md`, regla 10) y en la skill `hermes-backup-restore`.
 
 ### Actualizar Hermes (y volver a aplicar el parche Ctrl+Q)
 
@@ -322,8 +324,8 @@ Dos avisos independientes, los dos lanzados desde la carpeta Inicio y **sin vent
 | Arranque | `hermes-ready-notify.ps1` + `Hermes_ReadyNotify.vbs` | estado (OK/aviso), update, dual boot, veredicto, parche Ctrl+Q (solo si falta) e importación de arranque |
 | Cierre | `hermes-cierre-notify.ps1` + `Hermes_CierreNotify.vbs` | `🔌 Hermes se ha cerrado en Windows (hora HH:mm). No te contestaré hasta que vuelva a arrancar.` |
 
-- Hermes **no tiene evento de cierre**: `gateway/hooks.py` solo define `gateway:startup`, `session:*` y `agent:*`. Por eso el aviso de cierre es un **vigilante externo**: espera a que aparezca el proceso del gateway (`python*` con `gateway run`), guarda su PID y avisa cuando desaparece.
-- **No avisa en un reinicio**: si en 30 s aparece otro gateway (un update o un `restart`), se calla. Sondeo cada 5 s; si no ve arrancar el gateway en 15 min, sale sin avisar.
+- Hermes **no tiene evento de cierre**: `gateway/hooks.py` solo define `gateway:startup`, `session:*` y `agent:*`. Por eso el aviso de cierre es un **vigilante externo**: espera a que aparezca el gateway y avisa cuando desaparece.
+- **v2 (22/10/2026)**: mira la **línea de comandos de todos los procesos**, sin filtrar por nombre (la v1 solo veía `python.exe`/`pythonw.exe` y, si el gateway corría con otro nombre, esperaba 900 s y salía en silencio). Vigila «hay gateway / no hay gateway» en vez de un PID, espera hasta **6 h** a que aparezca, escribe en el log al arrancar (`gateway detectado (pid …); vigilando su cierre`) y tiene 30 s de gracia para no avisar en un reinicio. Sondeo cada 5 s.
 - No cubre el apagón seco (nadie da tiempo) ni el caso de que el gateway arranque antes que el vigilante.
 - Logs: `%LOCALAPPDATA%\hermes\logs\ready-notify.log` y `...\logs\cierre-notify.log`.
 - ⚠️ **Cada aviso vive en dos rutas**: el esquema (`D:\Linux\Config\Hermes-Win\gateway-service\`) es la fuente, pero **lo que se ejecuta es la copia local** `%LOCALAPPDATA%\hermes\gateway-service\`. Instalar solo en el esquema deja el arranque con la versión vieja (pasó el 22/10/2026); los encargos 22 y 23 ya copian a las dos y validan la sintaxis.
@@ -481,18 +483,30 @@ Los dos arreglos están en `kokoro-server.py` **y** en `kokoro-tts.py` (respaldo
 
 ### Timeouts del proveedor (stream lento)
 
-`opencode-go` puede tardar en emitir el primer trozo y el vigilante de stream cortaba la respuesta
-(«60 s waiting for the first stream chunk… stream stale watchdog»). Fijado **por proveedor** en
-`config.yaml` (22/10/2026):
+`opencode-go` puede tardar en emitir el primer trozo y el vigilante de stream cortaba la respuesta («60 s waiting for the first stream chunk… stream stale watchdog»). Fijado **por proveedor** en `config.yaml` (22/10/2026):
 
 ```
 providers.opencode-go.stale_timeout_seconds   = 300
 providers.opencode-go.request_timeout_seconds = 600
 ```
 
-Se aplican con `hermes config set <clave> <valor> --force` (el `--force` es necesario: `config set` no
-conoce las claves anidadas de `providers.*`). La clave se lee en cada llamada
-(`hermes_cli/timeouts.py`), pero una sesión ya abierta puede tener la caché vieja: reiniciar el gateway.
+Se aplican con `hermes config set <clave> <valor> --force` (el `--force` es necesario: `config set` no conoce las claves anidadas de `providers.*`). La clave se lee en cada llamada (`hermes_cli/timeouts.py`), pero una sesión ya abierta puede tener la caché vieja: reiniciar el gateway.
+
+### Tope de contexto y compactación (22/10/2026)
+
+El aviso `⏳ waiting on … 60s waiting for the first stream chunk` no era del watchdog ni del proveedor: era el **tamaño del envío**. `deepseek-v4.1-flash` declara ventana de 1 M y la compactación estaba al 50 % (`compression.threshold`), o sea a ~500.000 tokens; medido en este equipo: `tokens_before` de **422.000 a 439.000** y compactaciones de **57-119 s**.
+
+Fijado (mismo criterio que Linux; copia previa en `backups\config.yaml.bak-20261022-230339-compression`):
+
+```
+compression.threshold_tokens = 100000
+compression.protect_last_n   = 10
+```
+
+- `threshold_tokens` es un **tope absoluto**: el código aplica el menor entre el porcentaje de la ventana y este valor (`agent/agent_init.py`).
+- **60.000 no vale**: el suelo real es el rabo protegido, no el resumen. Con `protect_last_n: 20` ese rabo medía 37.200-39.713 tokens en este equipo; con 10 baja a ~19.000 y el suelo a ~28.000, así que 100.000 deja ~72.000 de trabajo real.
+- Entra **al arrancar la sesión**: las abiertas siguen con los valores viejos en memoria.
+- Telemetría para comprobarlo: `logs\agent.log`, líneas `context compression … telemetry` (`tokens_before`, `protected_tail_tokens`, `summary_generation_ms`).
 
 ### Plugins instalados
 

@@ -233,11 +233,7 @@ El instalador instala Node.js, Python, LM Studio, OpenCode, despliega esta confi
 
 ## Notas
 
-> 🎤 **Voz (STT/TTS):** implementada en Windows con **GPU** — STT `whisper.cpp` CUDA (`voice\stt.ps1`, ~0,8 s/audio) y TTS **Kokoro GPU** con **servidor persistente** (`voice\kokoro-server.py` en 4210, `speak.ps1`, `tts-server.ps1`; ~0,5-1,5 s/locución). Atajos: `Ctrl+R` (grabar), `Leader+R` (grabar+enviar), `Leader+S` (leer respuesta), `Leader+V` (TTS on/off), `Ctrl+Q` (parar).
-> 🎙️ **Micrófono:** el predeterminado es el **TONOR TD510 Air Mic**.
-> 🕐 **Timeline:** la TUI solo muestra ~6 peticiones (PR #26861 sin mergear); usa `timeline-completo`.
-> 🔐 **Política de ejecución:** `RemoteSigned` (CurrentUser) para poder cargar el perfil.
-> 🖥️ **Hardware:** AMD Ryzen 9 7900 · NVIDIA RTX 4070 Ti SUPER (16 GB) · 63,1 GB RAM.
+> 🎤 **Voz (STT/TTS):** implementada en Windows con **GPU** — STT `whisper.cpp` CUDA (`voice\stt.ps1`, ~0,8 s/audio) y TTS **Kokoro GPU** con **servidor persistente** (`voice\kokoro-server.py` en 4210, `speak.ps1`, `tts-server.ps1`; ~0,5-1,5 s/locución). Atajos: `Ctrl+R` (grabar), `Leader+R` (grabar+enviar), `Leader+S` (leer respuesta), `Leader+V` (TTS on/off), `Ctrl+Q` (parar). 🎙️ **Micrófono:** el predeterminado es el **TONOR TD510 Air Mic**. 🕐 **Timeline:** la TUI solo muestra ~6 peticiones (PR #26861 sin mergear); usa `timeline-completo`. 🔐 **Política de ejecución:** `RemoteSigned` (CurrentUser) para poder cargar el perfil. 🖥️ **Hardware:** AMD Ryzen 9 7900 · NVIDIA RTX 4070 Ti SUPER (16 GB) · 63,1 GB RAM.
 
 ---
 

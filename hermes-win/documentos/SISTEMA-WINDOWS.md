@@ -4,8 +4,7 @@
 |-----------|------------|------------|-----------|
 | ✅ al día | 10/10/2026 (captura 17:20–17:45 · revisión 19:45) | Antonio | PC-ANTONIO (Windows 11 Pro) |
 
-> Inventario del equipo **tal como lo ve Windows** (el gemelo de `SISTEMA-CACHYOS.md`, que lo mira desde Linux). Es documentación de referencia: describe el sistema, no es una pieza de la restauración, así que **no viaja en el ZIP** (aunque sí en la copia saneada de dotfiles).
-> Escrito por el Hermes de Windows el 10/10/2026. Los valores dinámicos van marcados como *(instantánea)*.
+> Inventario del equipo **tal como lo ve Windows** (el gemelo de `SISTEMA-CACHYOS.md`, que lo mira desde Linux). Es documentación de referencia: describe el sistema, no es una pieza de la restauración, así que **no viaja en el ZIP** (aunque sí en la copia saneada de dotfiles). Escrito por el Hermes de Windows el 10/10/2026. Los valores dinámicos van marcados como *(instantánea)*.
 
 ---
 
