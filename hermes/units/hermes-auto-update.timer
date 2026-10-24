@@ -1,0 +1,13 @@
+[Unit]
+Description=Comprobar y aplicar actualizaciones de Hermes cada domingo
+
+[Timer]
+# Semanal, domingo de madrugada (el update reinicia el gateway).
+OnCalendar=Sun *-*-* 04:30:00
+# Si el equipo estaba apagado, se hace en el siguiente arranque.
+Persistent=true
+RandomizedDelaySec=15m
+Unit=hermes-auto-update.service
+
+[Install]
+WantedBy=timers.target

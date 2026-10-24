@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 📁 Perfiles | 26/07/2026 · rev. 10/10/2026 | Antonio |
+| 📁 Perfiles | 26/07/2026 · rev. 22/10/2026 | Antonio |
 
 > Perfiles local / cloud / activo, MCPs y proveedores
 

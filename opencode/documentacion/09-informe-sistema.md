@@ -3,9 +3,9 @@ Cómo generar un informe completo del equipo (hardware, SMART, btrfs, sensores) 
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 10/10/2026 · rev. 10/10/2026 | Antonio |
+| ✅ Activo | 10/10/2026 · rev. 23/10/2026 | Antonio |
 
-> Procedimiento empleado para generar/revisar `~/informe-sistema.md` el **10/10/2026**, con volcado privilegiado verificado (1.463 líneas).
+> Procedimiento empleado para generar/revisar `~/Documentos/informe-sistema.md` el **10/10/2026**, con volcado privilegiado verificado (1.463 líneas).
 
 ---
 
@@ -117,7 +117,7 @@ wc -l /tmp/opencode/sysinfo-privado.txt
 
 ## Estructura del informe resultante
 
-El informe (`~/informe-sistema.md`) sigue este orden, todo en **tablas Markdown nativas**:
+El informe (`~/Documentos/informe-sistema.md`) sigue este orden, todo en **tablas Markdown nativas**:
 
 1. **Resumen del equipo** · 2. **Sistema operativo y software** · 3. **CPU** (con vulnerabilidades) · 4. **Memoria RAM** (DIMMs + swap/zram) · 5. **Gráficas** (NVIDIA, iGPU, monitores) · 6. **Almacenamiento** (discos, particiones, SMART, btrfs) · 7. **Red** (WiFi/Ethernet/Bluetooth) · 8. **Audio** · 9. **Sensores** · 10. **Incidencias detectadas** · 11. **Recomendaciones** · **Anexo** con el método.
 

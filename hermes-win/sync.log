@@ -13197,3 +13197,1109 @@
 [23/10/2026 06:46:57]    🗂️  1 duplicados del mismo día eliminados
 [23/10/2026 06:46:57] 
 [23/10/2026 06:46:57] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 06:46:57]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 06:46:57]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 06:46:57] 
+[23/10/2026 06:46:57] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 06:46:58]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 06:46:58]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 06:46:58] 
+[23/10/2026 06:46:58] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 06:46:58]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 06:46:58] 
+[23/10/2026 06:46:58] ✅ Backup completado.
+[23/10/2026 06:46:58]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-064651.zip
+[23/10/2026 06:46:58]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 06:46:58]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 06:46:58]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 20:40:36] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 20:40:37] === Backup Hermes Agent (Windows) - 23/10/2026 20:40 ===
+[23/10/2026 20:40:37] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 20:40:38] ✅ Setup verificado. Continuando backup...
+[23/10/2026 20:40:38] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 20:40:38]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 20:40:38] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 20:40:38]    ✅ 3 documento(s) en documentos\
+[23/10/2026 20:40:38] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 20:40:39]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 20:40:39]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 20:40:39]    ✅ credenciales\.env incluido
+[23/10/2026 20:40:39]    ✅ credenciales\auth.json incluido
+[23/10/2026 20:40:40]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 20:40:40] 
+[23/10/2026 20:40:40] 📦 Creando ZIP...
+[23/10/2026 20:40:43]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204037.zip
+[23/10/2026 20:40:43] 
+[23/10/2026 20:40:43] 🧹 Aplicando retención (30 días)...
+[23/10/2026 20:40:43]    🗑️  0 zips antiguos eliminados
+[23/10/2026 20:40:43]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 20:40:43] 
+[23/10/2026 20:40:43] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 20:40:43]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 20:40:44]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 20:40:44] 
+[23/10/2026 20:40:44] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 20:40:48]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 20:40:48]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 20:40:48] 
+[23/10/2026 20:40:48] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 20:40:49]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 20:40:49] 
+[23/10/2026 20:40:49] ✅ Backup completado.
+[23/10/2026 20:40:49]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204037.zip
+[23/10/2026 20:40:49]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 20:40:49]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 20:40:49]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 20:40:49] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204037.zip
+[23/10/2026 20:40:49] ─────────────────────────────────────
+[23/10/2026 20:43:56] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 20:43:57] === Backup Hermes Agent (Windows) - 23/10/2026 20:43 ===
+[23/10/2026 20:43:57] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 20:43:58] ✅ Setup verificado. Continuando backup...
+[23/10/2026 20:43:58] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 20:43:58]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 20:43:58] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 20:43:58]    ✅ 3 documento(s) en documentos\
+[23/10/2026 20:43:58] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 20:43:59]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 20:43:59]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 20:43:59]    ✅ credenciales\.env incluido
+[23/10/2026 20:43:59]    ✅ credenciales\auth.json incluido
+[23/10/2026 20:44:00]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 20:44:00] 
+[23/10/2026 20:44:00] 📦 Creando ZIP...
+[23/10/2026 20:44:03]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204357.zip
+[23/10/2026 20:44:03] 
+[23/10/2026 20:44:03] 🧹 Aplicando retención (30 días)...
+[23/10/2026 20:44:03]    🗑️  0 zips antiguos eliminados
+[23/10/2026 20:44:03]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 20:44:03] 
+[23/10/2026 20:44:03] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 20:44:03]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 20:44:04]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 20:44:04] 
+[23/10/2026 20:44:04] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 20:44:04]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 20:44:05]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 20:44:05] 
+[23/10/2026 20:44:05] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 20:44:05]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 20:44:05] 
+[23/10/2026 20:44:05] ✅ Backup completado.
+[23/10/2026 20:44:05]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204357.zip
+[23/10/2026 20:44:05]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 20:44:05]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 20:44:05]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 20:44:05] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204357.zip
+[23/10/2026 20:44:05] ─────────────────────────────────────
+[23/10/2026 20:46:02] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 20:46:03] === Backup Hermes Agent (Windows) - 23/10/2026 20:46 ===
+[23/10/2026 20:46:03] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 20:46:04] ✅ Setup verificado. Continuando backup...
+[23/10/2026 20:46:04] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 20:46:04]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 20:46:04] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 20:46:04]    ✅ 3 documento(s) en documentos\
+[23/10/2026 20:46:04] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 20:46:04]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 20:46:04]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 20:46:04]    ✅ credenciales\.env incluido
+[23/10/2026 20:46:04]    ✅ credenciales\auth.json incluido
+[23/10/2026 20:46:06]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 20:46:06] 
+[23/10/2026 20:46:06] 📦 Creando ZIP...
+[23/10/2026 20:46:09]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204603.zip
+[23/10/2026 20:46:09] 
+[23/10/2026 20:46:09] 🧹 Aplicando retención (30 días)...
+[23/10/2026 20:46:09]    🗑️  0 zips antiguos eliminados
+[23/10/2026 20:46:09]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 20:46:09] 
+[23/10/2026 20:46:09] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 20:46:09]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 20:46:10]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 20:46:10] 
+[23/10/2026 20:46:10] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 20:46:10]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 20:46:11]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 20:46:11] 
+[23/10/2026 20:46:11] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 20:46:11]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 20:46:11] 
+[23/10/2026 20:46:11] ✅ Backup completado.
+[23/10/2026 20:46:11]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204603.zip
+[23/10/2026 20:46:11]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 20:46:11]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 20:46:11]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 20:46:11] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204603.zip
+[23/10/2026 20:46:11] ─────────────────────────────────────
+[23/10/2026 20:46:33] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 20:46:34] === Backup Hermes Agent (Windows) - 23/10/2026 20:46 ===
+[23/10/2026 20:46:34] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 20:46:35] ✅ Setup verificado. Continuando backup...
+[23/10/2026 20:46:35] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 20:46:35]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 20:46:35] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 20:46:35]    ✅ 3 documento(s) en documentos\
+[23/10/2026 20:46:35] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 20:46:35]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 20:46:35]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 20:46:35]    ✅ credenciales\.env incluido
+[23/10/2026 20:46:35]    ✅ credenciales\auth.json incluido
+[23/10/2026 20:46:36]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 20:46:36] 
+[23/10/2026 20:46:36] 📦 Creando ZIP...
+[23/10/2026 20:46:39]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204634.zip
+[23/10/2026 20:46:39] 
+[23/10/2026 20:46:39] 🧹 Aplicando retención (30 días)...
+[23/10/2026 20:46:39]    🗑️  0 zips antiguos eliminados
+[23/10/2026 20:46:39]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 20:46:39] 
+[23/10/2026 20:46:39] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 20:46:39]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 20:46:39]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 20:46:39] 
+[23/10/2026 20:46:39] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 20:46:40]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 20:46:40]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 20:46:40] 
+[23/10/2026 20:46:40] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 20:46:40]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 20:46:40] 
+[23/10/2026 20:46:40] ✅ Backup completado.
+[23/10/2026 20:46:40]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204634.zip
+[23/10/2026 20:46:40]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 20:46:40]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 20:46:40]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 20:46:41] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-204634.zip
+[23/10/2026 20:46:41] ─────────────────────────────────────
+[23/10/2026 20:50:40] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 20:50:41] === Backup Hermes Agent (Windows) - 23/10/2026 20:50 ===
+[23/10/2026 20:50:41] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 20:50:42] ✅ Setup verificado. Continuando backup...
+[23/10/2026 20:50:42] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 20:50:42]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 20:50:42] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 20:50:42]    ✅ 3 documento(s) en documentos\
+[23/10/2026 20:50:42] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 20:50:42]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 20:50:42]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 20:50:42]    ✅ credenciales\.env incluido
+[23/10/2026 20:50:42]    ✅ credenciales\auth.json incluido
+[23/10/2026 20:50:44]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 20:50:44] 
+[23/10/2026 20:50:44] 📦 Creando ZIP...
+[23/10/2026 20:50:46]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-205041.zip
+[23/10/2026 20:50:46] 
+[23/10/2026 20:50:46] 🧹 Aplicando retención (30 días)...
+[23/10/2026 20:50:46]    🗑️  0 zips antiguos eliminados
+[23/10/2026 20:50:46]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 20:50:46] 
+[23/10/2026 20:50:46] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 20:50:47]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 20:50:47]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 20:50:47] 
+[23/10/2026 20:50:47] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 20:50:47]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 20:50:48]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 20:50:48] 
+[23/10/2026 20:50:48] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 20:50:48]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 20:50:48] 
+[23/10/2026 20:50:48] ✅ Backup completado.
+[23/10/2026 20:50:48]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-205041.zip
+[23/10/2026 20:50:48]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 20:50:48]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 20:50:48]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 20:50:48] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-205041.zip
+[23/10/2026 20:50:48] ─────────────────────────────────────
+[23/10/2026 21:01:50] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:01:51] === Backup Hermes Agent (Windows) - 23/10/2026 21:01 ===
+[23/10/2026 21:01:51] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:01:51] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:01:51] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:01:52]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:01:52] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:01:52]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:01:52] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:01:52]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:01:52]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:01:52]    ✅ credenciales\.env incluido
+[23/10/2026 21:01:52]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:01:53]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:01:53] 
+[23/10/2026 21:01:53] 📦 Creando ZIP...
+[23/10/2026 21:01:56]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-210150.zip
+[23/10/2026 21:01:56] 
+[23/10/2026 21:01:56] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:01:56]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:01:56]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:01:56] 
+[23/10/2026 21:01:56] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:01:56]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:01:56]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:01:56] 
+[23/10/2026 21:01:56] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:01:56]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:01:57]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:01:57] 
+[23/10/2026 21:01:57] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:01:57]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:01:57] 
+[23/10/2026 21:01:57] ✅ Backup completado.
+[23/10/2026 21:01:57]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-210150.zip
+[23/10/2026 21:01:57]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:01:57]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:01:57]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:01:57] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-210150.zip
+[23/10/2026 21:01:57] ─────────────────────────────────────
+[23/10/2026 21:02:41] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:02:42] === Backup Hermes Agent (Windows) - 23/10/2026 21:02 ===
+[23/10/2026 21:02:42] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:02:43] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:02:43] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:02:43]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:02:43] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:02:43]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:02:43] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:02:44]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:02:44]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:02:44]    ✅ credenciales\.env incluido
+[23/10/2026 21:02:44]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:02:45]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:02:45] 
+[23/10/2026 21:02:45] 📦 Creando ZIP...
+[23/10/2026 21:02:47]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-210242.zip
+[23/10/2026 21:02:47] 
+[23/10/2026 21:02:47] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:02:47]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:02:47]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:02:47] 
+[23/10/2026 21:02:47] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:02:48]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:02:48]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:02:48] 
+[23/10/2026 21:02:48] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:02:48]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:02:49]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:02:49] 
+[23/10/2026 21:02:49] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:02:49]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:02:49] 
+[23/10/2026 21:02:49] ✅ Backup completado.
+[23/10/2026 21:02:49]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-210242.zip
+[23/10/2026 21:02:49]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:02:49]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:02:49]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:02:49] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-210242.zip
+[23/10/2026 21:02:49] ─────────────────────────────────────
+[23/10/2026 21:07:53] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:07:54] === Backup Hermes Agent (Windows) - 23/10/2026 21:07 ===
+[23/10/2026 21:07:54] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:07:55] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:07:55] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:07:55]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:07:55] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:07:55]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:07:55] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:07:55]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:07:55]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:07:55]    ✅ credenciales\.env incluido
+[23/10/2026 21:07:55]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:07:57]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:07:57] 
+[23/10/2026 21:07:57] 📦 Creando ZIP...
+[23/10/2026 21:07:59]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-210754.zip
+[23/10/2026 21:07:59] 
+[23/10/2026 21:07:59] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:07:59]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:07:59]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:07:59] 
+[23/10/2026 21:07:59] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:07:59]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:07:59]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:07:59] 
+[23/10/2026 21:07:59] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:08:00]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:08:00]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:08:00] 
+[23/10/2026 21:08:00] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:08:00]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:08:00] 
+[23/10/2026 21:08:00] ✅ Backup completado.
+[23/10/2026 21:08:00]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-210754.zip
+[23/10/2026 21:08:00]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:08:00]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:08:00]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:08:00] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-210754.zip
+[23/10/2026 21:08:00] ─────────────────────────────────────
+[23/10/2026 21:12:36] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:12:37] === Backup Hermes Agent (Windows) - 23/10/2026 21:12 ===
+[23/10/2026 21:12:37] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:12:38] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:12:38] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:12:38]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:12:38] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:12:38]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:12:38] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:12:38]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:12:39]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:12:39]    ✅ credenciales\.env incluido
+[23/10/2026 21:12:39]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:12:40]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:12:40] 
+[23/10/2026 21:12:40] 📦 Creando ZIP...
+[23/10/2026 21:12:42]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211237.zip
+[23/10/2026 21:12:42] 
+[23/10/2026 21:12:42] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:12:42]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:12:42]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:12:42] 
+[23/10/2026 21:12:42] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:12:42]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:12:43]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:12:43] 
+[23/10/2026 21:12:43] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:12:43]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:12:44]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:12:44] 
+[23/10/2026 21:12:44] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:12:44]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:12:44] 
+[23/10/2026 21:12:44] ✅ Backup completado.
+[23/10/2026 21:12:44]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211237.zip
+[23/10/2026 21:12:44]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:12:44]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:12:44]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:12:44] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211237.zip
+[23/10/2026 21:12:44] ─────────────────────────────────────
+[23/10/2026 21:13:35] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:13:36] === Backup Hermes Agent (Windows) - 23/10/2026 21:13 ===
+[23/10/2026 21:13:36] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:13:37] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:13:37] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:13:37]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:13:37] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:13:37]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:13:37] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:13:37]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:13:37]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:13:38]    ✅ credenciales\.env incluido
+[23/10/2026 21:13:38]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:13:39]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:13:39] 
+[23/10/2026 21:13:39] 📦 Creando ZIP...
+[23/10/2026 21:13:41]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211336.zip
+[23/10/2026 21:13:41] 
+[23/10/2026 21:13:41] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:13:41]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:13:41]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:13:41] 
+[23/10/2026 21:13:41] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:13:41]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:13:42]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:13:42] 
+[23/10/2026 21:13:42] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:13:42]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:13:43]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:13:43] 
+[23/10/2026 21:13:43] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:13:43]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:13:43] 
+[23/10/2026 21:13:43] ✅ Backup completado.
+[23/10/2026 21:13:43]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211336.zip
+[23/10/2026 21:13:43]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:13:43]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:13:43]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:13:43] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211336.zip
+[23/10/2026 21:13:43] ─────────────────────────────────────
+[23/10/2026 21:16:02] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:16:03] === Backup Hermes Agent (Windows) - 23/10/2026 21:16 ===
+[23/10/2026 21:16:03] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:16:03] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:16:03] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:16:04]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:16:04] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:16:04]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:16:04] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:16:04]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:16:04]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:16:04]    ✅ credenciales\.env incluido
+[23/10/2026 21:16:04]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:16:06]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:16:06] 
+[23/10/2026 21:16:06] 📦 Creando ZIP...
+[23/10/2026 21:16:08]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211602.zip
+[23/10/2026 21:16:09] 
+[23/10/2026 21:16:09] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:16:09]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:16:09]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:16:09] 
+[23/10/2026 21:16:09] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:16:09]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:16:09]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:16:09] 
+[23/10/2026 21:16:09] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:16:09]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:16:10]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:16:10] 
+[23/10/2026 21:16:10] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:16:10]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:16:10] 
+[23/10/2026 21:16:10] ✅ Backup completado.
+[23/10/2026 21:16:10]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211602.zip
+[23/10/2026 21:16:10]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:16:10]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:16:10]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:16:10] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211602.zip
+[23/10/2026 21:16:10] ─────────────────────────────────────
+[23/10/2026 21:17:24] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:17:25] === Backup Hermes Agent (Windows) - 23/10/2026 21:17 ===
+[23/10/2026 21:17:25] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:17:26] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:17:26] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:17:26]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:17:26] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:17:26]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:17:26] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:17:26]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:17:27]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:17:27]    ✅ credenciales\.env incluido
+[23/10/2026 21:17:27]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:17:28]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:17:28] 
+[23/10/2026 21:17:28] 📦 Creando ZIP...
+[23/10/2026 21:17:30]    ✅ ZIP creado (12.12 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211725.zip
+[23/10/2026 21:17:30] 
+[23/10/2026 21:17:30] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:17:30]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:17:30]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:17:30] 
+[23/10/2026 21:17:30] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:17:30]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:17:31]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:17:31] 
+[23/10/2026 21:17:31] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:17:32]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:17:33]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:17:33] 
+[23/10/2026 21:17:33] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:17:33]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:17:33] 
+[23/10/2026 21:17:33] ✅ Backup completado.
+[23/10/2026 21:17:33]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211725.zip
+[23/10/2026 21:17:33]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:17:33]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:17:33]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:17:33] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-211725.zip
+[23/10/2026 21:17:33] ─────────────────────────────────────
+[23/10/2026 21:26:47] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:26:47] === Backup Hermes Agent (Windows) - 23/10/2026 21:26 ===
+[23/10/2026 21:26:47] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:26:48] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:26:48] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:26:49]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:26:49] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:26:49]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:26:49] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:26:49]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:26:49]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:26:49]    ✅ credenciales\.env incluido
+[23/10/2026 21:26:49]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:26:50]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:26:50] 
+[23/10/2026 21:26:50] 📦 Creando ZIP...
+[23/10/2026 21:26:53]    ✅ ZIP creado (12.13 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-212647.zip
+[23/10/2026 21:26:53] 
+[23/10/2026 21:26:53] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:26:53]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:26:53]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:26:53] 
+[23/10/2026 21:26:53] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:26:53]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:26:53]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:26:53] 
+[23/10/2026 21:26:53] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:26:54]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:26:55]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:26:55] 
+[23/10/2026 21:26:55] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:26:55]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:26:55] 
+[23/10/2026 21:26:55] ✅ Backup completado.
+[23/10/2026 21:26:55]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-212647.zip
+[23/10/2026 21:26:55]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:26:55]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:26:55]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:26:55] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-212647.zip
+[23/10/2026 21:26:55] ─────────────────────────────────────
+[23/10/2026 21:30:00] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:30:01] === Backup Hermes Agent (Windows) - 23/10/2026 21:30 ===
+[23/10/2026 21:30:01] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:30:02] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:30:02] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:30:02]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:30:02] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:30:02]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:30:02] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:30:02]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:30:02]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:30:02]    ✅ credenciales\.env incluido
+[23/10/2026 21:30:02]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:30:04]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:30:04] 
+[23/10/2026 21:30:04] 📦 Creando ZIP...
+[23/10/2026 21:30:06]    ✅ ZIP creado (12.13 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213001.zip
+[23/10/2026 21:30:06] 
+[23/10/2026 21:30:06] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:30:06]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:30:06]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:30:06] 
+[23/10/2026 21:30:06] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:30:06]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:30:07]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:30:07] 
+[23/10/2026 21:30:07] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:30:07]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:30:08]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:30:08] 
+[23/10/2026 21:30:08] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:30:08]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:30:08] 
+[23/10/2026 21:30:08] ✅ Backup completado.
+[23/10/2026 21:30:08]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213001.zip
+[23/10/2026 21:30:08]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:30:08]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:30:08]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:30:08] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213001.zip
+[23/10/2026 21:30:08] ─────────────────────────────────────
+[23/10/2026 21:33:40] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:33:41] === Backup Hermes Agent (Windows) - 23/10/2026 21:33 ===
+[23/10/2026 21:33:41] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:33:42] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:33:42] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:33:42]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:33:42] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:33:42]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:33:42] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:33:42]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:33:43]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:33:43]    ✅ credenciales\.env incluido
+[23/10/2026 21:33:43]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:33:44]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:33:44] 
+[23/10/2026 21:33:44] 📦 Creando ZIP...
+[23/10/2026 21:33:46]    ✅ ZIP creado (12.13 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213341.zip
+[23/10/2026 21:33:47] 
+[23/10/2026 21:33:47] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:33:47]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:33:47]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:33:47] 
+[23/10/2026 21:33:47] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:33:47]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:33:47]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:33:47] 
+[23/10/2026 21:33:47] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:33:47]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:33:48]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:33:48] 
+[23/10/2026 21:33:48] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:33:48]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:33:48] 
+[23/10/2026 21:33:48] ✅ Backup completado.
+[23/10/2026 21:33:48]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213341.zip
+[23/10/2026 21:33:48]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:33:48]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:33:48]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:33:48] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213341.zip
+[23/10/2026 21:33:48] ─────────────────────────────────────
+[23/10/2026 21:36:33] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:36:34] === Backup Hermes Agent (Windows) - 23/10/2026 21:36 ===
+[23/10/2026 21:36:34] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:36:35] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:36:35] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:36:35]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:36:35] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:36:35]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:36:35] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:36:35]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:36:35]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:36:35]    ✅ credenciales\.env incluido
+[23/10/2026 21:36:35]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:36:37]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:36:37] 
+[23/10/2026 21:36:37] 📦 Creando ZIP...
+[23/10/2026 21:36:39]    ✅ ZIP creado (12.13 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213634.zip
+[23/10/2026 21:36:39] 
+[23/10/2026 21:36:39] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:36:39]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:36:39]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:36:39] 
+[23/10/2026 21:36:39] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:36:40]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:36:40]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:36:40] 
+[23/10/2026 21:36:40] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:36:40]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:36:41]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:36:41] 
+[23/10/2026 21:36:41] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:36:41]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:36:41] 
+[23/10/2026 21:36:41] ✅ Backup completado.
+[23/10/2026 21:36:41]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213634.zip
+[23/10/2026 21:36:41]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:36:41]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:36:41]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:36:41] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213634.zip
+[23/10/2026 21:36:41] ─────────────────────────────────────
+[23/10/2026 21:38:23] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:38:24] === Backup Hermes Agent (Windows) - 23/10/2026 21:38 ===
+[23/10/2026 21:38:24] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:38:25] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:38:25] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:38:25]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:38:25] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:38:25]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:38:25] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:38:25]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:38:25]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:38:25]    ✅ credenciales\.env incluido
+[23/10/2026 21:38:25]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:38:27]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:38:27] 
+[23/10/2026 21:38:27] 📦 Creando ZIP...
+[23/10/2026 21:38:29]    ✅ ZIP creado (12.13 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213824.zip
+[23/10/2026 21:38:29] 
+[23/10/2026 21:38:29] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:38:29]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:38:29]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:38:29] 
+[23/10/2026 21:38:29] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:38:29]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:38:30]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:38:30] 
+[23/10/2026 21:38:30] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:38:30]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:38:31]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:38:31] 
+[23/10/2026 21:38:31] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:38:31]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:38:31] 
+[23/10/2026 21:38:31] ✅ Backup completado.
+[23/10/2026 21:38:31]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213824.zip
+[23/10/2026 21:38:31]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:38:31]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:38:31]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:38:31] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-213824.zip
+[23/10/2026 21:38:31] ─────────────────────────────────────
+[23/10/2026 21:42:18] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:42:19] === Backup Hermes Agent (Windows) - 23/10/2026 21:42 ===
+[23/10/2026 21:42:19] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:42:20] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:42:20] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:42:20]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:42:20] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:42:20]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:42:20] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:42:20]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:42:20]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:42:20]    ✅ credenciales\.env incluido
+[23/10/2026 21:42:20]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:42:22]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:42:22] 
+[23/10/2026 21:42:22] 📦 Creando ZIP...
+[23/10/2026 21:42:24]    ✅ ZIP creado (12.13 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-214219.zip
+[23/10/2026 21:42:24] 
+[23/10/2026 21:42:24] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:42:24]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:42:24]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:42:24] 
+[23/10/2026 21:42:24] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:42:24]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:42:25]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:42:25] 
+[23/10/2026 21:42:25] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:42:25]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:42:26]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:42:26] 
+[23/10/2026 21:42:26] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:42:26]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:42:26] 
+[23/10/2026 21:42:26] ✅ Backup completado.
+[23/10/2026 21:42:26]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-214219.zip
+[23/10/2026 21:42:26]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:42:26]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:42:26]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:42:26] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-214219.zip
+[23/10/2026 21:42:26] ─────────────────────────────────────
+[23/10/2026 21:46:02] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:46:03] === Backup Hermes Agent (Windows) - 23/10/2026 21:46 ===
+[23/10/2026 21:46:03] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:46:04] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:46:04] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:46:04]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:46:04] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:46:04]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:46:04] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:46:04]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:46:04]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:46:04]    ✅ credenciales\.env incluido
+[23/10/2026 21:46:04]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:46:06]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:46:06] 
+[23/10/2026 21:46:06] 📦 Creando ZIP...
+[23/10/2026 21:46:09]    ✅ ZIP creado (12.13 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-214603.zip
+[23/10/2026 21:46:09] 
+[23/10/2026 21:46:09] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:46:09]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:46:09]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:46:09] 
+[23/10/2026 21:46:09] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:46:09]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:46:09]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:46:09] 
+[23/10/2026 21:46:09] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:46:10]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:46:11]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:46:11] 
+[23/10/2026 21:46:11] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:46:11]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:46:11] 
+[23/10/2026 21:46:11] ✅ Backup completado.
+[23/10/2026 21:46:11]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-214603.zip
+[23/10/2026 21:46:11]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:46:11]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:46:11]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:46:11] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-214603.zip
+[23/10/2026 21:46:11] ─────────────────────────────────────
+[23/10/2026 21:47:49] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:47:50] === Backup Hermes Agent (Windows) - 23/10/2026 21:47 ===
+[23/10/2026 21:47:50] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:47:51] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:47:51] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:47:51]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:47:51] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:47:51]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:47:51] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:47:51]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:47:52]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:47:52]    ✅ credenciales\.env incluido
+[23/10/2026 21:47:52]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:47:53]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:47:53] 
+[23/10/2026 21:47:53] 📦 Creando ZIP...
+[23/10/2026 21:47:56]    ✅ ZIP creado (12.13 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-214750.zip
+[23/10/2026 21:47:56] 
+[23/10/2026 21:47:56] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:47:56]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:47:56]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:47:56] 
+[23/10/2026 21:47:56] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:47:56]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:47:57]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:47:57] 
+[23/10/2026 21:47:57] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:47:57]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:47:58]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:47:58] 
+[23/10/2026 21:47:58] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:47:58]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:47:58] 
+[23/10/2026 21:47:58] ✅ Backup completado.
+[23/10/2026 21:47:58]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-214750.zip
+[23/10/2026 21:47:58]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:47:58]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:47:58]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:47:58] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-214750.zip
+[23/10/2026 21:47:58] ─────────────────────────────────────
+[23/10/2026 21:52:42] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:52:43] === Backup Hermes Agent (Windows) - 23/10/2026 21:52 ===
+[23/10/2026 21:52:43] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:52:44] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:52:44] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:52:44]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:52:44]    ✅ scripts\ copiado a sesion-hermes\scripts
+[23/10/2026 21:52:44] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:52:44]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:52:44] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:52:45]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:52:45]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:52:45]    ✅ credenciales\.env incluido
+[23/10/2026 21:52:45]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:52:45]    ✅ credenciales\google_token.json incluido
+[23/10/2026 21:52:45]    ✅ credenciales\google_client_secret.json incluido
+[23/10/2026 21:52:45]    ✅ credenciales\gmail-app-password.txt incluido
+[23/10/2026 21:52:46]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:52:46] 
+[23/10/2026 21:52:46] 📦 Creando ZIP...
+[23/10/2026 21:52:50]    ✅ ZIP creado (12.14 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-215243.zip
+[23/10/2026 21:52:50] 
+[23/10/2026 21:52:50] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:52:50]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:52:50]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:52:50] 
+[23/10/2026 21:52:50] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:52:50]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:52:50]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:52:50] 
+[23/10/2026 21:52:50] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:52:51]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:52:53]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:52:53] 
+[23/10/2026 21:52:53] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:52:53]    ✅ Copia publicada al día (1 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:52:53] 
+[23/10/2026 21:52:53] ✅ Backup completado.
+[23/10/2026 21:52:53]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-215243.zip
+[23/10/2026 21:52:53]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:52:53]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:52:53]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:52:53] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-215243.zip
+[23/10/2026 21:52:53] ─────────────────────────────────────
+[23/10/2026 21:54:22] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:54:23] === Backup Hermes Agent (Windows) - 23/10/2026 21:54 ===
+[23/10/2026 21:54:23] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:54:24] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:54:24] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:54:24]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:54:24]    ✅ scripts\ copiado a sesion-hermes\scripts
+[23/10/2026 21:54:24] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:54:24]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:54:24] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:54:25]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:54:25]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:54:25]    ✅ credenciales\.env incluido
+[23/10/2026 21:54:25]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:54:25]    ✅ credenciales\google_token.json incluido
+[23/10/2026 21:54:25]    ✅ credenciales\google_client_secret.json incluido
+[23/10/2026 21:54:25]    ✅ credenciales\gmail-app-password.txt incluido
+[23/10/2026 21:54:26]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:54:26] 
+[23/10/2026 21:54:26] 📦 Creando ZIP...
+[23/10/2026 21:54:29]    ✅ ZIP creado (12.14 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-215423.zip
+[23/10/2026 21:54:30] 
+[23/10/2026 21:54:30] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:54:30]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:54:30]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:54:30] 
+[23/10/2026 21:54:30] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:54:30]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:54:30]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:54:30] 
+[23/10/2026 21:54:30] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:54:30]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:54:31]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:54:31] 
+[23/10/2026 21:54:31] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:54:31]    ✅ Copia publicada al día (1 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:54:31] 
+[23/10/2026 21:54:31] ✅ Backup completado.
+[23/10/2026 21:54:31]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-215423.zip
+[23/10/2026 21:54:31]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:54:31]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:54:31]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:54:31] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-215423.zip
+[23/10/2026 21:54:31] ─────────────────────────────────────
+[23/10/2026 21:59:10] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 21:59:11] === Backup Hermes Agent (Windows) - 23/10/2026 21:59 ===
+[23/10/2026 21:59:11] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 21:59:12] ✅ Setup verificado. Continuando backup...
+[23/10/2026 21:59:12] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 21:59:12]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 21:59:12]    ✅ scripts\ copiado a sesion-hermes\scripts
+[23/10/2026 21:59:12] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 21:59:12]    ✅ 3 documento(s) en documentos\
+[23/10/2026 21:59:12] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 21:59:12]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 21:59:13]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 21:59:13]    ✅ credenciales\.env incluido
+[23/10/2026 21:59:13]    ✅ credenciales\auth.json incluido
+[23/10/2026 21:59:13]    ✅ credenciales\google_token.json incluido
+[23/10/2026 21:59:13]    ✅ credenciales\google_client_secret.json incluido
+[23/10/2026 21:59:13]    ✅ credenciales\gmail-app-password.txt incluido
+[23/10/2026 21:59:14]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 21:59:14] 
+[23/10/2026 21:59:14] 📦 Creando ZIP...
+[23/10/2026 21:59:17]    ✅ ZIP creado (12.14 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-215911.zip
+[23/10/2026 21:59:17] 
+[23/10/2026 21:59:17] 🧹 Aplicando retención (30 días)...
+[23/10/2026 21:59:17]    🗑️  0 zips antiguos eliminados
+[23/10/2026 21:59:17]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 21:59:17] 
+[23/10/2026 21:59:17] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 21:59:17]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 21:59:17]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 21:59:17] 
+[23/10/2026 21:59:17] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 21:59:18]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 21:59:19]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 21:59:19] 
+[23/10/2026 21:59:19] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 21:59:19]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 21:59:19] 
+[23/10/2026 21:59:19] ✅ Backup completado.
+[23/10/2026 21:59:19]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-215911.zip
+[23/10/2026 21:59:19]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 21:59:19]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 21:59:19]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 21:59:19] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-215911.zip
+[23/10/2026 21:59:19] ─────────────────────────────────────
+[23/10/2026 22:00:05] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 22:00:06] === Backup Hermes Agent (Windows) - 23/10/2026 22:00 ===
+[23/10/2026 22:00:06] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 22:00:07] ✅ Setup verificado. Continuando backup...
+[23/10/2026 22:00:07] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 22:00:07]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 22:00:07]    ✅ scripts\ copiado a sesion-hermes\scripts
+[23/10/2026 22:00:07] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 22:00:07]    ✅ 3 documento(s) en documentos\
+[23/10/2026 22:00:07] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 22:00:08]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 22:00:08]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 22:00:08]    ✅ credenciales\.env incluido
+[23/10/2026 22:00:08]    ✅ credenciales\auth.json incluido
+[23/10/2026 22:00:08]    ✅ credenciales\google_token.json incluido
+[23/10/2026 22:00:08]    ✅ credenciales\google_client_secret.json incluido
+[23/10/2026 22:00:08]    ✅ credenciales\gmail-app-password.txt incluido
+[23/10/2026 22:00:09]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 22:00:09] 
+[23/10/2026 22:00:09] 📦 Creando ZIP...
+[23/10/2026 22:00:12]    ✅ ZIP creado (12.14 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-220006.zip
+[23/10/2026 22:00:12] 
+[23/10/2026 22:00:12] 🧹 Aplicando retención (30 días)...
+[23/10/2026 22:00:12]    🗑️  0 zips antiguos eliminados
+[23/10/2026 22:00:12]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 22:00:12] 
+[23/10/2026 22:00:12] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 22:00:12]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 22:00:12]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 22:00:12] 
+[23/10/2026 22:00:12] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 22:00:13]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 22:00:14]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 22:00:14] 
+[23/10/2026 22:00:14] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 22:00:14]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 22:00:14] 
+[23/10/2026 22:00:14] ✅ Backup completado.
+[23/10/2026 22:00:14]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-220006.zip
+[23/10/2026 22:00:14]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 22:00:14]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 22:00:14]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 22:00:14] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-220006.zip
+[23/10/2026 22:00:14] ─────────────────────────────────────
+[23/10/2026 22:00:51] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 22:00:51] === Backup Hermes Agent (Windows) - 23/10/2026 22:00 ===
+[23/10/2026 22:00:51] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 22:00:52] ✅ Setup verificado. Continuando backup...
+[23/10/2026 22:00:52] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 22:00:53]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 22:00:53]    ✅ scripts\ copiado a sesion-hermes\scripts
+[23/10/2026 22:00:53] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 22:00:53]    ✅ 3 documento(s) en documentos\
+[23/10/2026 22:00:53] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 22:00:53]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 22:00:53]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 22:00:53]    ✅ credenciales\.env incluido
+[23/10/2026 22:00:53]    ✅ credenciales\auth.json incluido
+[23/10/2026 22:00:53]    ✅ credenciales\google_token.json incluido
+[23/10/2026 22:00:53]    ✅ credenciales\google_client_secret.json incluido
+[23/10/2026 22:00:53]    ✅ credenciales\gmail-app-password.txt incluido
+[23/10/2026 22:00:54]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 22:00:54] 
+[23/10/2026 22:00:54] 📦 Creando ZIP...
+[23/10/2026 22:00:57]    ✅ ZIP creado (12.14 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-220051.zip
+[23/10/2026 22:00:57] 
+[23/10/2026 22:00:57] 🧹 Aplicando retención (30 días)...
+[23/10/2026 22:00:57]    🗑️  0 zips antiguos eliminados
+[23/10/2026 22:00:57]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 22:00:57] 
+[23/10/2026 22:00:57] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 22:00:58]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 22:00:58]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 22:00:58] 
+[23/10/2026 22:00:58] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 22:00:58]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 22:00:59]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 22:00:59] 
+[23/10/2026 22:00:59] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 22:00:59]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 22:00:59] 
+[23/10/2026 22:00:59] ✅ Backup completado.
+[23/10/2026 22:00:59]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-220051.zip
+[23/10/2026 22:00:59]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 22:00:59]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 22:00:59]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 22:00:59] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-220051.zip
+[23/10/2026 22:00:59] ─────────────────────────────────────
+[23/10/2026 22:11:48] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 22:11:49] === Backup Hermes Agent (Windows) - 23/10/2026 22:11 ===
+[23/10/2026 22:11:49] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 22:11:50] ✅ Setup verificado. Continuando backup...
+[23/10/2026 22:11:50] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 22:11:50]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 22:11:50]    ✅ scripts\ copiado a sesion-hermes\scripts
+[23/10/2026 22:11:50] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 22:11:50]    ✅ 3 documento(s) en documentos\
+[23/10/2026 22:11:50] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 22:11:50]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 22:11:51]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 22:11:51]    ✅ credenciales\.env incluido
+[23/10/2026 22:11:51]    ✅ credenciales\auth.json incluido
+[23/10/2026 22:11:51]    ✅ credenciales\google_token.json incluido
+[23/10/2026 22:11:51]    ✅ credenciales\google_client_secret.json incluido
+[23/10/2026 22:11:51]    ✅ credenciales\gmail-app-password.txt incluido
+[23/10/2026 22:11:52]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 22:11:52] 
+[23/10/2026 22:11:52] 📦 Creando ZIP...
+[23/10/2026 22:11:55]    ✅ ZIP creado (12.14 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-221149.zip
+[23/10/2026 22:11:55] 
+[23/10/2026 22:11:55] 🧹 Aplicando retención (30 días)...
+[23/10/2026 22:11:55]    🗑️  0 zips antiguos eliminados
+[23/10/2026 22:11:55]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 22:11:55] 
+[23/10/2026 22:11:55] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...
+[23/10/2026 22:11:55]    🔎 Escaneo: 8 patrones + 9 valores reales de credenciales
+[23/10/2026 22:11:55]    ✅ Copia en dotfiles libre de claves (patrones + valores reales)
+[23/10/2026 22:11:55] 
+[23/10/2026 22:11:55] 🐧 Replicando en la home de Linux (F:\@home\antonio)...
+[23/10/2026 22:11:56]    ✅ Respaldo replicado: F:\@home\antonio\Config\Hermes-Win
+[23/10/2026 22:11:57]    ✅ Copia en dotfiles de la home replicada libre de claves
+[23/10/2026 22:11:57] 
+[23/10/2026 22:11:57] 📚 Refrescando la copia publicada del esquema (D:\HermesSync\windows\esquema-windows)...
+[23/10/2026 22:11:57]    ✅ Copia publicada al día (0 fichero(s) actualizados, sin credenciales)
+[23/10/2026 22:11:57] 
+[23/10/2026 22:11:57] ✅ Backup completado.
+[23/10/2026 22:11:57]    ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-221149.zip
+[23/10/2026 22:11:57]    Para restaurar (prueba SIEMPRE en una carpeta temporal):
+[23/10/2026 22:11:57]      1. powershell -ExecutionPolicy Bypass -File "D:\Linux\Config\Hermes-Win\restaurar-hermes.ps1" -Destino "C:\Users\evo01\AppData\Local\Temp\restore-hermes"
+[23/10/2026 22:11:57]      2. o descomprimir el zip y ejecutar restore-win.cmd
+[23/10/2026 22:11:57] ✅ Backup regenerado: ZIP: D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-221149.zip
+[23/10/2026 22:11:57] ─────────────────────────────────────
+[23/10/2026 22:12:00] 🔄 Sincronizando Hermes (Windows) -> respaldo canónico y ZIP
+[23/10/2026 22:12:01] === Backup Hermes Agent (Windows) - 23/10/2026 22:12 ===
+[23/10/2026 22:12:01] 🔍 Verificando setup (check-setup-win.ps1)...
+[23/10/2026 22:12:02] ✅ Setup verificado. Continuando backup...
+[23/10/2026 22:12:02] 🔄 Refrescando respaldo canónico en sesion-hermes\...
+[23/10/2026 22:12:02]    ✅ extras\bin copiado a sesion-hermes\extras\bin
+[23/10/2026 22:12:02]    ✅ scripts\ copiado a sesion-hermes\scripts
+[23/10/2026 22:12:02] 📚 Refrescando documentos\ (copia de los markdown de configuración)...
+[23/10/2026 22:12:02]    ✅ 3 documento(s) en documentos\
+[23/10/2026 22:12:02] 📦 Copiando configuración desde C:\Users\evo01\AppData\Local\hermes\...
+[23/10/2026 22:12:02]    ✅ shared\ (auth del Portal Nous) incluido
+[23/10/2026 22:12:02]    ✅ kanban.db incluido (copia consistente)
+[23/10/2026 22:12:02]    ✅ credenciales\.env incluido
+[23/10/2026 22:12:02]    ✅ credenciales\auth.json incluido
+[23/10/2026 22:12:02]    ✅ credenciales\google_token.json incluido
+[23/10/2026 22:12:02]    ✅ credenciales\google_client_secret.json incluido
+[23/10/2026 22:12:02]    ✅ credenciales\gmail-app-password.txt incluido
+[23/10/2026 22:12:04]    ✅ restaurar-hermes.ps1 + restore-win.cmd incluidos
+[23/10/2026 22:12:04] 
+[23/10/2026 22:12:04] 📦 Creando ZIP...
+[23/10/2026 22:12:07]    ✅ ZIP creado (12.14 MB): D:\Linux\Config\Hermes-Win\backups\hermes-win-backup-20261023-221201.zip
+[23/10/2026 22:12:07] 
+[23/10/2026 22:12:07] 🧹 Aplicando retención (30 días)...
+[23/10/2026 22:12:07]    🗑️  0 zips antiguos eliminados
+[23/10/2026 22:12:07]    🗂️  1 duplicados del mismo día eliminados
+[23/10/2026 22:12:07] 
+[23/10/2026 22:12:07] 🔐 Sincronizando copia en dotfiles\hermes-win (SIN claves de API)...

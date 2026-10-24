@@ -6,7 +6,7 @@
 #   - ~/Config/hermes/ es la copia de SEGURIDAD (instalación desde limpio)
 #   - ~/Config/hermes/backups/hermes/ → tarballs hermes-backup-*.tar.gz
 #   - ~/Config/hermes/sesion-hermes/ → respaldo canónico + instalador desde limpio
-#   - Credenciales (.env, auth.json) dentro del tarball con permisos 600
+#   - Credenciales (.env, auth.json y las de Google) dentro del tarball con permisos 600
 #   - Copia saneada en ~/Documentos/dotfiles/hermes/ SIN claves de API
 set -euo pipefail
 
@@ -107,13 +107,22 @@ done
 # Excluido a propósito: cache/, installs/, tools/, hermes-agent/ (clon git, ~3 GB),
 # state.db + sessions/ (histórico de conversaciones), logs/, imagen y audio cache,
 # runtime/, sandboxes/, terminal-sessions/, clones temporales.
-for d in skills plugins memories hooks agent-hooks skins tui-widgets desktop-plugins pets; do
+for d in skills plugins memories hooks agent-hooks skins tui-widgets desktop-plugins pets scripts; do
     if [ -d "${HERMES_ACTIVO}/${d}" ]; then
         rsync -a --delete --exclude='*.lock' --exclude='*.sock' --exclude='*.pid' \
               --exclude='__pycache__/' --exclude='*.pyc' \
               "${HERMES_ACTIVO}/${d}/" "${ROOT}/${d}/"
     fi
 done
+
+# `scripts/` es el código propio del perfil (puentes de los cronjobs, centinela de los mensajes
+# semanales, enviadores de correo): si falta, una restauración deja los cronjobs apuntando a un
+# fichero inexistente. Los del esquema (~/Config/hermes/) van aparte, en esquema/ y sesion-hermes/.
+if [ -d "${HERMES_ACTIVO}/scripts" ]; then
+    rsync -a --delete --exclude='__pycache__/' --exclude='*.pyc' \
+          "${HERMES_ACTIVO}/scripts/" "${SESION_DIR}/scripts/"
+    echo "   ✅ scripts/ del perfil incluido (tarball + sesion-hermes)"
+fi
 
 # Credencial del Portal Nous (access/refresh token) — se respalda, pero NO va a dotfiles
 if [ -d "${HERMES_ACTIVO}/shared" ]; then
@@ -137,16 +146,18 @@ if [ -f "${HERMES_ACTIVO}/kanban.db" ]; then
     echo "   ✅ kanban.db incluido"
 fi
 
-# ─── 4. Credenciales (auth.json + .env) — van SOLO en el tarball, permisos 600 ───
+# ─── 4. Credenciales (auth.json, .env y las de Google) — van SOLO en el tarball, permisos 600 ───
 mkdir -p "${ROOT}/credenciales"
 chmod 700 "${ROOT}/credenciales"
-for c in .env auth.json; do
+# Las de Google son imprescindibles: sin google_token.json no hay Gmail, Calendar ni Drive, y sin
+# google_client_secret.json no se puede volver a consentir. gmail-app-password.txt es el plan B SMTP.
+for c in .env auth.json google_token.json google_client_secret.json gmail-app-password.txt; do
     if [ -f "${HERMES_ACTIVO}/${c}" ]; then
         cp -p "${HERMES_ACTIVO}/${c}" "${ROOT}/credenciales/${c}"
         chmod 600 "${ROOT}/credenciales/${c}"
         echo "   ✅ credenciales/${c} incluido"
     else
-        echo "   ⚠️  ${HERMES_ACTIVO}/${c} no encontrado"
+        echo "   ℹ️  ${c} no presente (se omite)"
     fi
 done
 
@@ -242,6 +253,14 @@ if [ -f "${SOURCE_DIR}/credenciales/auth.json" ]; then
     chmod 600 "$DEST_HOME/auth.json"
     echo "✅ auth.json restaurado en $DEST_HOME/"
 fi
+# Credenciales de Google (token OAuth, cliente y contraseña de aplicación del plan B SMTP)
+for g in google_token.json google_client_secret.json gmail-app-password.txt; do
+    if [ -f "${SOURCE_DIR}/credenciales/${g}" ]; then
+        cp "${SOURCE_DIR}/credenciales/${g}" "$DEST_HOME/${g}"
+        chmod 600 "$DEST_HOME/${g}"
+        echo "✅ ${g} restaurado en $DEST_HOME/"
+    fi
+done
 
 # Scripts extra (voz local) a ~/.local/bin
 if [ -d "${SOURCE_DIR}/extras/bin" ]; then
@@ -314,7 +333,7 @@ if [ "$FALTA" -eq 0 ]; then
     echo "   1. 'hermes doctor' para validar el entorno."
     echo "   2. Reinicia Hermes: el parche de Ctrl+Q no entra en sesiones ya abiertas."
     echo "   3. Habilita los servicios que necesites:"
-    echo "      systemctl --user enable --now hermes-sync.timer lm-studio-watchdog.timer hermes-nvidia-aliases.path hermes-espejo-vault.path"
+    echo "      systemctl --user enable --now hermes-sync.timer lm-studio-watchdog.timer hermes-nvidia-aliases.path hermes-espejo-vault.path hermes-auto-update.timer"
 else
     echo "⚠️  Restauración incompleta: revisa los avisos de arriba."
 fi

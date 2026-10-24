@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 🔧 Utilidades | 26/07/2026 · rev. 22/10/2026 | Antonio |
+| 🔧 Utilidades | 26/07/2026 · rev. 23/10/2026 | Antonio |
 
 > Variables de entorno, sincronización, systemd y scripts
 
@@ -28,6 +28,14 @@
 Es el archivo de **instrucciones del sistema** que OpenCode carga al inicio de cada sesión. Contiene **todas las reglas de comportamiento** que el modelo debe seguir.
 
 ### Secciones principales
+
+#### 🚫 Git: nunca commit ni push
+
+```
+- El agente NO ejecuta git commit ni git push (ni dotfiles ni ningún repo)
+- Sí puede editar archivos y dejar la copia de dotfiles generada por el backup
+- Los commits y pushes los hace SIEMPRE Antonio a mano
+```
 
 #### 👤 Identidad del usuario
 
@@ -459,9 +467,9 @@ Recolecta 13 secciones (más `meta`): OS, CPU, RAM, placa base, GPU NVIDIA/AMD, 
 
 - `bash -n` (sintaxis)
 - `shellcheck` (sin errores reales; SC2016 en heredocs = OK)
-- **47 heredocs embebidos** comparados uno a uno contra los archivos activos
+- **46 heredocs embebidos** comparados uno a uno contra los archivos activos
   (incluye `timeline-completo` y `speak` de `~/.local/bin/`, los plugins de
-  `plugins/`, los **8** servicios/timers systemd —incl. `sync-obsidian.service`,
+  `plugins/`, los **10** servicios/timers systemd —incl. `sync-obsidian.service`,
   `sync-obsidian.path` y `check-mega-pr.service`/`.timer`— y los manuales de hardware
   `documentacion/hardware-info.md` y `documentacion/README-hardware.md`)
 - Estructura completa de pasos (1-19 + sub-pasos `4b`, `14b`, `15b`)

@@ -80,11 +80,11 @@ En `~/Documentos/dotfiles/hermes/` va la copia **SANEADA** (sin claves) que se v
 | ✅ Se respalda | ❌ NO se respalda (regenerable o voluminoso) |
 |---|---|
 | `config.yaml`, `SOUL.md`, `install_id`, `channel_directory.json`, `shell-hooks-allowlist.json` | `hermes-agent/` (clon git de ~810 MB, se reclona solo) |
-| `skills/`, `plugins/`, `hooks/`, `pets/`, `skins/`, `tui-widgets/`, `desktop-plugins/` | `tools/` e `installs/` (~3 GB de descargas gestionadas por Hermes) |
+| `skills/`, `plugins/`, `hooks/`, `pets/`, `skins/`, `tui-widgets/`, `desktop-plugins/`, `scripts/` | `tools/` e `installs/` (~3 GB de descargas gestionadas por Hermes) |
 | `memories/` (`MEMORY.md`, `USER.md`) | `cache/`, `audio_cache/`, `image_cache/`, `models_dev_cache.json` |
 | `cron/` (trabajos, sin la BD de ejecuciones) | `state.db*` y `sessions/` (histórico de conversaciones) |
 | `kanban.db` (copia con `sqlite3 .backup`) | `logs/`, `runtime/`, `sandboxes/`, `terminal-sessions/` |
-| `credenciales/` → `.env` + `auth.json` (0600) y `shared/` (auth del Portal Nous) | clones temporales `.hermes-clone-*`, `pairing/`, `pending_messages/`, `state/` |
+| `credenciales/` → `.env`, `auth.json`, `google_token.json`, `google_client_secret.json` y `gmail-app-password.txt` (0600) y `shared/` (auth del Portal Nous) | clones temporales `.hermes-clone-*`, `pairing/`, `pending_messages/`, `state/` |
 | `extras/bin/` → stack de voz (`kokoro-tts`, `whisper-stt`, `whisper-cli`, `hermes-voz`…) | ficheros `.lock`, `.pid`, `.sock` |
 
 El tarball resultante pesa unos pocos MB (frente a los ~3 GB del directorio completo).
@@ -94,6 +94,7 @@ El tarball resultante pesa unos pocos MB (frente a los ~3 GB del directorio comp
 ## Credenciales y claves de API
 
 - Las claves viven en `~/.hermes/.env` y los tokens OAuth de proveedores en `~/.hermes/auth.json`. `~/.hermes/shared/nous_auth.json` guarda el token del Portal Nous (access + refresh).
+- Las de **Google** son tres ficheros sueltos en la raíz del perfil y viajan a `credenciales/` con 0600: `google_token.json` (sin él no hay Gmail, Calendar, Drive ni Docs), `google_client_secret.json` (sin él no se puede volver a consentir) y, si existe, `gmail-app-password.txt` (contraseña de aplicación del plan B por SMTP; en Linux puede no estar y entonces el plan B simplemente no se activa). `restore.sh` los devuelve a su sitio con 0600.
 - **SÍ deben estar** dentro del tarball de `~/Config/hermes/backups/hermes/`: es la copia de restauración y las necesita. Por eso el tarball se crea con `umask 077` + `chmod 600` y su directorio con `chmod 700`.
 - **NUNCA** deben estar en `~/Documentos/dotfiles/`. Esa es la frontera real.
 - Antes de commitear la copia de dotfiles, verificar:
@@ -187,6 +188,7 @@ Unidades de usuario del esquema (copia en `~/Config/hermes/units/`; las del dual
 | `lm-studio-watchdog.service` + `.timer` | vigila el «servidor mudo» de LM Studio cada 5 min |
 | `hermes-nvidia-aliases.path` + `.service` | recompone los alias NVIDIA cuando cambia el whitelist de OpenCode |
 | `hermes-ready-notify.service` | aviso por Telegram cuando el gateway está listo (sección propia más abajo) |
+| `hermes-auto-update.service` + `.timer` | actualiza Hermes solo los domingos de madrugada: comprueba release, actualiza con snapshot previo, re-niega la telemetría y avisa por Telegram (sección propia más abajo) |
 | `hermes-dual-sync-{import,export,apagado}.service` + `.timer` | estado compartido con Windows (ver «Dual boot») |
 | `hermes-renumerar.service` + `hermes-renumerar.timer` | renumera el orden de las sesiones cada minuto (`display_order`) para que la app no «corte» la conversación (ver «Dual boot») |
 | `hermes-gateway.service` | **del propio Hermes**, no del esquema: la recrea `hermes gateway install` |
@@ -220,11 +222,22 @@ Antonio quiere saber cuándo queda disponible Hermes al encender o reiniciar el 
 - **No duplica el aviso nativo**: en reinicios planificados (`/restart`, `hermes update`) el propio gateway ya avisa vía `~/.hermes/.restart_notify.json` / `.restart_pending.json`; con esos marcadores el script calla.
 - Prueba real: `systemctl --user start hermes-ready-notify.service` (envía el mensaje) o `DRY_RUN=1 ~/.local/bin/hermes-ready-notify.sh` (lo imprime sin enviarlo). **Nunca reiniciar `hermes-gateway` desde una sesión propia del gateway**: el drain espera al turno en curso y acaba en SIGTERM a los 70 s.
 - **El aviso lleva además el mantenimiento del arranque** (por eso se revisa siempre al empezar a trabajar y no hay que preguntarlo):
-  - `🔄 Update`: resultado de `hermes update --check` (solo lectura: un `git fetch`, no toca nada). «al día (canal stable)» o «⬆️ HAY ACTUALIZACIÓN — N commits behind…». **No actualiza solo**: Antonio elige el momento porque el update reinicia el gateway.
+  - `🔄 Update`: resultado de `hermes update --check` (solo lectura: un `git fetch`, no toca nada). «al día (canal stable)» o «⬆️ HAY ACTUALIZACIÓN — N commits behind…». **Quien instala es `hermes-auto-update.timer`** los domingos a las 04:30 (sección «Actualización automática de Hermes»); este aviso sirve para saber que hay release nueva antes de esa fecha.
   - `🤝 Dual boot`: última importación (`~/.hermes/.dual-sync/estado.json`), si `HermesSync/NOTA-PARA-LINUX.md` ha crecido desde el arranque anterior (marca en `~/.hermes/state/arranque-nota.size`; la nota se acepta como vista al avisarla) y cuántos encargos de `HermesSync/linux/encargos/` siguen sin estar en `~/.hermes/state/encargos-hechos.json`.
   - `🛠️ Parche del CLI`: **solo aparece si NO está aplicado** (el resto de arranques callan). El parche local Ctrl+Q/Ctrl+C vive fuera de git: tras un `hermes update` el autostash puede dejarlo aparcado y las teclas dejan de cortar la locución. Se comprueba con `hermes-parche-ctrlq estado` (exit 0 = aplicado) y, si falla, el aviso lo dice con el comando para revisarlo.
   - Queda registrado en `~/Config/hermes/logs/arranque-linux.log`, que es lo primero que se mira al empezar sesión. Es registro local: `logs/` no viaja en el tarball.
 - Detalle completo: skill `hermes-gateway-startup-alert`.
+
+## Actualización automática de Hermes
+
+Hasta el 23/10/2026 cada update era una decisión de Antonio; desde entonces lo aplica solo el timer y el aviso de arranque queda como información previa.
+
+- Script: `hermes-auto-update.sh` (vivo en `~/Config/hermes/`, copia en `sesion-hermes/`). Admite `--dry-run`, que hace el `--check` y no instala.
+- Unidades: `hermes-auto-update.service` (`oneshot`) + `hermes-auto-update.timer` (copia en `units/`): `OnCalendar=Sun *-*-* 04:30:00`, `Persistent=true` (si el equipo estaba apagado se hace en el arranque siguiente) y `RandomizedDelaySec=15m`.
+- Flujo: `hermes update --check` → si no hay release nueva **termina sin tocar el gateway** (no se reinicia por rutina); si la hay, `hermes update --yes` (snapshot `quick`, autostash y restauración del parche Ctrl+Q, reinicio del fleet con drain-first), vuelve a poner `telemetry.shared_metrics.{send,enabled}` en `false` —una migración de config podría reactivarla— y avisa por Telegram con la versión antes/después o con el fallo y la ruta del log.
+- La unidad es **hermana** del gateway, no hija: así sobrevive al reinicio que ella misma provoca. Un update lanzado desde dentro del gateway (cron o terminal del agente) muere con el `KillMode` del cgroup y necesita `--no-gateway-restart`.
+- Log: `~/Config/hermes/logs/auto-update.log` (además de `journalctl --user -u hermes-auto-update`).
+- A mano sigue valiendo lo de siempre: `hermes update --plan` antes de lanzarlo, y no cerrar la sesión del agente para «aplicar» el código.
 
 ---
 
@@ -558,7 +571,7 @@ Se ejecuta a mano antes de dar por bueno un cambio del esquema (y después de to
 
 ## Skills propias
 
-Las skills viven en `~/.hermes/skills/` (entran en el backup). Las de autoría local, todas en `autonomous-ai-agents/`: `hermes-agent`, `hermes-backup-restore`, `hermes-cambio-de-modelo`, `hermes-modelos-proveedores`, `hermes-modelos-viables`, `hermes-dual-boot-sync`, `hermes-voz-local-gpu`, `hermes-local-surfaces`, `hermes-gateway-startup-alert`, `hermes-upstream-pr`, `hermes-auditoria-sesiones`, `hermes-event-hooks` (hooks de evento y arranque), `hermes-diagnostico-arranque` (errores y avisos al arrancar Hermes), `hermes-actualizaciones` (actualizar Hermes y depurar su arranque), `hermes-perfil-real-navegador` (cuando una web pide sesión en el navegador real) y `modelos-locales-dimensionado`. Son la memoria operativa del esquema: ante una tarea de Hermes se carga la skill correspondiente antes de improvisar. El import del dual boot trae además las skills propias del lado Windows —hoy `hermes-voz-kokoro-windows` (voz de Hermes en Windows: «Falló la lectura en voz alta», servidor Kokoro, cambio de voz), con `platforms: [windows]`, así que solo aplica allí—; viven aquí porque el estado viaja, pero no deben cargarse en este equipo.
+Las skills viven en `~/.hermes/skills/` (entran en el backup). Las de autoría local, todas en `autonomous-ai-agents/`: `hermes-agent`, `hermes-backup-restore`, `hermes-cambio-de-modelo`, `hermes-modelos-proveedores`, `hermes-modelos-viables`, `hermes-dual-boot-sync`, `hermes-voz-local-gpu`, `hermes-local-surfaces`, `hermes-gateway-startup-alert`, `hermes-upstream-pr`, `hermes-auditoria-sesiones`, `hermes-event-hooks` (hooks de evento y arranque), `hermes-diagnostico-arranque` (errores y avisos al arrancar Hermes), `hermes-actualizaciones` (actualizar Hermes y depurar su arranque), `hermes-aviso-apagado-windows` (cuando no llega el aviso de apagado de Hermes en Windows), `hermes-perfil-real-navegador` (cuando una web pide sesión en el navegador real) y `modelos-locales-dimensionado`. Son la memoria operativa del esquema: ante una tarea de Hermes se carga la skill correspondiente antes de improvisar. El import del dual boot trae además las skills propias del lado Windows —hoy `hermes-voz-kokoro-windows` (voz de Hermes en Windows: «Falló la lectura en voz alta», servidor Kokoro, cambio de voz), con `platforms: [windows]`, así que solo aplica allí—; viven aquí porque el estado viaja, pero no deben cargarse en este equipo.
 
 ---
 

@@ -337,7 +337,7 @@ foreach ($s in @('AGENTS-WIN.md', 'SISTEMA-WINDOWS.md', 'backup-hermes.ps1', 'sy
     $o = Join-Path $Base $s
     if (Test-Path $o) { Copy-Item $o (Join-Path $SesionDir $s) -Force }
 }
-foreach ($f in @('.env', 'auth.json')) {
+foreach ($f in @('.env', 'auth.json', 'google_token.json', 'google_client_secret.json', 'gmail-app-password.txt')) {
     $p = Join-Path $SesionDir $f
     if (Test-Path $p) { Set-AclPrivada $p -Fichero }
 }
@@ -348,6 +348,14 @@ $extras = Join-Path $Base 'extras'
 if (Test-Path -LiteralPath $extras) {
     [void](Invoke-Robocopy -Origen $extras -Destino (Join-Path $SesionDir 'extras') -Extra @('/XD', '__pycache__'))
     Escribir-Log '   ✅ extras\bin copiado a sesion-hermes\extras\bin'
+}
+
+# Los scripts propios del perfil (puentes del cron, enviadores de correo) van también al respaldo
+# canónico: sin ellos, una restauración desde sesion-hermes deja los cronjobs sin programa.
+$scriptsPerfil = Join-Path $HermesHome 'scripts'
+if (Test-Path -LiteralPath $scriptsPerfil) {
+    [void](Invoke-Robocopy -Origen $scriptsPerfil -Destino (Join-Path $SesionDir 'scripts') -Extra @('/XD', '__pycache__'))
+    Escribir-Log '   ✅ scripts\ copiado a sesion-hermes\scripts'
 }
 
 # ── 1b. Documentación de configuración (documentos\) ────────────────────────────────────
@@ -376,7 +384,7 @@ foreach ($f in @('config.yaml', 'SOUL.md', 'install_id', 'channel_directory.json
 # Fuera a propósito: state.db* y sessions\ (histórico de conversaciones, viaja por el
 # esquema dual boot), cache\, logs\, runtime\, sandboxes\, terminal-sessions\, tools\,
 # installs\, hermes-agent\ (clon git), clones temporales, pairing\, pending_messages\.
-foreach ($d in @('skills', 'plugins', 'memories', 'hooks', 'agent-hooks', 'skins',
+foreach ($d in @('skills', 'plugins', 'memories', 'scripts', 'hooks', 'agent-hooks', 'skins',
                  'tui-widgets', 'desktop-plugins', 'pets')) {
     $o = Join-Path $HermesHome $d
     if (Test-Path $o) {
@@ -407,11 +415,11 @@ if (Test-Path $kanban) {
     }
 }
 
-# ── 4. Credenciales (.env + auth.json): SOLO en el zip / sesion-hermes, ACL restringida ─
+# ── 4. Credenciales (.env + auth.json + Google): SOLO en el zip / sesion-hermes, ACL restringida ─
 $CredDir = Join-Path $Root 'credenciales'
 New-Item -ItemType Directory -Force -Path $CredDir | Out-Null
 Set-AclPrivada $CredDir
-foreach ($c in @('.env', 'auth.json')) {
+foreach ($c in @('.env', 'auth.json', 'google_token.json', 'google_client_secret.json', 'gmail-app-password.txt')) {
     $o = Join-Path $HermesHome $c
     if (Test-Path $o) {
         $dst = Join-Path $CredDir $c

@@ -328,7 +328,7 @@ if [ -d "${BACKUP_BASE}/units" ]; then
     systemctl --user daemon-reload 2>/dev/null || true
     for u in hermes-sync.timer hermes-ready-notify.service lm-studio-app.service \
              lm-studio-watchdog.timer hermes-nvidia-aliases.path \
-             hermes-espejo-vault.path; do
+             hermes-espejo-vault.path hermes-auto-update.timer; do
         if systemctl --user enable --now "$u" >/dev/null 2>&1; then
             ok "unidad habilitada: $u"
         else

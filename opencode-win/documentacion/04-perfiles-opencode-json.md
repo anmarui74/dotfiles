@@ -381,7 +381,7 @@ Configurados bajo `mcp.servers` (sintaxis V2). En Windows hay **5 MCPs**:
 
 ## LSP
 
-> ✅ **OpenCode V2 2.1.3 sí ejecuta servidores LSP** a través del bloque `lsp` de la configuración.
+> ✅ **OpenCode V2 2.1.4 sí ejecuta servidores LSP** a través del bloque `lsp` de la configuración.
 
 Los tres perfiles (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json`) declaran **11 servidores LSP** lanzados con `npx -y` (bajo demanda, sin instalación global):
 
@@ -412,10 +412,10 @@ Los tres perfiles (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json
 ```json
 {
   "dependencies": {
-    "@opencode/plugin": "^2.1.3",
-    "@opencode/theme": "^2.1.3",
-    "@opentui/core": "^0.6.6",
-    "@opentui/solid": "^0.6.6",
+    "@opencode/plugin": "^2.1.4",
+    "@opencode/theme": "^2.1.4",
+    "@opentui/core": "^0.6.8",
+    "@opentui/solid": "^0.6.8",
     "solid-js": "^1.9.12"
   }
 }
@@ -423,10 +423,10 @@ Los tres perfiles (`opencode.jsonc`, `opencode-local.json`, `opencode-cloud.json
 
 | Paquete | Versión | Propósito |
 |---------|---------|-----------|
-| `@opencode/plugin` | `^2.1.3` | SDK de plugins V2 (servidor y TUI) |
-| `@opencode/theme` | `^2.1.3` | Tokens de tema para plugins TUI |
-| `@opentui/core` | `^0.6.6` | Renderer OpenTUI (peer de TUI) |
-| `@opentui/solid` | `^0.6.6` | Bindings Solid para OpenTUI |
+| `@opencode/plugin` | `^2.1.4` | SDK de plugins V2 (servidor y TUI) |
+| `@opencode/theme` | `^2.1.4` | Tokens de tema para plugins TUI |
+| `@opentui/core` | `^0.6.8` | Renderer OpenTUI (peer de TUI) |
+| `@opentui/solid` | `^0.6.8` | Bindings Solid para OpenTUI |
 | `solid-js` | `^1.9.12` | Reactividad de la UI de plugins TUI |
 
 > ⚠️ **Imprescindible para la voz y la barra lateral.** `opencode-voice-modified/tui.js` y `plugins\antonio.sidebar-mimo\tui.tsx` importan `@opencode/plugin/tui`; si faltan estas dependencias el plugin no carga (falla en silencio) y la voz deja de funcionar. El instalador ejecuta `npm install` en la carpeta de config para restaurarlas.

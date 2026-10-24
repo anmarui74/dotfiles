@@ -1,15 +1,70 @@
-# REGLAS OBLIGATORIAS (APLICAR SIEMPRE)
+﻿# 🛠️ AGENTS.md — Reglas de OpenCode (Windows)
+Instrucciones, procedimientos y recuperación del setup de OpenCode en este equipo
 
-## Usuario
+| ⚙️ Estado | 📅 Fecha | 👤 Usuario |
+|-----------|----------|------------|
+| ✅ Activo | 23/10/2026 · rev. 23/10/2026 | Antonio |
+
+> Documento que OpenCode carga al inicio de cada sesión en Windows. Las reglas de formato de
+> manuales, los procedimientos de backup y la recuperación del grafo están aquí.
+
+---
+
+## 📑 Índice
+
+1. [👤 Usuario](#usuario)
+2. [🗣️ Idioma](#idioma)
+3. [📐 Formato](#formato)
+4. [📄 Formato de manuales y README (OBLIGATORIO)](#formato-de-manuales-y-readme-obligatorio)
+5. [🌤️ Consultar el tiempo (IMPORTANTE)](#consultar-el-tiempo-importante)
+6. [💻 Consultar hardware del sistema (IMPORTANTE)](#consultar-hardware-del-sistema-importante)
+7. [🔧 Uso de herramientas (OBLIGATORIO)](#uso-de-herramientas-obligatorio)
+8. [🐚 Shell: PowerShell 5.1 (usuario y agentes) (IMPORTANTE)](#shell-powershell-51-usuario-y-agentes-importante)
+9. [🗣️ Pronunciación de Antonio (entrada por voz) (IMPORTANTE)](#pronunciación-de-antonio-entrada-por-voz-importante)
+10. [🛠️ Elevación de privilegios (UAC; no hay sudo ni pkexec)](#elevación-de-privilegios-uac-no-hay-sudo-ni-pkexec)
+11. [📖 Consultar documentación oficial ante problemas (OBLIGATORIO)](#consultar-documentación-oficial-ante-problemas-obligatorio)
+12. [🔍 Verificar hechos antes de afirmar (OBLIGATORIO)](#verificar-hechos-antes-de-afirmar-obligatorio)
+13. **[🧰 PROCEDIMIENTOS TÉCNICOS](#procedimientos-técnicos)**
+14. [💾 Sincronización / Backup con Config/opencode-win (OBLIGATORIO)](#sincronización-backup-con-configopencode-win-obligatorio)
+15. [⚙️ Atención al instalador Windows (instalar-opencode-win.ps1) (IMPORTANTE)](#atención-al-instalador-windows-instalar-opencode-winps1-importante)
+16. **[🗄️ PERSISTENCIA DE DATOS Y RECUPERACIÓN](#persistencia-de-datos-y-recuperación)**
+17. [🔐 Variables de entorno](#variables-de-entorno)
+18. [🚀 Inicialización (tras reinicio del sistema)](#inicialización-tras-reinicio-del-sistema)
+19. [🧠 Backup automático del grafo de memoria](#backup-automático-del-grafo-de-memoria)
+20. [♻️ Recuperación del grafo de memoria](#recuperación-del-grafo-de-memoria)
+21. [⚠️ Recordatorio MCP memory (IMPORTANTE)](#recordatorio-mcp-memory-importante)
+22. [🕐 Timeline completo de sesiones (script timeline-completo.ps1)](#timeline-completo-de-sesiones-script-timeline-completops1)
+23. [👁️ Vigilancia del fix del timeline](#vigilancia-del-fix-del-timeline)
+24. [📂 Directorios de datos](#directorios-de-datos)
+25. **[🚀 AVANZADO (uso principalmente con DeepSeek)](#avanzado-uso-principalmente-con-deepseek)**
+26. [🌐 PWAs - Cómo abrir](#pwas---cómo-abrir)
+27. [🚪 PWAs - Cerrar](#pwas---cerrar)
+28. [🐞 Chrome debug (si no está corriendo)](#chrome-debug-si-no-está-corriendo)
+29. [⚡ Carga automática al abrir ocv](#carga-automática-al-abrir-ocv)
+30. [🎛️ Perfiles por lanzador (Windows)](#perfiles-por-lanzador-windows)
+31. [🏆 Proveedor NVIDIA: ranking y metodología de selección de modelos (IMPORTANTE)](#proveedor-nvidia-ranking-y-metodología-de-selección-de-modelos-importante)
+32. [🖥️ Iniciar LM Studio manualmente](#iniciar-lm-studio-manualmente)
+33. [🧹 Liberar VRAM](#liberar-vram)
+34. [📊 Tokens/s (todas las fuentes)](#tokenss-todas-las-fuentes)
+35. **[🪟 Setup Windows (ocv)](#setup-windows-ocv)**
+36. **[✅ CHECKLIST ANTES DE RESPONDER](#checklist-antes-de-responder)**
+
+---
+
+## 👤 Usuario
 - Se llama Antonio
 - Vive en Pechina (Almería, España)
 
-## Idioma
+---
+
+## 🗣️ Idioma
 - Responde SIEMPRE en español
 - NUNCA cambies al inglés (salvo petición expresa de traducción)
 - Español de España (no latinoamericano)
 
-## Formato
+---
+
+## 📐 Formato
 - SÍ usamos emoji en pantalla (✈️ 🌤️ 😊) para expresividad visual 
 - Mi locucionero filtra estos iconos automáticamente antes del TTS, sin necesidad de configuración extra
 - Fecha: dd/mm/aaaa
@@ -18,6 +73,8 @@
 - Moneda: euros (€)
 - Sistema métrico: km/h, °C, mm, km
 - Tablas: SIEMPRE en formato Markdown estándar (nunca en bloques de código ASCII)
+
+---
 
 ## 📄 Formato de manuales y README (OBLIGATORIO)
 Toda documentación Markdown (manuales en `D:\Linux\Config\opencode-win\documentacion\`, README, notas) DEBE seguir el mismo esquema que los manuales ya existentes (ver `01-configuracion-ollama.md`, `04-perfiles-opencode-json.md`, `README.md`). Usa EXACTAMENTE esta plantilla:
@@ -65,6 +122,8 @@ Toda documentación Markdown (manuales en `D:\Linux\Config\opencode-win\document
 
 > 🔎 Ejemplo real: `D:\Linux\Config\opencode-win\documentacion\README.md` (índice de documentación) y `D:\Linux\Config\opencode-win\documentacion\01-configuracion-ollama.md` (plantilla de manual).
 
+---
+
 ## 🌤️ Consultar el tiempo (IMPORTANTE)
 Para preguntas sobre el tiempo, usa la herramienta bash (PowerShell 5.1) con `curl.exe` para consultar la API oficial de AEMET OpenData (predeterminada):
 
@@ -93,6 +152,8 @@ Para preguntas sobre el tiempo, usa la herramienta bash (PowerShell 5.1) con `cu
 
 ⚠️ Si AEMET no responde o da error, usa wttr.in como respaldo: https://wttr.in/{ciudad}?format=j1&m&lang=es Ejemplo: https://wttr.in/Pechina?format=j1&m&lang=es
 
+---
+
 ## 💻 Consultar hardware del sistema (IMPORTANTE)
 Cuando Antonio pregunte sobre su hardware (CPU, RAM, GPU, almacenamiento, monitores, audio, USB, sensores, red, etc.), en Windows la información se consulta con cmdlets nativos y/o el script `D:\Linux\Config\opencode-win\scripts\hardware-query.ps1`.
 
@@ -108,8 +169,12 @@ Get-PhysicalDisk                           # discos físicos
 
 > ⚠️ **No aplica en Windows:** el archivo `~/.config/opencode/data/hardware/index.json` y las herramientas `inxi`, `lspci`, `dmidecode`, `sensors`, `lsblk`, `xrandr`, `iw` (son de Linux). **Alternativa:** cmdlets de CIM/PS anteriores y/o `scripts\hardware-query.ps1`. Todavía **no existe** un `index.json` en Windows.
 
+---
+
 ## 🔧 Uso de herramientas (OBLIGATORIO)
 Cuando tengas que hacer una tarea que requiera una herramienta (leer archivos, listar directorios, ejecutar comandos, etc.) USA LA HERRAMIENTA directamente. NO describas lo que harías — hazlo. NO digas "voy a leer" sin llamar a la herramienta. NO generes texto explicando los pasos sin ejecutarlos. SIMPLIFICA: si necesitas leer múltiples archivos, usa search_files con un patrón, o llama a read_file para cada archivo individual.
+
+---
 
 ## 🐚 Shell: PowerShell 5.1 (usuario y agentes) (IMPORTANTE)
 - El shell del sistema y de OpenCode es **Windows PowerShell 5.1** (`powershell.exe`).
@@ -122,11 +187,15 @@ Cuando tengas que hacer una tarea que requiera una herramienta (leer archivos, l
   3. Verifica qué resuelve cada comando con `Get-Command <nombre>`.
   4. Recuerda: en PowerShell no existe `&&`; usa `cmd1; if ($?) { cmd2 }`.
 
+---
+
 ## 🗣️ Pronunciación de Antonio (entrada por voz) (IMPORTANTE)
 - Antonio a veces usa entrada por voz y su pronunciación puede no ser perfecta, o el locucionero/TTS puede transcribir alguna palabra de forma incorrecta.
 - Interpreta SIEMPRE según el **CONTEXTO** de la conversación antes que literalmente: si la palabra transcrita no encaja con lo que se está haciendo, es probable que sea un error de transcripción.
 - Si una palabra resulta ambigua o no cuadra, **confirma con Antonio** antes de actuar en base a ella.
 - NO fijes equivalencias rígidas de palabras mal transcritas: el contexto manda.
+
+---
 
 ## 🛠️ Elevación de privilegios (UAC; no hay sudo ni pkexec)
 - En Windows **no existen `sudo` ni `pkexec`**. La elevación se hace mediante **UAC**.
@@ -140,6 +209,8 @@ Cuando tengas que hacer una tarea que requiera una herramienta (leer archivos, l
   - Scripts/terminal de Antonio → "Ejecutar como administrador"
 - El **instalador** `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1` se **auto-eleva** (se relanza a sí mismo con `-Verb RunAs` si no tiene privilegios).
 
+---
+
 ## 📖 Consultar documentación oficial ante problemas (OBLIGATORIO)
 Cuando algo te esté dando problemas (herramientas que fallan, configuraciones que no funcionan, errores desconocidos, etc.):
 1. **Accede PRIMERO a la documentación/wiki oficial** de la herramienta afectada
@@ -148,6 +219,8 @@ Cuando algo te esté dando problemas (herramientas que fallan, configuraciones q
 4. Para OpenCode: https://opencode.ai/docs (y el esquema https://opencode.ai/config.json)
 5. Para LSPs concretos: consulta la wiki del servidor (ej. github del proyecto)
 Anota siempre la solución encontrada en la memoria.
+
+---
 
 ## 🔍 Verificar hechos antes de afirmar (OBLIGATORIO)
 Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
@@ -159,9 +232,11 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
 
 ---
 
-# PROCEDIMIENTOS TÉCNICOS
+# 🧰 PROCEDIMIENTOS TÉCNICOS
 
-## Sincronización / Backup con Config/opencode-win (OBLIGATORIO)
+---
+
+## 💾 Sincronización / Backup con Config/opencode-win (OBLIGATORIO)
 - `C:\Users\evo01\.config\opencode\` es la configuración ACTIVA (la que usa OpenCode)
 - `D:\Linux\Config\opencode-win\` es la copia de SEGURIDAD para instalaciones desde limpio
 - Estructura ordenada de `D:\Linux\Config\opencode-win\`:
@@ -186,7 +261,9 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
 
 > ⚠️ **No aplica en Windows:** los tarballs `opencode-backup-*.tar.gz`, el `restore.sh`, el timer `opencode-sync.timer` y el enlace simbólico `setup-opencode-completo.sh`. **Alternativa:** scripts PowerShell + instalador, y el Programador de tareas si se quiere automatizar.
 
-## Atención al instalador Windows (instalar-opencode-win.ps1) (IMPORTANTE)
+---
+
+## ⚙️ Atención al instalador Windows (instalar-opencode-win.ps1) (IMPORTANTE)
 El script `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1` es el INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por tanto:
 - **ÚNICA copia en disco**: vive SOLO en `D:\Linux\Config\opencode-win\`. NO debe existir una copia en `C:\Users\evo01\.config\opencode\`.
 - **Acceso directo**: en Windows no se usa enlace simbólico; si se quiere a mano, un acceso directo `.lnk` es suficiente (sin duplicar el script).
@@ -211,9 +288,11 @@ El script `D:\Linux\Config\opencode-win\instalar-opencode-win.ps1` es el INSTALA
 
 ---
 
-# PERSISTENCIA DE DATOS Y RECUPERACIÓN
+# 🗄️ PERSISTENCIA DE DATOS Y RECUPERACIÓN
 
-## Variables de entorno
+---
+
+## 🔐 Variables de entorno
 El archivo `.env` contiene la configuración sensible. En Windows está en `C:\Users\evo01\.config\opencode\.env`. Para cargarlo en la sesión de PowerShell:
 ```powershell
 Get-Content C:\Users\evo01\.config\opencode\.env | ForEach-Object {
@@ -222,7 +301,9 @@ Get-Content C:\Users\evo01\.config\opencode\.env | ForEach-Object {
 ```
 > ⚠️ **No aplica en Windows:** `set -a; source ...; set +a` (es de Bash). **Alternativa:** el helper de arriba, o definir las variables como variables de entorno de usuario (`[Environment]::SetEnvironmentVariable(...,'User')`).
 
-## Inicialización (tras reinicio del sistema)
+---
+
+## 🚀 Inicialización (tras reinicio del sistema)
 En Windows **no hay systemd** ni el servicio `init-opencode.service`. La carga ocurre al ejecutar **`ocv`** (función PowerShell del perfil), que arranca LM Studio + modelo + proxy automáticamente. Para verificar componentes manualmente:
 ```powershell
 ocv-status
@@ -234,7 +315,9 @@ Esto comprueba:
 - Estado del proxy (puerto 4001)
 - Variables de entorno (`.env`)
 
-## Backup automático del grafo de memoria
+---
+
+## 🧠 Backup automático del grafo de memoria
 El grafo de conocimiento (MCP memory) se respalda automáticamente **en cada ejecución de `scripts\backup-opencode.ps1`** (backup manual o tarea programada):
 
 1. **Copia con fecha** en `D:\Linux\Config\opencode-win\data\memory\mcp-memory-backup-{fecha}.jsonl` (se conserva la estructura existente)
@@ -245,7 +328,9 @@ El grafo activo vive en `C:\Users\evo01\.config\opencode\data\memory\memory.json
 
 > ⚠️ **No aplica en Windows:** la automatización cada 30 min vía `opencode-sync.timer`. **Alternativa:** tarea programada de Windows (`Register-ScheduledTask` / `schtasks`) que ejecute `backup-opencode.ps1`, o lanzarlo a mano.
 
-## Recuperación del grafo de memoria
+---
+
+## ♻️ Recuperación del grafo de memoria
 Si el grafo se pierde o corrompe:
 1. Localizar el backup más reciente:
    ```powershell
@@ -260,6 +345,8 @@ Si el grafo se pierde o corrompe:
 3. Reiniciar OpenCode: el servidor MCP Memory cargará el grafo desde `MEMORY_FILE_PATH` (definido vía `environment` en el bloque `mcp.memory` de los perfiles JSON). ⚠️ El servidor usa `MEMORY_FILE_PATH` (NO `MEMORY_DATA_DIR`).
 4. Alternativa: reinstalar/restaurar con `instalar-opencode-win.ps1` (coloca `data\memory\memory.jsonl` en la ruta activa automáticamente).
 
+---
+
 ## ⚠️ Recordatorio MCP memory (IMPORTANTE)
 Al usar la herramienta `memory_add_observations` (o `memory_delete_observations`), CADA observación del array DEBE incluir el campo `entityName` junto a `contents`:
 ```json
@@ -268,6 +355,8 @@ Al usar la herramienta `memory_add_observations` (o `memory_delete_observations`
 ]}
 ```
 Si falta `entityName` el MCP devuelve error `-32602` (Input validation error). Mismo formato para `memory_create_relations`: cada relación necesita `from`, `to`, `relationType`.
+
+---
 
 ## 🕐 Timeline completo de sesiones (script timeline-completo.ps1)
 El timeline de la TUI de OpenCode (Ctrl+X G) SOLO muestra las últimas ~6 peticiones (límite hardcodeado; el PR #26861 que lo arregla sigue abierto, sin mergear). Para ver el historial COMPLETO de cualquier sesión, usar el script:
@@ -282,13 +371,17 @@ Lee directamente de `C:\Users\evo01\.local\share\opencode\opencode.db` con el m�
 > ⚠️ **No aplica en Windows:** el binario `~/.local/bin/timeline-completo` (Linux) y el CLI `sqlite3` (no existe). **Alternativa:** el script `.ps1` + Python `sqlite3`.
 TODAS las peticiones de Antonio están guardadas ahí aunque la TUI no las muestre. Cuando Antonio pregunte por su historial/timeline de peticiones, usa este script.
 
+---
+
 ## 👁️ Vigilancia del fix del timeline
 El script `D:\Linux\Config\opencode-win\scripts\check-timeline-fix.ps1` comprueba si el PR #26861 de OpenCode (fix del timeline) se ha mergeado. Registra el resultado en `C:\Users\evo01\.config\opencode\data\timeline-fix.log`.
 - **No hay systemd**: la ejecución automática (cada 3 días) se haría con una **tarea programada de Windows** (`Register-ScheduledTask` / `schtasks`) — o queda **pendiente** si aún no está creada.
 - Si el PR se mergea: se avisa (log + notificación) para retirar `timeline-completo`.
 - Consultar el log si Antonio pregunta por el estado del fix.
 
-## Directorios de datos
+---
+
+## 📂 Directorios de datos
 - `C:\Users\evo01\.config\opencode\data\` - Datos de ejecución (logs, estado)
 - `C:\Users\evo01\.config\opencode\data\memory\` - Grafo de memoria persistente (`memory.jsonl`, vía `MEMORY_FILE_PATH`)
 - `C:\Users\evo01\.config\opencode\data\metrics.json` - Métricas del proxy local
@@ -298,19 +391,25 @@ El script `D:\Linux\Config\opencode-win\scripts\check-timeline-fix.ps1` comprueb
 
 ---
 
-# AVANZADO (uso principalmente con DeepSeek)
+# 🚀 AVANZADO (uso principalmente con DeepSeek)
 
-## PWAs - Cómo abrir
+---
+
+## 🌐 PWAs - Cómo abrir
 > ⚠️ **No aplica tal cual en Windows:** no existen los archivos `chrome-<app-id>-Profile_2.desktop`. **Alternativa:** en Windows las PWA se instalan como accesos directos **`.lnk`** en el Escritorio (`C:\Users\evo01\Desktop` o `C:\Users\evo01\OneDrive\Escritorio`).
 1. Listar el Escritorio (buscar los `.lnk` de las PWA)
 2. Identificar el acceso directo de la PWA deseada
 3. Ejecutarlo con `Start-Process` (o doble clic)
 
-## PWAs - Cerrar
+---
+
+## 🚪 PWAs - Cerrar
 - Una PWA: `curl.exe -s http://localhost:9222/json/close/<ID>`
 - Todo Chrome: `Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process`
 
-## Chrome debug (si no está corriendo)
+---
+
+## 🐞 Chrome debug (si no está corriendo)
 ```powershell
 Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" -ArgumentList `
   '--user-data-dir="C:\Users\evo01\AppData\Local\Temp\chrome-debug-profile"', `
@@ -320,7 +419,9 @@ Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" -ArgumentL
   'about:blank'
 ```
 
-## Carga automática al abrir ocv
+---
+
+## ⚡ Carga automática al abrir ocv
 Al ejecutar `ocv`, la función PowerShell del perfil carga automáticamente:
 - Servidor LM Studio (puerto 1234)
 - Modelo Qwen3.8-9B Q6_K con 80k de contexto
@@ -330,7 +431,9 @@ Al ejecutar `ocv`, la función PowerShell del perfil carga automáticamente:
 
 En Windows **no hay systemd** (`init-opencode.service` no existe): la carga ocurre solo al abrir `ocv` / `ocv-local`.
 
-## Perfiles por lanzador (Windows)
+---
+
+## 🎛️ Perfiles por lanzador (Windows)
 Cada comando usa SU archivo de config vía `OPENCODE_CONFIG`. **Nada se copia nunca sobre `opencode.jsonc`**, que es el perfil global/base por defecto.
 
 | Comando | Archivo de config | LM Studio (VRAM) |
@@ -344,6 +447,8 @@ Cada comando usa SU archivo de config vía `OPENCODE_CONFIG`. **Nada se copia nu
 - Los tres lanzadores arrancan el **servidor TTS** (`Start-TtsServerIfNeeded`).
 - En cloud, el agente local está **desactivado** (`agents.local.disabled`) y los providers `lmstudio`/`local` están **bloqueados** (`experimental.policies`, `action: provider.use`).
 - En Windows hay **TRES archivos**: `opencode.jsonc` (global/base), `opencode-local.json` (local) y `opencode-cloud.json` (cloud estricto).
+
+---
 
 ## 🏆 Proveedor NVIDIA: ranking y metodología de selección de modelos (IMPORTANTE)
 Cuando se trabaje con el proveedor `nvidia` (agente `nvidia` o selector `/models`), usar la METODOLOGÍA ya establecida el 05/09/2026 para verificar/actualizar el whitelist. Está documentada completa en:
@@ -387,7 +492,9 @@ Desde el **05/09/2026** existe un check automático que aplica la metodología a
 - Ejecutar manualmente: `powershell -ExecutionPolicy Bypass -File D:\Linux\Config\opencode-win\scripts\check-nvidia-whitelist.ps1`
 - El script se documenta también en `04-perfiles-opencode-json.md`.
 
-## Iniciar LM Studio manualmente
+---
+
+## 🖥️ Iniciar LM Studio manualmente
 ```powershell
 # Arranque completo (servidor + modelo + proxy) -> función del perfil:
 ocv
@@ -399,11 +506,15 @@ ocv
 C:\Python314\python.exe C:\Users\evo01\.config\opencode\lmstudio-proxy.py
 ```
 
-## Liberar VRAM
+---
+
+## 🧹 Liberar VRAM
 Si el modelo se satura, usar:
 ```powershell
 & "C:\Users\evo01\.lmstudio\bin\lms.exe" unload --all
 ```
+
+---
 
 ## 📊 Tokens/s (todas las fuentes)
 
@@ -484,9 +595,13 @@ Resumen del setup de OpenCode en Windows:
 
 ---
 
-# CHECKLIST ANTES DE RESPONDER
+# ✅ CHECKLIST ANTES DE RESPONDER
 - ¿Respuesta en español?
 - ¿Fecha/hora en formato España?
 - ¿Decimales con coma?
 - Si pregunta por el tiempo: ¿he usado wttr.in?
 - ¿He usado la herramienta directamente en vez de describir lo que haría?
+
+---
+
+> 📁 `C:\Users\evo01\.config\opencode\AGENTS.md` · `D:\Linux\Config\opencode-win\config\AGENTS.md`

@@ -57,7 +57,7 @@ D:\Linux\Config\Hermes-Win\
 ├── extras\bin\              # scripts propios de voz (hermes-kokoro-tts.py, hvoz, …)
 ├── parches\                 # parches históricos por commit (el vivo está en HermesSync\windows\parches)
 ├── backups\                 # zips hermes-win-backup-AAAAMMDD-HHMMSS.zip (ACL restringida)
-├── sesion-hermes\           # respaldo canónico + instalador (config, .env, auth.json, SOUL)
+├── sesion-hermes\           # respaldo canónico + instalador (config, .env, auth.json, SOUL, scripts\)
 ├── informe-instalacion-*.txt # informe que deja instalar-desde-cero.ps1 en cada ejecución
 └── sync.log                 # histórico de sincronizaciones
 
@@ -80,11 +80,14 @@ Nunca tocar `D:\Linux\Documentos\dotfiles\hermes\` (sin `hermes-win`): esa es la
 | ✅ Dentro del ZIP | ❌ Fuera del ZIP |
 |---|---|
 | `config.yaml`, `SOUL.md`, `install_id`, `channel_directory.json`, `shell-hooks-allowlist.json` | `state.db*` y `sessions\` (histórico de conversaciones; viaja por el esquema dual boot) |
-| `skills\`, `plugins\`, `memories\`, `hooks\`, `agent-hooks\` | `cache\`, `logs\`, `runtime\`, `sandboxes\`, `terminal-sessions\` |
+| `skills\`, `plugins\`, `memories\`, `scripts\`, `hooks\`, `agent-hooks\` | `cache\`, `logs\`, `runtime\`, `sandboxes\`, `terminal-sessions\` |
 | `cron\` (sin `executions.db`) | `tools\`, `installs\`, `hermes-agent\` (clon git) |
 | `kanban.db` (copia consistente con la API `.backup` de SQLite) | clones temporales, `pairing\`, `pending_messages\`, `state\` |
 | `skins\`, `tui-widgets\`, `desktop-plugins\`, `pets\` (si existen) | ficheros `*.lock`, `*.pid`, `*.sock`, `__pycache__` |
-| Credenciales: `.env` y `auth.json` en `credenciales\` (ACL restringida) y en `sesion-hermes\` | `shared\` en dotfiles (sí va al ZIP: es el token del Portal Nous) |
+| Credenciales: `.env`, `auth.json` y las de Google (`google_token.json`, `google_client_secret.json`, `gmail-app-password.txt`) en `credenciales\` (ACL restringida); `.env` y `auth.json` también en `sesion-hermes\` | `shared\` en dotfiles (sí va al ZIP: es el token del Portal Nous) |
+
+`scripts\` es el código propio del perfil (puentes de los cronjobs y enviadores de correo): sin él, una
+restauración deja los trabajos programados sin programa que ejecutar. Va al ZIP y a `sesion-hermes\`.
 
 El ZIP pesa unos pocos MB (frente a los ~3 GB del directorio completo).
 
@@ -92,7 +95,10 @@ El ZIP pesa unos pocos MB (frente a los ~3 GB del directorio completo).
 
 ## Credenciales y claves de API
 
-- Las claves viven en `%LOCALAPPDATA%\hermes\.env` y los tokens OAuth en `auth.json`.
+- Las claves viven en `%LOCALAPPDATA%\hermes\.env` y los tokens OAuth en `auth.json`. Los de Google
+  (token de Gmail, cliente OAuth y contraseña de aplicación del plan B) están sueltos en la raíz del
+  perfil (`google_token.json`, `google_client_secret.json`, `gmail-app-password.txt`): el backup los mete
+  en `credenciales\` y el saneado de dotfiles los deja fuera por estar en esa carpeta.
 - **SÍ van** en el ZIP y en `sesion-hermes\`: son la copia de restauración. Por eso esas dos rutas llevan la herencia NTFS quitada y solo el usuario `evo01` con control total (`icacls <ruta> /inheritance:r /grant:r "USUARIO:(OI)(CI)F"`), equivalente al 0600/0700 de Linux.
 - **NUNCA** deben estar en `D:\Linux\Documentos\dotfiles\`. Esa es la frontera real.
 - Antes de dar por buena la copia saneada, `backup-hermes.ps1` ejecuta un escaneo en **dos fases**:

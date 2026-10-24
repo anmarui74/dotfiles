@@ -6088,19 +6088,19 @@ Información completa del hardware del sistema (índice `data/hardware/index.jso
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Activo | 16/08/2026 · rev. 10/10/2026 | Antonio |
+| ✅ Activo | 16/08/2026 · rev. 23/10/2026 | Antonio |
 
-> 🕐 **Re-verificado el 10/10/2026** con volcado privilegiado completo (`pkexec`): CPU, RAM, placa, GPU, discos/SMART, red y sensores. El índice `data/hardware/index.json` está actualizado al **10/10/2026**. Volcado completo: `hardware-query.py scan` (pide `pkexec`).
+> 🕐 **Re-verificado el 11/10/2026** con volcado privilegiado completo (`pkexec`): CPU, RAM, placa, GPU, discos/SMART, red y sensores. El índice `data/hardware/index.json` está actualizado al **11/10/2026**. El **kernel** se refresca a mano cuando cambia de versión (última vez, 23/10/2026). Volcado completo: `hardware-query.py scan` (pide `pkexec`).
 
 | 🖥️ Sistema | 🐧 Kernel | 📐 Arquitectura |
 |------------|----------|-----------------|
-| CachyOS (Arch rolling) | 7.2.9-2-cachyos | x86_64 |
+| CachyOS (Arch rolling) | 7.3.0-5-cachyos | x86_64 |
 
 | 🖥️ Escritorio | 🐚 Shell | 🌍 Locale / Zona |
 |---------------|----------|------------------|
 | GNOME 51.0 (Wayland, GDM) | zsh | es_ES.UTF-8 · Europe/Madrid |
 
-> 📊 **Información actualizada:** 10/10/2026 · Verificada con volcado privilegiado `pkexec` (`inxi`, `dmidecode`, `smartctl`, `nvidia-smi`, `btrfs`, `sensors`)
+> 📊 **Información actualizada:** 11/10/2026 (kernel, 23/10/2026) · Verificada con volcado privilegiado `pkexec` (`inxi`, `dmidecode`, `smartctl`, `nvidia-smi`, `btrfs`, `sensors`)
 
 ---
 

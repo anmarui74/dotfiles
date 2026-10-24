@@ -64,7 +64,7 @@ Todos en **esquema V2** (`permissions`, `agents`, `providers`, `mcp`, `lsp`):
 | `ocv-cloud` | `opencode-cloud.json` | ❌ No carga |
 | `ocv-status` | — | Estado de componentes |
 
-> 🖥️ **App de escritorio V2** (2.1.3): instalada desde `opencode.ai/download` (NSIS) en `%LOCALAPPDATA%\Programs\@opencodedesktop`. La V1 de `winget` fue desinstalada. El CLI V2 (`@opencode/cli`) está en **2.1.3**. Los LSP se lanzan con `npx -y` (Python vía `basedpyright`) y **no** aparecen en la barra lateral: corren en segundo plano.
+> 🖥️ **App de escritorio V2** (2.1.4): instalada desde `opencode.ai/download` (NSIS) en `%LOCALAPPDATA%\Programs\@opencodedesktop`. La V1 de `winget` fue desinstalada. El CLI V2 (`@opencode/cli`) está en **2.1.4**. Los LSP se lanzan con `npx -y` (Python vía `basedpyright`) y **no** aparecen en la barra lateral: corren en segundo plano.
 
 ---
 

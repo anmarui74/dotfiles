@@ -1,0 +1,14 @@
+[Unit]
+Description=Actualizacion automatica de Hermes (canal stable)
+Documentation=https://hermes-agent.nousresearch.com/docs/getting-started/updating
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/Config/hermes/hermes-auto-update.sh
+StandardOutput=journal
+StandardError=journal
+# El drain del gateway espera a los turnos en vuelo: margen amplio.
+TimeoutStartSec=1800
+Nice=10
