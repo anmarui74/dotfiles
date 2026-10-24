@@ -37,6 +37,8 @@ Guía completa del sistema de voz, modelos y herramientas.
 | 08 | [Incidencia GPU Xid 79](08-incidencia-gpu-xid79.md) | 💥 GPU caída del bus PCIe (22/09/2026) |
 | 09 | [Informe del sistema — procedimiento](09-informe-sistema.md) | 📝 Generar informe del equipo con `pkexec` (inxi, SMART, btrfs, sensores) |
 | 10 | [OnlyOffice IA con OpenCode Go](10-onlyoffice-ia-opencode-go.md) | 🤖 Proxy 4002 · `x-opencode-session` · plugin IA de ONLYOFFICE |
+| 11 | [Qwen3.8-Flash-Next local con llama.cpp](11-qwen-flash-next-local.md) | 🚀 MoE 125B/A6B en `:1919` · offload VRAM+RAM+NVMe · visión · flags óptimos |
+| 12 | [Historial de migración a V2 y decisiones retiradas](12-historial-migracion-v2.md) | 🕓 Cronología V1→V2 · vigilantes retirados · decisión de skills (50 → 4) |
 
 ### Notas y hardware
 
@@ -60,7 +62,7 @@ Flujo de **voz → texto → IA → respuesta**:
 | 1️⃣ | 🎤 **Tú (Antonio)** | Hablas o escribes |
 | 2️⃣ | **STT** — `sox` + `whisper-cpp` | Audio capturado y transcrito en **GPU** |
 | 3️⃣ | **TUI de OpenCode** | Teclado + comandos `/stt-*` |
-| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build`/`plan` **deepseek-v4.1-flash** + `local` Qwen 3.8 + `nvidia` Nemotron 3 Ultra 550B + `multimodal` MiMo V2.5 · 5 MCP · 50 skills |
+| 4️⃣ | **OpenCode** | Agentes: `cloud`/`build`/`plan` **deepseek-v4.1-flash** + `local` Qwen 3.8 + `nvidia` Nemotron 3.5 Super VL 120B + `multimodal` MiMo V2.5 · 5 MCP · 4 skills activas |
 | 5️⃣ | **TTS** — `Kokoro GPU` → `paplay` + **Pantalla** | 🔊 Audio por voz · 📄 Texto en pantalla |
 
 ---
@@ -72,7 +74,7 @@ Flujo de **voz → texto → IA → respuesta**:
 | **LM Studio** | `http://localhost:1234` | Modelo local `qwen3.8-9b` (80K contexto) |
 | **Proxy OpenCode ↔ LM Studio** | `http://localhost:4001` | Intermediario con métricas (tokens/s) |
 | **OpenCode Go (cloud)** | `https://opencode.ai` | Agentes `cloud` + `build` + `plan`: `deepseek-v4.1-flash`; `multimodal`: `mimo-v2.5` |
-| **NVIDIA NIM (cloud)** | `https://integrate.api.nvidia.com/v1` | Agente `nvidia`: Nemotron 3 Ultra 550B A55B (~74,5 tok/s, 1M contexto) |
+| **NVIDIA NIM (cloud)** | `https://integrate.api.nvidia.com/v1` | Agente `nvidia`: Nemotron 3.5 Super VL 120B A12B (~95 tok/s, multimodal texto+imagen) |
 | **Ollama** _(en desuso)_ | `http://localhost:11434` | Modelos `llama3.1`, `gemma4`, `deepseek-r1`, `qwen3.5` (LiteLLM) |
 
 **Secuencia de arranque:**
@@ -101,22 +103,37 @@ start-opencode-server.sh
 
 ## Skills de OpenCode
 
-### ✨ 50 skills activos
+### ✨ 4 skills activas (desde 24/10/2026)
 
-| Categoría | Skills |
-|-----------|--------|
-| **Frontend** | `angular-architect`, `nextjs-developer`, `react-expert`, `vue-expert`, `vue-expert-js`, `fullstack-guardian` |
-| **Backend** | `nestjs-expert`, `fastapi-expert`, `django-expert`, `java-architect`, `golang-pro`, `rust-engineer`, `cpp-pro`, `php-pro`, `python-pro` |
-| **Datos** | `pandas-pro`, `postgres-pro`, `sql-pro`, `database-optimizer` |
-| **IA / LLM** | `prompt-engineer`, `pydantic`, `rag-architect`, `spec-miner` |
-| **Infraestructura** | `cloud-architect`, `terraform-engineer`, `kubernetes-specialist`, `devops-engineer`, `sre-engineer`, `monitoring-expert` |
-| **Calidad** | `code-reviewer`, `security-reviewer`, `secure-code-guardian`, `test-master`, `debugging-wizard`, `the-fool` |
-| **APIs** | `api-designer`, `graphql-architect`, `websocket-engineer`, `atlassian-mcp`, `mcp-developer`, `opencode-marketplace` |
-| **Otros** | `cli-developer`, `architecture-designer`, `code-documenter`, `feature-forge`, `legacy-modernizer`, `microservices-architect`, `playwright-expert`, `typescript-pro`, `javascript-pro` |
+> 🕓 Antes había **50 activas**. La auditoría del 24/10/2026 demostró que en 14.157 mensajes
+> no se había invocado **ninguna**: solo ocupaban contexto (6.100 tokens por petición). Las
+> otras 46 se movieron a `skills-disabled/` (recuperables con un `mv`).
+> Detalle y criterio: [`12-historial-migracion-v2.md`](12-historial-migracion-v2.md#decisiones-sobre-skills).
 
-### 🚫 18 skills desactivados
+| Skill | Por qué se queda |
+|-------|------------------|
+| `python-pro` | Lenguaje real: vllm, tokenizers, harnesses, scripts |
+| `debugging-wizard` | Diagnóstico de fallos, uso más frecuente |
+| `cli-developer` | Scripts, argv, completions |
+| `prompt-engineer` | Prompts de agentes (Hermes, OpenCode) |
 
-`chaos-engineer`, `csharp-developer`, `dotnet-core-expert`, `embedded-systems`, `fine-tuning-expert`, `flutter-expert`, `game-developer`, `kotlin-specialist`, `laravel-specialist`, `ml-pipeline`, `rails-expert`, `react-native-expert`, `salesforce-developer`, `shopify-expert`, `spark-engineer`, `spring-boot-engineer`, `swift-expert`, `wordpress-pro`
+### 🚫 64 skills desactivadas
+
+Las 18 anteriores (`chaos-engineer`, `csharp-developer`, `dotnet-core-expert`,
+`embedded-systems`, `fine-tuning-expert`, `flutter-expert`, `game-developer`,
+`kotlin-specialist`, `laravel-specialist`, `ml-pipeline`, `rails-expert`,
+`react-native-expert`, `salesforce-developer`, `shopify-expert`, `spark-engineer`,
+`spring-boot-engineer`, `swift-expert`, `wordpress-pro`) **más** las 46 que se retiraron el
+24/10/2026: `angular-architect`, `api-designer`, `architecture-designer`, `atlassian-mcp`,
+`cloud-architect`, `code-documenter`, `code-reviewer`, `cpp-pro`, `database-optimizer`,
+`devops-engineer`, `django-expert`, `fastapi-expert`, `feature-forge`, `fullstack-guardian`,
+`golang-pro`, `graphql-architect`, `java-architect`, `javascript-pro`,
+`kubernetes-specialist`, `legacy-modernizer`, `mcp-developer`, `microservices-architect`,
+`monitoring-expert`, `nestjs-expert`, `nextjs-developer`, `opencode-marketplace`,
+`pandas-pro`, `php-pro`, `playwright-expert`, `postgres-pro`, `pydantic`, `rag-architect`,
+`react-expert`, `rust-engineer`, `secure-code-guardian`, `security-reviewer`, `spec-miner`,
+`sql-pro`, `sre-engineer`, `terraform-engineer`, `test-master`, `the-fool`, `typescript-pro`,
+`vue-expert`, `vue-expert-js`, `websocket-engineer`.
 
 ---
 

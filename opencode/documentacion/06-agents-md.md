@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| 📜 Reglas del sistema | 26/07/2026 · rev. 23/10/2026 | Antonio |
+| 📜 Reglas del sistema | 26/07/2026 · rev. 24/10/2026 | Antonio |
 
 > Instrucciones del sistema que OpenCode carga al inicio de cada sesión
 
@@ -239,9 +239,13 @@ Razón: `sudo` pide la contraseña por terminal, pero el agente se ejecuta en un
 
 ## Sección 2: PROCEDIMIENTOS TÉCNICOS
 
-### OpenCode V2 (2.0.x) — cambios importantes
+### OpenCode V2 (2.0.x) — resumen operativo
 
-AGENTS.md documenta la migración de V1 (1.18.x) a **V2 (2.0.x)**:
+> 🕓 **24/10/2026:** la cronología completa de la migración V1→V2 (fechas, PRs, issues y
+> decisiones) se movió a `12-historial-migracion-v2.md` para no inyectarla en cada petición.
+> En `AGENTS.md` queda solo el resumen que cambia el día a día.
+
+AGENTS.md documenta lo esencial de **V2 (2.1.3)**:
 
 - Config TUI: `tui.json` → **`cli.json`**; los plugins TUI V1 no funcionan (los nuevos van en `plugins/<nombre>/tui.tsx`).
 - Ciclo de agentes primarios: **`Shift+Tab`** (ya no `Tab`); fallback `Ctrl+X → A`.
@@ -250,7 +254,7 @@ AGENTS.md documenta la migración de V1 (1.18.x) a **V2 (2.0.x)**:
 - LSP: V2 **no ejecuta** servidores LSP (bloque retirado; usar `basedpyright`, `tsc --noEmit`, `shellcheck`… por terminal).
 - `instructions` retirado (V2 no carga sus entradas); `AGENTS.md` se **autodescubre**.
 
-### Sincronización con Config/opencode (líneas 271-394) — OBLIGATORIO
+### Sincronización con Config/opencode — OBLIGATORIO
 
 Explica el **sistema de dos directorios**:
 
@@ -280,13 +284,15 @@ Explica el **sistema de dos directorios**:
 detecta** (busca formas de API key, no contraseñas sueltas): la comprobación aparte es
 `find ~/Documentos/dotfiles -name 'service.json*'`, que debe salir **vacío**.
 
-#### 📝 Fidelidad de los manuales y espejo en Obsidian (líneas 383-394)
+#### 📝 Fidelidad de los manuales y espejo en Obsidian
 
 - **Espejo en Obsidian (automático):** `sync-opencode.sh` ejecuta `sync-obsidian.sh` en cada ciclo (30 min) y la unidad `sync-obsidian.path` al guardar un manual → cualquier cambio en `documentacion/*.md` llega solo al vault.
 - **Revisión de fidelidad (manual/recomendada):** comprobar que los manuales reflejen la config actual (versión, puertos, modelos/agentes, rutas, unidades systemd, estados de PR/issues, claves).
 - **El backup solo verifica los heredocs embebidos** (`AGENTS.md`, `documentacion/hardware-info.md`, `documentacion/README-hardware.md`); el resto de manuales no se revisan solos.
+- 🔔 **Desde el 24/10/2026** `check-setup-completo.sh` añade un **aviso** (no bloqueante) con los
+  manuales cuya cabecera `rev.` lleva más de **120 días** sin actualizarse.
 
-### Atención a setup-opencode-completo.sh (líneas 396-452) — IMPORTANTE
+### Atención a setup-opencode-completo.sh — IMPORTANTE
 
 Este script es el **instalador completo embebido**. Contiene toda la configuración dentro de sí mismo (es un script autocontenido).
 

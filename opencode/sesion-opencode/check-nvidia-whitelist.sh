@@ -41,6 +41,43 @@ log() {
     echo "[$(date '+%d/%m/%Y %H:%M:%S')] $*" >> "$LOG_FILE"
 }
 
+notif_error() {
+    command -v notify-send >/dev/null 2>&1 && \
+        notify-send -u critical "OpenCode: verificación NVIDIA" "$1" 2>/dev/null || true
+}
+
+# ------------------------------------------------------------
+# 0. Guardia de interrupción (24/10/2026)
+#    La ejecución del 18/10/2026 murió a los 10 s tras comprobar
+#    5 de 7 modelos: no guardó estado y nadie se enteró porque el
+#    script salía sin rastro de error. Este trap garantiza que
+#    CUALQUIER salida no completada quede en el log y se notifique.
+#    FIN_OK=1 solo se pone justo antes del exit 0 final.
+# ------------------------------------------------------------
+FIN_OK=0
+trap_rc=0
+trap 'trap_rc=$?; if [ "$FIN_OK" -ne 1 ]; then log "❌ Ejecución INTERRUMPIDA (código $trap_rc): estado NO guardado. Revisar este log."; notif_error "La comprobación quincenal se interrumpió (código $trap_rc). Revisa data/nvidia-whitelist.log"; fi' EXIT
+
+# Aviso de caducidad: si el estado lleva más de 45 días sin actualizarse,
+# el timer o el script están rotos aunque el servicio no falle.
+if [ -f "$STATE_FILE" ]; then
+    DIF_DIAS=$(python3 - "$STATE_FILE" << 'PYEOF' 2>/dev/null || echo ""
+import json, sys, datetime
+try:
+    d = json.load(open(sys.argv[1]))
+    u = d.get('ultima_ejecucion')
+    if not u: print(""); raise SystemExit
+    print((datetime.datetime.now() - datetime.datetime.fromisoformat(u)).days)
+except Exception:
+    print("")
+PYEOF
+)
+    if [ -n "$DIF_DIAS" ] && [ "$DIF_DIAS" -gt 45 ] 2>/dev/null; then
+        log "⚠️ Estado caducado: última ejecución hace ${DIF_DIAS} días."
+        notif_error "La verificación del whitelist lleva ${DIF_DIAS} días sin completarse. Revisa el timer y el log."
+    fi
+fi
+
 # ------------------------------------------------------------
 # 1. Obtener API key de NVIDIA desde auth.json de OpenCode
 # ------------------------------------------------------------
@@ -402,4 +439,5 @@ PYEOF
 rm -f "$STATE_TMP" "$CATALOG_TMP" "$RETIRED_TMP"
 
 log "🏁 Verificación completada."
+FIN_OK=1
 exit 0

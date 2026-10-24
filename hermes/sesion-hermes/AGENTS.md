@@ -91,6 +91,30 @@ El tarball resultante pesa unos pocos MB (frente a los ~3 GB del directorio comp
 
 ---
 
+## Perfiles de Hermes (multiperfil)
+
+Antonio tiene **dos perfiles**, y el segundo es intencionado: **no se borra**.
+
+| Perfil | Home | Modelo | Para qué |
+|---|---|---|---|
+| `default` (principal) | `~/.hermes/` | `deepseek-v4.1-flash` (proveedor `opencode-go`) | el de uso diario; **es el único que se respalda** |
+| `nvidia` | `~/.hermes/profiles/nvidia/` | `nvidia/nemotron-3.5-super-vl-120b-a12b` (proveedor `nvidia`) | usar Hermes con nemotron-super-vl de forma **rápida e independiente** del principal |
+
+- Se lanza con el atajo **`nvidia`** (`~/.local/bin/nvidia` → `hermes -p nvidia "$@"`) o con
+  `hermes -p nvidia <comando>`. `hermes profile list` muestra ambos y su gateway.
+- `nvidia` tiene su propio `config.yaml`, `state.db` (conversaciones), `memories/`, `skills/` y `cron/`:
+  lo que se haga ahí **no** toca al principal, y al revés. Las memorias empezaron como copia del
+  principal (23/10/2026) y a partir de ahí divergen a propósito.
+- **No entra en el respaldo canónico.** `sync-hermes.sh` y `backup-hermes.sh` abortan con código 3 si
+  `HERMES_HOME` apunta a un perfil (`SYNC_PERMITIR_PERFIL=1` lo salta a propósito). Respaldo de ese
+  perfil: copiar `profiles/nvidia/config.yaml` + `memories/` si alguna vez hace falta, nunca el home entero.
+- Su `skills/.hub/index-cache/` pesa ~50 MB y es **caché del catálogo**: se puede purgar sin avisar
+  (se regenera al buscar skills). El resto del perfil ronda los 13 MB.
+- El gateway lo atiende el proceso principal (multiplex): **no** hay un `hermes-gateway` propio del
+  perfil, así que no hay que arrancar ni parar nada aparte.
+
+---
+
 ## Credenciales y claves de API
 
 - Las claves viven en `~/.hermes/.env` y los tokens OAuth de proveedores en `~/.hermes/auth.json`. `~/.hermes/shared/nous_auth.json` guarda el token del Portal Nous (access + refresh).
@@ -121,6 +145,7 @@ Antes de copiar nada ejecuta `check-setup-completo.sh`; si el esquema no está c
 bash ~/Config/hermes/sync-hermes.sh          # con salida
 bash ~/Config/hermes/sync-hermes.sh --quiet  # vía systemd
 ```
+El respaldo es **siempre** del perfil principal `~/.hermes`. Si `HERMES_HOME` apunta a un perfil secundario (`~/.hermes/profiles/<perfil>`), `sync-hermes.sh` y `backup-hermes.sh` salen con código 3 y no tocan nada; para respaldar un perfil a propósito, `SYNC_PERMITIR_PERFIL=1`. Motivo: un respaldo lanzado desde una sesión de un perfil (24/10/2026) dejó `sesion-hermes/` y el tarball con la configuración de ese perfil.
 
 ### Instalación desde limpio
 ```bash
@@ -280,16 +305,15 @@ Los modelos se alternan con `/model <alias>`. Los alias viven en `model.aliases`
 | Alias | Modelo en Hermes | Equivalente en OpenCode |
 |---|---|---|
 | `local` | `lmstudio/qwen3.8-9b` | proveedor `local` (agentes `local`, `title`) |
-| `local-qwen35` | `lmstudio/qwen3.5-9b` | descargado en LM Studio |
-| `local-gemma` | `lmstudio/google/gemma-4-e4b` | descargado en LM Studio (único con visión) |
 | `nvidia` | `nvidia/nvidia/nemotron-3-ultra-550b-a55b` | agente `nvidia` |
-| `nemotron-super` | `nvidia/nvidia/nemotron-3-super-120b-a12b` | whitelist |
-| `gpt-oss` | `nvidia/openai/gpt-oss-20b` | whitelist |
 | `glimmer` | `nvidia/meta/muse-glimmer-30b` | whitelist |
 | `lightning` | `nvidia/nvidia/nemotron-3.5-lightning-30b-a3b` | whitelist |
-| `nano-omni` | `nvidia/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | whitelist |
 | `vision` | `nvidia/meta/llama-3.2-11b-vision-instruct` | whitelist |
+| `local-qwen35` | `lmstudio/qwen3.5-9b` | descargado en LM Studio |
+| `local-gemma` | `lmstudio/google/gemma-4-e4b` | descargado en LM Studio (único con visión) |
 | `multimodal` | `opencode-go/mimo-v2.5` | agente `multimodal` |
+
+> **Alias en `config.yaml` que no entran en esta tabla simple** (valor objeto o nombre distinto al catálogo OpenCode, documentados aparte): `nemotron-super-vl` → `nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b`, `bolt` → `nvidia/nvidia/nemotron-3.5-bolt-e4b`, `flashnext` → objeto `qwen3.8-flash-next` en `:1919` (llama.cpp). El script de auditoría lee solo los 8 alias de valor simple arriba; estos tres se gestionan con `hermes-nvidia-aliases` y no se replican en el export de Windows.
 
 Requisito que vive **fuera** del backup de Hermes (es config de LM Studio, no de Hermes): `defaultContextLength` en `~/.lmstudio/settings.json` debe ser ≥ 65536; aquí está en 81920 (valor con el que los tres locales caben juntos en 16 GB: gemma-4-e4b 6,7 GB, qwen3.8-9b 11,5 GB). Hermes exige 64 000 tokens de ventana; con el valor de fábrica (8192) rechaza el local como modelo principal y deja inservible el escalón `lmstudio` de la cadena de respaldo (cae al escalón anterior).
 

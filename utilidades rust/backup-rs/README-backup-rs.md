@@ -2,7 +2,7 @@
 
 | ⚙️ Estado | 📅 Fecha | 👤 Usuario |
 |-----------|----------|------------|
-| ✅ Operativo | 01/10/2026 · rev. 22/10/2026 | Antonio |
+| ✅ Operativo | 01/10/2026 · rev. 24/10/2026 | Antonio |
 
 > Herramienta CLI en **Rust** para Arch Linux (CachyOS) que respalda automáticamente los directorios personales
 > (`Config`, `Documentos`, `Descargas`, `Imágenes`, `Vídeos`, incluidos archivos
@@ -183,15 +183,20 @@ de la estructura del home:
 | Caso | Comportamiento real | Motivo |
 |------|---------------------|--------|
 | **Enlace simbólico** (a fichero o a directorio) | **No se copia**: el espejo no tiene ninguna entrada para él | El recorrido es `WalkDir` con `follow_links(false)` y solo procesa `entry.file_type().is_file()`; un symlink nunca es `is_file()` |
-| **Directorio vacío** | Si falta en el espejo **no se crea**; si sobra **no se borra** | `copy_file` crea directorios solo como padres de ficheros (`create_dir_all`) y `remove_extra_files` hace `continue` con todo lo que no sea fichero |
+| **Directorio vacío** | Si falta en el espejo **no se crea**; si sobra (no existe en el origen) **se borra** | `copy_file` crea directorios solo como padres de ficheros (`create_dir_all`); `remove_extra_files` recorre el espejo `contents_first` y aplica `remove_dir` a los que no existen en el origen (solo si están vacíos) |
 | Fichero presente en el espejo y ya inexistente en el origen | Se **borra** (machacar) | `remove_extra_files` recorre el espejo y elimina lo que no existe en el origen (`!src_candidate.exists()`) |
 | Ruta afectada por `exclude_patterns` (p. ej. `**/node_modules/**`) | Si el fichero sigue existiendo en el origen, **permanece** en el espejo aunque no se recorra; solo desaparece si ya no existe en el origen | La exclusión afecta al recorrido del origen, no a la comprobación del borrado |
 
-Consecuencia práctica: con el tiempo el espejo acumula **directorios vacíos** (y restos
-de rutas retiradas del origen) y le faltan los **enlaces simbólicos**. No afecta a la
-restauración de contenido, pero si se quiere el espejo fiel a la estructura del origen
-hay que completarlo a mano con los scripts de `scripts/` (comparan cada origen con cada
-espejo; trabajan sin argumentos en modo informe):
+Consecuencia práctica: el espejo **sí queda fiel a la estructura** desde la rev. del
+24/10/2026: los directorios que dejan de existir en el origen se eliminan en la misma
+pasada que los ficheros (recorrido `contents_first` + `remove_dir`, así que solo se
+borra lo que ya está vacío y nunca se pierde contenido). Si un directorio huérfano no
+se puede vaciar del todo (un fichero excluido por `exclude_patterns`, un symlink, un
+fallo de red puntual en SMB), se conserva y se reintenta en la siguiente pasada. El
+único hueco estructural que queda son los **enlaces simbólicos**.
+
+Los scripts de `scripts/` siguen sirviendo como comprobación independiente (comparan
+cada origen con cada espejo; sin argumentos trabajan en modo informe):
 
 ```bash
 cd ~/"Config/utilidades rust/backup-rs/scripts"
@@ -265,6 +270,9 @@ extra_sources = ["/mnt/seagate/Windows"]
   (además de las `[[sources]]`). Ej.: incluir `/mnt/seagate/Windows` en la nube sin
   añadirlo al backup versionado del Crucial ni al espejo de SEAGATE. Si la ruta no
   existe (p. ej. el disco no está montado), se omite con aviso.
+- `extra_dest`: directorio base donde se copian las `extra_sources` (por defecto,
+  el propio `destination`). Ej.: las fuentes van a `<share>/Linux`, pero `Windows`
+  va a la raíz del share (`<share>`).
 
 Los mirrors nube se sincronizan con `backup once`/`backup mirror`/`backup run` y
 **nunca requieren sudo**. Si el punto CIFS está montado, `backup-rs` usa `rsync`

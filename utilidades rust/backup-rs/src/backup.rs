@@ -41,6 +41,7 @@ pub struct BackupStats {
     pub bytes_copied: u64,
     pub errors: u64,
     pub files_deleted: u64,
+    pub dirs_deleted: u64,
 }
 
 impl BackupEngine {
@@ -119,6 +120,7 @@ impl BackupEngine {
         &mut self,
         mirror_dest: &std::path::Path,
         extra_sources: &[std::path::PathBuf],
+        extra_dest: Option<&std::path::Path>,
     ) -> Result<BackupStats> {
         println!("📦 Sincronizando espejo nube (rsync): {}", mirror_dest.display());
 
@@ -135,8 +137,11 @@ impl BackupEngine {
         }
 
         // Rutas adicionales propias de este mirror (p. ej. SEAGATE/Windows).
+        // Se copian a `extra_dest` si se indica (p. ej. la raíz del share en vez
+        // de dentro de `Linux`); si no, al propio destino del mirror.
+        let extra_base = extra_dest.unwrap_or(mirror_dest);
         for extra in extra_sources {
-            self.rsync_source(extra, &[], mirror_dest)?;
+            self.rsync_source(extra, &[], extra_base)?;
         }
 
         self.print_stats();
@@ -434,7 +439,13 @@ impl BackupEngine {
         Ok(())
     }
 
-    /// Borra recursivamente del espejo los archivos que no existen en el origen
+    /// Borra recursivamente del espejo los archivos **y directorios** que no
+    /// existen en el origen (espejo fiel a la estructura del origen).
+    ///
+    /// Un directorio solo se elimina si está vacío (`remove_dir`), así que nunca
+    /// se pierde contenido: si queda algo que no se puede borrar (un fichero
+    /// excluido por `exclude_patterns`, un enlace, un fallo de red en un share
+    /// SMB...), el directorio se queda y se reintenta en la siguiente pasada.
     fn remove_extra_files(&mut self, dest_dir: &Path, source_root: &Path) -> Result<()> {
         for entry in WalkDir::new(dest_dir).follow_links(false).into_iter().filter_map(Result::ok) {
             if !entry.file_type().is_file() {
@@ -456,6 +467,41 @@ impl BackupEngine {
                 }
             }
         }
+
+        // 2) Directorios sobrantes: los que ya no existen en el origen. Se recorren
+        //    con `contents_first` (hijos antes que padres), de modo que un árbol
+        //    huérfano se vacía de dentro hacia fuera en la misma pasada.
+        for entry in WalkDir::new(dest_dir)
+            .follow_links(false)
+            .contents_first(true)
+            .into_iter()
+            .filter_map(Result::ok)
+        {
+            // La raíz del espejo nunca se borra; los symlinks tampoco (no se gestionan).
+            if entry.path() == dest_dir || !entry.file_type().is_dir() {
+                continue;
+            }
+            let rel = match entry.path().strip_prefix(dest_dir) {
+                Ok(rel) => rel,
+                Err(_) => continue,
+            };
+            // Si existe en el origen se conserva, aunque esté vacío (fidelidad).
+            if source_root.join(rel).exists() {
+                continue;
+            }
+            match fs::remove_dir(entry.path()) {
+                Ok(()) => {
+                    println!("   🗑️  Eliminado del espejo (no existe en origen): {}/", entry.path().display());
+                    self.stats.dirs_deleted += 1;
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                // No está vacío: contiene algo que no se puede borrar (excluido por
+                // patrón, vetado por SMB...). Se deja y se reintenta más adelante.
+                Err(e) if e.kind() == std::io::ErrorKind::DirectoryNotEmpty => {}
+                Err(e) => return Err(e.into()),
+            }
+        }
+
         Ok(())
     }
 
@@ -716,6 +762,9 @@ impl BackupEngine {
         if self.stats.files_deleted > 0 {
             println!("   Archivos borrados: {}", self.stats.files_deleted);
         }
+        if self.stats.dirs_deleted > 0 {
+            println!("   Directorios borrados: {}", self.stats.dirs_deleted);
+        }
         if self.stats.errors > 0 {
             println!("   Errores:           {}", self.stats.errors);
         }
@@ -790,4 +839,137 @@ fn parse_rsync_stats(stderr: &str, stats: &mut BackupStats) {
     stats.files_deleted += deleted;
     stats.bytes_copied += transferred_bytes;
     stats.files_skipped += total_regular.saturating_sub(transferred);
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Prepara un directorio temporal limpio para un test.
+    fn tmpdir(nombre: &str) -> PathBuf {
+        let base = std::env::temp_dir().join(format!(
+            "backup-rs-test-{}-{}",
+            nombre,
+            std::process::id()
+        ));
+        fs::remove_dir_all(&base).ok();
+        fs::create_dir_all(&base).unwrap();
+        base
+    }
+
+    /// El espejo debe perder los directorios que no existen en el origen (aunque
+    /// estén vacíos o anidados) y conservar los que sí existen, vacíos incluidos.
+    #[test]
+    fn borra_directorios_huerfanos_y_conserva_los_del_origen() {
+        let base = tmpdir("dirs");
+        let origen = base.join("origen");
+        let espejo = base.join("espejo");
+
+        // Origen real: a/f.txt, b/c/f.txt y un directorio vacío legítimo
+        fs::create_dir_all(origen.join("a")).unwrap();
+        fs::create_dir_all(origen.join("b/c")).unwrap();
+        fs::create_dir_all(origen.join("vacio_real")).unwrap();
+        fs::write(origen.join("a/f.txt"), "a").unwrap();
+        fs::write(origen.join("b/c/f.txt"), "c").unwrap();
+
+        // Espejo: lo mismo + huérfanos (vacío, anidado y con fichero dentro)
+        fs::create_dir_all(espejo.join("a")).unwrap();
+        fs::create_dir_all(espejo.join("b/c")).unwrap();
+        fs::create_dir_all(espejo.join("vacio_real")).unwrap();
+        fs::write(espejo.join("a/f.txt"), "a").unwrap();
+        fs::write(espejo.join("b/c/f.txt"), "c").unwrap();
+        fs::create_dir_all(espejo.join("huerfano/references")).unwrap();
+        fs::create_dir_all(espejo.join("huerfano2/sub/deep")).unwrap();
+        fs::create_dir_all(espejo.join("huerfano3")).unwrap();
+        fs::write(espejo.join("huerfano3/f.txt"), "x").unwrap();
+
+        let mut engine = BackupEngine::new(Config::default());
+        engine.remove_extra_files(&espejo, &origen).unwrap();
+
+        assert!(!espejo.join("huerfano").exists(), "huérfano vacío debe desaparecer");
+        assert!(!espejo.join("huerfano2").exists(), "huérfano anidado debe desaparecer");
+        assert!(!espejo.join("huerfano3").exists(), "huérfano con fichero debe desaparecer");
+        assert!(espejo.join("vacio_real").is_dir(), "el vacío que existe en origen se conserva");
+        assert!(espejo.join("a/f.txt").is_file(), "el contenido válido no se toca");
+        assert!(espejo.join("b/c/f.txt").is_file(), "el contenido válido no se toca");
+
+        assert_eq!(engine.stats.files_deleted, 1, "solo el fichero huérfano");
+        assert_eq!(engine.stats.dirs_deleted, 6, "references, huerfano, deep, sub, huerfano2, huerfano3");
+
+        fs::remove_dir_all(&base).ok();
+    }
+
+    /// Un directorio huérfano que no se puede vaciar del todo NO debe borrarse
+    /// (defensa: nunca perder contenido por un borrado parcial).
+    #[cfg(unix)]
+    #[test]
+    fn conserva_huerfano_no_vaciable() {
+        use std::os::unix::fs::symlink;
+
+        let base = tmpdir("no-vaciable");
+        let origen = base.join("origen");
+        let espejo = base.join("espejo");
+        fs::create_dir_all(&origen).unwrap();
+        fs::create_dir_all(espejo.join("huerfano")).unwrap();
+        // Un symlink no es `is_file()` para WalkDir → la fase de ficheros no lo
+        // toca; el directorio queda no vacío y `remove_dir` falla con ENOTEMPTY.
+        symlink("/ruta/inexistente", espejo.join("huerfano/enlace")).unwrap();
+
+        let mut engine = BackupEngine::new(Config::default());
+        engine.remove_extra_files(&espejo, &origen).unwrap();
+
+        assert!(espejo.join("huerfano").is_dir(), "no se borra un directorio que aún tiene contenido");
+        assert_eq!(engine.stats.dirs_deleted, 0);
+
+        fs::remove_dir_all(&base).ok();
+    }
+
+    /// Prueba de integración del espejo completo: copia lo nuevo y limpia los
+    /// restos (ficheros y directorios huérfanos) en la misma pasada.
+    #[test]
+    fn sync_mirror_plain_copia_y_limpia_restos() {
+        use crate::config::{BackupConfig, WatchConfig};
+
+        let base = tmpdir("mirror");
+        let origen = base.join("origen");
+        let espejo = base.join("espejo");
+
+        fs::create_dir_all(origen.join("a")).unwrap();
+        fs::create_dir_all(origen.join("vacio_real")).unwrap();
+        fs::write(origen.join("a/f.txt"), "hola").unwrap();
+
+        // Espejo previo: contenido válido, un vacío legítimo, un fichero obsoleto
+        // y un directorio huérfano (la carpeta fantasma que dejaban las skills).
+        fs::create_dir_all(espejo.join("origen/a")).unwrap();
+        fs::create_dir_all(espejo.join("origen/vacio_real")).unwrap();
+        fs::create_dir_all(espejo.join("origen/vieja/references")).unwrap();
+        fs::write(espejo.join("origen/obsoleto.txt"), "x").unwrap();
+
+        let config = Config {
+            backup: BackupConfig {
+                destination: base.join("crucial"),
+                folder_name: "Backup".to_string(),
+                max_versions: Some(1),
+                compression: false,
+            },
+            sources: vec![SourceConfig {
+                path: origen.clone(),
+                include_hidden: true,
+                exclude_patterns: vec![],
+            }],
+            watch: WatchConfig { enabled: false, debounce_ms: 0, recursive: false },
+            mirrors: vec![],
+        };
+
+        let mut engine = BackupEngine::new(config);
+        let stats = engine.sync_mirror_plain(&espejo).unwrap();
+
+        assert!(espejo.join("origen/a/f.txt").is_file(), "el fichero del origen se copia");
+        assert!(!espejo.join("origen/obsoleto.txt").exists(), "el fichero obsoleto se borra");
+        assert!(!espejo.join("origen/vieja").exists(), "la carpeta huérfana desaparece");
+        assert!(espejo.join("origen/vacio_real").is_dir(), "el vacío legítimo se conserva");
+        assert_eq!(stats.files_deleted, 1);
+        assert_eq!(stats.dirs_deleted, 2, "references y vieja");
+
+        fs::remove_dir_all(&base).ok();
+    }
 }

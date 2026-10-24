@@ -35,6 +35,10 @@ log() {
 }
 
 # ─── 1. Copiar archivos críticos de config a sesion-opencode ───
+# ⚠️ SIEMPRE con `-p` / `-a`: sin preservar el mtime, este script (que corre cada
+# 30 min) reescribe la fecha de TODA la copia de seguridad y los espejos de
+# backup-rs (SEAGATE, PortableSSD) la ven como "modificada" y la recopian entera
+# en cada pasada (~100 MB por ciclo y desgaste inútil del disco).
 log "🔄 Sincronizando .config/opencode/ → Config/opencode/sesion-opencode/..."
 
 for f in "$CONFIG_ACTIVO"/*.json "$CONFIG_ACTIVO"/*.sh "$CONFIG_ACTIVO"/*.js "$CONFIG_ACTIVO"/*.py "$CONFIG_ACTIVO"/*.yaml "$CONFIG_ACTIVO"/.env "$CONFIG_ACTIVO"/.gitignore; do
@@ -43,7 +47,7 @@ for f in "$CONFIG_ACTIVO"/*.json "$CONFIG_ACTIVO"/*.sh "$CONFIG_ACTIVO"/*.js "$C
     case "$base" in
         package.json|package-lock.json|service.json) continue ;;
     esac
-    cp "$f" "$SESION_DIR/" 2>/dev/null || true
+    cp -p "$f" "$SESION_DIR/" 2>/dev/null || true
 done
 
 # Los scripts que viven en la RAÍZ del respaldo deben reflejar los activos. Sin esto,
@@ -51,13 +55,13 @@ done
 # del script y deshace cambios recientes (p. ej. el chmod 600 del tarball).
 for s in backup-opencode.sh sync-opencode.sh; do
     if [ -f "$CONFIG_ACTIVO/$s" ]; then
-        cp "$CONFIG_ACTIVO/$s" "$CONFIG_BACKUP/$s" 2>/dev/null || true
+        cp -p "$CONFIG_ACTIVO/$s" "$CONFIG_BACKUP/$s" 2>/dev/null || true
     fi
 done
 
 # AGENTS.md es configuración (no manual): se respalda en la raíz de Config/opencode/
 if [ -f "$CONFIG_ACTIVO/AGENTS.md" ]; then
-    cp "$CONFIG_ACTIVO/AGENTS.md" "$CONFIG_BACKUP/AGENTS.md" 2>/dev/null || true
+    cp -p "$CONFIG_ACTIVO/AGENTS.md" "$CONFIG_BACKUP/AGENTS.md" 2>/dev/null || true
 fi
 
 # Eliminar restos de configuración en la raíz del respaldo. OpenCode SOLO lee la config
@@ -68,7 +72,7 @@ rm -f "$CONFIG_BACKUP"/opencode.json "$CONFIG_BACKUP"/opencode-local.json \
 
 # Manuales de configuración: ~/.config/opencode/documentacion/ → ~/Config/opencode/documentacion/
 if [ -d "$CONFIG_ACTIVO/documentacion" ]; then
-    cp "$CONFIG_ACTIVO/documentacion/"*.md "$DOC_DIR/" 2>/dev/null || true
+    cp -p "$CONFIG_ACTIVO/documentacion/"*.md "$DOC_DIR/" 2>/dev/null || true
 fi
 
 # Eliminar manuales obsoletos que pudieran quedar en sesion-opencode
@@ -83,15 +87,15 @@ rm -f "$SESION_DIR/service.json" "$CONFIG_BACKUP/service.json" 2>/dev/null || tr
 # para que la copia refleje exactamente el origen (elimina obsoletos)
 for dir in commands prompts skills skills-disabled plugins; do
     if [ -d "$CONFIG_ACTIVO/$dir" ]; then
-        rm -rf "$SESION_DIR/$dir"
-        cp -r "$CONFIG_ACTIVO/$dir" "$SESION_DIR/" 2>/dev/null || true
+        rm -rf "${SESION_DIR:?}/$dir"
+        cp -a "$CONFIG_ACTIVO/$dir" "$SESION_DIR/" 2>/dev/null || true
     fi
 done
 
 # Plugin de voz
 if [ -d "$CONFIG_ACTIVO/opencode-voice-modified" ]; then
     rm -rf "$SESION_DIR/opencode-voice-modified"
-    cp -r "$CONFIG_ACTIVO/opencode-voice-modified" "$SESION_DIR/opencode-voice-modified"
+    cp -a "$CONFIG_ACTIVO/opencode-voice-modified" "$SESION_DIR/opencode-voice-modified"
     log "✅ Plugin de voz sincronizado"
 fi
 

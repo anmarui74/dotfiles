@@ -201,70 +201,15 @@ Antes de declarar que algo "falta", "está roto" o "es un problema crítico":
 
 # PROCEDIMIENTOS TÉCNICOS
 
-## 🆕 OpenCode V2 (2.0.x): cambios importantes (16/09/2026)
-Antonio migró de OpenCode V1 (1.18.x) a **V2 (2.0.x)**. Cambios que afectan a esta config:
-- **Config del cliente TUI:** `tui.json` (V1) → **`cli.json`** (V2, `~/.config/opencode/cli.json`).
-  Ahí se registran los plugins del terminal y se desactivan los internos (`-opencode.sidebar.context` y `-opencode.sidebar.footer`).
-- **⚠️ Cambio de tecla de agente:** el ciclo de agentes primarios ya NO está en `Tab` sino en
-  **`Shift+Tab`** (`agent.cycle`; `agent.cycle.reverse` sin asignar). `Tab` pasó a ser
-  `prompt.autocomplete.complete` (`dialog.worktree.generate` en diálogos). Fallback: `Ctrl+X` → `A`
-  (`agent.list`). Verificado el 16/09/2026 en una TUI aislada (`/usr/bin/opencode --standalone`
-  enviando `ESC[Z`): rotó de agente correctamente. En `cli.json` solo se sobrescribe
-  `session.rename` → `f8`; `agent.cycle` NO se toca. El aviso `shift+tab agents` sale en la barra
-  inferior de la TUI. El antiguo `tui.json` (V1) se retiró el 16/09/2026 (archivado en `~/Config/opencode/legacy/`): V2 no lo lee.
-- **Plugins TUI:** los plugins V1 **no funcionan** en V2. Los nuevos van en
-  `~/.config/opencode/plugins/<nombre>/tui.tsx` (auto-descubiertos) e importan `@opencode/plugin/tui`
-  con `Plugin.define({ id, setup(context) })`. NO llevar `index.ts` de servidor en la carpeta salvo
-  que se instale `@opencode/plugin` (si no, falla con "Cannot find package").
-- **Barra lateral estilo MiMoCode:** `plugins/sidebar-mimo/tui.tsx`. Muestra arriba del todo
-  **Context** (tokens, % usado, límite, **t/s** y coste), luego **Directorio de trabajo** e
-  **Instrucciones**, y al final la **versión de OpenCode**. Usa `prepend: "sidebar.content"`.
-  El footer nativo (`opencode.sidebar.footer`) se desactiva en `cli.json` para no repetir la ruta.
-- **Voz:** `opencode-voice-modified/tui.js` (puente V2 sobre `lib/`), registrado en `cli.json`.
-- **Sintaxis canónica V2 (19/09/2026):** los 3 perfiles usan las claves de la wiki V2
-  (`providers`, `agents`, `permissions`, `mcp.servers`, `system`, `disabled`). V2 acepta además
-  las claves V1 (`provider`, `agent`, `permission`, `mcp` plano, `prompt`…) y las migra
-  automáticamente, pero ya no se usan. ⚠️ El schema público `opencode.ai/config.json` aún solo
-  valida las claves V1, así que el editor puede marcarlas como desconocidas (desajuste de la beta).
-  - **Ampliación canónica (21/09/2026):** se pasaron a sintaxis nativa V2 las dos últimas claves V1
-    que quedaban: `small_model` → **`agents.title.model`** (agente oculto `title`) y
-    `disabled_providers` → **`policies`** (`action: provider.use`, `effect: deny`).
-    ⚠️ **Actualización (22/10/2026, OpenCode 2.1.2):** la wiki V2 marca `experimental.policies` como
-    **deprecada**; la clave canónica es **`policies`** (nivel raíz). V2 sigue leyendo la antigua y la
-    fusiona, pero ya no se usa.
-    V2 ya las normalizaba en silencio, pero ahora son explícitas. Se añadió además **`model`** raíz
-    (`opencode-go/deepseek-v4.1-flash` en base/cloud, `local/qwen3.8-9b` en local) para fijar el
-    modelo por defecto de sesión, y **`session.tps: true`** en `cli.json`.
-- **Actualizaciones (22/10/2026):** las gestiona **CachyOS/pacman** (`opencode` en
-  `cachyos-extra-znver4` y `opencode-desktop-bin` en `chaotic-aur`). El updater interno queda
-  **desactivado** con `"update": "disable"` en `opencode.json` para no competir con pacman ni
-  avisar de versiones aún no empaquetadas.
-- **NVIDIA whitelist:** la clave `providers.nvidia.whitelist` está **IGNORADA** por V2 (no tiene
-  equivalente V2). La aplica el plugin de servidor `plugins/nvidia-filter/index.ts`
-  (`ctx.model.transform`), que lee la lista de `opencode.json`. `check-nvidia-whitelist.sh`
-  sigue siendo la fuente de verdad de esa lista (lee/escribe `providers.nvidia.whitelist`).
-- **LSP:** V2 **NO ejecuta servidores LSP** (sin diagnósticos ni indicador en la barra).
-  Por eso el bloque `lsp` se **retiró** de `opencode.json` el 16/09/2026 (copia en
-  `~/Config/opencode/legacy/lsp-block-v1.json`, por si V2 lo recupera). Para tipos/lint, por
-  terminal: `basedpyright`, `tsc --noEmit`, `cargo clippy`, `shellcheck`, etc.
-- **`instructions`** de `opencode.json` se acepta pero V2 **no carga sus entradas**; `AGENTS.md`
-  se descubre automáticamente. Se **retiró** de `opencode.json` el 19/09/2026 por ser inerte.
-- **Ollama:** retirado. Antonio usa **LM Studio** (ver `02-configuracion-lmstudio.md`).
-- **Provider local (LM Studio) en V2:** el id `lmstudio` **no resuelve** (choca con el builtin).
-  Se usa un provider propio `local` (paquete nativo `@opencode/ai/providers/openai-compatible`,
-  `settings.baseURL` = proxy `http://localhost:4001/v1`) con el modelo explícito `qwen3.8-9b`.
-  El agente `local` y el agente `title` (vía `agents.title.model`) usan **`local/qwen3.8-9b`**.
-- **✅ NVIDIA en V2 (`prompt_cache_key`) — RESUELTO (17/09/2026):** el bug del runtime
-  OpenAI-compatible de V2 (2.0.3) que inyectaba `prompt_cache_key` y la API de NVIDIA rechazaba
-  (`Validation: Unsupported parameter(s)`) está **corregido en OpenCode 2.0.4+** (PR
-  [#49121](https://github.com/anomalyco/opencode/pull/49121), merge 15/09/2026: Chat Completions
-  omite `prompt_cache_key` salvo `compatibility.supportsPromptCacheKey`). El reporte fue el issue
-  [#49240](https://github.com/anomalyco/opencode/issues/49240) (duplicado de
-  [#45113](https://github.com/anomalyco/opencode/issues/45113)), **cerrado el 05/10/2026** por
-  `rekram1-node` confirmando «any version 2.0.4 or later has fix». Verificado end-to-end con
-  `muse-glimmer-30b` y los 4 nemotron (super/ultra/lightning/nano-omni): todos responden, tanto en
-  `--standalone` como en el servicio compartido. Por eso se retiró el vigilante
-  `check-nvidia-prompt-cache.sh` + su timer y servicio systemd (17/09/2026).
+## 🆕 OpenCode V2 (2.0.x): lo que cambia de facto
+V2 (2.1.3) usa sintaxis canónica (`providers`, `agents`, `permissions`, `mcp.servers`, `policies`)
+y **fusiona** la config global con la del perfil (`OPENCODE_CONFIG`).
+- Claves V1 que ya **no hacen nada**: `lsp` (V2 no ejecuta LSP), `instructions` y
+  `provider.nvidia.whitelist` (la aplica el plugin `plugins/nvidia-filter`).
+- Ciclo de agentes en **Shift+Tab**; voz y barra lateral son plugins de `cli.json`.
+- Actualizaciones por **pacman** (updater interno en `"update": "disable"`).
+- Para tipos/lint sin LSP: `basedpyright`, `tsc --noEmit`, `cargo clippy`, `shellcheck`.
+> 📖 Cronología completa (fechas, PRs, issues, decisiones): `documentacion/12-historial-migracion-v2.md`.
 
 ---
 
@@ -407,46 +352,13 @@ INSTALADOR COMPLETO desde cero. Contiene toda la configuración embebida. Por ta
 - El `backup-opencode.sh` lo incluye automáticamente en el tarball desde
   `~/Config/opencode/sesion-opencode/`.
 - Cuando Antonio pida un backup, DEBES:
-  1. Revisar `setup-opencode-completo.sh` por completo
-  2. Comprobar que incluye TODOS los archivos actuales de `~/.config/opencode/`
-     (JSON, scripts, AGENTS.md, .env, etc.) con su contenido real
-  3. Si falta algo o está desactualizado, actualizarlo ANTES del backup en
-     `~/Config/opencode/sesion-opencode/setup-opencode-completo.sh`
-     (única copia en disco)
-  4. **Poner al día `~/Documentos/api-keys-opencode.md`**: debe listar TODAS las
-     claves vigentes de `auth.json` y del `.env` (AEMET, `OPENCODE_GO_ONLYOFFICE_KEY`,
-     `opencode-go`, `nvidia`, etc.) con su fecha de revisión. El backup lo embebe
-     en `credenciales/api-keys-opencode.md` y avisa si detecta alguna clave que
-     falte en el listado (`⚠️ api-keys-opencode.md DESACTUALIZADO`).
-  5. Ejecutar `bash ~/Config/opencode/backup-opencode.sh` para regenerar el tarball
-  6. Verificar que el tarball contiene el setup actualizado y que no hay copias
-     del setup en `~/.config/opencode/` (ni en la raíz ni en `sesion-opencode/scripts/`)
-  7. 🚫 **NO hacer `git commit` ni `git push`**: la copia en dotfiles ya queda generada
-     por el backup, pero el commit y el push los hace **siempre Antonio a mano**.
-     El agente deja los cambios listos y le avisa (ver la regla al inicio del documento).
-
-  ### ✅ CHECKLIST OBLIGATORIO del punto 1 (revisar el setup POR COMPLETO):
-  - [ ] `bash -n` del setup (sintaxis)
-  - [ ] `shellcheck` del setup (sin warnings/errors reales; SC2016 en heredocs = OK)
-  - [ ] TODOS los heredocs embebidos == archivos activos, comparando UNO A UNO
-        (opencode.json, opencode-local.json, opencode-cloud.json, cli.json,
-        AGENTS.md, .env, y TODOS los scripts: sync, init, start-*,
-        hardware-query, check-nvidia-whitelist,
-        hardware-query.py, lmstudio-proxy.py, backup-opencode, bootstrap-ocv,
-        timeline-completo)
-        — no solo los JSON
-  - [ ] Comandos usados existen en el sistema (pkexec, pacman, pipx, npm, etc.)
-  - [ ] Estructura completa (pasos 1-19, sin saltos ni duplicados)
-  - [ ] `~/Documentos/api-keys-opencode.md` al día (sin `⚠️ DESACTUALIZADO` en la salida del backup)
-        y con la clave real de OnlyOffice (`OPENCODE_GO_ONLYOFFICE_KEY`) incluida
-
-  ### ⚡ VERIFICACIÓN AUTOMÁTICA (NO DEPENDE DE MI MEMORIA):
-  El script `~/.config/opencode/check-setup-completo.sh` hace TODO el checklist
-  automáticamente (sintaxis, shellcheck, heredocs uno a uno, estructura, comandos).
-  Está INTEGRADO en `backup-opencode.sh`: se ejecuta SIEMPRE al hacer un backup y
-  si el setup no está correcto, el backup se ABORTA. NO es opcional ni manual.
-  Si Antonio pide un backup, simplemente ejecuta `bash ~/Config/opencode/backup-opencode.sh`
-  — la verificación ocurre sola. Si algo falla, el script dirá exactamente qué corregir.
+  1. `bash ~/Config/opencode/backup-opencode.sh` — verifica el setup solo (sintaxis,
+     shellcheck, heredocs uno a uno, estructura y comandos) y **aborta** si algo falla.
+  2. Poner al día `~/Documentos/api-keys-opencode.md` (todas las claves vigentes de
+     `auth.json` y `.env`, con fecha). El backup lo embebe y avisa si falta alguna.
+  3. 🚫 **NO hacer `git commit` ni `git push`**: la copia de dotfiles la deja el backup,
+     pero publica **siempre Antonio**. El agente deja todo listo y avisa.
+  > El checklist detallado no se reproduce aquí: vive en `check-setup-completo.sh`.
 - El `backup-opencode.sh` ya lo incluye automáticamente desde `~/Config/opencode/sesion-opencode/`
 - Al RESTAURAR desde un tarball, el `restore.sh` coloca el setup en
   `~/Config/opencode/sesion-opencode/`, no en la raíz de `~/.config/opencode/`
@@ -536,34 +448,10 @@ Lee directamente de `~/.local/share/opencode/opencode.db` (sqlite3).
 TODAS las peticiones de Antonio están guardadas ahí aunque la TUI no las muestre.
 Cuando Antonio pregunte por su historial/timeline de peticiones, usa este script.
 
-## 👁️ Vigilancia del fix del timeline — RETIRADA (12/10/2026)
-El vigilante `check-timeline-fix.sh` + su timer `check-timeline-fix.timer` se **retiraron el 12/10/2026**:
-el PR #26861 (fix del timeline) quedó **cerrado sin mergear el 10/10/2026** y no hay nada más que vigilar.
-`timeline-completo` **sigue siendo necesario** (el límite de ~6 peticiones de la TUI no se ha arreglado).
-
-## 🐞 Vigilancia del issue #39164 — RETIRADA (12/10/2026)
-El vigilante `check-fix.sh` + su timer `check-opencode-fix.timer` se **retiraron el 12/10/2026**.
-El issue [#39164](https://github.com/anomalyco/opencode/issues/39164) ("MCP tools not sent to local
-OpenAI-compatible models") quedó **CERRADO el 11/10/2026**, pero como **"not_planned"**: fue un cierre
-masivo de issues de la **V1** al salir la V2, **no** porque se arreglara. El bug era de OpenCode 1.x;
-en V2 el tool calling local funciona. No hay nada más que vigilar.
-
-## ⌨️ Tecla `l` tragada en la TUI V2 — RESUELTO (16/09/2026)
-**La causa NO era un bug de OpenCode, era local:** el plugin `opencode-voice-modified/tui.js`
-tenía `normalizeBind()` convirtiendo `<leader>r` en `leader+r`. El parser de V2 lee `leader+r`
-como una secuencia LITERAL de teclas que empieza por `l`, así que la `l` quedaba como prefijo
-pendiente y se tragaba su primera pulsación en TODA la TUI (no solo en el compositor).
-**Arreglo aplicado:** `normalizeBind()` devuelve el bind sin transformar, porque V2 usa el
-mismo formato que V1 (`<leader>r`, con ángulos). Verificado el 16/09/2026 en la TUI real:
-4 pulsaciones → 4 `l` (antes 2).
-- **Diagnóstico reproducible:** en una ventana de Kitty aislada, `OTUI_STDIN_LOG` demostró que
-  Kitty envía `l` como byte `6c` y que OpenCode lo recibe; con `a`/`b`/`n`/`p`/`c` no falla;
-  sin plugins no falla; con solo el plugin de voz (original) vuelve a fallar; con la copia
-  corregida funciona. `l x` → "x" (mal) vs "lx" (bien).
-- El issue upstream [#49244](https://github.com/anomalyco/opencode/issues/49244) se abrió con
-  un diagnóstico erróneo (por eso decía "sin plugins que usen `l`"); se comentó y se CERRÓ el
-  16/09/2026. El vigilante `check-key-l-issue.sh` + `check-key-l-issue.timer` se RETIRARON el
-  mismo día.
+## 👁️ Vigilancias retiradas (histórico)
+Los vigilantes `check-timeline-fix`, `check-fix` (#39164), `check-key-l-issue` y
+`check-nvidia-prompt-cache` se retiraron por quedar resueltos o cerrados sin merge.
+> 📖 Motivos, fechas y lección aplicable: `documentacion/12-historial-migracion-v2.md`.
 
 ## Directorios de datos
 - `/home/antonio/.config/opencode/data/` - Datos de ejecución (logs, estado)
@@ -642,9 +530,9 @@ Resumen de la metodología (en orden, obligatorio):
 4. **Tool calling (OBLIGATORIO para OpenCode):** petición con `tools: [get_current_time]` + `tool_choice: auto`; exigir `tool_calls` reales en la respuesta. Sin tools = inutilizable en OpenCode.
 5. **Reintentos:** los 429/500/503/timeout se reintentan con más margen antes de decidir.
 
-Whitelist actual (rev. 11/09/2026): 7 modelos operativos en los 3 perfiles (se retiró `minimaxai/minimax-m3`, EOL el 09/09/2026). Los retirados devuelven **410 Gone** (end of life) y se eliminan del whitelist. Detalle completo (ranking y descartados) en el markdown citado.
+Whitelist actual (rev. 24/10/2026, pasada completa): **6 modelos** operativos en los 3 perfiles. Ese día salieron `nemotron-3-super-120b-a12b` (HTTP 404), `openai/gpt-oss-20b` (8 tok/s, bajo el mínimo) y `nemotron-3-nano-omni` (503 intermitente); entró `nemotron-3.5-bolt-e4b` (53,9 tok/s). Los retirados devuelven **410 Gone** (end of life) y se eliminan del whitelist. Detalle completo (ranking y descartados) en el markdown citado.
 
-**Modelos de los agentes:** `cloud` (predeterminado), `build`, `plan` y `multimodal` usan el predefinido de OpenCode Go (`opencode-go/deepseek-v4.1-flash`, admite texto + imagen); `local` usa `local/qwen3.8-9b`; `nvidia` usa `nvidia/nvidia/nemotron-3-ultra-550b-a55b` (NVIDIA Nemotron 3 Ultra 550B A55B, modelo mayor de la familia Nemotron 3, tool calling nativo; hasta el 24/09/2026 usaba Nemotron 3 Super 120B A12B).
+**Modelos de los agentes:** `cloud` (predeterminado), `build`, `plan` y `multimodal` usan el predefinido de OpenCode Go (`opencode-go/deepseek-v4.1-flash`, admite texto + imagen); `local` usa `local/qwen3.8-9b`; `nvidia` usa `nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b` (Nemotron 3.5 Super VL 120B A12B: **multimodal** texto+imagen, tool calling nativo, ~95 tok/s; desde el 24/10/2026, antes Ultra 550B A55B).
 
 > ⚠️ **Nota V2:** el `model` de un agente **primario** no cambia el modelo de la sesión al seleccionar el agente (la sesión guarda el suyo). Sí se aplica cuando el agente se usa como **subagente** (verificado con `nvidia`).
 
@@ -663,6 +551,24 @@ Desde el **05/09/2026** existe un check automático que aplica la metodología a
 - Si el timer avisa de candidatos nuevos, revisar y, si procede, añadirlos al whitelist de los 3 perfiles siguiendo la metodología.
 - Ejecutar manualmente: `bash ~/.config/opencode/check-nvidia-whitelist.sh`
 - El script se documenta también en `04-perfiles-opencode-json.md`.
+
+## 🚀 Qwen3.8-Flash-Next local (llama.cpp, puerto 1919) — NO es LM Studio
+Modelo MoE de 125B (6B activos, arquitectura `qwen4_exp`) servido con **llama.cpp compilado
+a mano** en `~/src/llama.cpp/build/bin/llama-server` (CUDA, sm_89). LM Studio no lo ofrece en
+su catálogo y no permite los ajustes que lo hacen usable (`--fit-target`, `--spec-type
+ngram-mod`, mmap perezoso).
+- **Unidad:** `qwen-flash-next.service` (usuario, **disabled**: no arranca solo porque ocupa
+  ~40 GB de RAM) → `~/Config/qwen-flash-next/arrancar-qwen-flash-next.sh`
+- **Modelo:** 3 shards `UD-IQ3_XXS` (82 GB) en `~/modelos/qwen3.8-flash-next/` + `mmproj-F16.gguf`
+  (visión activa desde el 24/10/2026; `QWEN_VISION=0` la apaga).
+- **Rendimiento medido:** ~33 tok/s decode, ~309 tok/s prefill, 14,5 GB de 16 de VRAM con
+  visión (1,9 GB libres), RSS ~44 GB. Config óptima: `--fit-target 1280`, KV `q8_0`,
+  `-b 4096 -ub 1024`, especulación `ngram-mod` 3/12, `-t 12` (SMT perjudica).
+- **Atajo:** `qwen-flash` → arrancar / parar / estado / logs / prueba.
+- **Clientes configurados:** `~/.config/opencode/opencode.json` (`providers.flashnext` +
+  agente `flashnext`, capacidades `text`+`image`) y `~/.hermes/config.yaml` (alias y
+  `providers.flashnext`). Los perfiles local/cloud heredan el proveedor de la base.
+- **Manual completo:** `~/Config/qwen-flash-next/LEEME.md`
 
 ## Iniciar LM Studio manualmente
 ```bash

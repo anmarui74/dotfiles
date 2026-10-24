@@ -105,7 +105,7 @@ impl FileWatcher {
             if now_mounted && !was_mounted {
                 println!("🔌 Disco montado, sincronizando espejo: {} ({})", m.name, m.destination.display());
                 if m.uri.is_some() {
-                    if let Err(e) = engine.sync_network_mirror(&m.destination, &m.extra_sources) {
+                    if let Err(e) = engine.sync_network_mirror(&m.destination, &m.extra_sources, m.extra_dest.as_deref()) {
                         eprintln!("❌ Error sincronizando espejo nube {}: {}", m.name, e);
                     }
                 } else if let Err(e) = engine.sync_mirror_plain(&m.destination) {

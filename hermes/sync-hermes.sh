@@ -14,6 +14,18 @@ LOG_FILE="${BACKUP_BASE}/sync.log"
 LOCK_FILE="${BACKUP_BASE}/.sync.lock"
 QUIET="${1:-}"
 
+# El respaldo canónico es SIEMPRE el del perfil activo de Antonio (~/.hermes).
+# Si se lanza desde una sesión de otro perfil (p. ej. ~/.hermes/profiles/<name>),
+# HERMES_HOME apunta a ese perfil y el tarball/sesion-hermes quedarían con la
+# config equivocada: se aborta salvo autorización explícita.
+HERMES_CANONICO="$HOME/.hermes"
+if [ "$(readlink -f "$HERMES_ACTIVO")" != "$(readlink -f "$HERMES_CANONICO")" ] && [ "${SYNC_PERMITIR_PERFIL:-0}" != "1" ]; then
+    msg="❌ sync-hermes: HERMES_HOME apunta a $HERMES_ACTIVO, no a $HERMES_CANONICO (perfil secundario). Respaldo ABORTADO para no contaminar sesion-hermes/ y el tarball. Usa SYNC_PERMITIR_PERFIL=1 si de verdad quieres respaldar ese perfil."
+    echo "[$(date '+%d/%m/%Y %H:%M:%S')] $msg" >> "$LOG_FILE"
+    echo "$msg" >&2
+    exit 3
+fi
+
 # Evitar ejecuciones simultáneas
 if [ -f "$LOCK_FILE" ]; then
     pid="$(cat "$LOCK_FILE" 2>/dev/null || true)"

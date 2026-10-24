@@ -152,7 +152,6 @@ USER_PREFER_MARKDOWN_TABLES=true
 
 # ─── Memoria persistente ───
 MEMORY_FILE_PATH=/home/antonio/.config/opencode/data/memory/memory.jsonl
-MEMORY_DATA_DIR=/home/antonio/.config/opencode/data/memory
 MEMORY_BACKUP_ENABLED=true
 MEMORY_BACKUP_PATH=/home/antonio/Config/opencode/backups/mcp-memory-backup-$(date '+%Y-%m-%d_%H%M').jsonl
 
@@ -174,7 +173,9 @@ OPENCODE_GO_ONLYOFFICE_KEY=********   # clave dedicada; la usa opencode-go-proxy
 ```
 
 > 📌 Las antiguas variables `OLLAMA_API_KEY` y `OLLAMA_PROXY_PORT` se **retiraron** del `.env`
-> al abandonar Ollama (sustituido por LM Studio).
+> al abandonar Ollama (sustituido por LM Studio). El 24/10/2026 se retiró también
+> `MEMORY_DATA_DIR`: no la usaba nadie y confundía frente a `MEMORY_FILE_PATH`, que es la
+> que lee el servidor MCP memory.
 
 ### Explicación de cada variable
 
@@ -187,7 +188,6 @@ OPENCODE_GO_ONLYOFFICE_KEY=********   # clave dedicada; la usa opencode-go-proxy
 | `MAX_SEARCH_RESULTS` | `8` | Máximo de resultados de búsqueda |
 | `TIMEOUT_SECONDS` | `120` | Timeout para peticiones web |
 | `USER_PREFER_MARKDOWN_TABLES` | `true` | Fuerza tablas Markdown nativas en las respuestas |
-| `MEMORY_DATA_DIR` | `~/.config/opencode/data/memory` | Directorio del grafo de memoria persistente |
 | `MEMORY_FILE_PATH` | `~/.config/opencode/data/memory/memory.jsonl` | **Ruta del archivo del grafo que usa el servidor MCP memory** (vía `environment` en los 3 perfiles) |
 | `MEMORY_BACKUP_ENABLED` | `true` | Activa backups automáticos del grafo |
 | `MEMORY_BACKUP_PATH` | `Config/opencode/backups/...` | Ruta de los backups del grafo |
@@ -351,6 +351,28 @@ Mismo patrón: **a diario a las 10:00** (retardo aleatorio de 10 min) ejecuta `c
 
 > 💡 No es una utilidad de OpenCode en sí, pero vive en `~/.config/opencode/` y forma parte del backup. El parche y su documentación completa están en `~/.local/share/mega-nautilus-fix/LEEME.md`.
 
+### `notify-failure@.service` (24/10/2026) — aviso de fallo
+
+**Archivo:** `~/.config/systemd/user/notify-failure@.service` (plantilla instanciada)
+
+Unidad **transversal**: la usan `check-nvidia-whitelist.service`, `check-mega-pr.service` y
+`opencode-sync.service` mediante `OnFailure=notify-failure@%N.service`. Si la unidad falla,
+lanza un `notify-send` crítico con el nombre de la unidad que falló.
+
+```ini
+[Unit]
+Description=Aviso de escritorio cuando falla una unidad de OpenCode (%i)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c '/usr/bin/notify-send -u critical "OpenCode: fallo en %i" "La unidad %i no terminó bien. Revisa: journalctl --user -u %i.service" 2>/dev/null || true'
+```
+
+> ⚠️ **`NotifyOnFailure=` NO existe en systemd** (probado con systemd 262:
+> `Unknown key 'NotifyOnFailure' in section [Unit], ignoring`). El mecanismo correcto es
+> `OnFailure=` + esta plantilla. Verificado el 24/10/2026 con una unit de prueba que falla:
+> `test-fallo.service` → `Result=exit-code` y el notificador → `Result=success`.
+
 ### `btrfs-scrub.timer` (11/10/2026) — unidad de **SISTEMA** (root)
 
 **Archivos (root):** `/etc/systemd/system/btrfs-scrub.service` · `/etc/systemd/system/btrfs-scrub.timer`
@@ -492,6 +514,17 @@ Verifica el whitelist del proveedor NVIDIA aplicando la metodología completa:
 - **API key:** se lee de `~/.local/share/opencode/auth.json` (clave `nvidia.key`), no está hardcodeada.
 - Ejecutar manualmente: `bash ~/.config/opencode/check-nvidia-whitelist.sh`
 
+- **🛡️ Guardia de interrupción (24/10/2026).** La ejecución del **18/10/2026** murió a los 10 s
+  tras comprobar solo 5 de 7 modelos: no guardó estado, no escribió la línea de cierre
+  `🏁 Verificación completada` y **nadie se enteró** (el estado siguió fechado el 01/10 y el
+  servicio no dejó rastro en el journal). Desde el 24/10 el script tiene:
+  - un `trap` con `FIN_OK`: cualquier salida no completada se registra como
+    «❌ Ejecución INTERRUMPIDA» y manda notificación crítica de escritorio;
+  - **aviso de caducidad**: si `ultima_ejecucion` tiene más de 45 días, avisa aunque el
+    servicio «termine bien»;
+  - la unit lleva `OnFailure=notify-failure@%N.service` (ver servicios systemd).
+  - Probado el 24/10/2026: interrupción simulada (`exit 3`) → log + notificación ✅.
+
 ### `check-mega-pr.sh` (10/10/2026)
 
 **Archivo:** `~/.config/opencode/check-mega-pr.sh` · **Timer:** `check-mega-pr.timer` (a diario, 10:00 + retardo aleatorio 10 min)
@@ -531,6 +564,21 @@ Verifica qué modelos están disponibles en LM Studio.
 Proxy OpenCode ↔ LM Studio (puerto 4001). Además de reenviar las peticiones:
 - **Registra métricas por request** en `data/metrics.json` (definido en `METRICS_EXPORT_PATH` del `.env`, activado con `ENABLE_METRICS=true`): timestamp, modelo, tokens in/out, tiempo y **tokens/s**.
 - **Inyecta `stats.tokens_per_second`** en respuestas no-streaming (las streaming estiman tokens con chars/4 porque LM Studio no reporta usage en SSE).
+
+### `mcp-fetch-fix.js` (proxy del MCP fetch)
+
+**Archivo:** `~/.config/opencode/mcp-fetch-fix.js` · **Se usa desde** `mcp.servers.fetch` en `opencode.json`
+
+El servidor upstream (`mcp-fetch-server`) declara la capability `resources` en el handshake de
+`initialize` pero no implementa `resources/list`: responde `-32601` y OpenCode registraba
+«failed to get resources» en cada arranque. El proxy reenvía todo el protocolo tal cual y
+**elimina solo la clave `resources`** del `initialize`, conservando las 6 tools
+(`fetch_html`, `fetch_markdown`, `fetch_txt`, `fetch_json`, `fetch_readable`,
+`fetch_youtube_transcript`).
+
+> 🔒 **Versión fijada (24/10/2026):** se lanza con `npx -y mcp-fetch-server@1.1.2`. Antes iba
+> sin versión: un cambio en npm o una caché vacía podía impedir el arranque del MCP y el fallo
+> era silencioso. Si se actualiza a propósito, cambiar la versión aquí y en el heredoc del setup.
 
 ### `opencode-go-proxy.py` (22/10/2026)
 
@@ -738,13 +786,13 @@ Estos comandos implementan una **metodología de desarrollo** completa con fases
 │   ├── execution/
 │   └── retrospectives/
 │
-├── skills/                   # Skills de OpenCode (50 activos)
-│   ├── angular-architect/
+├── skills/                   # Skills activas (4 desde 24/10/2026)
 │   ├── python-pro/
-│   ├── react-expert/
-│   └── ... (50 skills)
+│   ├── debugging-wizard/
+│   ├── cli-developer/
+│   └── prompt-engineer/
 │
-├── skills-disabled/          # Skills desactivados (18)
+├── skills-disabled/          # Skills desactivadas (64) — recuperables con mv
 │
 └── data/
     ├── hardware/

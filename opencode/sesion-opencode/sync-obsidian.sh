@@ -63,6 +63,8 @@ M = {
     "08-incidencia-gpu-xid79.md": "💻 08 Incidencia GPU Xid 79.md",
     "09-informe-sistema.md": "💻 09 Informe del sistema.md",
     "10-onlyoffice-ia-opencode-go.md": "💻 10 OnlyOffice IA con OpenCode Go.md",
+    "11-qwen-flash-next-local.md": "💻 11 Qwen3.8-Flash-Next local.md",
+    "12-historial-migracion-v2.md": "💻 12 Historial de migración V2.md",
     "hardware-info.md": "💻 Hardware del equipo.md",
     "README-hardware.md": "💻 README hardware.md",
     "notas-opencode-go.md": "💻 Notas OpenCode Go.md",
@@ -73,10 +75,14 @@ M = {
 
 def _link(m):
     t = m.group(1)
-    return "](%s)" % M[t].replace(" ", "%20") if t in M else m.group(0)
+    ancla = m.group(2) or ""
+    if t not in M:
+        return m.group(0)
+    return "](%s%s)" % (M[t].replace(" ", "%20"), ancla)
 
 def transform(txt):
-    return "\n" + re.sub(r"\]\(([^)]*\.md)\)", _link, txt)
+    # Reescribe enlaces relativos .md (con o sin ancla #seccion) al nombre de la nota
+    return "\n" + re.sub(r"\]\(([^)#]*\.md)(#[^)]*)?\)", _link, txt)
 
 ok, cambiados, faltan = [], [], []
 for cfg, vname in M.items():

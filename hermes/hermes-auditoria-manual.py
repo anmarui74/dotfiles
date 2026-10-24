@@ -230,8 +230,22 @@ else:
             p = urllib.parse.unquote(m.group(1))
             if p.startswith(("http", "#")):
                 continue
-            if not os.path.exists(f"{raiz}/{p if p.endswith('.md') else p + '.md'}"):
+            ruta, _, ancla = p.partition("#")
+            if not ruta:
+                continue
+            destino = f"{raiz}/{ruta if ruta.endswith('.md') else ruta + '.md'}"
+            if not os.path.exists(destino):
                 malos.append(p)
+            elif ancla:
+                # el ancla debe corresponder a un encabezado real de la nota (slug estilo Obsidian)
+                def _slug(t):
+                    t = re.sub(r"[^\w\s-]", "", t.strip().lower())
+                    return re.sub(r"\s+", "-", t)
+                titulos = {_slug(l.lstrip("#").strip())
+                           for l in open(destino, encoding="utf-8").read().splitlines()
+                           if l.startswith("#")}
+                if ancla not in titulos:
+                    malos.append(p)
         check(not malos, f"enlaces rotos en el índice del vault ({carpeta}): {malos}")
 
 # ─── 9. Copias del manual (canónica y saneada) ───

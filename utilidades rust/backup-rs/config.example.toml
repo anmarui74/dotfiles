@@ -95,9 +95,13 @@ uri = "smb://mycloud-eudvfr.local/antonio/Linux"
 # Rutas extra propias de este mirror (además de las [[sources]]).
 # Ej.: incluir la carpeta Windows del SEAGATE en la nube.
 extra_sources = ["/mnt/seagate/Windows"]
+# Dónde se copian las extra_sources (por defecto, el propio `destination`).
+# Aquí van a la raíz del share, no dentro de `Linux`.
+extra_dest = "/home/antonio/MyCloud/antonio"
 
 [[mirrors]]
 name = "NUBE-public"
 destination = "/home/antonio/MyCloud/public/Linux"
 uri = "smb://mycloud-eudvfr.local/public/Linux"
 extra_sources = ["/mnt/seagate/Windows"]
+extra_dest = "/home/antonio/MyCloud/public"

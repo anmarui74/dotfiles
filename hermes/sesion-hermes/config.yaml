@@ -115,15 +115,19 @@ model:
   aliases:
     local: lmstudio/qwen3.8-9b
     nvidia: nvidia/nvidia/nemotron-3-ultra-550b-a55b
-    nemotron-super: nvidia/nvidia/nemotron-3-super-120b-a12b
-    gpt-oss: nvidia/openai/gpt-oss-20b
     glimmer: nvidia/meta/muse-glimmer-30b
     lightning: nvidia/nvidia/nemotron-3.5-lightning-30b-a3b
-    nano-omni: nvidia/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
     vision: nvidia/meta/llama-3.2-11b-vision-instruct
     local-qwen35: lmstudio/qwen3.5-9b
     local-gemma: lmstudio/google/gemma-4-e4b
     multimodal: opencode-go/mimo-v2.5
+    flashnext:
+      model: qwen3.8-flash-next
+      provider: custom
+      base_url: http://127.0.0.1:1919/v1
+      api_key: local
+    nemotron-super-vl: nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b
+    bolt: nvidia/nvidia/nemotron-3.5-bolt-e4b
 kanban:
   review_dispatch: true
 
@@ -1046,6 +1050,8 @@ agent:
   # The active selection is stored in display.personality (never here, and
   # never in agent.system_prompt — that field is your manual system prompt).
   personalities: {}
+  reasoning_overrides["qwen3:
+    8-flash-next"]: low
   #   mentor: "You are a supportive mentor. Guide, don't lecture."
   #   reviewer:
   #     system_prompt: "You are a meticulous code reviewer."
@@ -1055,6 +1061,8 @@ agent:
 # =============================================================================
 # Gateway Lifecycle
 # =============================================================================
+  reasoning_overrides:
+    qwen3.8-flash-next: low
 gateway:
   signal_interrupt_grace_timeout: 1
   delivery_ledger: true
@@ -2176,3 +2184,21 @@ providers:
   opencode-go:
     stale_timeout_seconds: 300
     request_timeout_seconds: 600
+  flashnext:
+    api: http://127.0.0.1:1919/v1
+    name: Qwen3.8-Flash-Next local
+    api_key: local
+    model: qwen3.8-flash-next
+    context_length: 65536
+    discover_models: true
+    request_timeout_seconds: 900
+    stale_timeout_seconds: 600
+    capabilities:
+      vision: true
+      tools: true
+    models:
+      qwen3.8-flash-next:
+        supports_vision: true
+  custom:
+    request_timeout_seconds: 900
+    stale_timeout_seconds: 600

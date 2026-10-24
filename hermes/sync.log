@@ -2075,3 +2075,158 @@ rsync error: some files/attrs were not transferred (see previous errors) (code 2
 [24/10/2026 09:41:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
 [24/10/2026 09:41:12] ✅ Archivos sincronizados
 [24/10/2026 09:41:12] 📦 Regenerando tarball de backup...
+[24/10/2026 09:41:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-094112.tar.gz
+[24/10/2026 09:41:15] ─────────────────────────────────────
+[24/10/2026 10:11:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 10:11:12] ✅ Archivos sincronizados
+[24/10/2026 10:11:12] 📦 Regenerando tarball de backup...
+[24/10/2026 10:11:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-101112.tar.gz
+[24/10/2026 10:11:15] ─────────────────────────────────────
+[24/10/2026 10:41:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 10:41:12] ✅ Archivos sincronizados
+[24/10/2026 10:41:12] 📦 Regenerando tarball de backup...
+[24/10/2026 10:41:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-104112.tar.gz
+[24/10/2026 10:41:15] ─────────────────────────────────────
+[24/10/2026 11:11:17] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 11:11:17] ✅ Archivos sincronizados
+[24/10/2026 11:11:17] 📦 Regenerando tarball de backup...
+[24/10/2026 11:11:19] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-111117.tar.gz
+[24/10/2026 11:11:19] ─────────────────────────────────────
+[24/10/2026 11:24:59] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 11:25:00] ✅ Archivos sincronizados
+[24/10/2026 11:25:00] 📦 Regenerando tarball de backup...
+[24/10/2026 11:25:02] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-112500.tar.gz
+[24/10/2026 11:25:02] ─────────────────────────────────────
+[24/10/2026 11:42:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 11:42:12] ✅ Archivos sincronizados
+[24/10/2026 11:42:12] 📦 Regenerando tarball de backup...
+[24/10/2026 11:42:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-114212.tar.gz
+[24/10/2026 11:42:15] ─────────────────────────────────────
+[24/10/2026 12:12:42] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 12:12:42] ✅ Archivos sincronizados
+[24/10/2026 12:12:42] 📦 Regenerando tarball de backup...
+[24/10/2026 12:12:45] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-121242.tar.gz
+[24/10/2026 12:12:45] ─────────────────────────────────────
+[24/10/2026 12:43:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 12:43:12] ✅ Archivos sincronizados
+[24/10/2026 12:43:12] 📦 Regenerando tarball de backup...
+[24/10/2026 12:43:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-124312.tar.gz
+[24/10/2026 12:43:15] ─────────────────────────────────────
+[24/10/2026 13:13:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 13:13:12] ✅ Archivos sincronizados
+[24/10/2026 13:13:12] 📦 Regenerando tarball de backup...
+[24/10/2026 13:13:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-131312.tar.gz
+[24/10/2026 13:13:15] ─────────────────────────────────────
+[24/10/2026 13:43:42] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 13:43:42] ✅ Archivos sincronizados
+[24/10/2026 13:43:42] 📦 Regenerando tarball de backup...
+[24/10/2026 13:43:45] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-134342.tar.gz
+[24/10/2026 13:43:45] ─────────────────────────────────────
+[24/10/2026 14:13:42] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 14:13:42] ✅ Archivos sincronizados
+[24/10/2026 14:13:42] 📦 Regenerando tarball de backup...
+[24/10/2026 14:13:45] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-141342.tar.gz
+[24/10/2026 14:13:45] ─────────────────────────────────────
+[24/10/2026 14:43:42] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 14:43:42] ✅ Archivos sincronizados
+[24/10/2026 14:43:42] 📦 Regenerando tarball de backup...
+[24/10/2026 14:43:45] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-144342.tar.gz
+[24/10/2026 14:43:45] ─────────────────────────────────────
+[24/10/2026 15:14:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 15:14:12] ✅ Archivos sincronizados
+[24/10/2026 15:14:12] 📦 Regenerando tarball de backup...
+[24/10/2026 15:14:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-151412.tar.gz
+[24/10/2026 15:14:15] ─────────────────────────────────────
+[24/10/2026 15:45:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 15:45:12] ✅ Archivos sincronizados
+[24/10/2026 15:45:12] 📦 Regenerando tarball de backup...
+[24/10/2026 15:45:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-154512.tar.gz
+[24/10/2026 15:45:15] ─────────────────────────────────────
+[24/10/2026 16:15:42] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 16:15:42] ✅ Archivos sincronizados
+[24/10/2026 16:15:42] 📦 Regenerando tarball de backup...
+[24/10/2026 16:15:45] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-161542.tar.gz
+[24/10/2026 16:15:45] ─────────────────────────────────────
+[24/10/2026 16:46:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 16:46:12] ✅ Archivos sincronizados
+[24/10/2026 16:46:12] 📦 Regenerando tarball de backup...
+[24/10/2026 16:46:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-164612.tar.gz
+[24/10/2026 16:46:15] ─────────────────────────────────────
+[24/10/2026 17:17:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 17:17:12] ✅ Archivos sincronizados
+[24/10/2026 17:17:12] 📦 Regenerando tarball de backup...
+[24/10/2026 17:17:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-171712.tar.gz
+[24/10/2026 17:17:15] ─────────────────────────────────────
+[24/10/2026 17:47:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 17:47:12] ✅ Archivos sincronizados
+[24/10/2026 17:47:12] 📦 Regenerando tarball de backup...
+[24/10/2026 17:47:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-174712.tar.gz
+[24/10/2026 17:47:15] ─────────────────────────────────────
+[24/10/2026 18:17:13] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:17:13] ✅ Archivos sincronizados
+[24/10/2026 18:17:13] 📦 Regenerando tarball de backup...
+[24/10/2026 18:17:16] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-181713.tar.gz
+[24/10/2026 18:17:16] ─────────────────────────────────────
+[24/10/2026 18:21:01] 🔄 Sincronizando /home/antonio/.hermes/profiles/nvidia/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:21:01] ✅ Archivos sincronizados
+[24/10/2026 18:21:01] 📦 Regenerando tarball de backup...
+[24/10/2026 18:21:02] ❌ FALLO al regenerar el backup (ver /tmp/hermes-backup-last.log)
+
+❌❌❌ VERIFICACIÓN DEL SETUP FALLIDA ❌❌❌
+   El esquema de backup no está correcto/completo.
+   Corrige el setup ANTES del backup (ver ~/Config/hermes/AGENTS.md).
+   Backup ABORTADO para no guardar un setup defectuoso.
+[24/10/2026 18:21:45] 🔄 Sincronizando /home/antonio/.hermes/profiles/nvidia/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:21:45] ✅ Archivos sincronizados
+[24/10/2026 18:21:45] 📦 Regenerando tarball de backup...
+[24/10/2026 18:21:49] ✅ Backup regenerado: ✅ Tarball creado (12M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-182145.tar.gz
+[24/10/2026 18:21:49] ─────────────────────────────────────
+[24/10/2026 18:32:46] 🔄 Sincronizando /home/antonio/.hermes/profiles/nvidia/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:32:46] ✅ Archivos sincronizados
+[24/10/2026 18:32:46] 📦 Regenerando tarball de backup...
+[24/10/2026 18:32:49] ✅ Backup regenerado: ✅ Tarball creado (12M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-183246.tar.gz
+[24/10/2026 18:32:49] ─────────────────────────────────────
+[24/10/2026 18:36:30] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:36:30] ✅ Archivos sincronizados
+[24/10/2026 18:36:30] 📦 Regenerando tarball de backup...
+[24/10/2026 18:36:33] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-183630.tar.gz
+[24/10/2026 18:36:33] ─────────────────────────────────────
+[24/10/2026 18:37:31] ❌ sync-hermes: HERMES_HOME apunta a /home/antonio/.hermes/profiles/nvidia, no a /home/antonio/.hermes (perfil secundario). Respaldo ABORTADO para no contaminar sesion-hermes/ y el tarball. Usa SYNC_PERMITIR_PERFIL=1 si de verdad quieres respaldar ese perfil.
+[24/10/2026 18:37:35] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:37:35] ✅ Archivos sincronizados
+[24/10/2026 18:37:35] 📦 Regenerando tarball de backup...
+[24/10/2026 18:37:38] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-183735.tar.gz
+[24/10/2026 18:37:38] ─────────────────────────────────────
+[24/10/2026 18:44:40] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:44:40] ✅ Archivos sincronizados
+[24/10/2026 18:44:40] 📦 Regenerando tarball de backup...
+[24/10/2026 18:44:43] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-184440.tar.gz
+[24/10/2026 18:44:43] ─────────────────────────────────────
+[24/10/2026 18:45:22] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:45:23] ✅ Archivos sincronizados
+[24/10/2026 18:45:23] 📦 Regenerando tarball de backup...
+[24/10/2026 18:45:26] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-184523.tar.gz
+[24/10/2026 18:45:26] ─────────────────────────────────────
+[24/10/2026 18:48:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:48:12] ✅ Archivos sincronizados
+[24/10/2026 18:48:12] 📦 Regenerando tarball de backup...
+[24/10/2026 18:48:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-184812.tar.gz
+[24/10/2026 18:48:15] ─────────────────────────────────────
+[24/10/2026 18:53:58] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 18:53:58] ✅ Archivos sincronizados
+[24/10/2026 18:53:58] 📦 Regenerando tarball de backup...
+[24/10/2026 18:54:01] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-185358.tar.gz
+[24/10/2026 18:54:01] ─────────────────────────────────────
+[24/10/2026 19:19:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 19:19:12] ✅ Archivos sincronizados
+[24/10/2026 19:19:12] 📦 Regenerando tarball de backup...
+[24/10/2026 19:19:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-191912.tar.gz
+[24/10/2026 19:19:15] ─────────────────────────────────────
+[24/10/2026 19:49:12] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 19:49:12] ✅ Archivos sincronizados
+[24/10/2026 19:49:12] 📦 Regenerando tarball de backup...
+[24/10/2026 19:49:15] ✅ Backup regenerado: ✅ Tarball creado (13M): /home/antonio/Config/hermes/backups/hermes/hermes-backup-20261024-194912.tar.gz
+[24/10/2026 19:49:15] ─────────────────────────────────────
+[24/10/2026 20:19:13] 🔄 Sincronizando /home/antonio/.hermes/ → /home/antonio/Config/hermes/sesion-hermes/
+[24/10/2026 20:19:13] ✅ Archivos sincronizados
+[24/10/2026 20:19:13] 📦 Regenerando tarball de backup...

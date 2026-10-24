@@ -153,12 +153,14 @@ fi
 veredicto_line=""
 orientar="$COMUN/scripts/orientar.py"
 if [ -f "$orientar" ]; then
-  # El timer de publicacion (hermes-dual-sync.timer) arranca con OnBootSec=3min y tarda unos
-  # segundos: al arrancar el aviso puede llegar ANTES de que exista la publicacion de esta
-  # sesion y veria la de la sesion anterior (p. ej. "806 min sin publicar" tras pasar la noche
-  # apagado). Se espera un poco, y si sigue avisando de la publicacion se reintenta una vez.
+  # El timer de publicacion (hermes-dual-sync.timer) arranca con OnBootSec=3min **desde el
+  # arranque**, no desde que empieza este aviso, y el motor tarda unos segundos en publicar: tras
+  # pasar la noche apagado el aviso llega ANTES de que exista la publicacion de esta sesion y lee
+  # la de ayer (asi salieron "806 min" y "588 min sin publicar" sin ningun fallo: 588 min = el
+  # hueco nocturno). Se reintenta hasta 240 s, que cubre los 3 min de OnBootSec mas la ejecucion
+  # del motor con margen; solo si sigue avisando se manda la linea.
   espera=0
-  while [ "$espera" -lt 90 ]; do
+  while [ "$espera" -lt 240 ]; do
     v=$(timeout 60 python3 "$orientar" --veredicto 2>&1 || true)
     case "$v" in
       *"sin publicar"*) sleep 10; espera=$((espera + 10)) ;;

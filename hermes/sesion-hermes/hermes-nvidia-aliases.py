@@ -47,10 +47,14 @@ WHITELIST_FILES = (
 )
 
 # Nombres ya acordados con Antonio (los que existían a mano antes de este script).
+# Regla: sin puntos en el nombre — `hermes config set model.aliases.X` parte la clave
+# por puntos y `nemotron-3.5-super` acabaría anidado como `nemotron-3: {5-super: …}`.
 NAME_MAP = {
     "nvidia/nemotron-3-ultra-550b-a55b": "nvidia",
     "nvidia/nemotron-3-super-120b-a12b": "nemotron-super",
+    "nvidia/nemotron-3.5-super-vl-120b-a12b": "nemotron-super-vl",
     "nvidia/nemotron-3.5-lightning-30b-a3b": "lightning",
+    "nvidia/nemotron-3.5-bolt-e4b": "bolt",
     "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": "nano-omni",
     "openai/gpt-oss-20b": "gpt-oss",
     "meta/muse-glimmer-30b": "glimmer",
@@ -95,6 +99,8 @@ def alias_para(modelo: str) -> tuple[str, bool]:
     for sufijo in _SUFIJOS:
         if base.endswith(sufijo):
             base = base[: -len(sufijo)]
+    # Sin puntos: el CLI de Hermes parte las claves de config por puntos.
+    base = base.replace(".", "-")
     partes = [p for p in re.split(r"[-_]", base) if p]
     return "-".join(partes[:3]) or base, False
 

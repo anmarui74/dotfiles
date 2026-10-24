@@ -1,6 +1,6 @@
 ---
 name: debugging-wizard
-description: Parses error messages, traces execution flow through stack traces, correlates log entries to identify failure points, and applies systematic hypothesis-driven methodology to isolate and resolve bugs. Use when investigating errors, analyzing stack traces, finding root causes of unexpected behavior, troubleshooting crashes, or performing log analysis, error investigation, or root cause analysis.
+description: Use when debugging: analizar errores, stack traces, logs y localizar la causa raíz con hipótesis.
 license: MIT
 compatibility: opencode
 metadata:

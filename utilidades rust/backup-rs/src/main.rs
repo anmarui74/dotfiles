@@ -203,7 +203,7 @@ async fn run_backup_once(config: &Config) -> Result<()> {
             match ensure_network_mount(mirror) {
                 Some(mounted) => {
                     println!("🔗 Sincronizando espejo nube: {} ({})", mirror.name, mounted.display());
-                    engine.sync_network_mirror(&mounted, &mirror.extra_sources)?;
+                    engine.sync_network_mirror(&mounted, &mirror.extra_sources, mirror.extra_dest.as_deref())?;
                 }
                 None => {
                     println!("⏭️  Espejo nube {} no accesible (share no montado), se omite: {}", mirror.name, mirror.uri.as_deref().unwrap_or(""));
@@ -670,7 +670,7 @@ fn sync_plain_mirrors(engine: &mut BackupEngine, config: &Config, can_use_sudo: 
             match ensure_network_mount(mirror) {
                 Some(mounted) => {
                     println!("🔗 Sincronizando espejo nube: {} ({})", mirror.name, mounted.display());
-                    engine.sync_network_mirror(&mounted, &mirror.extra_sources)?;
+                    engine.sync_network_mirror(&mounted, &mirror.extra_sources, mirror.extra_dest.as_deref())?;
                 }
                 None => {
                     println!("⏭️  Espejo nube {} no accesible (share no montado), se omite: {}", mirror.name, mirror.destination.display());

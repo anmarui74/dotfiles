@@ -37,6 +37,11 @@ pub struct MirrorConfig {
     /// de nube, sin añadirlo al backup versionado del Crucial).
     #[serde(default)]
     pub extra_sources: Vec<PathBuf>,
+    /// Directorio base donde se copian las `extra_sources` (si difiere del
+    /// `destination`). Ej.: el destino es `<share>/Linux` pero `extra_sources`
+    /// deben ir a la raíz del share (`<share>`), no dentro de `Linux`.
+    #[serde(default)]
+    pub extra_dest: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -132,6 +137,7 @@ impl Default for Config {
                     source: None,
                     include: vec![],
                     extra_sources: vec![],
+                    extra_dest: None,
                 },
             ],
         }

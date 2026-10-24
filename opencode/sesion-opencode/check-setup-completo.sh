@@ -124,6 +124,7 @@ extra_archivos = [
     ('systemd check-nvidia-whitelist.timer', 'NVIDIAWL-TIMEREOF', '/home/antonio/.config/systemd/user/check-nvidia-whitelist.timer'),
     ('systemd check-mega-pr.service', 'CHECKMEGAPR-SERVEOF', '/home/antonio/.config/systemd/user/check-mega-pr.service'),
     ('systemd check-mega-pr.timer', 'CHECKMEGAPR-TIMEREOF', '/home/antonio/.config/systemd/user/check-mega-pr.timer'),
+    ('systemd notify-failure@.service', 'NOTIFYFAIL-SERVEOF', '/home/antonio/.config/systemd/user/notify-failure@.service'),
     ('systemd sync-obsidian.service', 'SYNCOBS-SERVEOF', '/home/antonio/.config/systemd/user/sync-obsidian.service'),
     ('systemd sync-obsidian.path', 'SYNCOBS-PATHEOF', '/home/antonio/.config/systemd/user/sync-obsidian.path'),
     ('systemd opencode-go-proxy.service', 'GOUNITEOF', '/home/antonio/.config/systemd/user/opencode-go-proxy.service'),
@@ -202,6 +203,36 @@ if [ -n "$MISSING" ]; then
     ERRORS=$((ERRORS+1))
 else
     log "✅ Comandos necesarios presentes (pkexec, pacman, pipx, npm, rustup, go, curl, git, sqlite3, systemctl)"
+fi
+
+# ─── 7. Antigüedad de los manuales (aviso, no bloquea) ───
+# Un manual que no se revisa envejece en silencio: su cabecera lleva
+# `rev. dd/mm/aaaa` y aquí se avisa si lleva más de 120 días sin tocarse.
+DOCS="$ACTIVO/documentacion"
+VIEJOS=""
+if [ -d "$DOCS" ]; then
+    for md in "$DOCS"/*.md; do
+        [ -f "$md" ] || continue
+        REV=$(grep -m1 -oE 'rev\. [0-9]{2}/[0-9]{2}/[0-9]{4}' "$md" | grep -oE '[0-9]{2}/[0-9]{2}/[0-9]{4}')
+        [ -n "$REV" ] || continue
+        DIAS=$(python3 -c "
+import datetime,sys
+try:
+    d=datetime.datetime.strptime('$REV','%d/%m/%Y')
+    print((datetime.datetime.now()-d).days)
+except Exception:
+    print('')
+" 2>/dev/null)
+        if [ -n "$DIAS" ] && [ "$DIAS" -gt 120 ] 2>/dev/null; then
+            VIEJOS="$VIEJOS $(basename "$md")(${DIAS}d)"
+        fi
+    done
+fi
+if [ -n "$VIEJOS" ]; then
+    log "⚠️ AVISO: manuales sin revisar desde hace >120 días:$VIEJOS"
+    WARNINGS=$((WARNINGS+1))
+else
+    log "✅ Manuales con revisión reciente (≤120 días)"
 fi
 
 # ─── Resultado final ───

@@ -16,7 +16,9 @@
 
 const { spawn } = require("node:child_process");
 
-const child = spawn("npx", ["-y", "mcp-fetch-server"], {
+// Versión fijada (24/10/2026): sin ella, un cambio de npm o una caché vacía
+// podía dejar el MCP sin arrancar y el fallo era silencioso.
+const child = spawn("npx", ["-y", "mcp-fetch-server@1.1.2"], {
   stdio: ["pipe", "pipe", "inherit"],
 });
 

@@ -21,6 +21,14 @@ NAME="hermes-backup-${DATE}"
 ROOT="${BACKUP_DIR}/${NAME}"
 RETENTION_DAYS="${LOG_RETENTION_DAYS:-30}"
 
+# El respaldo es SIEMPRE del perfil activo de Antonio (~/.hermes). Si HERMES_HOME
+# apunta a un perfil secundario (~/.hermes/profiles/<name>), se aborta para no
+# generar un tarball con la configuración equivocada (salvo autorización explícita).
+if [ "$(readlink -f "$HERMES_ACTIVO")" != "$(readlink -f "$HOME/.hermes")" ] && [ "${SYNC_PERMITIR_PERFIL:-0}" != "1" ]; then
+    echo "❌ backup-hermes: HERMES_HOME apunta a $HERMES_ACTIVO, no a $HOME/.hermes (perfil secundario). Backup ABORTADO." >&2
+    exit 3
+fi
+
 echo "=== Backup Hermes Agent - $(date '+%d/%m/%Y %H:%M') ==="
 
 # ─── 0. VERIFICACIÓN OBLIGATORIA (si falla, se ABORTA el backup) ───

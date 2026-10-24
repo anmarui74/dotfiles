@@ -112,9 +112,9 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
       ]
     },
     "nvidia": {
-      "description": "Agente NVIDIA - NVIDIA Nemotron 3 Ultra 550B (A55B): modelo mayor de la familia Nemotron 3, tool calling nativo, gratis vía NIM. Actualizado el 24/09/2026 (antes Nemotron 3 Super 120B A12B). Usable como primario (Shift+Tab) y como subagente delegado por DeepSeek",
+      "description": "Agente NVIDIA - NVIDIA Nemotron 3.5 Super VL 120B A12B: multimodal (texto + imagen), tool calling nativo y ~95 tok/s, gratis vía NIM. Actualizado el 24/10/2026 (antes Nemotron 3 Ultra 550B A55B). Usable como primario (Shift+Tab) y como subagente delegado por DeepSeek",
       "mode": "all",
-      "model": "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
+      "model": "nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b"
     },
     "multimodal": {
       "description": "Agente multimodal - MiMo V2.5 (Xiaomi, 311B MoE, 1M contexto, omnimodal). Usable como primario (Shift+Tab) y como subagente delegado",
@@ -132,7 +132,8 @@ Perfil por defecto (para `ocv` / `opencode`). Tiene **todos los agentes activos*
         "nvidia/nemotron-3-ultra-550b-a55b",
         "nvidia/nemotron-3-super-120b-a12b",
         "nvidia/nemotron-3.5-lightning-30b-a3b",
-        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "nvidia/nemotron-3.5-super-vl-120b-a12b"
       ],
       "settings": {
         "timeout": 600000,
@@ -272,7 +273,7 @@ Diferencias respecto a `opencode.json` (por defecto):
 | **Agente principal** | `cloud` (OpenCode Go) | `local` (Qwen 3.8 local) | `cloud` (OpenCode Go) |
 | **Agente local** | ✅ activo (primario) | ✅ activo (primario) | ❌ desactivado |
 | **Modelo cloud** | ✅ OpenCode Go (deepseek-v4.1-flash) | ✅ OpenCode Go (deepseek-v4.1-flash) | ✅ OpenCode Go (deepseek-v4.1-flash) |
-| **Agente NVIDIA** | ✅ primario/subagente Nemotron 3 Ultra 550B | ✅ primario/subagente Nemotron 3 Ultra 550B | ✅ primario/subagente Nemotron 3 Ultra 550B |
+| **Agente NVIDIA** | ✅ primario/subagente Nemotron 3.5 Super VL 120B | ✅ primario/subagente Nemotron 3.5 Super VL 120B | ✅ primario/subagente Nemotron 3.5 Super VL 120B |
 | **Agente multimodal** | ✅ primario/subagente MiMo V2.5 (`opencode-go/mimo-v2.5`) | ✅ primario/subagente (heredado de global) | ✅ primario/subagente (heredado de global) |
 | **context7** | ✅ | ❌ | ✅ |
 | **filesystem** | ✅ | ✅ | ✅ |
@@ -386,7 +387,7 @@ Define agentes (personas/modos del asistente):
 - **plan:** Agente especial para planificación (lee AGENTS.md al inicio)
 - **local:** Agente local, usa el modelo Qwen 3.8 Q6_K vía LM Studio (puerto 4001). Es **primario** en el perfil activo y en el perfil local; **desactivado** (`disabled: true`) en el perfil cloud
 - **cloud:** Agente principal del perfil activo, usa **OpenCode Go** (`opencode-go/deepseek-v4.1-flash`). Desde el **09/09/2026** tiene la regla `{ "action": "subagent", "resource": "*", "effect": "allow" }`, lo que le permite **delegar automáticamente** a los subagentes (nvidia, multimodal, general, explore)
-- **nvidia:** `mode: all` (primario y subagente), usa por defecto **NVIDIA Nemotron 3 Ultra 550B (A55B)** (`nvidia/nvidia/nemotron-3-ultra-550b-a55b`) desde el **24/09/2026** (antes Nemotron 3 Super 120B A12B, y antes Muse Glimmer 30B). Modelo mayor de la familia Nemotron 3, tool calling nativo. DeepSeek lo invoca automáticamente para código pesado
+- **nvidia:** `mode: all` (primario y subagente), usa por defecto **NVIDIA Nemotron 3.5 Super VL 120B A12B** (`nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b`) desde el **24/10/2026** (antes Nemotron 3 Ultra 550B A55B). Multimodal (texto + imagen), tool calling nativo y ~95 tok/s. DeepSeek lo invoca automáticamente para código pesado
 - **multimodal:** `mode: all` (solo en `opencode.json`; heredado por fusión en local y cloud), usa **MiMo V2.5** (`opencode-go/mimo-v2.5`, Xiaomi, 311B MoE, 1M contexto, omnimodal) con prompt optimizado para imagen + texto y recuperación de contexto largo. (Antes usaba `opencode-go/deepseek-v4.1-flash#multimodal`.)
 
 Campos por agente: `system` para el prompt (antes `prompt`), `model`
@@ -404,7 +405,7 @@ Proveedores de modelos. Configurados:
   - **Tools:** Habilitadas
 
 - **nvidia** (cloud, desde el **18/08/2026**):
-  - **Modelo agente:** `nvidia/nvidia/nemotron-3-ultra-550b-a55b` (NVIDIA Nemotron 3 Ultra 550B A55B; desde el **24/09/2026**; antes Nemotron 3 Super 120B A12B y antes Muse Glimmer 30B)
+  - **Modelo agente:** `nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b` (NVIDIA Nemotron 3.5 Super VL 120B A12B; desde el **24/10/2026**; antes Ultra 550B A55B)
   - **Whitelist:** 7 modelos operativos (rev. **11/09/2026**: se retiró `minimaxai/minimax-m3`, verificado con HTTP 410 Gone, fin de vida el 09/09/2026). Vive en `providers.nvidia.whitelist`: V2 **ignora** esta clave (no tiene equivalente V2) y la aplica el plugin `nvidia-filter`.
   - **Parámetros:** `providers.nvidia.body` = `{temperature: 1, top_p: 0.95}`. ⚠️ V2 **descarta** `temperature`/`top_p` a nivel de agente; hay que ponerlos en el provider, el modelo o una variante.
   - **API Key:** `nvapi-*` (en `auth.json` de OpenCode)
@@ -424,19 +425,39 @@ Proveedores de modelos. Configurados:
 4. **Tool calling:** petición con `tools: [get_current_time]` y `tool_choice: auto`. Se exige que la respuesta contenga `tool_calls` reales.
 5. **Reintento de sobrecarga:** los que fallaron con timeout / 429 / 503 / 500 se reintentaron con más margen antes de decidir.
 
-**Resultado del ranking (los 7 del whitelist, ordenados de mejor a peor):**
+**Resultado del ranking — revisión completa del 24/10/2026 (6 modelos):**
 
 | # | Modelo | Velocidad | Tool calling | Veredicto |
 |---|--------|-----------|--------------|-----------|
-| 1 | `meta/muse-glimmer-30b` | 144,9 tok/s | ✅ | ⭐⭐⭐⭐⭐ *(agente nvidia del 05/09 al 17/09/2026)* |
-| 2 | `nvidia/nemotron-3.5-lightning-30b-a3b` | 119,6 tok/s | ✅ | ⭐⭐⭐⭐⭐ |
-| 3 | `nvidia/nemotron-3-super-120b-a12b` | 93,4 tok/s | ✅ | ⭐⭐⭐⭐ *(agente nvidia del 17/09 al 24/09/2026)* |
-| 4 | `nvidia/nemotron-3-ultra-550b-a55b` | 74,5 tok/s | ✅ | ⭐⭐⭐⭐ *(agente nvidia desde el 24/09/2026)* |
-| 5 | `meta/llama-3.2-11b-vision-instruct` | 50,7 tok/s | ✅ | ⭐⭐⭐⭐ |
-| 6 | `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | 40,3 tok/s | ✅ | ⭐⭐⭐⭐ |
-| 7 | `openai/gpt-oss-20b` | 34,2 tok/s | ✅ | ⭐⭐⭐⭐ |
+| 1 | `nvidia/nemotron-3.5-super-vl-120b-a12b` | **93,8 tok/s** | ✅ | ⭐⭐⭐⭐⭐ *(agente nvidia desde el 24/10/2026 · multimodal texto+imagen)* |
+| 2 | `nvidia/nemotron-3.5-lightning-30b-a3b` | 81,1 tok/s | ✅ | ⭐⭐⭐⭐⭐ |
+| 3 | `nvidia/nemotron-3.5-bolt-e4b` | 53,9 tok/s | ✅ | ⭐⭐⭐⭐ *(añadido el 24/10/2026)* |
+| 4 | `meta/llama-3.2-11b-vision-instruct` | 39,4 tok/s | ✅ | ⭐⭐⭐⭐ |
+| 5 | `nvidia/nemotron-3-ultra-550b-a55b` | 35,0 tok/s | ✅ | ⭐⭐⭐⭐ *(agente nvidia del 24/09 al 24/10/2026)* |
+| 6 | `meta/muse-glimmer-30b` | 11,1 tok/s | ✅ | ⭐⭐⭐ *(agente nvidia del 05/09 al 17/09/2026)* |
 
-> ⚠️ **Actualización 11/09/2026:** `minimaxai/minimax-m3` (45,2 tok/s, puesto 6) fue **retirado** por NVIDIA — HTTP 410 Gone, fin de vida el 09/09/2026 — y eliminado del whitelist. Quedan **7 modelos**. El mismo retirado se eliminó también de los 3 perfiles de MiMoCode, que mantienen esta misma lista.
+> 📊 **Metodología aplicada el 24/10/2026 a los 8 modelos de entonces + 1 candidato:** HTTP 200
+> real, generación de ~200 tokens para medir velocidad (mínimo 10 tok/s) y tool calling con
+> `tool_choice: auto`. Los dudosos se **reintentaron** antes de decidir (3 mediciones).
+
+**Salieron de la whitelist el 24/10/2026:**
+
+| Modelo | Motivo | ¿Recuperable? |
+|--------|--------|---------------|
+| `nvidia/nemotron-3-super-120b-a12b` | **HTTP 404**: NVIDIA ya no expone endpoint de chat | No (retirado por NVIDIA) |
+| `openai/gpt-oss-20b` | **8,0 tok/s** estables (8,1 / 8,0 / 4,6 en 3 mediciones): por debajo del mínimo de 10. Antes daba 34,2 tok/s | Sí, si vuelve a rendir |
+| `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | **HTTP 503 en 2 de 3 intentos** de tool calling (el tercero funcionó a 46,1 tok/s): inestable para agente | Sí, cuando estabilice |
+
+> 💡 **`models` explícito para `bolt-e4b` (24/10/2026):** el catálogo de `models.dev` está
+> desactualizado para NVIDIA y no conoce este modelo (recién publicado), así que estaba en la
+> whitelist pero **no aparecía en `/models`**. Se define a mano en `providers.nvidia.models`
+> con `modelID`, `capabilities` (tools, text) y `limit` (128k contexto / 32k salida —
+> **límites estimados**: el endpoint `/v1/models` de NVIDIA no los publica). Verificado:
+> aparece en `opencode models` y responde con `opencode run --model nvidia/nvidia/nemotron-3.5-bolt-e4b`.
+
+> ⚠️ **Histórico:** `minimaxai/minimax-m3` fue retirado por NVIDIA (HTTP 410 Gone, EOL el
+> 09/09/2026). El mismo retirado se eliminó también de los perfiles de MiMoCode, que mantienen
+> esta misma lista.
 
 **Modelos nuevos del catálogo probados y descartados (05/09/2026):**
 
